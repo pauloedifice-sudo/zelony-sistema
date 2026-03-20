@@ -750,15 +750,21 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 <div class="topbar">
   <div class="tb-logo">ZELONY <small>Imóveis</small></div>
   <div class="tb-right">
-    <span id="tb-user-nome" style="font-size:11px;color:var(--tm);"></span>
-    <select class="role-sel" id="role-sel" onchange="trocaRole()">
+    <!-- Info do usuário logado -->
+    <div id="tb-user-info" style="display:flex;align-items:center;gap:7px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:7px;padding:4px 12px;cursor:default;">
+      <span id="tb-user-avatar" style="width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;"></span>
+      <span id="tb-user-nome" style="font-size:11px;font-weight:600;color:var(--tx);"></span>
+      <span id="tb-user-perfil-badge" style="font-size:9px;color:var(--tm);"></span>
+    </div>
+    <!-- Seletor de visualização — APENAS para Dono e Diretor -->
+    <select class="role-sel" id="role-sel" onchange="trocaRole()" style="display:none;" title="Visualizar como...">
       <option value="dono">👑 Dono</option>
       <option value="fin">👤 Financeiro</option>
       <option value="cor">👤 Corretor</option>
       <option value="cap">👤 Capitão</option>
       <option value="ger">👤 Gerente</option>
-      <option value="dir" selected>👤 Diretor — Paulo</option>
-      <option value="rh">👤 RH — Giovana</option>
+      <option value="dir" selected>👤 Diretor</option>
+      <option value="rh">👤 RH</option>
     </select>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
     <button onclick="fazerLogout()" style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Sair do sistema">↩ Sair</button>
@@ -1347,23 +1353,31 @@ function vendaNoFiltro(v){
 }
 
 function vendasU(l){
-  // Aplica filtro de unidade (só para quem tem acesso a ambas)
-  const u=getUnidadeUsuario();
+  // Aplica filtro de unidade
+  const unid=getUnidadeUsuario();
   let base=l;
-  if(u==='Ambas'){
-    // Aplica filtro manual de unidade
+  if(unid==='Ambas'){
     if(filtroUnidade!=='all') base=l.filter(v=>v.unidade===filtroUnidade);
   } else {
-    // Só vê a própria unidade
-    base=l.filter(v=>v.unidade===u||!v.unidade);
+    base=l.filter(v=>v.unidade===unid||!v.unidade);
   }
   if(role==='dono') return base;
   if(role==='fin') return base;
   if(role==='rh') return base.filter(v=>v.pct_rh&&v.pct_rh>0);
-  if(role==='cor'){const u=usuarioLogado;return u?base.filter(v=>v.corretor===u.nome.split(' ')[0]):[];}
-  if(role==='cap'){const u=usuarioLogado;return u?base.filter(v=>v.capitao===u.nome.split(' ')[0]):[];}
-  if(role==='ger'){const u=usuarioLogado;return u?base.filter(v=>v.gerente===u.nome.split(' ')[0]):[];}
-  if(role==='dir'){const u=usuarioLogado;return u?base.filter(v=>v.diretor===u.nome.split(' ')[0]):base;}
+
+  // Para os demais, filtra pelo nome do usuário logado
+  // Verifica se o campo da venda bate com o primeiro nome OU nome completo do usuário
+  const matchNome=(campo,usuario)=>{
+    if(!usuario||!campo) return false;
+    const c=campo.toLowerCase();
+    const nomes=usuario.nome.toLowerCase().split(' ');
+    return c===usuario.nome.toLowerCase()||nomes.some(n=>n.length>2&&c===n)||c===nomes[0];
+  };
+
+  if(role==='cor') return usuarioLogado?base.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
+  if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)):[];
+  if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)):[];
+  if(role==='dir') return usuarioLogado?base.filter(v=>matchNome(v.diretor,usuarioLogado)):[];
   return base;
 }
 
@@ -1378,7 +1392,38 @@ function getCols(){if(role==='cor')return['data','cliente','produto','com_cor','
 
 const modTitles={carteira:'Minha Carteira',vendas:'Vendas &amp; Comissão',trein:'Treinamentos',proc:'Processos Operacionais',usuarios:'Usuários'};
 function setMod(m,el){['carteira','vendas','trein','proc','usuarios'].forEach(x=>document.getElementById('mod-'+x).classList.add('hidden'));document.getElementById('mod-'+m).classList.remove('hidden');document.querySelectorAll('.sb-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('pg-title').innerHTML=modTitles[m];if(m==='carteira')renderCarteira();if(m==='trein')renderTrein();if(m==='proc')renderProc();if(m==='vendas'&&vtab==='rel')renderRel();if(m==='usuarios')renderUsuarios();}
-function trocaRole(){role=document.getElementById('role-sel').value;const d=RD[role];document.getElementById('sb-av').textContent=d.av;document.getElementById('sb-uname').textContent=d.nome;document.getElementById('sb-urole').textContent=d.role;if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();renderFiltros();renderVList();if(curVId)showVDetail(curVId);if(vtab==='rel')renderRel();if(!document.getElementById('mod-trein').classList.contains('hidden'))renderTrein();if(!document.getElementById('mod-usuarios').classList.contains('hidden'))renderUsuarios();renderBtnNovaVenda();}
+function atualizarTopbar(usuario, roleValue){
+  const nomeDisplay=usuario.nome.split(' ')[0];
+  const perfilDisplay=usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'');
+  document.getElementById('tb-user-avatar').textContent=ini(usuario.nome);
+  document.getElementById('tb-user-nome').textContent=nomeDisplay;
+  document.getElementById('tb-user-perfil-badge').textContent=perfilDisplay;
+  const sel=document.getElementById('role-sel');
+  if(roleValue==='dono'){
+    sel.style.display='block';
+    sel.value=roleValue;
+  } else {
+    sel.style.display='none';
+  }
+  document.getElementById('sb-av').textContent=ini(usuario.nome);
+  document.getElementById('sb-uname').textContent=nomeDisplay;
+  document.getElementById('sb-urole').textContent=perfilDisplay;
+}
+
+function trocaRole(){
+  role=document.getElementById('role-sel').value;
+  const d=RD[role];
+  document.getElementById('sb-av').textContent=d.av;
+  document.getElementById('sb-uname').textContent=d.nome;
+  document.getElementById('sb-urole').textContent=d.role;
+  if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();
+  renderFiltros();renderVList();
+  if(curVId)showVDetail(curVId);
+  if(vtab==='rel')renderRel();
+  if(!document.getElementById('mod-trein').classList.contains('hidden'))renderTrein();
+  if(!document.getElementById('mod-usuarios').classList.contains('hidden'))renderUsuarios();
+  renderBtnNovaVenda();
+}
 function setVTab(t,el){vtab=t;document.querySelectorAll('.vtab').forEach(b=>b.classList.remove('active'));el.classList.add('active');const a=document.getElementById('vd-acomp'),r=document.getElementById('vd-rel');if(t==='acomp'){a.style.display='flex';r.classList.add('hidden');}else{a.style.display='none';r.classList.remove('hidden');renderRel();}}
 function renderFiltros(){
   const cnt={};vendasU(VENDAS).forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});
@@ -1409,7 +1454,7 @@ function setUnidade(u,el){
 function renderBtnNovaVenda(){
   const wrap=document.getElementById('btn-nova-venda-wrap');
   if(!wrap)return;
-  if(['dir','fin'].includes(role)){
+  if(['dir','fin','dono'].includes(role)){
     wrap.innerHTML=`<button class="btn-nova-venda" id="btn-nv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Nova venda</button>`;
     document.getElementById('btn-nv').addEventListener('click',abrirModalVenda);
   } else {
@@ -1654,7 +1699,7 @@ const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><
 // Garante array de anexos na venda
 if(!v.anexos) v.anexos=[];
 const anexosH=renderAnexosSec(v);
-document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${role==='fin'&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${role!=='fin'?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas o financeiro pode avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
 // Bind do input de anexo após render
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
@@ -1784,7 +1829,7 @@ function exportPDF(){const btn=document.getElementById('bpdf');btn.classList.add
 function abrirM(id){const v=VENDAS.find(x=>x.id===id);pendId=id;document.getElementById('mobs').value='';document.getElementById('mchars').textContent='0/400';document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>Etapa atual</span><strong>${ETAPAS[v.etapa]}</strong></div><div style="font-size:16px;color:var(--gold);">→</div><div class="sf to"><span>Próxima</span><strong>${ETAPAS[v.etapa+1]}</strong></div></div>`;document.getElementById('mbackdrop').classList.add('show');}
 function fecharM(){document.getElementById('mbackdrop').classList.remove('show');pendId=null;}
 function handleBackdrop(e){if(e.target===document.getElementById('mbackdrop'))fecharM();}
-function confirmAv(){const v=VENDAS.find(x=>x.id===pendId);if(!v)return;const obs=document.getElementById('mobs').value.trim();v.etapa++;v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:'Financeiro',o:obs});notifs.unshift({venda:v.cliente.split('/')[0].trim(),etapa:ETAPAS[v.etapa],obs,hora:'agora'});const b=document.getElementById('nbadge');b.textContent=notifs.length;b.classList.remove('hidden');fecharM();renderFiltros();renderVList();showVDetail(v.id);renderNots();dbAtualizarVenda(v).catch(e=>console.error(e));salvarLS();if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();}
+function confirmAv(){const v=VENDAS.find(x=>x.id===pendId);if(!v)return;const obs=document.getElementById('mobs').value.trim();const quemAvancou=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';v.etapa++;v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quemAvancou,o:obs});notifs.unshift({venda:v.cliente.split('/')[0].trim(),etapa:ETAPAS[v.etapa],obs,hora:'agora'});const b=document.getElementById('nbadge');b.textContent=notifs.length;b.classList.remove('hidden');fecharM();renderFiltros();renderVList();showVDetail(v.id);renderNots();dbAtualizarVenda(v).catch(e=>console.error(e));salvarLS();if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();}
 
 function renderTrein(){
   const cats=['Corretor','Capitão','Gerente'];
@@ -2283,14 +2328,8 @@ function fazerLogin(){
       nome:usuario.nome.split(' ')[0],
       role:usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'')
     };
-
-    // Define o perfil automaticamente
-    document.getElementById('role-sel').value=roleValue;
     role=roleValue;
-    document.getElementById('sb-av').textContent=ini(usuario.nome);
-    document.getElementById('sb-uname').textContent=usuario.nome.split(' ')[0];
-    document.getElementById('sb-urole').textContent=usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'');
-    document.getElementById('tb-user-nome').textContent=usuario.nome.split(' ')[0]+' ·';
+    atualizarTopbar(usuario,roleValue);
 
     // Esconde login, mostra app
     document.getElementById('login-screen').classList.add('hidden');
@@ -2325,12 +2364,8 @@ function restaurarSessao(){
     nome:usuario.nome.split(' ')[0],
     role:usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'')
   };
-  document.getElementById('role-sel').value=roleValue;
   role=roleValue;
-  document.getElementById('sb-av').textContent=ini(usuario.nome);
-  document.getElementById('sb-uname').textContent=usuario.nome.split(' ')[0];
-  document.getElementById('sb-urole').textContent=usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'');
-  document.getElementById('tb-user-nome').textContent=usuario.nome.split(' ')[0]+' ·';
+  atualizarTopbar(usuario,roleValue);
   document.getElementById('login-screen').classList.add('hidden');
   return true;
 }
