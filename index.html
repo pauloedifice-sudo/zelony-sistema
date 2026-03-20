@@ -1395,7 +1395,7 @@ function comMinha(v){
     const matchDir=(campo)=>{
       if(!campo) return false;
       const c=campo.toLowerCase().trim();
-      const nomeCompleto=usuarioLogado.nome.toLowerCase();
+      const nomeCompleto=usuarioLogado.nome.toLowerCase().trim();
       const primeiroNome=nomeCompleto.split(' ')[0];
       return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
     };
@@ -1440,9 +1440,8 @@ function vendasU(l, somenteMinhas=false){
   const matchNome=(campo,usuario)=>{
     if(!usuario||!campo) return false;
     const c=campo.toLowerCase().trim();
-    const nomeCompleto=usuario.nome.toLowerCase();
+    const nomeCompleto=usuario.nome.toLowerCase().trim();
     const primeiroNome=nomeCompleto.split(' ')[0];
-    // Bate se campo é igual ao nome completo OU ao primeiro nome (mínimo 3 chars)
     return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
   };
 
@@ -1477,7 +1476,7 @@ function renderCarteira(){
     const matchNome=(campo)=>{
       if(!campo) return false;
       const c=campo.toLowerCase().trim();
-      const nomeCompleto=usuarioLogado.nome.toLowerCase();
+      const nomeCompleto=usuarioLogado.nome.toLowerCase().trim();
       const primeiroNome=nomeCompleto.split(' ')[0];
       return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
     };
@@ -1523,8 +1522,9 @@ function renderCarteira(){
     const mn=(campo)=>{
       if(!campo) return false;
       const c2=campo.toLowerCase().trim();
-      const np=usuarioLogado.nome.toLowerCase().split(' ')[0];
-      return c2===usuarioLogado.nome.toLowerCase()||(np.length>=3&&c2===np);
+      const nc=usuarioLogado.nome.toLowerCase().trim();
+      const pn=nc.split(' ')[0];
+      return c2===nc||(pn.length>=3&&c2===pn);
     };
     if(mn(v.corretor)) totalBonus+=bonusCor(v);
     if(mn(v.capitao))  totalBonus+=0; // capitão não tem bônus
