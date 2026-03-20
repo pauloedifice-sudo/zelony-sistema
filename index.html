@@ -1012,7 +1012,26 @@ input[type=range]{width:100%;accent-color:var(--gold);}
             <div class="pct-prev-item"><div class="pct-prev-lbl">Zelony</div><div class="pct-prev-val" id="pv-zel">—</div></div>
           </div>
           <div class="mv-divider"></div>
-          <!-- Documentos obrigatórios -->
+          <!-- Bônus -->
+          <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional)</span></div>
+          <div class="f-field">
+            <label>Valor do bônus (R$)</label>
+            <input type="number" id="mv-bonus" placeholder="Ex: 2000" min="0" oninput="calcularPrevBonus()">
+          </div>
+          <div class="mv-section" style="margin-top:8px;font-size:9px;">Distribuição do bônus (%)</div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-bonus-dir" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-bonus-ger" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-bonus-cor" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+          </div>
+          <!-- Preview bônus -->
+          <div class="pct-preview" id="mv-bonus-preview" style="display:none;">
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Total bônus</div><div class="pct-prev-val" id="pb-total">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pb-dir">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pb-ger">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Corretor</div><div class="pct-prev-val" id="pb-cor">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl" id="pb-resto-lbl">Restante</div><div class="pct-prev-val" id="pb-resto" style="color:#C06030;">—</div></div>
+          </div>
           <div class="mv-section">Documentos Obrigatórios</div>
           <!-- Comprovante -->
           <div class="doc-upload-box" id="dbox-comp" onclick="document.getElementById('mv-comp-input').click()">
@@ -1255,6 +1274,8 @@ function mapVendaIn(v){return{
   pct_rh:parseFloat(v.pct_rh||0),etapa:v.etapa||0,
   diretor2:v.diretor2||null,pct_dir2:parseFloat(v.pct_dir2||0),
   cca:v.cca||'',
+  bonus:parseFloat(v.bonus||0),bonus_pct_dir:parseFloat(v.bonus_pct_dir||0),
+  bonus_pct_ger:parseFloat(v.bonus_pct_ger||0),bonus_pct_cor:parseFloat(v.bonus_pct_cor||0),
   hist:v.hist||[],anexos:[]
 };}
 function mapVendaOut(v){return{
@@ -1265,6 +1286,8 @@ function mapVendaOut(v){return{
   pct_ger:v.pct_ger,pct_dir:v.pct_dir,pct_rh:v.pct_rh,
   diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
   cca:v.cca||'',
+  bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
+  bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
   etapa:v.etapa,hist:v.hist
 };}
 function mapTreinIn(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
@@ -1345,6 +1368,10 @@ function fmtK(v){return v>=1e6?'R$ '+(v/1e6).toFixed(1)+'M':v>=1000?'R$ '+Math.r
 function hoje(){const d=new Date();return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();}
 function com(v,p){return(v.valor*p)-(v.valor*p*v.imp);}
 function comC(v){return com(v,v.pct_cor);}function comCap(v){return com(v,v.pct_cap);}function comG(v){return com(v,v.pct_ger);}function comD(v){return com(v,v.pct_dir);}function comD2(v){return v.pct_dir2?com(v,v.pct_dir2):0;}
+// Funções de bônus
+function bonusDir(v){return v.bonus?(v.bonus*(v.bonus_pct_dir||0)/100):0;}
+function bonusGer(v){return v.bonus?(v.bonus*(v.bonus_pct_ger||0)/100):0;}
+function bonusCor(v){return v.bonus?(v.bonus*(v.bonus_pct_cor||0)/100):0;}
 function comRH(v){return v.pct_rh?com(v,v.pct_rh):0;}
 function comZ(v){return com(v,Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0));}
 function comTotal(v){return v.valor*v.pct*(1-v.imp);}
@@ -1417,29 +1444,49 @@ function vendasU(l, somenteMinhas=false){
   // mas na Carteira (somenteMinhas=true) vê só as suas
   if(role==='dir'&&(unid==='Ambas'||!unid)){
     if(somenteMinhas&&usuarioLogado){
-      return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado));
+      return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado));
     }
     return base;
   }
 
   if(role==='cor') return usuarioLogado?base.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
-  if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)):[];
-  if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)):[];
-  if(role==='dir') return usuarioLogado?base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)):[];
+  if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)||matchNome(v.corretor,usuarioLogado)):[];
+  if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado)||matchNome(v.capitao,usuarioLogado)):[];
+  if(role==='dir') return usuarioLogado?base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado)):[];
   return base;
 }
 
 function renderCarteira(){
-  const lMinhas=vendasU(VENDAS, true); // só as minhas (saldo + tabela da carteira)
+  const lMinhas=vendasU(VENDAS, true);
+
+  // Calcula o saldo real do usuário somando TODOS os papéis que ele teve na venda + bônus
   const calcSaldo=(v)=>{
-    if(role==='cor') return comC(v);
-    if(role==='cap') return comCap(v);
-    if(role==='ger') return comG(v);
-    if(role==='rh') return comRH(v);
     if(role==='fin') return comZ(v);
-    if(role==='dono') return comTotal(v);
-    if(role==='dir') return comD(v)+(v.diretor2?comD2(v):0);
-    return comTotal(v);
+    if(role==='dono') return comTotal(v)+(v.bonus||0);
+    if(role==='rh') return comRH(v);
+    if(!usuarioLogado) return 0;
+
+    const matchNome=(campo)=>{
+      if(!campo) return false;
+      const c=campo.toLowerCase();
+      const nomes=usuarioLogado.nome.toLowerCase().split(' ').filter(n=>n.length>2);
+      return c===usuarioLogado.nome.toLowerCase()||nomes.some(n=>c===n);
+    };
+
+    let total=0;
+    if(matchNome(v.corretor))  { total+=comC(v);   total+=bonusCor(v); }
+    if(matchNome(v.capitao))   { total+=comCap(v); }
+    if(matchNome(v.gerente))   { total+=comG(v);   total+=bonusGer(v); }
+    if(matchNome(v.diretor))   { total+=comD(v);   total+=bonusDir(v); }
+    if(matchNome(v.diretor2))  { total+=comD2(v); }
+    // Se não aparece em nenhum campo, usa comissão padrão do perfil
+    if(total===0){
+      if(role==='cor') return comC(v)+bonusCor(v);
+      if(role==='cap') return comCap(v);
+      if(role==='ger') return comG(v)+bonusGer(v);
+      if(role==='dir') return comD(v)+bonusDir(v);
+    }
+    return total;
   };
   const saldo=lMinhas.reduce((s,v)=>s+calcSaldo(v),0);
   const pend=lMinhas.filter(v=>v.etapa<ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
@@ -1453,19 +1500,18 @@ function renderCarteira(){
     data:'Data',cliente:'Cliente',produto:'Produto',corretor:'Corretor',
     capitao:'Capitão',gerente:'Gerente',vgv:'Valor venda',
     com_bruta:'Com. bruta',com_total:'Com. líquida',
-    com_cor:role==='cor'?'Minha comissão':'Corretor',
-    com_cap:role==='cap'?'Minha comissão':'Capitão',
-    com_ger:role==='ger'?'Minha comissão':'Gerente',
-    com_dir:role==='dir'?'Minha comissão':'Diretor',
-    com_zel:'Zelony',minha:'Total visível',etapa:'Etapa'
+    com_cor:'Corretor',com_cap:'Capitão',com_ger:'Gerente',
+    com_dir:'Minha comissão',
+    com_zel:'Zelony',
+    minha:'Minha comissão',etapa:'Etapa'
   };
   const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
   document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">${saldoLabel}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Minhas vendas</div><div class="cmc-v go">${lMinhas.length}</div><div class="cmc-s">${lMinhas.filter(v=>v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div><div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function getCols(){
-  if(role==='cor') return['data','cliente','produto','com_cor','etapa'];
-  if(role==='cap') return['data','cliente','produto','corretor','com_cor','com_cap','etapa'];
-  if(role==='ger') return['data','cliente','produto','corretor','com_ger','etapa'];
+  if(role==='cor') return['data','cliente','produto','corretor','gerente','vgv','com_cor','minha','etapa'];
+  if(role==='cap') return['data','cliente','produto','corretor','gerente','vgv','com_cor','com_cap','minha','etapa'];
+  if(role==='ger') return['data','cliente','produto','corretor','gerente','vgv','com_cor','com_cap','com_ger','minha','etapa'];
   if(role==='dir') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','etapa'];
   if(role==='dono') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];
   return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];
@@ -1644,7 +1690,7 @@ function abrirModalVenda(){
   if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome.split(' ')[0];
 
   // Limpa campos
-  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-ger','mv-bonus-cor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('mv-dir2-pct-field');
   if(f) f.style.display='none';
   const pw=document.getElementById('pv-dir2-wrap');
@@ -1659,6 +1705,30 @@ function abrirModalVenda(){
 
 function fecharMV(){document.getElementById('mvenda').classList.remove('show');}
 function handleBackdropV(e){if(e.target===document.getElementById('mvenda'))fecharMV();}
+
+function calcularPrevBonus(){
+  const bonus=parseFloat(document.getElementById('mv-bonus').value)||0;
+  const pDir=parseFloat(document.getElementById('mv-bonus-dir').value)||0;
+  const pGer=parseFloat(document.getElementById('mv-bonus-ger').value)||0;
+  const pCor=parseFloat(document.getElementById('mv-bonus-cor').value)||0;
+  const prev=document.getElementById('mv-bonus-preview');
+  if(!bonus){prev.style.display='none';return;}
+  prev.style.display='flex';
+  const vDir=bonus*(pDir/100);
+  const vGer=bonus*(pGer/100);
+  const vCor=bonus*(pCor/100);
+  const total=pDir+pGer+pCor;
+  const resto=bonus-(vDir+vGer+vCor);
+  document.getElementById('pb-total').textContent=fmt(bonus);
+  document.getElementById('pb-dir').textContent=pDir?fmt(vDir):'—';
+  document.getElementById('pb-ger').textContent=pGer?fmt(vGer):'—';
+  document.getElementById('pb-cor').textContent=pCor?fmt(vCor):'—';
+  const restoEl=document.getElementById('pb-resto');
+  const restoLbl=document.getElementById('pb-resto-lbl');
+  if(total===100){restoEl.textContent='✓ 100%';restoEl.style.color='#2E9E6E';restoLbl.textContent='Distribuição';}
+  else if(total>100){restoEl.textContent=`⚠️ ${total}% (excede 100%)`;restoEl.style.color='#C05030';restoLbl.textContent='Total %';}
+  else{restoEl.textContent=fmt(resto)+` (${(100-total).toFixed(0)}% sem destino)`;restoEl.style.color='#C06030';restoLbl.textContent='Sem destino';}
+}
 
 function calcularPrevV(){
   const val=parseFloat(document.getElementById('mv-valor').value)||0;
@@ -1701,6 +1771,10 @@ function salvarVenda(){
   const diretor=document.getElementById('mv-diretor').value;
   const diretor2=document.getElementById('mv-diretor2').value||null;
   const cca=document.getElementById('mv-cca').value.trim();
+  const bonus=parseFloat(document.getElementById('mv-bonus').value)||0;
+  const bonus_pct_dir=parseFloat(document.getElementById('mv-bonus-dir').value)||0;
+  const bonus_pct_ger=parseFloat(document.getElementById('mv-bonus-ger').value)||0;
+  const bonus_pct_cor=parseFloat(document.getElementById('mv-bonus-cor').value)||0;
   const valor=parseFloat(document.getElementById('mv-valor').value);
   const pct=(parseFloat(document.getElementById('mv-pct').value)||0)/100;
   const imp=(parseFloat(document.getElementById('mv-imp').value)||11)/100;
@@ -1755,6 +1829,7 @@ function salvarVenda(){
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,
+    bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
     hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}],
@@ -1808,11 +1883,13 @@ const distH=`<div class="sec"><div class="sec-h">Distribuição da comissão</di
   </div>`:'<div style="font-size:9px;color:var(--tm);margin-top:2px;">⚠️ Sem dados bancários cadastrados</div>';
   return`<div class="eq-row" style="flex-wrap:wrap;"><div class="eav">${ini(m.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${m.n}</div><div style="font-size:9px;color:var(--tm);">${m.c} · ${(m.pct*100).toFixed(2)}%</div>${bancoPix}</div><span style="font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:8px;">${fmt(m.val)}</span></div>`;
 }).join('')}${rhRow}${impostoRow}</div></div>`;
-const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;">${ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
+const bonusH=v.bonus>0&&['dir','fin','dono','ger','cor'].includes(role)?`<div class="sec"><div class="sec-h" style="color:#2E7E5E;">🎁 Bônus da construtora</div><div class="sec-b"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;font-size:12px;font-weight:600;">${fmt(v.bonus)} total</span></div>${[{n:v.diretor,c:'Diretor',val:bonusDir(v),pct:v.bonus_pct_dir},{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}].filter(b=>b.pct>0).map(b=>`<div class="eq-row"><div class="eav">${ini(b.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${b.n}</div><div style="font-size:9px;color:var(--tm);">${b.c} · ${b.pct}% do bônus</div></div><span style="font-size:13px;font-weight:600;color:#2E7E5E;white-space:nowrap;margin-left:8px;">${fmt(b.val)}</span></div>`).join('')}</div></div>`:'';
+
 // Garante array de anexos na venda
 if(!v.anexos) v.anexos=[];
 const anexosH=renderAnexosSec(v);
-document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;">${ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
+document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
 // Bind do input de anexo após render
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
