@@ -1390,9 +1390,10 @@ function comMinha(v){
     if(!usuarioLogado) return comD(v);
     const matchDir=(campo)=>{
       if(!campo) return false;
-      const c=campo.toLowerCase();
-      const nomes=usuarioLogado.nome.toLowerCase().split(' ').filter(n=>n.length>2);
-      return c===usuarioLogado.nome.toLowerCase()||nomes.some(n=>c===n);
+      const c=campo.toLowerCase().trim();
+      const nomeCompleto=usuarioLogado.nome.toLowerCase();
+      const primeiroNome=nomeCompleto.split(' ')[0];
+      return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
     };
     if(matchDir(v.diretor2)&&!matchDir(v.diretor)) return comD2(v);
     if(matchDir(v.diretor2)&&matchDir(v.diretor)) return comD(v)+comD2(v);
@@ -1434,10 +1435,11 @@ function vendasU(l, somenteMinhas=false){
 
   const matchNome=(campo,usuario)=>{
     if(!usuario||!campo) return false;
-    const c=campo.toLowerCase();
+    const c=campo.toLowerCase().trim();
     const nomeCompleto=usuario.nome.toLowerCase();
-    const nomes=nomeCompleto.split(' ');
-    return c===nomeCompleto||nomes.some(n=>n.length>2&&c===n);
+    const primeiroNome=nomeCompleto.split(' ')[0];
+    // Bate se campo é igual ao nome completo OU ao primeiro nome (mínimo 3 chars)
+    return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
   };
 
   // Diretor com "Ambas": vê todas as vendas em Vendas/Comissão,
@@ -1449,6 +1451,8 @@ function vendasU(l, somenteMinhas=false){
     return base;
   }
 
+  // Cada perfil vê APENAS as vendas onde aparece no seu campo específico
+  // (ou em campos de níveis abaixo — se também exerceu essa função)
   if(role==='cor') return usuarioLogado?base.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
   if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)||matchNome(v.corretor,usuarioLogado)):[];
   if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado)||matchNome(v.capitao,usuarioLogado)):[];
@@ -1468,9 +1472,10 @@ function renderCarteira(){
 
     const matchNome=(campo)=>{
       if(!campo) return false;
-      const c=campo.toLowerCase();
-      const nomes=usuarioLogado.nome.toLowerCase().split(' ').filter(n=>n.length>2);
-      return c===usuarioLogado.nome.toLowerCase()||nomes.some(n=>c===n);
+      const c=campo.toLowerCase().trim();
+      const nomeCompleto=usuarioLogado.nome.toLowerCase();
+      const primeiroNome=nomeCompleto.split(' ')[0];
+      return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
     };
 
     let total=0;
@@ -1501,20 +1506,21 @@ function renderCarteira(){
     capitao:'Capitão',gerente:'Gerente',vgv:'Valor venda',
     com_bruta:'Com. bruta',com_total:'Com. líquida',
     com_cor:'Corretor',com_cap:'Capitão',com_ger:'Gerente',
-    com_dir:'Minha comissão',
-    com_zel:'Zelony',
-    minha:'Minha comissão',etapa:'Etapa'
+    com_dir:'Minha comissão',com_zel:'Zelony',
+    minha:'Minha comissão',
+    bonus_cor:'🎁 Bônus',bonus_ger:'🎁 Bônus',bonus_dir:'🎁 Bônus',bonus_total:'🎁 Bônus total',
+    etapa:'Etapa'
   };
-  const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
+  const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='bonus_cor')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(bonusCor(v)):'—'}</td>`;if(c==='bonus_ger')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(bonusGer(v)):'—'}</td>`;if(c==='bonus_dir')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(bonusDir(v)):'—'}</td>`;if(c==='bonus_total')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
   document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">${saldoLabel}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Minhas vendas</div><div class="cmc-v go">${lMinhas.length}</div><div class="cmc-s">${lMinhas.filter(v=>v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div><div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function getCols(){
-  if(role==='cor') return['data','cliente','produto','corretor','gerente','vgv','com_cor','minha','etapa'];
+  if(role==='cor') return['data','cliente','produto','corretor','gerente','vgv','com_cor','minha','bonus_cor','etapa'];
   if(role==='cap') return['data','cliente','produto','corretor','gerente','vgv','com_cor','com_cap','minha','etapa'];
-  if(role==='ger') return['data','cliente','produto','corretor','gerente','vgv','com_cor','com_cap','com_ger','minha','etapa'];
-  if(role==='dir') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','etapa'];
-  if(role==='dono') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];
-  return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];
+  if(role==='ger') return['data','cliente','produto','corretor','gerente','vgv','com_cor','com_cap','com_ger','minha','bonus_ger','etapa'];
+  if(role==='dir') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','bonus_dir','etapa'];
+  if(role==='dono') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','bonus_total','etapa'];
+  return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','bonus_total','etapa'];
 }
 
 const modTitles={carteira:'Minha Carteira',vendas:'Vendas &amp; Comissão',trein:'Treinamentos',proc:'Processos Operacionais',usuarios:'Usuários'};
