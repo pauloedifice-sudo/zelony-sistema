@@ -997,7 +997,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
             <div class="pct-field"><label>Capitão %</label><input type="number" id="mv-pct-cap" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
             <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-pct-ger" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
             <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-pct-dir" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
-            <div class="pct-field" id="mv-pct-dir2-wrap" style="display:none;"><label>Dir. 2 %</label><input type="number" id="mv-pct-dir2b" placeholder="0" min="0" step="0.01" oninput="syncDir2Pct(this);calcularPrevV()"></div>
+            <div class="pct-field"><label>Diretor 2 %</label><input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
           </div>
           <!-- Preview comissões -->
           <div class="pct-preview" id="mv-preview" style="display:none;">
@@ -1400,11 +1400,27 @@ function vendasU(l){
 function renderCarteira(){
   const l=vendasU(VENDAS),saldo=l.reduce((s,v)=>s+comVis(v),0),pend=l.filter(v=>v.etapa<ETAPAS.length-1).reduce((s,v)=>s+comVis(v),0),rec=l.filter(v=>v.etapa===ETAPAS.length-1).reduce((s,v)=>s+comVis(v),0),rd=RD[role];
   const cols=getCols();
-  const hdrMap={data:'Data',cliente:'Cliente',produto:'Produto',corretor:'Corretor',capitao:'Capitão',gerente:'Gerente',vgv:'Valor venda',com_bruta:'Com. bruta',com_total:'Com. líquida',com_cor:'Corretor',com_cap:'Capitão',com_ger:'Gerente',com_dir:'Diretor',com_zel:'Zelony',minha:'Total visível',etapa:'Etapa'};
+  const hdrMap={
+    data:'Data',cliente:'Cliente',produto:'Produto',corretor:'Corretor',
+    capitao:'Capitão',gerente:'Gerente',vgv:'Valor venda',
+    com_bruta:'Com. bruta',com_total:'Com. líquida',
+    com_cor:role==='cor'?'Minha comissão':'Corretor',
+    com_cap:role==='cap'?'Minha comissão':'Capitão',
+    com_ger:role==='ger'?'Minha comissão':'Gerente',
+    com_dir:role==='dir'?'Minha comissão':'Diretor',
+    com_zel:'Zelony',minha:'Total visível',etapa:'Etapa'
+  };
   const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
   document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">Saldo a receber</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">Total acumulado — ${rd.nome} · ${rd.role}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Total de vendas</div><div class="cmc-v go">${l.length}</div><div class="cmc-s">${l.filter(v=>v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div><div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
-function getCols(){if(role==='cor')return['data','cliente','produto','com_cor','etapa'];if(role==='cap')return['data','cliente','produto','corretor','com_cor','com_cap','minha','etapa'];if(role==='ger')return['data','cliente','produto','corretor','capitao','com_cor','com_cap','com_ger','minha','etapa'];if(role==='dir')return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','etapa'];return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];}
+function getCols(){
+  if(role==='cor') return['data','cliente','produto','com_cor','etapa'];
+  if(role==='cap') return['data','cliente','produto','corretor','com_cor','com_cap','etapa'];
+  if(role==='ger') return['data','cliente','produto','corretor','com_ger','etapa'];
+  if(role==='dir') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','etapa'];
+  if(role==='dono') return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];
+  return['data','cliente','produto','corretor','gerente','vgv','com_bruta','com_total','com_cor','com_cap','com_ger','com_dir','com_zel','etapa'];
+}
 
 const modTitles={carteira:'Minha Carteira',vendas:'Vendas &amp; Comissão',trein:'Treinamentos',proc:'Processos Operacionais',usuarios:'Usuários'};
 function setMod(m,el){['carteira','vendas','trein','proc','usuarios'].forEach(x=>document.getElementById('mod-'+x).classList.add('hidden'));document.getElementById('mod-'+m).classList.remove('hidden');document.querySelectorAll('.sb-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('pg-title').innerHTML=modTitles[m];if(m==='carteira')renderCarteira();if(m==='trein')renderTrein();if(m==='proc')renderProc();if(m==='vendas'&&vtab==='rel')renderRel();if(m==='usuarios')renderUsuarios();}
