@@ -321,7 +321,25 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 .login-box{animation:fadeInUp 0.4s ease;}
 .login-screen.hidden{display:none !important;}
 
-/* ── MÓDULO USUÁRIOS ── */
+/* ── MODAL NOVA VENDA ── */
+.mv-modal{max-width:560px !important;}
+.mv-modal .modal-body{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:72vh;overflow-y:auto;}
+.mv-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin-bottom:2px;margin-top:4px;}
+.mv-divider{height:1px;background:var(--bd);margin:2px 0;}
+.pct-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.pct-field{display:flex;flex-direction:column;gap:4px;}
+.pct-field label{font-size:10px;font-weight:600;color:var(--ts);}
+.pct-field input{background:var(--bg2);border:1px solid var(--bd);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;}
+.pct-field input:focus{border-color:var(--gold-l);}
+.pct-preview{background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+.pct-prev-item{display:flex;flex-direction:column;gap:2px;}
+.pct-prev-lbl{font-size:9px;color:var(--tm);font-weight:500;text-transform:uppercase;}
+.pct-prev-val{font-size:12px;font-weight:600;color:var(--gold);}
+
+/* botão nova venda na lista */
+.btn-nova-venda{display:flex;align-items:center;gap:5px;background:var(--gold);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.13s;white-space:nowrap;}
+.btn-nova-venda:hover{background:var(--gold-l);}
+.btn-nova-venda svg{width:11px;height:11px;}
 .usuarios-wrap{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
 .usuarios-top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;flex-wrap:wrap;gap:10px;}
 .usuarios-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;flex-shrink:0;}
@@ -337,6 +355,17 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 .tag-ger{background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;}
 .tag-dir{background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd);}
 .tag-fin{background:#FEF0EC;color:#C05030;border:1px solid #E0A090;}
+.tag-rh{background:#E8F0FE;color:#1A56C4;border:1px solid #93B4F5;}
+/* toggle RH contratação */
+.rh-toggle-wrap{display:flex;align-items:center;justify-content:space-between;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:10px 14px;}
+.rh-toggle-label{font-size:12px;font-weight:500;color:var(--ts);}
+.rh-toggle-sub{font-size:10px;color:var(--tm);margin-top:2px;}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#D0C8B8;border-radius:22px;cursor:pointer;transition:0.2s;}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:0.2s;}
+.toggle-switch input:checked+.toggle-slider{background:var(--gold);}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(18px);}
 .user-card-body{padding:12px 14px;display:flex;flex-direction:column;gap:7px;}
 .user-info-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ts);}
 .user-info-row svg{width:13px;height:13px;flex-shrink:0;color:var(--tm);}
@@ -412,12 +441,10 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       <div class="login-divider">acesso de demonstração</div>
 
       <div class="login-hint">
-        Use qualquer e-mail cadastrado em <strong>Usuários</strong> com a senha <strong>zelony123</strong><br><br>
-        Exemplos:<br>
-        • <strong>sibele&#64;zelony.com.br</strong> → Corretor<br>
-        • <strong>thais&#64;zelony.com.br</strong> → Capitão<br>
-        • <strong>joao&#64;zelony.com.br</strong> → Gerente<br>
-        • <strong>vitoria&#64;zelony.com.br</strong> → Diretor
+        Entre com o e-mail e senha cadastrados pelo Diretor.<br><br>
+        <strong>Acesso inicial:</strong><br>
+        • E-mail: <strong>paulo.edifice&#64;gmail.com</strong><br>
+        • Senha: <strong>Mudar@123</strong>
       </div>
 
       <div class="login-footer">© 2026 Zelony Imóveis · Todos os direitos reservados</div>
@@ -432,10 +459,11 @@ input[type=range]{width:100%;accent-color:var(--gold);}
     <span id="tb-user-nome" style="font-size:11px;color:var(--tm);"></span>
     <select class="role-sel" id="role-sel" onchange="trocaRole()">
       <option value="fin">👤 Financeiro (Master)</option>
-      <option value="cor">👤 Corretor — Sibele</option>
-      <option value="cap">👤 Capitão — Thais</option>
-      <option value="ger">👤 Gerente — João</option>
-      <option value="dir">👤 Diretor — Vitória</option>
+      <option value="cor">👤 Corretor</option>
+      <option value="cap">👤 Capitão</option>
+      <option value="ger">👤 Gerente</option>
+      <option value="dir" selected>👤 Diretor — Paulo</option>
+      <option value="rh">👤 RH — Giovana</option>
     </select>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
     <button onclick="fazerLogout()" style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Sair do sistema">↩ Sair</button>
@@ -537,7 +565,10 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       <div class="v-split">
         <div class="v-list">
           <div class="vl-h">
-            <div class="vl-ht">Vendas <span class="zbg bg-a" id="vc">10</span></div>
+            <div class="vl-ht">
+              Vendas <span class="zbg bg-a" id="vc">0</span>
+              <div id="btn-nova-venda-wrap"></div>
+            </div>
             <div class="vl-tabs">
               <button class="vtab active" onclick="setVTab('acomp',this)">Acompanhamento</button>
               <button class="vtab" onclick="setVTab('rel',this)">Relatório</button>
@@ -569,6 +600,86 @@ input[type=range]{width:100%;accent-color:var(--gold);}
               <div class="tscroll" style="max-height:300px;"><table><thead><tr id="rel-thead"></tr></thead><tbody id="rel-body"></tbody></table></div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NOVA VENDA -->
+    <div class="modal-backdrop" id="mvenda" onclick="handleBackdropV(event)">
+      <div class="modal mv-modal">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="mv-title">Nova Venda</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Preencha os dados da venda *</div>
+          </div>
+          <button class="mclose" onclick="fecharMV()">✕</button>
+        </div>
+        <div class="mv-modal modal-body">
+          <!-- Dados do cliente -->
+          <div class="mv-section">Dados do Cliente</div>
+          <div class="f-row">
+            <div class="f-field"><label>Nome do cliente *</label><input type="text" id="mv-cliente" placeholder="Nome completo do cliente"></div>
+            <div class="f-field"><label>Data da venda *</label><input type="date" id="mv-data"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Produto / Empreendimento *</label><input type="text" id="mv-produto" placeholder="Ex: Palm Coast, Kentucky..."></div>
+            <div class="f-field"><label>Construtora *</label><input type="text" id="mv-construtora" placeholder="Ex: LYX, Prestes..."></div>
+          </div>
+          <div class="f-field"><label>Origem do lead</label>
+            <select id="mv-origem">
+              <option value="Indicação">Indicação</option>
+              <option value="MKT">MKT</option>
+              <option value="Oferta Ativa">Oferta Ativa</option>
+            </select>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Equipe -->
+          <div class="mv-section">Equipe Responsável</div>
+          <div class="f-row">
+            <div class="f-field"><label>Corretor *</label>
+              <select id="mv-corretor"><option value="">Selecione...</option></select>
+            </div>
+            <div class="f-field"><label>Capitão</label>
+              <select id="mv-capitao"><option value="">Nenhum</option></select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Gerente *</label>
+              <select id="mv-gerente"><option value="">Selecione...</option></select>
+            </div>
+            <div class="f-field"><label>Diretor *</label>
+              <select id="mv-diretor"><option value="">Selecione...</option></select>
+            </div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Valores -->
+          <div class="mv-section">Valores e Comissões</div>
+          <div class="f-row">
+            <div class="f-field"><label>Valor de venda (R$) *</label><input type="number" id="mv-valor" placeholder="Ex: 248000" min="0" oninput="calcularPrevV()"></div>
+            <div class="f-field"><label>% Comissão total *</label><input type="number" id="mv-pct" placeholder="Ex: 5" min="0" max="100" step="0.1" oninput="calcularPrevV()"></div>
+          </div>
+          <div class="f-field"><label>Imposto (%) — padrão 11%</label><input type="number" id="mv-imp" value="11" min="0" max="100" step="0.1" oninput="calcularPrevV()"></div>
+          <div class="mv-section" style="margin-top:8px;">Distribuição por membro (%)</div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-pct-cor" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Capitão %</label><input type="number" id="mv-pct-cap" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-pct-ger" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-pct-dir" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+          </div>
+          <!-- Preview comissões -->
+          <div class="pct-preview" id="mv-preview" style="display:none;">
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Com. bruta</div><div class="pct-prev-val" id="pv-bruta">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Imposto</div><div class="pct-prev-val" style="color:#C06030;" id="pv-imp">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Corretor</div><div class="pct-prev-val" id="pv-cor">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Capitão</div><div class="pct-prev-val" id="pv-cap">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pv-ger">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pv-dir">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Zelony</div><div class="pct-prev-val" id="pv-zel">—</div></div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharMV()">Cancelar</button>
+          <button class="btn-s" id="mv-save-btn" onclick="salvarVenda()">✓ Cadastrar venda</button>
         </div>
       </div>
     </div>
@@ -618,13 +729,14 @@ input[type=range]{width:100%;accent-color:var(--gold);}
           <div class="f-row">
             <div class="f-field">
               <label>Perfil de acesso *</label>
-              <select id="mu-perfil">
+              <select id="mu-perfil" onchange="toggleRHField()">
                 <option value="">Selecione...</option>
                 <option value="Corretor">Corretor</option>
                 <option value="Capitão">Capitão</option>
                 <option value="Gerente">Gerente</option>
                 <option value="Diretor">Diretor</option>
                 <option value="Financeiro">Financeiro</option>
+                <option value="RH">RH</option>
               </select>
             </div>
             <div class="f-field">
@@ -633,6 +745,19 @@ input[type=range]{width:100%;accent-color:var(--gold);}
                 <option value="Ativo">Ativo</option>
                 <option value="Inativo">Inativo</option>
               </select>
+            </div>
+          </div>
+          <!-- Campo RH — aparece só quando perfil = Corretor -->
+          <div id="rh-field" style="display:none;">
+            <div class="rh-toggle-wrap">
+              <div>
+                <div class="rh-toggle-label">Contratação realizada pelo RH?</div>
+                <div class="rh-toggle-sub">Se sim, 0,1% de comissão será destinado ao RH em cada venda deste corretor</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="mu-rh">
+                <span class="toggle-slider"></span>
+              </label>
             </div>
           </div>
           <div class="mu-divider"></div>
@@ -695,35 +820,14 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
 <script>
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
-const VENDAS=[
-  {id:1,data:'12/01',mes:'JANEIRO',cliente:'Juliana Gonçalves dos Santos',produto:'Palm Coast',construtora:'LYX',corretor:'Sibele',capitao:'Thais',gerente:'João',diretor:'Vitória',valor:248000,pct:0.05,imp:0.11,pct_cor:0.01,pct_cap:0.003,pct_ger:0.007,pct_dir:0.005,etapa:4,hist:[{e:0,d:'12/01',u:'Sistema',o:''},{e:1,d:'15/01',u:'Financeiro',o:'Cliente compareceu.'},{e:2,d:'18/01',u:'Financeiro',o:'Formulários assinados.'},{e:3,d:'22/01',u:'Financeiro',o:'Protocolo #2241.'},{e:4,d:'28/01',u:'Financeiro',o:'Entrevista 30/01 às 14h.'}]},
-  {id:2,data:'12/01',mes:'JANEIRO',cliente:'Maria Eduarda Ferreira dos Santos',produto:'Kentucky',construtora:'LYX',corretor:'Sibele',capitao:null,gerente:'João',diretor:'Vitória',valor:239000,pct:0.05,imp:0.11,pct_cor:0.01,pct_cap:0,pct_ger:0.01,pct_dir:0.005,etapa:2,hist:[{e:0,d:'12/01',u:'Sistema',o:''},{e:2,d:'26/01',u:'Financeiro',o:'Aguardando procuração.'}]},
-  {id:3,data:'16/01',mes:'JANEIRO',cliente:'Denise de Souza Miranda',produto:'Kentucky',construtora:'LYX',corretor:'Caio Gabriel',capitao:'Thais',gerente:'João',diretor:'Vitória',valor:225000,pct:0.05,imp:0.11,pct_cor:0.01,pct_cap:0.003,pct_ger:0.007,pct_dir:0.005,etapa:1,hist:[{e:0,d:'16/01',u:'Sistema',o:''},{e:1,d:'21/01',u:'Financeiro',o:'Cliente confirmou.'}]},
-  {id:4,data:'03/01',mes:'JANEIRO',cliente:'Douglas da Silva Santos',produto:'Vitacce Bosque',construtora:'Prestes',corretor:'Zelony',capitao:null,gerente:'Zelony',diretor:'Zelony',valor:417200,pct:0.04,imp:0.11,pct_cor:0.04,pct_cap:0,pct_ger:0,pct_dir:0,etapa:6,hist:[{e:0,d:'03/01',u:'Sistema',o:''},{e:6,d:'01/02',u:'Financeiro',o:'CEF assinado.'}]},
-  {id:5,data:'24/01',mes:'JANEIRO',cliente:'Alini Elize Gonçalves',produto:'Kentucky',construtora:'LYX',corretor:'Rafael',capitao:null,gerente:'Rafael',diretor:'Vitória',valor:239000,pct:0.05,imp:0.11,pct_cor:0.015,pct_cap:0,pct_ger:0.01,pct_dir:0.005,etapa:0,hist:[{e:0,d:'24/01',u:'Sistema',o:'Venda lançada.'}]},
-  {id:6,data:'06/02',mes:'FEVEREIRO',cliente:'Danilo Denys Ferreira',produto:'Kentucky',construtora:'LYX',corretor:'Cristiane',capitao:'Thais',gerente:'João',diretor:'Vitória',valor:225000,pct:0.05,imp:0.11,pct_cor:0.02,pct_cap:0.003,pct_ger:0.007,pct_dir:0.005,etapa:3,hist:[{e:0,d:'06/02',u:'Sistema',o:''},{e:3,d:'16/02',u:'Financeiro',o:'CEHOP #1042.'}]},
-  {id:7,data:'18/02',mes:'FEVEREIRO',cliente:'Leandro Luiz Barbosa',produto:'Campo Sales',construtora:'Suíça Flats',corretor:'Rayssa',capitao:null,gerente:'Victor May',diretor:'Vitória',valor:220000,pct:0.05,imp:0.11,pct_cor:0.019,pct_cap:0,pct_ger:0.015,pct_dir:0.005,etapa:5,hist:[{e:0,d:'18/02',u:'Sistema',o:''},{e:5,d:'03/03',u:'Financeiro',o:'Aguardando gerente regional.'}]},
-  {id:8,data:'12/02',mes:'FEVEREIRO',cliente:'Emerson Lima Gondim Filho',produto:'Athos',construtora:'G3',corretor:'Caio Scheffler',capitao:null,gerente:'Caio Scheffler',diretor:'César',valor:387000,pct:0.04,imp:0.11,pct_cor:0.01,pct_cap:0,pct_ger:0.01,pct_dir:0.0025,etapa:7,hist:[{e:0,d:'12/02',u:'Sistema',o:''},{e:7,d:'08/03',u:'Financeiro',o:'NF emitida.'}]},
-  {id:9,data:'14/02',mes:'FEVEREIRO',cliente:'Italo Gustavo da Silva',produto:'Treviso',construtora:'Treele',corretor:'Monaliza',capitao:'Thais',gerente:'João',diretor:'Vitória',valor:270466,pct:0.04,imp:0.11,pct_cor:0.01,pct_cap:0.003,pct_ger:0.007,pct_dir:0.005,etapa:2,hist:[{e:0,d:'14/02',u:'Sistema',o:''},{e:2,d:'21/02',u:'Financeiro',o:'Documentação completa.'}]},
-  {id:10,data:'07/02',mes:'FEVEREIRO',cliente:'Marthin Noronha',produto:'Broadway',construtora:'LYX',corretor:'Marthin',capitao:null,gerente:'João',diretor:'Vitória',valor:230000,pct:0.05,imp:0.11,pct_cor:0.01,pct_cap:0,pct_ger:0.01,pct_dir:0.002,etapa:8,hist:[{e:0,d:'07/02',u:'Sistema',o:''},{e:8,d:'10/03',u:'Financeiro',o:'Comissão depositada.'}]},
-];
-const TREIN=[
-  {titulo:'Fundamentos da venda imobiliária',cat:'Corretor',aulas:6,dur:'2h30',thumb:'🏠',bg:'#EEF4FE',prog:100},
-  {titulo:'Técnicas de abordagem ao cliente',cat:'Corretor',aulas:4,dur:'1h45',thumb:'🤝',bg:'#EEF4FE',prog:60},
-  {titulo:'Documentação e contratos básicos',cat:'Corretor',aulas:5,dur:'2h',thumb:'📄',bg:'#EEF4FE',prog:30},
-  {titulo:'Gestão e acompanhamento de equipe',cat:'Capitão',aulas:5,dur:'2h',thumb:'📋',bg:'#F4EEFE',prog:100},
-  {titulo:'Análise de desempenho individual',cat:'Capitão',aulas:4,dur:'1h30',thumb:'📊',bg:'#F4EEFE',prog:50},
-  {titulo:'Feedback e desenvolvimento de corretores',cat:'Capitão',aulas:6,dur:'2h15',thumb:'💬',bg:'#F4EEFE',prog:0},
-  {titulo:'Liderança estratégica de times',cat:'Gerente',aulas:7,dur:'3h',thumb:'🎯',bg:'#E8F5EE',prog:100},
-  {titulo:'Indicadores de performance e metas',cat:'Gerente',aulas:5,dur:'1h30',thumb:'📈',bg:'#E8F5EE',prog:80},
-  {titulo:'Gestão de conflitos e negociação',cat:'Gerente',aulas:4,dur:'1h45',thumb:'⚖️',bg:'#E8F5EE',prog:0},
-];
+const VENDAS=[];
+let TREIN=[];
 const PROC_DATA={'Comercial':[{nome:'Captação de imóveis',etapas:8,status:'Ativo',badge:'bg-g',steps:['Prospecção do imóvel','Avaliação de mercado','Visita técnica','Documentação do proprietário','Assinatura de exclusividade','Cadastro no sistema','Publicação nas plataformas','Acompanhamento de leads']},{nome:'Processo de venda',etapas:12,status:'Ativo',badge:'bg-g',steps:['Atendimento do lead','Qualificação do cliente','Apresentação do imóvel','Proposta inicial','Negociação','Aprovação do crédito','Assinatura de promessa','Análise jurídica','CEHOP','Entrevista Caixa','Assinatura CEF','Entrega das chaves']},{nome:'Locação de imóveis',etapas:10,status:'Ativo',badge:'bg-g',steps:['Captação do imóvel','Divulgação','Atendimento','Visita','Proposta','Análise cadastral','Assinatura do contrato','Vistoria de entrada','Pagamento de taxas','Entrega das chaves']}],'Jurídico':[{nome:'Contratos e escritura',etapas:6,status:'Revisão',badge:'bg-a',steps:['Minuta do contrato','Revisão jurídica','Assinatura das partes','Reconhecimento de firma','Registro em cartório','Entrega do documento']}],'Financeiro':[{nome:'Repasse de comissões',etapas:7,status:'Ativo',badge:'bg-g',steps:['Nota fiscal emitida','Validação dos valores','Aprovação do gerente','Aprovação do diretor','Processamento bancário','Depósito realizado','Comprovante enviado']}],'RH / Pessoas':[{nome:'Onboarding de corretor',etapas:5,status:'Rascunho',badge:'bg-gr',steps:['Documentação admissional','Apresentação da empresa','Treinamento inicial','Acompanhamento na primeira venda','Avaliação de 30 dias']},{nome:'Avaliação de desempenho',etapas:4,status:'Pendente',badge:'bg-r',steps:['Coleta de métricas','Reunião com gestor','Plano de desenvolvimento','Registro no sistema']}]};
 
-let role='fin',curVId=null,pendId=null,fEtapa='all',relMes='TODOS',vtab='acomp',tcatAtivo='Corretor',notifs=[];
+let role='dir',curVId=null,pendId=null,fEtapa='all',relMes='TODOS',vtab='acomp',tcatAtivo='Corretor',notifs=[];
 const CAT_BADGE={Corretor:'bg-b',Capitão:'bg-p',Gerente:'bg-g'};
 const CAT_ICON={Corretor:'👤',Capitão:'⭐',Gerente:'🏆'};
-const RD={fin:{av:'FI',nome:'Financeiro',role:'Master / Admin'},cor:{av:'SB',nome:'Sibele',role:'Corretor'},cap:{av:'TH',nome:'Thais',role:'Capitão'},ger:{av:'JO',nome:'João',role:'Gerente'},dir:{av:'VI',nome:'Vitória',role:'Diretora'}};
+const RD={fin:{av:'FI',nome:'Financeiro',role:'Master / Admin'},cor:{av:'COR',nome:'Corretor',role:'Corretor'},cap:{av:'CAP',nome:'Capitão',role:'Capitão'},ger:{av:'GER',nome:'Gerente',role:'Gerente'},dir:{av:'PE',nome:'Paulo',role:'Diretor'},rh:{av:'GI',nome:'Giovana',role:'RH'}};
 
 function ini(n){return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 function fmt(v){return 'R$ '+Math.round(v).toLocaleString('pt-BR');}
@@ -731,11 +835,19 @@ function fmtK(v){return v>=1e6?'R$ '+(v/1e6).toFixed(1)+'M':v>=1000?'R$ '+Math.r
 function hoje(){const d=new Date();return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();}
 function com(v,p){return(v.valor*p)-(v.valor*p*v.imp);}
 function comC(v){return com(v,v.pct_cor);}function comCap(v){return com(v,v.pct_cap);}function comG(v){return com(v,v.pct_ger);}function comD(v){return com(v,v.pct_dir);}
+function comRH(v){return v.pct_rh?com(v,v.pct_rh):0;}
 function comZ(v){return com(v,Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir,0));}
 function comTotal(v){return v.valor*v.pct*(1-v.imp);}
-function comVis(v){if(role==='cor')return comC(v);if(role==='cap')return comCap(v)+comC(v);if(role==='ger')return comG(v)+comCap(v)+comC(v);if(role==='dir')return comD(v)+comG(v)+comCap(v)+comC(v);return comTotal(v);}
-function lblCom(){if(role==='cor')return 'Minha comissão';if(role==='cap')return 'Cap + Corretor';if(role==='ger')return 'Ger + equipe';if(role==='dir')return 'Dir + equipe';return 'Com. líquida total';}
-function vendasU(l){if(role==='cor')return l.filter(v=>v.corretor==='Sibele');if(role==='cap')return l.filter(v=>v.capitao==='Thais');if(role==='ger')return l.filter(v=>v.gerente==='João');if(role==='dir')return l.filter(v=>v.diretor==='Vitória');return l;}
+function comVis(v){if(role==='cor')return comC(v);if(role==='cap')return comCap(v)+comC(v);if(role==='ger')return comG(v)+comCap(v)+comC(v);if(role==='dir')return comD(v)+comG(v)+comCap(v)+comC(v);if(role==='rh')return comRH(v);return comTotal(v);}
+function lblCom(){if(role==='cor')return 'Minha comissão';if(role==='cap')return 'Cap + Corretor';if(role==='ger')return 'Ger + equipe';if(role==='dir')return 'Dir + equipe';if(role==='rh')return 'Comissão RH';return 'Com. líquida total';}
+function vendasU(l){
+  if(role==='rh') return l.filter(v=>v.pct_rh&&v.pct_rh>0);
+  if(role==='cor'){const u=usuarioLogado;return u?l.filter(v=>v.corretor===u.nome.split(' ')[0]):l.filter(v=>v.corretor==='');}
+  if(role==='cap'){const u=usuarioLogado;return u?l.filter(v=>v.capitao===u.nome.split(' ')[0]):[];}
+  if(role==='ger'){const u=usuarioLogado;return u?l.filter(v=>v.gerente===u.nome.split(' ')[0]):[];}
+  if(role==='dir'){const u=usuarioLogado;return u?l.filter(v=>v.diretor===u.nome.split(' ')[0]):l;}
+  return l;
+}
 
 function renderCarteira(){
   const l=vendasU(VENDAS),saldo=l.reduce((s,v)=>s+comVis(v),0),pend=l.filter(v=>v.etapa<ETAPAS.length-1).reduce((s,v)=>s+comVis(v),0),rec=l.filter(v=>v.etapa===ETAPAS.length-1).reduce((s,v)=>s+comVis(v),0),rd=RD[role];
@@ -748,16 +860,155 @@ function getCols(){if(role==='cor')return['data','cliente','produto','com_cor','
 
 const modTitles={carteira:'Minha Carteira',vendas:'Vendas &amp; Comissão',trein:'Treinamentos',proc:'Processos Operacionais',usuarios:'Usuários'};
 function setMod(m,el){['carteira','vendas','trein','proc','usuarios'].forEach(x=>document.getElementById('mod-'+x).classList.add('hidden'));document.getElementById('mod-'+m).classList.remove('hidden');document.querySelectorAll('.sb-item').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('pg-title').innerHTML=modTitles[m];if(m==='carteira')renderCarteira();if(m==='trein')renderTrein();if(m==='proc')renderProc();if(m==='vendas'&&vtab==='rel')renderRel();if(m==='usuarios')renderUsuarios();}
-function trocaRole(){role=document.getElementById('role-sel').value;const d=RD[role];document.getElementById('sb-av').textContent=d.av;document.getElementById('sb-uname').textContent=d.nome;document.getElementById('sb-urole').textContent=d.role;if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();renderFiltros();renderVList();if(curVId)showVDetail(curVId);if(vtab==='rel')renderRel();if(!document.getElementById('mod-trein').classList.contains('hidden'))renderTrein();if(!document.getElementById('mod-usuarios').classList.contains('hidden'))renderUsuarios();}
+function trocaRole(){role=document.getElementById('role-sel').value;const d=RD[role];document.getElementById('sb-av').textContent=d.av;document.getElementById('sb-uname').textContent=d.nome;document.getElementById('sb-urole').textContent=d.role;if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();renderFiltros();renderVList();if(curVId)showVDetail(curVId);if(vtab==='rel')renderRel();if(!document.getElementById('mod-trein').classList.contains('hidden'))renderTrein();if(!document.getElementById('mod-usuarios').classList.contains('hidden'))renderUsuarios();renderBtnNovaVenda();}
 function setVTab(t,el){vtab=t;document.querySelectorAll('.vtab').forEach(b=>b.classList.remove('active'));el.classList.add('active');const a=document.getElementById('vd-acomp'),r=document.getElementById('vd-rel');if(t==='acomp'){a.style.display='flex';r.classList.add('hidden');}else{a.style.display='none';r.classList.remove('hidden');renderRel();}}
-function renderFiltros(){const cnt={};vendasU(VENDAS).forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});const base=vendasU(VENDAS);let h=`<button class="fe ${fEtapa==='all'?'active':''}" onclick="setFE('all')">Todas (${base.length})</button>`;ETAPAS.forEach((e,i)=>{if(cnt[i])h+=`<button class="fe ${fEtapa==i?'active':''}" onclick="setFE(${i})">${e.split(' ')[0]} (${cnt[i]})</button>`;});document.getElementById('vfilters').innerHTML=h;}
+function renderFiltros(){const cnt={};vendasU(VENDAS).forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});const base=vendasU(VENDAS);let h=`<button class="fe ${fEtapa==='all'?'active':''}" onclick="setFE('all')">Todas (${base.length})</button>`;ETAPAS.forEach((e,i)=>{if(cnt[i])h+=`<button class="fe ${fEtapa==i?'active':''}" onclick="setFE(${i})">${e.split(' ')[0]} (${cnt[i]})</button>`;});document.getElementById('vfilters').innerHTML=h;renderBtnNovaVenda();}
 function setFE(v){fEtapa=v==='all'?'all':parseInt(v);renderFiltros();renderVList();}
+
+// Botão Nova Venda — só Diretor e Financeiro
+function renderBtnNovaVenda(){
+  const wrap=document.getElementById('btn-nova-venda-wrap');
+  if(!wrap)return;
+  if(['dir','fin'].includes(role)){
+    wrap.innerHTML=`<button class="btn-nova-venda" id="btn-nv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Nova venda</button>`;
+    document.getElementById('btn-nv').addEventListener('click',abrirModalVenda);
+  } else {
+    wrap.innerHTML='';
+  }
+}
+
+let nextVendaId=1;
+
+function abrirModalVenda(){
+  // Popula selects com usuários cadastrados
+  const corretores=USUARIOS.filter(u=>u.perfil==='Corretor'&&u.status==='Ativo');
+  const capitaes=USUARIOS.filter(u=>u.perfil==='Capitão'&&u.status==='Ativo');
+  const gerentes=USUARIOS.filter(u=>u.perfil==='Gerente'&&u.status==='Ativo');
+  const diretores=USUARIOS.filter(u=>u.perfil==='Diretor'&&u.status==='Ativo');
+
+  const optCor=corretores.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
+  const optCap=capitaes.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
+  const optGer=gerentes.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
+  const optDir=diretores.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
+
+  document.getElementById('mv-corretor').innerHTML=`<option value="">Selecione...</option>${optCor}`;
+  document.getElementById('mv-capitao').innerHTML=`<option value="">Nenhum</option>${optCap}`;
+  document.getElementById('mv-gerente').innerHTML=`<option value="">Selecione...</option>${optGer}`;
+  document.getElementById('mv-diretor').innerHTML=`<option value="">Selecione...</option>${optDir}`;
+
+  // Se só há 1 opção, seleciona automaticamente
+  if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome.split(' ')[0];
+
+  // Limpa campos
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mv-imp').value='11';
+  document.getElementById('mv-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mv-origem').value='Indicação';
+  document.getElementById('mv-preview').style.display='none';
+  document.getElementById('mvenda').classList.add('show');
+  setTimeout(()=>document.getElementById('mv-cliente').focus(),100);
+}
+
+function fecharMV(){document.getElementById('mvenda').classList.remove('show');}
+function handleBackdropV(e){if(e.target===document.getElementById('mvenda'))fecharMV();}
+
+function calcularPrevV(){
+  const val=parseFloat(document.getElementById('mv-valor').value)||0;
+  const pct=(parseFloat(document.getElementById('mv-pct').value)||0)/100;
+  const imp=(parseFloat(document.getElementById('mv-imp').value)||0)/100;
+  const pCor=(parseFloat(document.getElementById('mv-pct-cor').value)||0)/100;
+  const pCap=(parseFloat(document.getElementById('mv-pct-cap').value)||0)/100;
+  const pGer=(parseFloat(document.getElementById('mv-pct-ger').value)||0)/100;
+  const pDir=(parseFloat(document.getElementById('mv-pct-dir').value)||0)/100;
+  const prev=document.getElementById('mv-preview');
+  if(!val||!pct){prev.style.display='none';return;}
+  prev.style.display='flex';
+  const bruta=val*pct;
+  const impostoVal=bruta*imp;
+  const liq=(v,p)=>(val*p)-(val*p*imp);
+  const zelPct=Math.max(pct-pCor-pCap-pGer-pDir,0);
+  document.getElementById('pv-bruta').textContent=fmt(bruta);
+  document.getElementById('pv-imp').textContent='- '+fmt(impostoVal);
+  document.getElementById('pv-cor').textContent=pCor?fmt(liq(val,pCor)):'—';
+  document.getElementById('pv-cap').textContent=pCap?fmt(liq(val,pCap)):'—';
+  document.getElementById('pv-ger').textContent=pGer?fmt(liq(val,pGer)):'—';
+  document.getElementById('pv-dir').textContent=pDir?fmt(liq(val,pDir)):'—';
+  document.getElementById('pv-zel').textContent=zelPct?fmt(liq(val,zelPct)):'—';
+}
+
+function salvarVenda(){
+  const cliente=document.getElementById('mv-cliente').value.trim();
+  const dataVal=document.getElementById('mv-data').value;
+  const produto=document.getElementById('mv-produto').value.trim();
+  const construtora=document.getElementById('mv-construtora').value.trim();
+  const origem=document.getElementById('mv-origem').value;
+  const corretor=document.getElementById('mv-corretor').value;
+  const capitao=document.getElementById('mv-capitao').value||null;
+  const gerente=document.getElementById('mv-gerente').value;
+  const diretor=document.getElementById('mv-diretor').value;
+  const valor=parseFloat(document.getElementById('mv-valor').value);
+  const pct=(parseFloat(document.getElementById('mv-pct').value)||0)/100;
+  const imp=(parseFloat(document.getElementById('mv-imp').value)||11)/100;
+  const pct_cor=(parseFloat(document.getElementById('mv-pct-cor').value)||0)/100;
+  const pct_cap=(parseFloat(document.getElementById('mv-pct-cap').value)||0)/100;
+  const pct_ger=(parseFloat(document.getElementById('mv-pct-ger').value)||0)/100;
+  const pct_dir=(parseFloat(document.getElementById('mv-pct-dir').value)||0)/100;
+
+  // Validações
+  if(!cliente){document.getElementById('mv-cliente').focus();showToast('⚠️','Informe o nome do cliente.');return;}
+  if(!dataVal){showToast('⚠️','Informe a data da venda.');return;}
+  if(!produto){document.getElementById('mv-produto').focus();showToast('⚠️','Informe o produto/empreendimento.');return;}
+  if(!construtora){document.getElementById('mv-construtora').focus();showToast('⚠️','Informe a construtora.');return;}
+  if(!corretor){showToast('⚠️','Selecione o corretor responsável.');return;}
+  if(!gerente){showToast('⚠️','Selecione o gerente responsável.');return;}
+  if(!diretor){showToast('⚠️','Selecione o diretor responsável.');return;}
+  if(!valor||valor<=0){document.getElementById('mv-valor').focus();showToast('⚠️','Informe o valor de venda.');return;}
+  if(!pct||pct<=0){document.getElementById('mv-pct').focus();showToast('⚠️','Informe o percentual de comissão.');return;}
+
+  // Formata data e mês
+  const d=new Date(dataVal+'T12:00:00');
+  const dia=d.getDate().toString().padStart(2,'0');
+  const mesNum=d.getMonth();
+  const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
+  const mes=meses[mesNum];
+
+  // Verifica se o corretor foi contratado pelo RH → adiciona 0,1% automático
+  const corretorUser=USUARIOS.find(u=>u.nome.split(' ')[0]===corretor||u.nome===corretor);
+  const pct_rh=(corretorUser&&corretorUser.rhContratacao)?0.001:0;
+
+  VENDAS.push({
+    id:nextVendaId++,data,mes,cliente,produto,construtora,origem,
+    corretor,capitao,gerente,diretor,
+    valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_rh,
+    etapa:0,
+    hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}]
+  });
+
+  fecharMV();
+  renderFiltros();
+  renderVList();
+  // Seleciona a venda recém-criada
+  const novaVenda=VENDAS[VENDAS.length-1];
+  showVDetail(novaVenda.id);
+  showToast('✅',`Venda de ${cliente.split(' ')[0]} cadastrada!`);
+}
 function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav">${ini(v.cliente)}</div><div style="flex:1;min-width:0;"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span></div></div>`).join('');}
 
 function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;return`<div class="si"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
 const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(role==='fin')mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir,0)});
-// Imposto: visível apenas para Diretor e Financeiro
+// Linha RH — aparece para Diretor, Financeiro e RH quando pct_rh > 0
+const rhRow=(['dir','fin','rh'].includes(role)&&v.pct_rh>0)?`
+  <div class="eq-row" style="background:#EEF4FE;border-radius:6px;padding:6px 8px;margin-top:6px;border:1px solid #90B8E8;">
+    <div style="width:25px;height:25px;border-radius:50%;background:#D0E4FF;border:1px solid #90B8E8;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">🤝</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:12px;font-weight:500;color:#1A56C4;">RH — Contratação</div>
+      <div style="font-size:9px;color:#4070B0;">${(v.pct_rh*100).toFixed(1)}% · com. líquida sobre venda</div>
+    </div>
+    <span style="font-size:13px;font-weight:600;color:#1A56C4;white-space:nowrap;margin-left:8px;">${fmt(comRH(v))}</span>
+  </div>`:'';
+// Imposto — só Diretor e Financeiro
 const valorImposto=v.valor*v.pct*v.imp;
 const impostoRow=['dir','fin'].includes(role)?`
   <div style="margin-top:8px;border-top:1px dashed rgba(184,144,42,0.25);padding-top:8px;">
@@ -771,14 +1022,13 @@ const impostoRow=['dir','fin'].includes(role)?`
     </div>
   </div>`:'';
 const distH=`<div class="sec"><div class="sec-h">Distribuição da comissão</div><div class="sec-b">${mbs.map(m=>{
-  // Busca dados bancários do usuário pelo primeiro nome
   const usuario=USUARIOS.find(u=>u.nome.split(' ')[0].toLowerCase()===m.n.toLowerCase()||u.nome.toLowerCase().includes(m.n.toLowerCase()));
-  const bancoPix=usuario?`<div style="display:flex;align-items:center;gap:10px;margin-top:3px;flex-wrap:wrap;">
+  const bancoPix=usuario&&usuario.banco?`<div style="display:flex;align-items:center;gap:10px;margin-top:3px;flex-wrap:wrap;">
     <span style="font-size:9px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd);border-radius:4px;padding:1px 7px;font-weight:500;">🏦 ${usuario.banco}</span>
     <span style="font-size:9px;background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;border-radius:4px;padding:1px 7px;font-weight:500;">🔑 ${usuario.pixTipo}: ${usuario.pix}</span>
   </div>`:'<div style="font-size:9px;color:var(--tm);margin-top:2px;">⚠️ Sem dados bancários cadastrados</div>';
   return`<div class="eq-row" style="flex-wrap:wrap;"><div class="eav">${ini(m.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${m.n}</div><div style="font-size:9px;color:var(--tm);">${m.c} · ${(m.pct*100).toFixed(2)}%</div>${bancoPix}</div><span style="font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:8px;">${fmt(m.val)}</span></div>`;
-}).join('')}${impostoRow}</div></div>`;
+}).join('')}${rhRow}${impostoRow}</div></div>`;
 const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;">${ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
 document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span></div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${role==='fin'&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${role!=='fin'?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas o financeiro pode avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>`;}
 
@@ -892,17 +1142,17 @@ function salvarTrein(){
 
 // ── USUÁRIOS ──────────────────────────────────────────────────────────────────
 let USUARIOS=[
-  {id:1,nome:'Sibele Aparecida Costa',email:'sibele@zelony.com.br',tel:'(41) 98765-4321',perfil:'Corretor',status:'Ativo',banco:'Nubank',agencia:'0001',conta:'12345-6',tipoConta:'Pagamento',pixTipo:'CPF',pix:'123.456.789-00'},
-  {id:2,nome:'Thais Fernanda Lima',email:'thais@zelony.com.br',tel:'(41) 99876-5432',perfil:'Capitão',status:'Ativo',banco:'Itaú',agencia:'1234',conta:'54321-0',tipoConta:'Corrente',pixTipo:'Telefone',pix:'(41) 99876-5432'},
-  {id:3,nome:'João Carlos Pereira',email:'joao@zelony.com.br',tel:'(41) 97654-3210',perfil:'Gerente',status:'Ativo',banco:'Bradesco',agencia:'5678',conta:'98765-4',tipoConta:'Corrente',pixTipo:'E-mail',pix:'joao@zelony.com.br'},
-  {id:4,nome:'Vitória Almeida Souza',email:'vitoria@zelony.com.br',tel:'(41) 96543-2109',perfil:'Diretor',status:'Ativo',banco:'Caixa',agencia:'0321',conta:'77654-3',tipoConta:'Poupança',pixTipo:'CPF',pix:'987.654.321-00'},
+  {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
+  {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
 ];
 let editUserIdx=-1;
 let pixSel='';
-let nextUserId=5;
+let nextUserId=3;
 
-const PERFIL_TAG={Corretor:'tag-cor',Capitão:'tag-cap',Gerente:'tag-ger',Diretor:'tag-dir',Financeiro:'tag-fin'};
-const PERFIL_ICON={Corretor:'👤',Capitão:'⭐',Gerente:'🏆',Diretor:'💼',Financeiro:'💰'};
+const SENHA_PADRAO='Mudar@123';
+
+const PERFIL_TAG={Corretor:'tag-cor',Capitão:'tag-cap',Gerente:'tag-ger',Diretor:'tag-dir',Financeiro:'tag-fin',RH:'tag-rh'};
+const PERFIL_ICON={Corretor:'👤',Capitão:'⭐',Gerente:'🏆',Diretor:'💼',Financeiro:'💰',RH:'🤝'};
 
 function iniUser(n){return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();}
 
@@ -982,6 +1232,13 @@ function renderUsuarios(){
   </div>`;
 }
 
+function toggleRHField(){
+  const perfil=document.getElementById('mu-perfil').value;
+  const field=document.getElementById('rh-field');
+  field.style.display=perfil==='Corretor'?'block':'none';
+  if(perfil!=='Corretor') document.getElementById('mu-rh').checked=false;
+}
+
 function abrirModalUser(){
   editUserIdx=-1;
   pixSel='';
@@ -991,6 +1248,8 @@ function abrirModalUser(){
   document.getElementById('mu-perfil').value='';
   document.getElementById('mu-status').value='Ativo';
   document.getElementById('mu-tipo-conta').value='';
+  document.getElementById('mu-rh').checked=false;
+  document.getElementById('rh-field').style.display='none';
   document.querySelectorAll('.pix-type').forEach(b=>b.classList.remove('sel'));
   document.getElementById('muser').classList.add('show');
   setTimeout(()=>document.getElementById('mu-nome').focus(),100);
@@ -1003,15 +1262,17 @@ function editarUsuario(idx){
   document.getElementById('mu-save-btn').textContent='✓ Salvar alterações';
   document.getElementById('mu-nome').value=u.nome;
   document.getElementById('mu-email').value=u.email;
-  document.getElementById('mu-tel').value=u.tel;
+  document.getElementById('mu-tel').value=u.tel||'';
   document.getElementById('mu-perfil').value=u.perfil;
   document.getElementById('mu-status').value=u.status;
-  document.getElementById('mu-banco').value=u.banco;
+  document.getElementById('mu-banco').value=u.banco||'';
   document.getElementById('mu-agencia').value=u.agencia||'';
-  document.getElementById('mu-conta').value=u.conta;
-  document.getElementById('mu-tipo-conta').value=u.tipoConta;
-  pixSel=u.pixTipo;
-  document.getElementById('mu-pix').value=u.pix;
+  document.getElementById('mu-conta').value=u.conta||'';
+  document.getElementById('mu-tipo-conta').value=u.tipoConta||'';
+  document.getElementById('mu-rh').checked=u.rhContratacao||false;
+  document.getElementById('rh-field').style.display=u.perfil==='Corretor'?'block':'none';
+  pixSel=u.pixTipo||'';
+  document.getElementById('mu-pix').value=u.pix||'';
   document.querySelectorAll('.pix-type').forEach(b=>{b.classList.toggle('sel',b.textContent.trim()===pixSel);});
   document.getElementById('muser').classList.add('show');
 }
@@ -1048,19 +1309,20 @@ function salvarUsuario(){
   const conta=document.getElementById('mu-conta').value.trim();
   const tipoConta=document.getElementById('mu-tipo-conta').value;
   const pix=document.getElementById('mu-pix').value.trim();
+  const rhContratacao=document.getElementById('mu-rh').checked;
 
   // Validações obrigatórias
   if(!nome){document.getElementById('mu-nome').focus();showToast('⚠️','Informe o nome completo.');return;}
   if(!email||!email.includes('@')){document.getElementById('mu-email').focus();showToast('⚠️','Informe um e-mail válido.');return;}
   if(!tel){document.getElementById('mu-tel').focus();showToast('⚠️','Informe o telefone.');return;}
-  if(!perfil){document.getElementById('mu-perfil').focus();showToast('⚠️','Selecione o perfil de acesso.');return;}
+  if(!perfil){showToast('⚠️','Selecione o perfil de acesso.');return;}
   if(!banco){document.getElementById('mu-banco').focus();showToast('⚠️','Informe o banco.');return;}
   if(!conta){document.getElementById('mu-conta').focus();showToast('⚠️','Informe a conta bancária.');return;}
-  if(!tipoConta){document.getElementById('mu-tipo-conta').focus();showToast('⚠️','Selecione o tipo de conta.');return;}
+  if(!tipoConta){showToast('⚠️','Selecione o tipo de conta.');return;}
   if(!pixSel){showToast('⚠️','Selecione o tipo de chave Pix.');return;}
   if(!pix){document.getElementById('mu-pix').focus();showToast('⚠️','Informe a chave Pix.');return;}
 
-  const dados={nome,email,tel,perfil,status,banco,agencia,conta,tipoConta,pixTipo:pixSel,pix};
+  const dados={nome,email,tel,perfil,status,banco,agencia,conta,tipoConta,pixTipo:pixSel,pix,rhContratacao};
 
   if(editUserIdx>=0){
     USUARIOS[editUserIdx]={...USUARIOS[editUserIdx],...dados};
@@ -1081,10 +1343,7 @@ function toggleNotif(){const p=document.getElementById('npanel');p.classList.tog
 function showToast(icon,msg){const old=document.getElementById('toast-el');if(old)old.remove();const t=document.createElement('div');t.id='toast-el';t.className='toast';t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;document.body.appendChild(t);setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),400);},3000);}
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
-const SENHA_PADRAO='zelony123';
-const PERFIL_ROLE={Corretor:'cor',Capitão:'cap',Gerente:'ger',Diretor:'dir',Financeiro:'fin'};
-// Financeiro master — acesso especial
-const MASTER_USER={nome:'Financeiro Master',email:'financeiro@zelony.com.br',perfil:'Financeiro'};
+const PERFIL_ROLE={Corretor:'cor',Capitão:'cap',Gerente:'ger',Diretor:'dir',Financeiro:'fin',RH:'rh'};
 
 let usuarioLogado=null;
 
@@ -1105,8 +1364,6 @@ function fazerLogin(){
   setTimeout(()=>{
     // Busca no cadastro de usuários
     let usuario=USUARIOS.find(u=>u.email.toLowerCase()===email);
-    // Verifica master financeiro
-    if(!usuario&&email===MASTER_USER.email.toLowerCase()) usuario=MASTER_USER;
 
     if(!usuario){
       document.getElementById('lg-error-msg').textContent='E-mail não cadastrado no sistema.';
@@ -1178,7 +1435,7 @@ function toggleSenha(){
 })();
 
 renderFiltros();renderVList();renderTrein();renderProc();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();}});
 </script>
 </body>
 </html>
