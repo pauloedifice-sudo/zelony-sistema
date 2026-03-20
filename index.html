@@ -1365,7 +1365,7 @@ function vendaNoFiltro(v){
   return v.unidade===filtroUnidade;
 }
 
-function vendasU(l){
+function vendasU(l, somenteMinhas=false){
   // Aplica filtro de unidade
   const unid=getUnidadeUsuario();
   let base=l;
@@ -1378,10 +1378,6 @@ function vendasU(l){
   if(role==='fin') return base;
   if(role==='rh') return base.filter(v=>v.pct_rh&&v.pct_rh>0);
 
-  // Diretor com "Ambas" vê todas as vendas das unidades (visão gerencial)
-  if(role==='dir'&&(unid==='Ambas'||!unid)) return base;
-
-  // Demais: filtra pelo nome do usuário logado no campo correspondente
   const matchNome=(campo,usuario)=>{
     if(!usuario||!campo) return false;
     const c=campo.toLowerCase();
@@ -1389,6 +1385,15 @@ function vendasU(l){
     const nomes=nomeCompleto.split(' ');
     return c===nomeCompleto||nomes.some(n=>n.length>2&&c===n);
   };
+
+  // Diretor com "Ambas": vê todas as vendas em Vendas/Comissão,
+  // mas na Carteira (somenteMinhas=true) vê só as suas
+  if(role==='dir'&&(unid==='Ambas'||!unid)){
+    if(somenteMinhas&&usuarioLogado){
+      return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado));
+    }
+    return base;
+  }
 
   if(role==='cor') return usuarioLogado?base.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
   if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)):[];
@@ -1398,7 +1403,7 @@ function vendasU(l){
 }
 
 function renderCarteira(){
-  const l=vendasU(VENDAS);
+  const l=vendasU(VENDAS, true); // somenteMinhas=true: Carteira mostra só as vendas do próprio usuário
   // Financeiro: saldo = comissão da Zelony (o que entra na imobiliária)
   // Demais: saldo = comissão visível do perfil logado
   const calcSaldo=(v)=>role==='fin'?comZ(v):comVis(v);
