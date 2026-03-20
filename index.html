@@ -983,6 +983,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
               <input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()">
             </div>
           </div>
+          <div class="f-field"><label>CCA Responsável *</label><input type="text" id="mv-cca" placeholder="Nome do CCA responsável"></div>
           <div class="mv-divider"></div>
           <!-- Valores -->
           <div class="mv-section">Valores e Comissões</div>
@@ -1253,6 +1254,7 @@ function mapVendaIn(v){return{
   pct_ger:parseFloat(v.pct_ger),pct_dir:parseFloat(v.pct_dir),
   pct_rh:parseFloat(v.pct_rh||0),etapa:v.etapa||0,
   diretor2:v.diretor2||null,pct_dir2:parseFloat(v.pct_dir2||0),
+  cca:v.cca||'',
   hist:v.hist||[],anexos:[]
 };}
 function mapVendaOut(v){return{
@@ -1262,6 +1264,7 @@ function mapVendaOut(v){return{
   valor:v.valor,pct:v.pct,imp:v.imp,pct_cor:v.pct_cor,pct_cap:v.pct_cap,
   pct_ger:v.pct_ger,pct_dir:v.pct_dir,pct_rh:v.pct_rh,
   diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
+  cca:v.cca||'',
   etapa:v.etapa,hist:v.hist
 };}
 function mapTreinIn(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
@@ -1602,7 +1605,7 @@ function abrirModalVenda(){
   if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome.split(' ')[0];
 
   // Limpa campos
-  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('mv-dir2-pct-field');
   if(f) f.style.display='none';
   const pw=document.getElementById('pv-dir2-wrap');
@@ -1658,6 +1661,7 @@ function salvarVenda(){
   const gerente=document.getElementById('mv-gerente').value;
   const diretor=document.getElementById('mv-diretor').value;
   const diretor2=document.getElementById('mv-diretor2').value||null;
+  const cca=document.getElementById('mv-cca').value.trim();
   const valor=parseFloat(document.getElementById('mv-valor').value);
   const pct=(parseFloat(document.getElementById('mv-pct').value)||0)/100;
   const imp=(parseFloat(document.getElementById('mv-imp').value)||11)/100;
@@ -1675,6 +1679,7 @@ function salvarVenda(){
   if(!corretor){showToast('⚠️','Selecione o corretor responsável.');return;}
   if(!gerente){showToast('⚠️','Selecione o gerente responsável.');return;}
   if(!diretor){showToast('⚠️','Selecione o diretor responsável.');return;}
+  if(!cca){document.getElementById('mv-cca').focus();showToast('⚠️','Informe o CCA responsável.');return;}
   if(!unidade){showToast('⚠️','Selecione a unidade da venda.');return;}
   if(!valor||valor<=0){document.getElementById('mv-valor').focus();showToast('⚠️','Informe o valor de venda.');return;}
   if(!pct||pct<=0){document.getElementById('mv-pct').focus();showToast('⚠️','Informe o percentual de comissão.');return;}
@@ -1710,7 +1715,7 @@ function salvarVenda(){
 
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
-    corretor,capitao,gerente,diretor,diretor2,
+    corretor,capitao,gerente,diretor,diretor2,cca,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
     hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}],
@@ -1768,7 +1773,7 @@ const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><
 // Garante array de anexos na venda
 if(!v.anexos) v.anexos=[];
 const anexosH=renderAnexosSec(v);
-document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
 // Bind do input de anexo após render
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
