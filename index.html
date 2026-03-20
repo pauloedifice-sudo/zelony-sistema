@@ -763,7 +763,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       <option value="cor">👤 Corretor</option>
       <option value="cap">👤 Capitão</option>
       <option value="ger">👤 Gerente</option>
-      <option value="dir" selected>👤 Diretor</option>
+      <option value="dir">👤 Diretor</option>
       <option value="rh">👤 RH</option>
     </select>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
@@ -1361,7 +1361,7 @@ function carregarLS(){/* substituído pelo Supabase */}
 const VENDAS_dummy=[];// já declarado acima
 const PROC_DATA={'Comercial':[{nome:'Captação de imóveis',etapas:8,status:'Ativo',badge:'bg-g',steps:['Prospecção do imóvel','Avaliação de mercado','Visita técnica','Documentação do proprietário','Assinatura de exclusividade','Cadastro no sistema','Publicação nas plataformas','Acompanhamento de leads']},{nome:'Processo de venda',etapas:12,status:'Ativo',badge:'bg-g',steps:['Atendimento do lead','Qualificação do cliente','Apresentação do imóvel','Proposta inicial','Negociação','Aprovação do crédito','Assinatura de promessa','Análise jurídica','CEHOP','Entrevista Caixa','Assinatura CEF','Entrega das chaves']},{nome:'Locação de imóveis',etapas:10,status:'Ativo',badge:'bg-g',steps:['Captação do imóvel','Divulgação','Atendimento','Visita','Proposta','Análise cadastral','Assinatura do contrato','Vistoria de entrada','Pagamento de taxas','Entrega das chaves']}],'Jurídico':[{nome:'Contratos e escritura',etapas:6,status:'Revisão',badge:'bg-a',steps:['Minuta do contrato','Revisão jurídica','Assinatura das partes','Reconhecimento de firma','Registro em cartório','Entrega do documento']}],'Financeiro':[{nome:'Repasse de comissões',etapas:7,status:'Ativo',badge:'bg-g',steps:['Nota fiscal emitida','Validação dos valores','Aprovação do gerente','Aprovação do diretor','Processamento bancário','Depósito realizado','Comprovante enviado']}],'RH / Pessoas':[{nome:'Onboarding de corretor',etapas:5,status:'Rascunho',badge:'bg-gr',steps:['Documentação admissional','Apresentação da empresa','Treinamento inicial','Acompanhamento na primeira venda','Avaliação de 30 dias']},{nome:'Avaliação de desempenho',etapas:4,status:'Pendente',badge:'bg-r',steps:['Coleta de métricas','Reunião com gestor','Plano de desenvolvimento','Registro no sistema']}]};
 
-let role='dir',curVId=null,pendId=null,fEtapa='all',relMes='TODOS',vtab='acomp',tcatAtivo='Corretor',notifs=[],filtroUnidade='all';
+let role='cor',curVId=null,pendId=null,fEtapa='all',relMes='TODOS',vtab='acomp',tcatAtivo='Corretor',notifs=[],filtroUnidade='all';
 const CAT_BADGE={Corretor:'bg-b',Capitão:'bg-p',Gerente:'bg-g'};
 const CAT_ICON={Corretor:'👤',Capitão:'⭐',Gerente:'🏆'};
 const RD={dono:{av:'DO',nome:'Dono',role:'Dono'},fin:{av:'FI',nome:'Financeiro',role:'Master / Admin'},cor:{av:'COR',nome:'Corretor',role:'Corretor'},cap:{av:'CAP',nome:'Capitão',role:'Capitão'},ger:{av:'GER',nome:'Gerente',role:'Gerente'},dir:{av:'PE',nome:'Paulo',role:'Diretor'},rh:{av:'GI',nome:'Giovana',role:'RH'}};
@@ -1515,7 +1515,29 @@ function renderCarteira(){
     bonus_cor:'🎁 Bônus',bonus_ger:'🎁 Bônus',bonus_dir:'🎁 Bônus',bonus_total:'🎁 Bônus total',
     etapa:'Etapa'
   };
-  const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='bonus_cor')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(bonusCor(v)):'—'}</td>`;if(c==='bonus_ger')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(bonusGer(v)):'—'}</td>`;if(c==='bonus_dir')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(bonusDir(v)):'—'}</td>`;if(c==='bonus_total')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
+  const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='bonus_cor'||c==='bonus_ger'||c==='bonus_dir'){
+  // Soma todos os bônus dos papéis que o usuário logado exerceu nessa venda
+  if(!v.bonus||v.bonus<=0) return`<td class="pos" style="color:#2E9E6E;">—</td>`;
+  let totalBonus=0;
+  if(usuarioLogado){
+    const mn=(campo)=>{
+      if(!campo) return false;
+      const c2=campo.toLowerCase().trim();
+      const np=usuarioLogado.nome.toLowerCase().split(' ')[0];
+      return c2===usuarioLogado.nome.toLowerCase()||(np.length>=3&&c2===np);
+    };
+    if(mn(v.corretor)) totalBonus+=bonusCor(v);
+    if(mn(v.capitao))  totalBonus+=0; // capitão não tem bônus
+    if(mn(v.gerente))  totalBonus+=bonusGer(v);
+    if(mn(v.diretor))  totalBonus+=bonusDir(v);
+    if(mn(v.diretor2)) totalBonus+=bonusDir(v);
+  } else {
+    if(c==='bonus_cor') totalBonus=bonusCor(v);
+    if(c==='bonus_ger') totalBonus=bonusGer(v);
+    if(c==='bonus_dir') totalBonus=bonusDir(v);
+  }
+  return`<td class="pos" style="color:#2E9E6E;">${totalBonus>0?fmt(totalBonus):'—'}</td>`;
+}if(c==='bonus_total')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
   document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">${saldoLabel}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Minhas vendas</div><div class="cmc-v go">${lMinhas.length}</div><div class="cmc-s">${lMinhas.filter(v=>v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div><div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function getCols(){
@@ -1598,7 +1620,6 @@ function renderBtnNovaVenda(){
     wrap.innerHTML='';
   }
 }
-
 let nextVendaId=1;
 
 // Documentos temporários do formulário de nova venda
