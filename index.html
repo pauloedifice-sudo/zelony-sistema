@@ -1430,9 +1430,7 @@ function vendasU(l, somenteMinhas=false){
 }
 
 function renderCarteira(){
-  const lTodos=vendasU(VENDAS);        // todas as vendas visíveis (para a tabela)
-  const lMinhas=vendasU(VENDAS, true); // só as minhas (para o saldo)
-  // calcSaldo: cada perfil vê só a própria comissão no saldo
+  const lMinhas=vendasU(VENDAS, true); // só as minhas (saldo + tabela da carteira)
   const calcSaldo=(v)=>{
     if(role==='cor') return comC(v);
     if(role==='cap') return comCap(v);
@@ -1446,7 +1444,7 @@ function renderCarteira(){
   const saldo=lMinhas.reduce((s,v)=>s+calcSaldo(v),0);
   const pend=lMinhas.filter(v=>v.etapa<ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
   const rec=lMinhas.filter(v=>v.etapa===ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
-  const l=lTodos; // tabela usa todas
+  const l=lMinhas; // tabela também mostra só as minhas
   const rd=RD[role];
   const saldoLabel='Saldo a receber';
   const saldoSub=`Minha comissão — ${rd.nome} · ${rd.role}`;
