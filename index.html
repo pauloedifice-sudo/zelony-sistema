@@ -1153,51 +1153,153 @@ input[type=range]{width:100%;accent-color:var(--gold);}
   <div id="nlist"></div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
 
-// ── DADOS PERSISTENTES (localStorage) ────────────────────────────────────────
+// ── SUPABASE ──────────────────────────────────────────────────────────────────
+const SB_URL='https://szaxwkfaferrfqcmzfab.supabase.co';
+const SB_KEY='sb_publishable_msIT4tw_go6f73uSpNQa-g_XDMYdcQ5';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+// Dados em memória (carregados do Supabase)
+const VENDAS=[];
+let TREIN=[];
 const USUARIOS_PADRAO=[
   {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
   {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
 ];
 const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyimoveis.com':'Mudar@123'};
 
+// ── FUNÇÕES SUPABASE ──────────────────────────────────────────────────────────
+
+// Carregar tudo do banco
+async function carregarDB(){
+  try{
+    // Usuários
+    const {data:us}=await sb.from('usuarios').select('*').order('id');
+    if(us&&us.length){
+      USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
+      nextUserId=Math.max(...USUARIOS.map(u=>u.id))+1;
+    }
+    // Senhas
+    const {data:ss}=await sb.from('senhas').select('*');
+    if(ss) ss.forEach(s=>SENHAS_INDIVIDUAIS[s.email.toLowerCase()]=s.senha);
+    // Vendas
+    const {data:vs}=await sb.from('vendas').select('*').order('id');
+    if(vs&&vs.length){
+      VENDAS.splice(0,VENDAS.length,...vs.map(mapVendaIn));
+      nextVendaId=Math.max(...VENDAS.map(v=>v.id))+1;
+    }
+    // Treinamentos
+    const {data:ts}=await sb.from('treinamentos').select('*').order('id');
+    if(ts&&ts.length) TREIN.splice(0,TREIN.length,...ts.map(mapTreinIn));
+  }catch(e){console.error('Erro ao carregar DB:',e);}
+}
+
+// Mappers banco → app
+function mapUsuarioIn(u){return{
+  id:u.id,nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
+  status:u.status,unidade:u.unidade||'Ambas',banco:u.banco||'',
+  agencia:u.agencia||'',conta:u.conta||'',tipoConta:u.tipo_conta||'',
+  pixTipo:u.pix_tipo||'',pix:u.pix||'',rhContratacao:u.rh_contratacao||false,
+  cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',end:u.endereco||'',
+  cidade:u.cidade||'',estado:u.estado||'',equipe:u.equipe||''
+};}
+function mapUsuarioOut(u){return{
+  nome:u.nome,email:u.email,tel:u.tel,perfil:u.perfil,status:u.status,
+  unidade:u.unidade,banco:u.banco,agencia:u.agencia,conta:u.conta,
+  tipo_conta:u.tipoConta,pix_tipo:u.pixTipo,pix:u.pix,
+  rh_contratacao:u.rhContratacao,cpf:u.cpf||'',nasc:u.nasc||'',
+  cep:u.cep||'',endereco:u.end||'',cidade:u.cidade||'',
+  estado:u.estado||'',equipe:u.equipe||''
+};}
+function mapVendaIn(v){return{
+  id:v.id,data:v.data,mes:v.mes,cliente:v.cliente,produto:v.produto,
+  construtora:v.construtora,origem:v.origem,unidade:v.unidade||'',
+  corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
+  valor:parseFloat(v.valor),pct:parseFloat(v.pct),imp:parseFloat(v.imp),
+  pct_cor:parseFloat(v.pct_cor),pct_cap:parseFloat(v.pct_cap),
+  pct_ger:parseFloat(v.pct_ger),pct_dir:parseFloat(v.pct_dir),
+  pct_rh:parseFloat(v.pct_rh||0),etapa:v.etapa||0,
+  hist:v.hist||[],anexos:[]
+};}
+function mapVendaOut(v){return{
+  data:v.data,mes:v.mes,cliente:v.cliente,produto:v.produto,
+  construtora:v.construtora,origem:v.origem,unidade:v.unidade,
+  corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
+  valor:v.valor,pct:v.pct,imp:v.imp,pct_cor:v.pct_cor,pct_cap:v.pct_cap,
+  pct_ger:v.pct_ger,pct_dir:v.pct_dir,pct_rh:v.pct_rh,
+  etapa:v.etapa,hist:v.hist
+};}
+function mapTreinIn(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
+function mapTreinOut(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
+
+// Salvar usuário no banco
+async function dbSalvarUsuario(u,id){
+  const dados=mapUsuarioOut(u);
+  if(id){
+    await sb.from('usuarios').update(dados).eq('id',id);
+  } else {
+    const {data}=await sb.from('usuarios').insert(dados).select().single();
+    if(data) u.id=data.id;
+  }
+}
+
+// Salvar senha no banco
+async function dbSalvarSenha(email,senha){
+  await sb.from('senhas').upsert({email:email.toLowerCase(),senha},{onConflict:'email'});
+  SENHAS_INDIVIDUAIS[email.toLowerCase()]=senha;
+}
+
+// Salvar venda no banco
+async function dbSalvarVenda(v){
+  const {data}=await sb.from('vendas').insert(mapVendaOut(v)).select().single();
+  if(data) v.id=data.id;
+}
+
+// Atualizar venda (etapa, hist)
+async function dbAtualizarVenda(v){
+  await sb.from('vendas').update({etapa:v.etapa,hist:v.hist}).eq('id',v.id);
+}
+
+// Salvar treinamento
+async function dbSalvarTrein(t,idx){
+  const dados=mapTreinOut(t);
+  if(idx!==undefined&&idx>=0){
+    // Busca pelo título e categoria para update (sem id local)
+    const {data:todos}=await sb.from('treinamentos').select('id,titulo,cat');
+    if(todos){
+      const found=todos.find(x=>x.titulo===TREIN[idx].titulo&&x.cat===TREIN[idx].cat);
+      if(found) await sb.from('treinamentos').update(dados).eq('id',found.id);
+      else await sb.from('treinamentos').insert(dados);
+    }
+  } else {
+    await sb.from('treinamentos').insert(dados);
+  }
+}
+
+// Excluir usuário
+async function dbExcluirUsuario(email){
+  await sb.from('usuarios').delete().eq('email',email);
+}
+
+// Manter salvarLS como fallback offline
 function salvarLS(){
   try{
-    // Salva sem dataUrl dos anexos (muito pesado para localStorage)
-    const vendasSem=VENDAS.map(v=>({...v,anexos:(v.anexos||[]).map(a=>({...a,dataUrl:'[arquivo]'}))}));
+    const vendasSem=VENDAS.map(v=>({...v,anexos:[]}));
     localStorage.setItem('zel_usuarios',JSON.stringify(USUARIOS));
     localStorage.setItem('zel_vendas',JSON.stringify(vendasSem));
     localStorage.setItem('zel_trein',JSON.stringify(TREIN));
     localStorage.setItem('zel_senhas',JSON.stringify(SENHAS_INDIVIDUAIS));
-    localStorage.setItem('zel_nextuid',String(nextUserId));
-    localStorage.setItem('zel_nextvid',String(nextVendaId));
-  }catch(e){console.warn('localStorage cheio:',e);}
+  }catch(e){}
 }
+function carregarLS(){/* substituído pelo Supabase */}
 
-function carregarLS(){
-  try{
-    const u=localStorage.getItem('zel_usuarios');
-    if(u) USUARIOS.splice(0,USUARIOS.length,...JSON.parse(u));
-    const v=localStorage.getItem('zel_vendas');
-    if(v) VENDAS.splice(0,VENDAS.length,...JSON.parse(v));
-    const t=localStorage.getItem('zel_trein');
-    if(t) TREIN.splice(0,TREIN.length,...JSON.parse(t));
-    const s=localStorage.getItem('zel_senhas');
-    if(s) Object.assign(SENHAS_INDIVIDUAIS,JSON.parse(s));
-    const nu=localStorage.getItem('zel_nextuid');
-    if(nu) nextUserId=parseInt(nu);
-    const nv=localStorage.getItem('zel_nextvid');
-    if(nv) nextVendaId=parseInt(nv);
-  }catch(e){console.warn('Erro ao carregar localStorage:',e);}
-}
-
-const VENDAS=[];
-let TREIN=[];
+const VENDAS_dummy=[];// já declarado acima
 const PROC_DATA={'Comercial':[{nome:'Captação de imóveis',etapas:8,status:'Ativo',badge:'bg-g',steps:['Prospecção do imóvel','Avaliação de mercado','Visita técnica','Documentação do proprietário','Assinatura de exclusividade','Cadastro no sistema','Publicação nas plataformas','Acompanhamento de leads']},{nome:'Processo de venda',etapas:12,status:'Ativo',badge:'bg-g',steps:['Atendimento do lead','Qualificação do cliente','Apresentação do imóvel','Proposta inicial','Negociação','Aprovação do crédito','Assinatura de promessa','Análise jurídica','CEHOP','Entrevista Caixa','Assinatura CEF','Entrega das chaves']},{nome:'Locação de imóveis',etapas:10,status:'Ativo',badge:'bg-g',steps:['Captação do imóvel','Divulgação','Atendimento','Visita','Proposta','Análise cadastral','Assinatura do contrato','Vistoria de entrada','Pagamento de taxas','Entrega das chaves']}],'Jurídico':[{nome:'Contratos e escritura',etapas:6,status:'Revisão',badge:'bg-a',steps:['Minuta do contrato','Revisão jurídica','Assinatura das partes','Reconhecimento de firma','Registro em cartório','Entrega do documento']}],'Financeiro':[{nome:'Repasse de comissões',etapas:7,status:'Ativo',badge:'bg-g',steps:['Nota fiscal emitida','Validação dos valores','Aprovação do gerente','Aprovação do diretor','Processamento bancário','Depósito realizado','Comprovante enviado']}],'RH / Pessoas':[{nome:'Onboarding de corretor',etapas:5,status:'Rascunho',badge:'bg-gr',steps:['Documentação admissional','Apresentação da empresa','Treinamento inicial','Acompanhamento na primeira venda','Avaliação de 30 dias']},{nome:'Avaliação de desempenho',etapas:4,status:'Pendente',badge:'bg-r',steps:['Coleta de métricas','Reunião com gestor','Plano de desenvolvimento','Registro no sistema']}]};
 
 let role='dir',curVId=null,pendId=null,fEtapa='all',relMes='TODOS',vtab='acomp',tcatAtivo='Corretor',notifs=[],filtroUnidade='all';
@@ -1482,7 +1584,7 @@ function salvarVenda(){
   const corretorUser=USUARIOS.find(u=>u.nome.split(' ')[0]===corretor||u.nome===corretor);
   const pct_rh=(corretorUser&&corretorUser.rhContratacao)?0.001:0;
 
-  VENDAS.push({
+  const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_rh,
@@ -1492,13 +1594,12 @@ function salvarVenda(){
       {nome:mvDocs.comp.nome,tipo:'comprovante',tamanho:mvDocs.comp.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.comp.dataUrl,mime:mvDocs.comp.mime},
       {nome:mvDocs.cont.nome,tipo:'contrato',tamanho:mvDocs.cont.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.cont.dataUrl,mime:mvDocs.cont.mime}
     ]
-  });
-
+  };
+  VENDAS.push(novaVenda);
+  dbSalvarVenda(novaVenda).catch(e=>console.error(e));
   fecharMV();
   renderFiltros();
   renderVList();
-  // Seleciona a venda recém-criada
-  const novaVenda=VENDAS[VENDAS.length-1];
   showVDetail(novaVenda.id);
   salvarLS();
   showToast('✅',`Venda de ${cliente.split(' ')[0]} cadastrada!`);
@@ -1673,7 +1774,7 @@ function exportPDF(){const btn=document.getElementById('bpdf');btn.classList.add
 function abrirM(id){const v=VENDAS.find(x=>x.id===id);pendId=id;document.getElementById('mobs').value='';document.getElementById('mchars').textContent='0/400';document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>Etapa atual</span><strong>${ETAPAS[v.etapa]}</strong></div><div style="font-size:16px;color:var(--gold);">→</div><div class="sf to"><span>Próxima</span><strong>${ETAPAS[v.etapa+1]}</strong></div></div>`;document.getElementById('mbackdrop').classList.add('show');}
 function fecharM(){document.getElementById('mbackdrop').classList.remove('show');pendId=null;}
 function handleBackdrop(e){if(e.target===document.getElementById('mbackdrop'))fecharM();}
-function confirmAv(){const v=VENDAS.find(x=>x.id===pendId);if(!v)return;const obs=document.getElementById('mobs').value.trim();v.etapa++;v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:'Financeiro',o:obs});notifs.unshift({venda:v.cliente.split('/')[0].trim(),etapa:ETAPAS[v.etapa],obs,hora:'agora'});const b=document.getElementById('nbadge');b.textContent=notifs.length;b.classList.remove('hidden');fecharM();renderFiltros();renderVList();showVDetail(v.id);renderNots();salvarLS();if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();}
+function confirmAv(){const v=VENDAS.find(x=>x.id===pendId);if(!v)return;const obs=document.getElementById('mobs').value.trim();v.etapa++;v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:'Financeiro',o:obs});notifs.unshift({venda:v.cliente.split('/')[0].trim(),etapa:ETAPAS[v.etapa],obs,hora:'agora'});const b=document.getElementById('nbadge');b.textContent=notifs.length;b.classList.remove('hidden');fecharM();renderFiltros();renderVList();showVDetail(v.id);renderNots();dbAtualizarVenda(v).catch(e=>console.error(e));salvarLS();if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();}
 
 function renderTrein(){
   const cats=['Corretor','Capitão','Gerente'];
@@ -1757,18 +1858,18 @@ function salvarTrein(){
   if(!aulas||aulas<1){document.getElementById('mt-aulas').focus();showToast('⚠️','Informe o número de aulas.');return;}
   if(!dur){document.getElementById('mt-dur').focus();showToast('⚠️','Informe a duração.');return;}
   if(editIdx>=0){
-    // EDIÇÃO — atualiza o item existente
-    const cat=TREIN[editIdx].cat;
+    // EDIÇÃO
     TREIN[editIdx]={...TREIN[editIdx],titulo,aulas,dur,thumb:emojiSel,prog};
-    fecharMT();
-    renderTrein();
+    fecharMT();renderTrein();
+    dbSalvarTrein(TREIN[editIdx],editIdx).catch(e=>console.error(e));
     salvarLS();
     showToast('✅',`"${titulo}" atualizado com sucesso!`);
   } else {
-    // NOVO — adiciona
-    TREIN.push({titulo,cat:tcatAtivo,aulas,dur,thumb:emojiSel,bg:CAT_BG_T[tcatAtivo],prog});
-    fecharMT();
-    renderTrein();
+    // NOVO
+    const novo={titulo,cat:tcatAtivo,aulas,dur,thumb:emojiSel,bg:CAT_BG_T[tcatAtivo],prog};
+    TREIN.push(novo);
+    fecharMT();renderTrein();
+    dbSalvarTrein(novo,-1).catch(e=>console.error(e));
     salvarLS();
     showToast('✅',`"${titulo}" adicionado com sucesso!`);
   }
@@ -1927,6 +2028,7 @@ function editarUsuario(idx){
 function excluirUsuario(idx){
   const u=USUARIOS[idx];
   if(!confirm(`Excluir o usuário "${u.nome}"? Esta ação não pode ser desfeita.`))return;
+  dbExcluirUsuario(u.email).catch(e=>console.error(e));
   USUARIOS.splice(idx,1);
   salvarLS();
   renderUsuarios();
@@ -1975,11 +2077,15 @@ function salvarUsuario(){
   const dados={nome,email,tel,perfil,status,banco,agencia,conta,tipoConta,pixTipo:pixSel,pix,rhContratacao,unidade};
 
   if(editUserIdx>=0){
+    const uid=USUARIOS[editUserIdx].id;
     USUARIOS[editUserIdx]={...USUARIOS[editUserIdx],...dados};
     showToast('✅',`Usuário "${nome}" atualizado!`);
+    dbSalvarUsuario(USUARIOS[editUserIdx],uid).catch(e=>console.error(e));
   } else {
-    USUARIOS.push({id:nextUserId++,...dados});
+    const novoU={id:nextUserId++,...dados};
+    USUARIOS.push(novoU);
     showToast('✅',`Usuário "${nome}" cadastrado!`);
+    dbSalvarUsuario(novoU,null).catch(e=>console.error(e));
   }
   salvarLS();
   fecharMU();
@@ -2058,7 +2164,7 @@ function salvarNovaSenha(){
 
   // Atualiza a senha — como a senha é global (SENHA_PADRAO), atualizamos apenas para esse usuário
   // Armazenamos em um mapa de senhas individuais
-  SENHAS_INDIVIDUAIS[emailAlvo]=nova;
+  dbSalvarSenha(emailAlvo,nova).catch(e=>console.error(e));
   salvarLS();
   fecharTS();
   showToast('✅','Senha alterada com sucesso!');
@@ -2310,9 +2416,15 @@ function concluirCadastro(){
   if(senha!==confirma){erro('As senhas não coincidem.');return;}
   const dados={nome,tel,status:'Ativo',banco,agencia,conta,tipoConta,pixTipo:pixSelCV,pix,cpf,nasc,cep,end,cidade,estado,token:null};
   const idx=USUARIOS.findIndex(u=>u.email.toLowerCase()===conviteAtivo.email.toLowerCase());
-  if(idx>=0)USUARIOS[idx]={...USUARIOS[idx],...dados};
-  else USUARIOS.push({id:nextUserId++,email:conviteAtivo.email,perfil:conviteAtivo.perfil,rhContratacao:conviteAtivo.rhContratacao,...dados});
-  SENHAS_INDIVIDUAIS[conviteAtivo.email.toLowerCase()]=senha;
+  if(idx>=0){
+    USUARIOS[idx]={...USUARIOS[idx],...dados};
+    dbSalvarUsuario(USUARIOS[idx],USUARIOS[idx].id).catch(e=>console.error(e));
+  } else {
+    const novoU={id:nextUserId++,email:conviteAtivo.email,perfil:conviteAtivo.perfil,rhContratacao:conviteAtivo.rhContratacao,...dados};
+    USUARIOS.push(novoU);
+    dbSalvarUsuario(novoU,null).catch(e=>console.error(e));
+  }
+  dbSalvarSenha(conviteAtivo.email.toLowerCase(),senha).catch(e=>console.error(e));
   delete CONVITES_PENDENTES[conviteAtivo.token];
   salvarLS();
   document.getElementById('conv-form').style.display='none';
@@ -2328,9 +2440,16 @@ function irParaLogin(){
 }
 
 // ── INICIALIZAÇÃO ──────────────────────────────────────────────────────────
-carregarLS();
-renderFiltros();renderVList();renderTrein();renderProc();
-verificarConviteURL();
+// Carrega dados do Supabase antes de renderizar
+carregarDB().then(()=>{
+  renderFiltros();renderVList();renderTrein();renderProc();
+  verificarConviteURL();
+}).catch(e=>{
+  console.error('Erro Supabase, usando localStorage:',e);
+  carregarLS();
+  renderFiltros();renderVList();renderTrein();renderProc();
+  verificarConviteURL();
+});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();}});
 </script>
 </body>
