@@ -1567,12 +1567,19 @@ function abrirModalVenda(){
   // Popula selects — filtra por unidade quando usuário tem unidade específica
   const unidadeUser=usuarioLogado?usuarioLogado.unidade||'Ambas':'Ambas';
   const filtrarUnid=(u)=>u.status==='Ativo'&&(u.unidade===unidadeUser||u.unidade==='Ambas'||unidadeUser==='Ambas');
-  const corretores=USUARIOS.filter(u=>u.perfil==='Corretor'&&filtrarUnid(u));
+  // Corretor: qualquer usuário ativo pode ser o corretor da venda
+  const todos=USUARIOS.filter(u=>filtrarUnid(u));
   const capitaes=USUARIOS.filter(u=>u.perfil==='Capitão'&&filtrarUnid(u));
-  const gerentes=USUARIOS.filter(u=>u.perfil==='Gerente'&&filtrarUnid(u));
+  const gerentes=USUARIOS.filter(u=>['Gerente','Diretor','Capitão'].includes(u.perfil)&&filtrarUnid(u));
   const diretores=USUARIOS.filter(u=>u.perfil==='Diretor'&&filtrarUnid(u));
 
-  const optCor=corretores.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
+  // Agrupa por perfil para o select de corretor ficar organizado
+  const perfilOrdem=['Dono','Diretor','Gerente','Capitão','Corretor','Financeiro','RH'];
+  const optCor=perfilOrdem.flatMap(p=>{
+    const lista=todos.filter(u=>u.perfil===p);
+    if(!lista.length) return [];
+    return [`<optgroup label="${p}">`,...lista.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`),'</optgroup>'];
+  }).join('');
   const optCap=capitaes.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
   const optGer=gerentes.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
   const optDir=diretores.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
