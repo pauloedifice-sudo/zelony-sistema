@@ -636,7 +636,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
   </div>
 </div>
 
-<div class="login-screen" id="login-screen">
+<div class="login-screen" id="login-screen" style="display:none;">
   <div class="login-left">
     <div class="login-brand">
       <div class="login-logo">ZELONY</div>
@@ -2217,6 +2217,9 @@ function fazerLogin(){
     usuarioLogado=usuario;
     const roleValue=PERFIL_ROLE[usuario.perfil]||'cor';
 
+    // Salva sessão no localStorage
+    localStorage.setItem('zel_sessao',usuario.email.toLowerCase());
+
     // Atualiza RD dinamicamente para o usuário logado
     RD[roleValue]={
       av:ini(usuario.nome),
@@ -2243,11 +2246,36 @@ function fazerLogin(){
 
 function fazerLogout(){
   usuarioLogado=null;
+  localStorage.removeItem('zel_sessao');
   document.getElementById('login-screen').classList.remove('hidden');
   document.getElementById('lg-email').value='';
   document.getElementById('lg-senha').value='';
   document.getElementById('lg-error').classList.remove('show');
   document.getElementById('lg-email').focus();
+}
+
+// Restaura sessão salva após carregar dados do banco
+function restaurarSessao(){
+  const emailSalvo=localStorage.getItem('zel_sessao');
+  if(!emailSalvo) return false;
+  const usuario=USUARIOS.find(u=>u.email.toLowerCase()===emailSalvo);
+  if(!usuario||usuario.status==='Pendente') return false;
+
+  usuarioLogado=usuario;
+  const roleValue=PERFIL_ROLE[usuario.perfil]||'cor';
+  RD[roleValue]={
+    av:ini(usuario.nome),
+    nome:usuario.nome.split(' ')[0],
+    role:usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'')
+  };
+  document.getElementById('role-sel').value=roleValue;
+  role=roleValue;
+  document.getElementById('sb-av').textContent=ini(usuario.nome);
+  document.getElementById('sb-uname').textContent=usuario.nome.split(' ')[0];
+  document.getElementById('sb-urole').textContent=usuario.perfil+(usuario.unidade&&usuario.unidade!=='Ambas'?' · '+usuario.unidade:'');
+  document.getElementById('tb-user-nome').textContent=usuario.nome.split(' ')[0]+' ·';
+  document.getElementById('login-screen').classList.add('hidden');
+  return true;
 }
 
 function toggleSenha(){
@@ -2443,11 +2471,19 @@ function irParaLogin(){
 // Carrega dados do Supabase antes de renderizar
 carregarDB().then(()=>{
   renderFiltros();renderVList();renderTrein();renderProc();
+  // Tenta restaurar sessão — se tiver logado antes, não mostra login
+  if(!restaurarSessao()){
+    // Sem sessão salva — mostra tela de login normalmente
+    document.getElementById('login-screen').classList.remove('hidden');
+  }
   verificarConviteURL();
 }).catch(e=>{
   console.error('Erro Supabase, usando localStorage:',e);
   carregarLS();
   renderFiltros();renderVList();renderTrein();renderProc();
+  if(!restaurarSessao()){
+    document.getElementById('login-screen').classList.remove('hidden');
+  }
   verificarConviteURL();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();}});
