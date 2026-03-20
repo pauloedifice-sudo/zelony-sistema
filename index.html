@@ -2433,9 +2433,14 @@ function enviarConvite(){
     nome,email_para:email,cargo:perfil,
     diretor:usuarioLogado?usuarioLogado.nome:'Diretor Zelony',link
   }).then(()=>{
-    // Adiciona como pendente no sistema
-    USUARIOS.push({id:nextUserId++,nome,email,tel:'',perfil,status:'Pendente',
-      banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao,equipe});
+    // Adiciona como pendente e salva imediatamente no Supabase
+    const novoU={id:nextUserId++,nome,email,tel:'',perfil,status:'Pendente',
+      banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',
+      rhContratacao,equipe,unidade:'',cpf:'',nasc:'',cep:'',
+      end:'',cidade:'',estado:''};
+    USUARIOS.push(novoU);
+    dbSalvarUsuario(novoU,null).catch(e=>console.error('Erro ao salvar convite:',e));
+    salvarLS();
     fecharConvite();renderUsuarios();
     showToast('✅',`Convite enviado para ${nome}!`);
   }).catch(err=>{
