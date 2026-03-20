@@ -974,6 +974,15 @@ input[type=range]{width:100%;accent-color:var(--gold);}
               <select id="mv-diretor"><option value="">Selecione...</option></select>
             </div>
           </div>
+          <div class="f-row">
+            <div class="f-field"><label>Diretor 2 <span style="font-size:9px;color:var(--tm);">(opcional)</span></label>
+              <select id="mv-diretor2"><option value="">Nenhum</option></select>
+            </div>
+            <div class="f-field" id="mv-dir2-pct-field" style="display:none;">
+              <label>Diretor 2 %</label>
+              <input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()">
+            </div>
+          </div>
           <div class="mv-divider"></div>
           <!-- Valores -->
           <div class="mv-section">Valores e Comissões</div>
@@ -988,6 +997,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
             <div class="pct-field"><label>Capitão %</label><input type="number" id="mv-pct-cap" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
             <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-pct-ger" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
             <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-pct-dir" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field" id="mv-pct-dir2-wrap" style="display:none;"><label>Dir. 2 %</label><input type="number" id="mv-pct-dir2b" placeholder="0" min="0" step="0.01" oninput="syncDir2Pct(this);calcularPrevV()"></div>
           </div>
           <!-- Preview comissões -->
           <div class="pct-preview" id="mv-preview" style="display:none;">
@@ -997,6 +1007,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
             <div class="pct-prev-item"><div class="pct-prev-lbl">Capitão</div><div class="pct-prev-val" id="pv-cap">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pv-ger">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pv-dir">—</div></div>
+            <div class="pct-prev-item" id="pv-dir2-wrap" style="display:none;"><div class="pct-prev-lbl">Diretor 2</div><div class="pct-prev-val" id="pv-dir2">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Zelony</div><div class="pct-prev-val" id="pv-zel">—</div></div>
           </div>
           <div class="mv-divider"></div>
@@ -1241,6 +1252,7 @@ function mapVendaIn(v){return{
   pct_cor:parseFloat(v.pct_cor),pct_cap:parseFloat(v.pct_cap),
   pct_ger:parseFloat(v.pct_ger),pct_dir:parseFloat(v.pct_dir),
   pct_rh:parseFloat(v.pct_rh||0),etapa:v.etapa||0,
+  diretor2:v.diretor2||null,pct_dir2:parseFloat(v.pct_dir2||0),
   hist:v.hist||[],anexos:[]
 };}
 function mapVendaOut(v){return{
@@ -1249,6 +1261,7 @@ function mapVendaOut(v){return{
   corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
   valor:v.valor,pct:v.pct,imp:v.imp,pct_cor:v.pct_cor,pct_cap:v.pct_cap,
   pct_ger:v.pct_ger,pct_dir:v.pct_dir,pct_rh:v.pct_rh,
+  diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
   etapa:v.etapa,hist:v.hist
 };}
 function mapTreinIn(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
@@ -1328,11 +1341,11 @@ function fmt(v){return 'R$ '+Math.round(v).toLocaleString('pt-BR');}
 function fmtK(v){return v>=1e6?'R$ '+(v/1e6).toFixed(1)+'M':v>=1000?'R$ '+Math.round(v/1000)+'k':fmt(v);}
 function hoje(){const d=new Date();return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();}
 function com(v,p){return(v.valor*p)-(v.valor*p*v.imp);}
-function comC(v){return com(v,v.pct_cor);}function comCap(v){return com(v,v.pct_cap);}function comG(v){return com(v,v.pct_ger);}function comD(v){return com(v,v.pct_dir);}
+function comC(v){return com(v,v.pct_cor);}function comCap(v){return com(v,v.pct_cap);}function comG(v){return com(v,v.pct_ger);}function comD(v){return com(v,v.pct_dir);}function comD2(v){return v.pct_dir2?com(v,v.pct_dir2):0;}
 function comRH(v){return v.pct_rh?com(v,v.pct_rh):0;}
-function comZ(v){return com(v,Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir,0));}
+function comZ(v){return com(v,Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0));}
 function comTotal(v){return v.valor*v.pct*(1-v.imp);}
-function comVis(v){if(role==='cor')return comC(v);if(role==='cap')return comCap(v)+comC(v);if(role==='ger')return comG(v)+comCap(v)+comC(v);if(role==='dir')return comD(v)+comG(v)+comCap(v)+comC(v);if(role==='rh')return comRH(v);return comTotal(v);}
+function comVis(v){if(role==='cor')return comC(v);if(role==='cap')return comCap(v)+comC(v);if(role==='ger')return comG(v)+comCap(v)+comC(v);if(role==='dir')return comD(v)+comD2(v)+comG(v)+comCap(v)+comC(v);if(role==='rh')return comRH(v);return comTotal(v);}
 function lblCom(){if(role==='cor')return 'Minha comissão';if(role==='cap')return 'Cap + Corretor';if(role==='ger')return 'Ger + equipe';if(role==='dir')return 'Dir + equipe';if(role==='rh')return 'Comissão RH';if(role==='dono')return 'Com. líquida total';return 'Com. líquida total';}
 
 // Filtra por unidade do usuário logado
@@ -1365,19 +1378,22 @@ function vendasU(l){
   if(role==='fin') return base;
   if(role==='rh') return base.filter(v=>v.pct_rh&&v.pct_rh>0);
 
-  // Para os demais, filtra pelo nome do usuário logado
-  // Verifica se o campo da venda bate com o primeiro nome OU nome completo do usuário
+  // Diretor com "Ambas" vê todas as vendas das unidades (visão gerencial)
+  if(role==='dir'&&(unid==='Ambas'||!unid)) return base;
+
+  // Demais: filtra pelo nome do usuário logado no campo correspondente
   const matchNome=(campo,usuario)=>{
     if(!usuario||!campo) return false;
     const c=campo.toLowerCase();
-    const nomes=usuario.nome.toLowerCase().split(' ');
-    return c===usuario.nome.toLowerCase()||nomes.some(n=>n.length>2&&c===n)||c===nomes[0];
+    const nomeCompleto=usuario.nome.toLowerCase();
+    const nomes=nomeCompleto.split(' ');
+    return c===nomeCompleto||nomes.some(n=>n.length>2&&c===n);
   };
 
   if(role==='cor') return usuarioLogado?base.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
   if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)):[];
   if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)):[];
-  if(role==='dir') return usuarioLogado?base.filter(v=>matchNome(v.diretor,usuarioLogado)):[];
+  if(role==='dir') return usuarioLogado?base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)):[];
   return base;
 }
 
@@ -1532,6 +1548,16 @@ function abrirModalVenda(){
   document.getElementById('mv-capitao').innerHTML=`<option value="">Nenhum</option>${optCap}`;
   document.getElementById('mv-gerente').innerHTML=`<option value="">Selecione...</option>${optGer}`;
   document.getElementById('mv-diretor').innerHTML=`<option value="">Selecione...</option>${optDir}`;
+  document.getElementById('mv-diretor2').innerHTML=`<option value="">Nenhum</option>${optDir}`;
+
+  // Mostra/oculta campo dir2 % quando diretor2 é selecionado
+  document.getElementById('mv-diretor2').onchange=function(){
+    const temDir2=!!this.value;
+    document.getElementById('mv-dir2-pct-field').style.display=temDir2?'block':'none';
+    document.getElementById('mv-pct-dir2-wrap').style.display=temDir2?'flex':'none';
+    if(!temDir2){document.getElementById('mv-pct-dir2').value='';document.getElementById('mv-pct-dir2b').value='';}
+    calcularPrevV();
+  };
 
   // Auto-preenche unidade e diretor
   const unidSel=document.getElementById('mv-unidade');
@@ -1543,7 +1569,10 @@ function abrirModalVenda(){
   if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome.split(' ')[0];
 
   // Limpa campos
-  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir'].forEach(id=>document.getElementById(id).value='');
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-pct-dir2b'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('mv-dir2-pct-field').style.display='none';
+  document.getElementById('mv-pct-dir2-wrap').style.display='none';
+  if(document.getElementById('pv-dir2-wrap'))document.getElementById('pv-dir2-wrap').style.display='none';
   document.getElementById('mv-imp').value='11';
   document.getElementById('mv-data').value=new Date().toISOString().split('T')[0];
   document.getElementById('mv-origem').value='Indicação';
@@ -1555,6 +1584,11 @@ function abrirModalVenda(){
 function fecharMV(){document.getElementById('mvenda').classList.remove('show');}
 function handleBackdropV(e){if(e.target===document.getElementById('mvenda'))fecharMV();}
 
+function syncDir2Pct(el){
+  const other=document.getElementById('mv-pct-dir2');
+  if(other) other.value=el.value;
+}
+
 function calcularPrevV(){
   const val=parseFloat(document.getElementById('mv-valor').value)||0;
   const pct=(parseFloat(document.getElementById('mv-pct').value)||0)/100;
@@ -1563,20 +1597,24 @@ function calcularPrevV(){
   const pCap=(parseFloat(document.getElementById('mv-pct-cap').value)||0)/100;
   const pGer=(parseFloat(document.getElementById('mv-pct-ger').value)||0)/100;
   const pDir=(parseFloat(document.getElementById('mv-pct-dir').value)||0)/100;
+  const pDir2=(parseFloat(document.getElementById('mv-pct-dir2').value)||0)/100;
+  const temDir2=!!document.getElementById('mv-diretor2').value;
   const prev=document.getElementById('mv-preview');
   if(!val||!pct){prev.style.display='none';return;}
   prev.style.display='flex';
   const bruta=val*pct;
   const impostoVal=bruta*imp;
-  const liq=(v,p)=>(val*p)-(val*p*imp);
-  const zelPct=Math.max(pct-pCor-pCap-pGer-pDir,0);
+  const liq=(p)=>(val*p)-(val*p*imp);
+  const zelPct=Math.max(pct-pCor-pCap-pGer-pDir-pDir2,0);
   document.getElementById('pv-bruta').textContent=fmt(bruta);
   document.getElementById('pv-imp').textContent='- '+fmt(impostoVal);
-  document.getElementById('pv-cor').textContent=pCor?fmt(liq(val,pCor)):'—';
-  document.getElementById('pv-cap').textContent=pCap?fmt(liq(val,pCap)):'—';
-  document.getElementById('pv-ger').textContent=pGer?fmt(liq(val,pGer)):'—';
-  document.getElementById('pv-dir').textContent=pDir?fmt(liq(val,pDir)):'—';
-  document.getElementById('pv-zel').textContent=zelPct?fmt(liq(val,zelPct)):'—';
+  document.getElementById('pv-cor').textContent=pCor?fmt(liq(pCor)):'—';
+  document.getElementById('pv-cap').textContent=pCap?fmt(liq(pCap)):'—';
+  document.getElementById('pv-ger').textContent=pGer?fmt(liq(pGer)):'—';
+  document.getElementById('pv-dir').textContent=pDir?fmt(liq(pDir)):'—';
+  const dir2wrap=document.getElementById('pv-dir2-wrap');
+  if(dir2wrap){dir2wrap.style.display=temDir2?'flex':'none';document.getElementById('pv-dir2').textContent=pDir2?fmt(liq(pDir2)):'—';}
+  document.getElementById('pv-zel').textContent=zelPct?fmt(liq(zelPct)):'—';
 }
 
 function salvarVenda(){
@@ -1590,6 +1628,7 @@ function salvarVenda(){
   const capitao=document.getElementById('mv-capitao').value||null;
   const gerente=document.getElementById('mv-gerente').value;
   const diretor=document.getElementById('mv-diretor').value;
+  const diretor2=document.getElementById('mv-diretor2').value||null;
   const valor=parseFloat(document.getElementById('mv-valor').value);
   const pct=(parseFloat(document.getElementById('mv-pct').value)||0)/100;
   const imp=(parseFloat(document.getElementById('mv-imp').value)||11)/100;
@@ -1597,6 +1636,7 @@ function salvarVenda(){
   const pct_cap=(parseFloat(document.getElementById('mv-pct-cap').value)||0)/100;
   const pct_ger=(parseFloat(document.getElementById('mv-pct-ger').value)||0)/100;
   const pct_dir=(parseFloat(document.getElementById('mv-pct-dir').value)||0)/100;
+  const pct_dir2=(parseFloat(document.getElementById('mv-pct-dir2').value)||0)/100;
 
   // Validações
   if(!cliente){document.getElementById('mv-cliente').focus();showToast('⚠️','Informe o nome do cliente.');return;}
@@ -1641,8 +1681,8 @@ function salvarVenda(){
 
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
-    corretor,capitao,gerente,diretor,
-    valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_rh,
+    corretor,capitao,gerente,diretor,diretor2,
+    valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
     hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}],
     anexos:[
@@ -1663,7 +1703,7 @@ function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.e
 
 function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;return`<div class="si"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
-const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(role==='fin')mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir,0)});
+const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin','dono'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin','dono'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin','dono'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(['dir','fin','dono'].includes(role)&&v.diretor2)mbs.push({n:v.diretor2,c:'Diretor 2',val:comD2(v),pct:v.pct_dir2});if(['fin','dono'].includes(role))mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0)});
 // Linha RH — aparece para Diretor, Financeiro e RH quando pct_rh > 0
 const rhRow=(['dir','fin','rh'].includes(role)&&v.pct_rh>0)?`
   <div class="eq-row" style="background:#EEF4FE;border-radius:6px;padding:6px 8px;margin-top:6px;border:1px solid #90B8E8;">
