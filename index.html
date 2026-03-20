@@ -321,7 +321,41 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 .login-box{animation:fadeInUp 0.4s ease;}
 .login-screen.hidden{display:none !important;}
 
-/* ── MODAL NOVA VENDA ── */
+/* ── ANEXOS ── */
+.anexos-sec{background:var(--bg);border:1px solid var(--bd);border-radius:9px;overflow:hidden;flex-shrink:0;}
+.anexos-h{padding:8px 13px;border-bottom:1px solid var(--bd);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;background:var(--gold-bg);display:flex;align-items:center;justify-content:space-between;}
+.anexos-body{padding:12px 13px;display:flex;flex-direction:column;gap:8px;}
+.anexo-drop{border:2px dashed var(--gold-bd);border-radius:8px;padding:18px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg2);}
+.anexo-drop:hover{border-color:var(--gold);background:var(--gold-bg);}
+.anexo-drop-icon{font-size:22px;margin-bottom:5px;}
+.anexo-drop-txt{font-size:11px;color:var(--tm);line-height:1.5;}
+.anexo-drop-txt strong{color:var(--gold);}
+.anexo-input{display:none;}
+.anexo-list{display:flex;flex-direction:column;gap:6px;}
+.anexo-item{display:flex;align-items:center;gap:10px;padding:8px 11px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;transition:all 0.12s;}
+.anexo-item:hover{border-color:var(--gold-bd);}
+.anexo-icon{font-size:20px;flex-shrink:0;}
+.anexo-info{flex:1;min-width:0;}
+.anexo-nome{font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.anexo-meta{font-size:9px;color:var(--tm);margin-top:1px;}
+.anexo-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;white-space:nowrap;}
+.badge-comp{background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;}
+.badge-cont{background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;}
+.badge-outro{background:var(--bg3);color:var(--ts);border:1px solid var(--bd);}
+.anexo-btns{display:flex;gap:5px;flex-shrink:0;}
+.btn-anexo-view{background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:5px;padding:3px 9px;font-size:10px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;}
+.btn-anexo-view:hover{background:var(--gold);color:#fff;}
+.btn-anexo-del{background:#FEF0EC;border:1px solid #E0A090;border-radius:5px;padding:3px 7px;font-size:10px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-anexo-del:hover{background:#FAE0D4;}
+/* Modal visualizador de anexo */
+.anexo-viewer{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;}
+.anexo-viewer.show{display:flex;}
+.anexo-viewer-top{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:900px;}
+.anexo-viewer-nome{font-size:13px;color:#fff;font-weight:500;}
+.btn-fechar-viewer{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:5px 12px;color:#fff;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-fechar-viewer:hover{background:rgba(255,255,255,0.25);}
+.anexo-viewer img{max-width:900px;max-height:80vh;border-radius:8px;object-fit:contain;}
+.anexo-viewer iframe{width:900px;height:80vh;border:none;border-radius:8px;background:#fff;}
 .mv-modal{max-width:560px !important;}
 .mv-modal .modal-body{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:72vh;overflow-y:auto;}
 .mv-section{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin-bottom:2px;margin-top:4px;}
@@ -340,6 +374,14 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 .btn-nova-venda{display:flex;align-items:center;gap:5px;background:var(--gold);color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.13s;white-space:nowrap;}
 .btn-nova-venda:hover{background:var(--gold-l);}
 .btn-nova-venda svg{width:11px;height:11px;}
+
+/* Upload de documentos no modal de venda */
+.doc-upload-box{border:2px dashed var(--bd);border-radius:9px;padding:14px;text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg2);user-select:none;}
+.doc-upload-box:hover{border-color:var(--gold);background:var(--gold-bg);}
+.doc-upload-box.ok{border:2px solid #2E9E6E;background:#EDF8F2;cursor:default;}
+.doc-upload-box.ok:hover{border-color:#2E9E6E;background:#E0F5EA;}
+.doc-upload-box.erro{border-color:#C05030;background:#FEF0EC;animation:shake 0.3s;}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
 .usuarios-wrap{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:14px;}
 .usuarios-top{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;flex-wrap:wrap;gap:10px;}
 .usuarios-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;flex-shrink:0;}
@@ -393,7 +435,171 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 </style>
 </head>
 <body>
-<!-- ── TELA DE LOGIN ── -->
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+/* ── CONVITE / ONBOARDING ── */
+.convite-screen{position:fixed;inset:0;z-index:9998;display:none;background:var(--bg2);overflow-y:auto;}
+.convite-screen.show{display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;}
+.convite-box{background:var(--bg);border:1px solid var(--gold-bd);border-radius:16px;width:100%;max-width:500px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.12);}
+.convite-header{background:linear-gradient(135deg,#0A0A0A,#1C1200);padding:28px;text-align:center;}
+.convite-logo{font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);letter-spacing:0.08em;}
+.convite-logo-sub{font-size:9px;letter-spacing:0.25em;color:var(--tm);text-transform:uppercase;margin-top:4px;}
+.convite-body{padding:24px;}
+.convite-boas-vindas{background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:10px;padding:14px;margin-bottom:20px;text-align:center;}
+.convite-boas-vindas .nome{font-family:'Playfair Display',serif;font-size:18px;color:var(--tx);margin-bottom:4px;}
+.convite-boas-vindas .cargo{font-size:11px;color:var(--tm);}
+.convite-step{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin:16px 0 8px;}
+.conv-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.conv-field label{font-size:11px;font-weight:600;color:var(--ts);}
+.conv-field input,.conv-field select{background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px 12px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;}
+.conv-field input:focus,.conv-field select:focus{border-color:var(--gold-l);}
+.conv-field input::placeholder{color:#B8A880;}
+.conv-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.conv-divider{height:1px;background:var(--bd);margin:16px 0;}
+.conv-btn{width:100%;padding:13px;background:var(--gold);color:#fff;font-size:13px;font-weight:600;border:none;border-radius:9px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;margin-top:8px;}
+.conv-btn:hover{background:var(--gold-l);}
+.conv-btn:disabled{opacity:0.6;pointer-events:none;}
+.conv-error{background:#FEF0EC;border:1px solid #E0A090;border-radius:7px;padding:9px 13px;font-size:11px;color:#C05030;margin-bottom:12px;display:none;}
+.conv-success{background:#E8F5EE;border:1px solid #80C8A0;border-radius:10px;padding:20px;text-align:center;display:none;}
+.conv-success .icon{font-size:36px;margin-bottom:8px;}
+.conv-success .title{font-family:'Playfair Display',serif;font-size:18px;color:#2E7E5E;}
+.conv-success .sub{font-size:12px;color:#2E9E6E;margin-top:6px;}
+/* Modal convidar no módulo usuários */
+.m-convite-modal{max-width:460px !important;}
+</style>
+
+<!-- TELA DE ONBOARDING — novo usuário completa cadastro -->
+<div class="convite-screen" id="convite-screen">
+  <div class="convite-box">
+    <div class="convite-header">
+      <div class="convite-logo">ZELONY</div>
+      <div class="convite-logo-sub">Imóveis — Cadastro</div>
+    </div>
+    <div class="convite-body">
+      <div class="convite-boas-vindas">
+        <div class="nome" id="conv-nome-bv">Olá!</div>
+        <div class="cargo">Você foi convidado(a) para o sistema Zelony Imóveis como <strong id="conv-cargo-bv"></strong></div>
+      </div>
+      <div class="conv-error" id="conv-error"></div>
+      <div class="conv-success" id="conv-success">
+        <div class="icon">🎉</div>
+        <div class="title">Cadastro concluído!</div>
+        <div class="sub">Sua conta foi criada com sucesso.<br>Você já pode fazer login com seu e-mail e senha.</div>
+        <button class="conv-btn" style="margin-top:16px;" onclick="irParaLogin()">Ir para o login →</button>
+      </div>
+      <div id="conv-form">
+        <div class="convite-step">📋 Dados Pessoais</div>
+        <div class="conv-field"><label>Nome completo *</label><input type="text" id="cv-nome" placeholder="Seu nome completo" maxlength="80"></div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Telefone / WhatsApp *</label><input type="tel" id="cv-tel" placeholder="(41) 99999-9999"></div>
+          <div class="conv-field"><label>Data de nascimento *</label><input type="date" id="cv-nasc"></div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-field"><label>CPF *</label><input type="text" id="cv-cpf" placeholder="000.000.000-00" maxlength="14"></div>
+          <div class="conv-field"><label>CEP *</label><input type="text" id="cv-cep" placeholder="00000-000" maxlength="9" oninput="buscarCEP(this.value)"></div>
+        </div>
+        <div class="conv-field"><label>Endereço *</label><input type="text" id="cv-end" placeholder="Rua, número, bairro"></div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Cidade *</label><input type="text" id="cv-cidade" placeholder="Curitiba"></div>
+          <div class="conv-field"><label>Estado *</label><input type="text" id="cv-estado" placeholder="PR" maxlength="2"></div>
+        </div>
+        <div class="conv-divider"></div>
+        <div class="convite-step">🏦 Dados Bancários</div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Banco *</label><input type="text" id="cv-banco" placeholder="Ex: Nubank, Itaú"></div>
+          <div class="conv-field"><label>Agência</label><input type="text" id="cv-agencia" placeholder="0001"></div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Conta *</label><input type="text" id="cv-conta" placeholder="12345-6"></div>
+          <div class="conv-field"><label>Tipo *</label>
+            <select id="cv-tipo-conta">
+              <option value="">Selecione...</option>
+              <option value="Corrente">Corrente</option>
+              <option value="Poupança">Poupança</option>
+              <option value="Pagamento">Pagamento</option>
+            </select>
+          </div>
+        </div>
+        <div class="conv-divider"></div>
+        <div class="convite-step">🔑 Chave Pix</div>
+        <div class="conv-field"><label>Tipo de chave *</label>
+          <div class="pix-types" id="cv-pix-types">
+            <div class="pix-type" onclick="selPixCV('CPF',this)">CPF</div>
+            <div class="pix-type" onclick="selPixCV('CNPJ',this)">CNPJ</div>
+            <div class="pix-type" onclick="selPixCV('E-mail',this)">E-mail</div>
+            <div class="pix-type" onclick="selPixCV('Telefone',this)">Telefone</div>
+            <div class="pix-type" onclick="selPixCV('Aleatória',this)">Aleatória</div>
+          </div>
+        </div>
+        <div class="conv-field"><label>Chave Pix *</label><input type="text" id="cv-pix" placeholder="Digite sua chave pix"></div>
+        <div class="conv-divider"></div>
+        <div class="convite-step">🔒 Criar Senha</div>
+        <div class="conv-field"><label>Nova senha *</label>
+          <div style="position:relative;">
+            <input type="password" id="cv-senha" placeholder="Mínimo 6 caracteres" style="padding-right:36px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px 36px 10px 12px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+            <button onclick="toggleSenhaField('cv-senha','cv-tog1')" id="cv-tog1" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <div class="conv-field"><label>Confirmar senha *</label>
+          <div style="position:relative;">
+            <input type="password" id="cv-confirma" placeholder="Repita a senha" style="padding-right:36px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px 36px 10px 12px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+            <button onclick="toggleSenhaField('cv-confirma','cv-tog2')" id="cv-tog2" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <button class="conv-btn" id="cv-btn" onclick="concluirCadastro()">✓ Concluir cadastro</button>
+        <div style="text-align:center;font-size:10px;color:var(--tm);margin-top:12px;">© 2026 Zelony Imóveis</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONVIDAR USUÁRIO -->
+<div class="modal-backdrop" id="m-convite" onclick="handleBackdropConv(event)">
+  <div class="modal m-convite-modal">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title">✉️ Convidar novo usuário</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:2px;">Um e-mail será enviado com link para cadastro</div>
+      </div>
+      <button class="mclose" onclick="fecharConvite()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+      <div class="f-field"><label>Nome completo *</label><input type="text" id="inv-nome" placeholder="Nome do novo usuário" maxlength="80"></div>
+      <div class="f-field"><label>E-mail *</label><input type="email" id="inv-email" placeholder="email@exemplo.com"></div>
+      <div class="f-row">
+        <div class="f-field">
+          <label>Perfil de acesso *</label>
+          <select id="inv-perfil" onchange="toggleInvRH()">
+            <option value="">Selecione...</option>
+            <option value="Corretor">Corretor</option>
+            <option value="Capitão">Capitão</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Diretor">Diretor</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="RH">RH</option>
+          </select>
+        </div>
+        <div class="f-field"><label>Equipe / Gestor</label><input type="text" id="inv-equipe" placeholder="Ex: Equipe Alpha"></div>
+      </div>
+      <div id="inv-rh-field" style="display:none;">
+        <div class="rh-toggle-wrap">
+          <div>
+            <div class="rh-toggle-label">Contratação realizada pelo RH?</div>
+            <div class="rh-toggle-sub">Se sim, 0,1% de comissão será destinado ao RH</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="inv-rh"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="login-error" id="inv-error" style="display:none;margin:0;"><span>⚠️</span><span id="inv-error-msg"></span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-c" onclick="fecharConvite()">Cancelar</button>
+      <button class="btn-s" id="inv-btn" onclick="enviarConvite()">✉️ Enviar convite</button>
+    </div>
+  </div>
+</div>
+
 <div class="login-screen" id="login-screen">
   <div class="login-left">
     <div class="login-brand">
@@ -438,16 +644,58 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 
       <button class="login-btn" id="lg-btn">Entrar no sistema</button>
 
-      <div class="login-divider">acesso de demonstração</div>
-
-      <div class="login-hint">
-        Entre com o e-mail e senha cadastrados pelo Diretor.<br><br>
-        <strong>Acesso inicial:</strong><br>
-        • E-mail: <strong>paulo.edifice&#64;gmail.com</strong><br>
-        • Senha: <strong>Mudar@123</strong>
+      <div style="text-align:center;margin-top:14px;">
+        <button id="lg-trocar-senha" style="background:none;border:none;font-size:12px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;padding:0;">
+          🔑 Trocar minha senha
+        </button>
       </div>
 
       <div class="login-footer">© 2026 Zelony Imóveis · Todos os direitos reservados</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TROCAR SENHA -->
+<div class="modal-backdrop" id="m-trocar-senha" style="z-index:10000;" onclick="handleBackdropTS(event)">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title">🔑 Trocar senha</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="ts-subtitulo">Informe seu e-mail e crie uma nova senha</div>
+      </div>
+      <button class="mclose" onclick="fecharTS()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+      <div class="f-field" id="ts-email-field">
+        <label>E-mail cadastrado *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">✉️</span>
+          <input type="email" id="ts-email" placeholder="seu@email.com.br" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 12px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+        </div>
+      </div>
+      <div class="f-field">
+        <label>Nova senha *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">🔒</span>
+          <input type="password" id="ts-nova" placeholder="Mínimo 6 caracteres" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 36px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+          <button onclick="toggleSenhaField('ts-nova','ts-tog1')" id="ts-tog1" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--tm);" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="f-field">
+        <label>Confirmar nova senha *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">🔒</span>
+          <input type="password" id="ts-confirma" placeholder="Repita a nova senha" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 36px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+          <button onclick="toggleSenhaField('ts-confirma','ts-tog2')" id="ts-tog2" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--tm);" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="login-error" id="ts-error" style="display:none;margin:0;">
+        <span>⚠️</span><span id="ts-error-msg"></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-c" onclick="fecharTS()">Cancelar</button>
+      <button class="btn-s" onclick="salvarNovaSenha()">✓ Salvar nova senha</button>
     </div>
   </div>
 </div>
@@ -467,6 +715,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
     </select>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
     <button onclick="fazerLogout()" style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Sair do sistema">↩ Sair</button>
+    <button onclick="abrirTS()" style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Trocar senha">🔑</button>
   </div>
 </div>
 
@@ -604,6 +853,15 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       </div>
     </div>
 
+    <!-- VISUALIZADOR DE ANEXO -->
+    <div class="anexo-viewer" id="anexo-viewer">
+      <div class="anexo-viewer-top">
+        <div class="anexo-viewer-nome" id="av-nome"></div>
+        <button class="btn-fechar-viewer" onclick="fecharViewer()">✕ Fechar</button>
+      </div>
+      <div id="av-content"></div>
+    </div>
+
     <!-- MODAL NOVA VENDA -->
     <div class="modal-backdrop" id="mvenda" onclick="handleBackdropV(event)">
       <div class="modal mv-modal">
@@ -676,6 +934,27 @@ input[type=range]{width:100%;accent-color:var(--gold);}
             <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pv-dir">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Zelony</div><div class="pct-prev-val" id="pv-zel">—</div></div>
           </div>
+          <div class="mv-divider"></div>
+          <!-- Documentos obrigatórios -->
+          <div class="mv-section">Documentos Obrigatórios</div>
+          <!-- Comprovante -->
+          <div class="doc-upload-box" id="dbox-comp" onclick="document.getElementById('mv-comp-input').click()">
+            <div id="dbox-comp-inner">
+              <div style="font-size:22px;margin-bottom:4px;">🧾</div>
+              <div style="font-size:12px;font-weight:600;color:var(--ts);">Comprovante de pagamento <span style="color:#C05030;">*</span></div>
+              <div style="font-size:10px;color:var(--tm);margin-top:3px;">Clique para selecionar · PDF, JPG, PNG</div>
+            </div>
+          </div>
+          <input type="file" id="mv-comp-input" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleDocUpload(this,'comp')">
+          <!-- Contrato -->
+          <div class="doc-upload-box" id="dbox-cont" onclick="document.getElementById('mv-cont-input').click()">
+            <div id="dbox-cont-inner">
+              <div style="font-size:22px;margin-bottom:4px;">📄</div>
+              <div style="font-size:12px;font-weight:600;color:var(--ts);">Contrato assinado <span style="color:#C05030;">*</span></div>
+              <div style="font-size:10px;color:var(--tm);margin-top:3px;">Clique para selecionar · PDF, JPG, PNG</div>
+            </div>
+          </div>
+          <input type="file" id="mv-cont-input" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleDocUpload(this,'cont')">
         </div>
         <div class="modal-foot">
           <button class="btn-c" onclick="fecharMV()">Cancelar</button>
@@ -879,7 +1158,57 @@ function renderBtnNovaVenda(){
 
 let nextVendaId=1;
 
+// Documentos temporários do formulário de nova venda
+let mvDocs={comp:null,cont:null};
+
+function handleDocUpload(input,tipo){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>10*1024*1024){showToast('⚠️','Arquivo maior que 10MB.');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    mvDocs[tipo]={nome:file.name,tamanho:fmtTamanho(file.size),mime:file.type,dataUrl:e.target.result};
+    const box=document.getElementById('dbox-'+tipo);
+    const inner=document.getElementById('dbox-'+tipo+'-inner');
+    const icon=tipo==='comp'?'🧾':'📄';
+    const label=tipo==='comp'?'Comprovante de pagamento':'Contrato assinado';
+    box.classList.remove('erro');
+    box.classList.add('ok');
+    box.onclick=null; // desativa clique para trocar enquanto ok
+    inner.innerHTML=`
+      <div style="font-size:18px;margin-bottom:3px;">${icon} ✅</div>
+      <div style="font-size:11px;font-weight:600;color:#2E7E5E;">${label}</div>
+      <div style="font-size:10px;color:#2E9E6E;margin-top:2px;">${file.name} · ${fmtTamanho(file.size)}</div>
+      <button onclick="removerDoc('${tipo}',event)" style="margin-top:6px;font-size:9px;background:none;border:1px solid #2E9E6E;border-radius:4px;padding:2px 8px;color:#2E7E5E;cursor:pointer;">Trocar arquivo</button>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removerDoc(tipo,e){
+  e.stopPropagation();
+  mvDocs[tipo]=null;
+  const box=document.getElementById('dbox-'+tipo);
+  const inner=document.getElementById('dbox-'+tipo+'-inner');
+  const icon=tipo==='comp'?'🧾':'📄';
+  const label=tipo==='comp'?'Comprovante de pagamento':'Contrato assinado';
+  box.classList.remove('ok','erro');
+  box.onclick=()=>document.getElementById('mv-'+tipo+'-input').click();
+  document.getElementById('mv-'+tipo+'-input').value='';
+  inner.innerHTML=`
+    <div style="font-size:22px;margin-bottom:4px;">${icon}</div>
+    <div style="font-size:12px;font-weight:600;color:var(--ts);">${label} <span style="color:#C05030;">*</span></div>
+    <div style="font-size:10px;color:var(--tm);margin-top:3px;">Clique para selecionar · PDF, JPG, PNG</div>`;
+}
+
 function abrirModalVenda(){
+  // Reset documentos
+  mvDocs={comp:null,cont:null};
+  ['comp','cont'].forEach(t=>{
+    const box=document.getElementById('dbox-'+t);
+    if(box){box.classList.remove('ok','erro');}
+    const input=document.getElementById('mv-'+t+'-input');
+    if(input) input.value='';
+  });
   // Popula selects com usuários cadastrados
   const corretores=USUARIOS.filter(u=>u.perfil==='Corretor'&&u.status==='Ativo');
   const capitaes=USUARIOS.filter(u=>u.perfil==='Capitão'&&u.status==='Ativo');
@@ -965,6 +1294,23 @@ function salvarVenda(){
   if(!valor||valor<=0){document.getElementById('mv-valor').focus();showToast('⚠️','Informe o valor de venda.');return;}
   if(!pct||pct<=0){document.getElementById('mv-pct').focus();showToast('⚠️','Informe o percentual de comissão.');return;}
 
+  // Validação dos documentos obrigatórios
+  if(!mvDocs.comp){
+    const box=document.getElementById('dbox-comp');
+    box.classList.add('erro');
+    setTimeout(()=>box.classList.remove('erro'),600);
+    showToast('⚠️','Anexe o comprovante de pagamento.');
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
+  if(!mvDocs.cont){
+    const box=document.getElementById('dbox-cont');
+    box.classList.add('erro');
+    setTimeout(()=>box.classList.remove('erro'),600);
+    showToast('⚠️','Anexe o contrato assinado.');
+    box.scrollIntoView({behavior:'smooth',block:'nearest'});
+    return;
+  }
   // Formata data e mês
   const d=new Date(dataVal+'T12:00:00');
   const dia=d.getDate().toString().padStart(2,'0');
@@ -982,7 +1328,11 @@ function salvarVenda(){
     corretor,capitao,gerente,diretor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_rh,
     etapa:0,
-    hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}]
+    hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}],
+    anexos:[
+      {nome:mvDocs.comp.nome,tipo:'comprovante',tamanho:mvDocs.comp.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.comp.dataUrl,mime:mvDocs.comp.mime},
+      {nome:mvDocs.cont.nome,tipo:'contrato',tamanho:mvDocs.cont.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.cont.dataUrl,mime:mvDocs.cont.mime}
+    ]
   });
 
   fecharMV();
@@ -1030,7 +1380,129 @@ const distH=`<div class="sec"><div class="sec-h">Distribuição da comissão</di
   return`<div class="eq-row" style="flex-wrap:wrap;"><div class="eav">${ini(m.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${m.n}</div><div style="font-size:9px;color:var(--tm);">${m.c} · ${(m.pct*100).toFixed(2)}%</div>${bancoPix}</div><span style="font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:8px;">${fmt(m.val)}</span></div>`;
 }).join('')}${rhRow}${impostoRow}</div></div>`;
 const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;">${ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
-document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span></div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${role==='fin'&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${role!=='fin'?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas o financeiro pode avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>`;}
+// Garante array de anexos na venda
+if(!v.anexos) v.anexos=[];
+const anexosH=renderAnexosSec(v);
+document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span></div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${role==='fin'&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${role!=='fin'?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas o financeiro pode avançar etapas.</div>`:''}</div>${distH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+// Bind do input de anexo após render
+const inp=document.getElementById('anexo-input-'+v.id);
+if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
+const drop=document.getElementById('anexo-drop-'+v.id);
+if(drop){drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='var(--gold)';drop.style.background='var(--gold-bg)';});drop.addEventListener('dragleave',()=>{drop.style.borderColor='';drop.style.background='';});drop.addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';drop.style.background='';const files=e.dataTransfer.files;if(files.length)processAnexoFiles(files,v.id);});}}
+// ── ANEXOS ───────────────────────────────────────────────────────────────────
+function renderAnexosSec(v){
+  const tipos={comprovante:{label:'Comprovante',badge:'badge-comp',icon:'🧾'},contrato:{label:'Contrato',badge:'badge-cont',icon:'📄'},outro:{label:'Outro',badge:'badge-outro',icon:'📎'}};
+  const lista=v.anexos&&v.anexos.length?v.anexos.map((a,i)=>{
+    const t=tipos[a.tipo]||tipos.outro;
+    const ext=a.nome.split('.').pop().toLowerCase();
+    const icon=['jpg','jpeg','png','gif','webp'].includes(ext)?'🖼️':ext==='pdf'?'📕':'📎';
+    return`<div class="anexo-item">
+      <span class="anexo-icon">${icon}</span>
+      <div class="anexo-info">
+        <div class="anexo-nome" title="${a.nome}">${a.nome}</div>
+        <div class="anexo-meta">${a.tamanho} · ${a.data} · por ${a.por}</div>
+      </div>
+      <span class="anexo-badge ${t.badge}">${t.label}</span>
+      <div class="anexo-btns">
+        <button class="btn-anexo-view" onclick="verAnexo(${v.id},${i})">👁 Ver</button>
+        <button class="btn-anexo-del" onclick="delAnexo(${v.id},${i})">🗑</button>
+      </div>
+    </div>`;
+  }).join(''):`<div style="text-align:center;padding:14px;font-size:11px;color:var(--tm);">Nenhum anexo ainda. Adicione o comprovante ou contrato.</div>`;
+
+  return`<div class="anexos-sec">
+    <div class="anexos-h">
+      <span>📎 Anexos <span style="font-weight:400;color:var(--tm);text-transform:none;letter-spacing:0;">(${v.anexos?v.anexos.length:0} arquivo${v.anexos&&v.anexos.length!==1?'s':''})</span></span>
+    </div>
+    <div class="anexos-body">
+      <div class="anexo-drop" id="anexo-drop-${v.id}" onclick="document.getElementById('anexo-input-${v.id}').click()">
+        <div class="anexo-drop-icon">📤</div>
+        <div class="anexo-drop-txt"><strong>Clique para adicionar</strong> ou arraste o arquivo aqui<br>PDF, JPG, PNG — máx. 10MB</div>
+      </div>
+      <input type="file" class="anexo-input" id="anexo-input-${v.id}" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 2px;">
+        <span style="font-size:10px;color:var(--tm);">Classificar como:</span>
+        <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="comprovante" checked style="accent-color:var(--gold);"> Comprovante</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="contrato" style="accent-color:var(--gold);"> Contrato</label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="outro" style="accent-color:var(--gold);"> Outro</label>
+      </div>
+      <div class="anexo-list">${lista}</div>
+    </div>
+  </div>`;
+}
+
+function getTipoAnexo(vendaId){
+  const radios=document.querySelectorAll(`input[name="tipo-anexo-${vendaId}"]`);
+  for(const r of radios){if(r.checked)return r.value;}
+  return'outro';
+}
+
+function fmtTamanho(bytes){if(bytes<1024)return bytes+'B';if(bytes<1048576)return(bytes/1024).toFixed(1)+'KB';return(bytes/1048576).toFixed(1)+'MB';}
+
+function handleAnexoUpload(e,vendaId){
+  processAnexoFiles(e.target.files,vendaId);
+  e.target.value=''; // reset para permitir mesmo arquivo
+}
+
+function processAnexoFiles(files,vendaId){
+  const v=VENDAS.find(x=>x.id===vendaId);
+  if(!v){return;}
+  if(!v.anexos) v.anexos=[];
+  const tipo=getTipoAnexo(vendaId);
+  let processados=0;
+  const total=files.length;
+  Array.from(files).forEach(file=>{
+    if(file.size>10*1024*1024){showToast('⚠️',`"${file.name}" é maior que 10MB.`);processados++;return;}
+    const reader=new FileReader();
+    reader.onload=e=>{
+      v.anexos.push({
+        nome:file.name,
+        tipo,
+        tamanho:fmtTamanho(file.size),
+        data:hoje().slice(0,5),
+        por:usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema',
+        dataUrl:e.target.result,
+        mime:file.type
+      });
+      processados++;
+      if(processados===total){
+        showVDetail(vendaId);
+        showToast('✅',`${total} arquivo${total>1?'s':''} adicionado${total>1?'s':''}!`);
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function delAnexo(vendaId,idx){
+  const v=VENDAS.find(x=>x.id===vendaId);
+  if(!v||!v.anexos)return;
+  if(!confirm(`Remover "${v.anexos[idx].nome}"?`))return;
+  v.anexos.splice(idx,1);
+  showVDetail(vendaId);
+  showToast('🗑','Anexo removido.');
+}
+
+function verAnexo(vendaId,idx){
+  const v=VENDAS.find(x=>x.id===vendaId);
+  if(!v||!v.anexos||!v.anexos[idx])return;
+  const a=v.anexos[idx];
+  document.getElementById('av-nome').textContent=a.nome;
+  const cont=document.getElementById('av-content');
+  if(a.mime&&a.mime.startsWith('image/')){
+    cont.innerHTML=`<img src="${a.dataUrl}" alt="${a.nome}">`;
+  } else if(a.mime==='application/pdf'){
+    cont.innerHTML=`<iframe src="${a.dataUrl}" title="${a.nome}"></iframe>`;
+  } else {
+    cont.innerHTML=`<div style="color:#fff;font-size:13px;padding:20px;background:rgba(255,255,255,0.1);border-radius:8px;">Pré-visualização não disponível para este tipo de arquivo.<br><a href="${a.dataUrl}" download="${a.nome}" style="color:var(--gold-l);margin-top:10px;display:inline-block;">⬇ Baixar arquivo</a></div>`;
+  }
+  document.getElementById('anexo-viewer').classList.add('show');
+}
+
+function fecharViewer(){
+  document.getElementById('anexo-viewer').classList.remove('show');
+  document.getElementById('av-content').innerHTML='';
+}
 
 function renderRel(){const meses=['TODOS',...new Set(VENDAS.map(v=>v.mes))];document.getElementById('rel-filters').innerHTML=meses.map(m=>`<button class="rf ${relMes===m?'active':''}" onclick="setRM('${m}',this)">${m}</button>`).join('');let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const vgv=l.reduce((s,v)=>s+v.valor,0),mc=l.reduce((s,v)=>s+comVis(v),0),conc=l.filter(v=>v.etapa===ETAPAS.length-1).length;document.getElementById('rel-mets').innerHTML=`<div class="mc a"><div class="mc-l">VGV total</div><div class="mc-v g">${fmtK(vgv)}</div><div class="mc-s">${l.length} vendas</div></div><div class="mc"><div class="mc-l">${lblCom()}</div><div class="mc-v g">${fmtK(mc)}</div><div class="mc-s">total período</div></div><div class="mc"><div class="mc-l">Em andamento</div><div class="mc-v">${l.length-conc}</div></div><div class="mc"><div class="mc-l">Concluídas</div><div class="mc-v">${conc}</div></div>`;document.getElementById('rel-n').textContent=`${l.length} vendas`;const mb=role==='dir'||role==='fin';document.getElementById('rel-thead').innerHTML=`<th>Data</th><th>Cliente</th><th>Produto</th><th>Corretor</th><th>Valor</th>${mb?'<th>Com. bruta</th>':''}<th>${lblCom()}</th><th>Etapa</th>`;document.getElementById('rel-body').innerHTML=l.map(v=>`<tr><td>${v.data}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td><td>${v.produto}</td><td>${v.corretor}</td><td class="pos">${fmt(v.valor)}</td>${mb?`<td class="pos">${fmt(v.valor*v.pct)}</td>`:''}<td class="pos">${fmt(comVis(v))}</td><td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td></tr>`).join('');}
 function setRM(m,el){relMes=m;document.querySelectorAll('.rf').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderRel();}
@@ -1150,6 +1622,7 @@ let pixSel='';
 let nextUserId=3;
 
 const SENHA_PADRAO='Mudar@123';
+const SENHAS_INDIVIDUAIS={}; // senhas individuais sobrescrevem a padrão
 
 const PERFIL_TAG={Corretor:'tag-cor',Capitão:'tag-cap',Gerente:'tag-ger',Diretor:'tag-dir',Financeiro:'tag-fin',RH:'tag-rh'};
 const PERFIL_ICON={Corretor:'👤',Capitão:'⭐',Gerente:'🏆',Diretor:'💼',Financeiro:'💰',RH:'🤝'};
@@ -1217,10 +1690,16 @@ function renderUsuarios(){
   cont.innerHTML=`<div class="usuarios-wrap">
     <div class="usuarios-top">
       <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">Usuários do Sistema</div>
-      <button class="btn-add-trein" onclick="abrirModalUser()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
-        Novo usuário
-      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-add-trein" style="background:var(--bg);border:1px solid var(--gold-bd);color:var(--gold);" onclick="abrirConvite()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8.5V13a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1h4.5"/><path d="M9 1h6v6"/><path d="M15 1L8 8"/></svg>
+          Convidar usuário
+        </button>
+        <button class="btn-add-trein" onclick="abrirModalUser()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+          Novo usuário
+        </button>
+      </div>
     </div>
     <div class="usuarios-stats">
       <div class="mc a"><div class="mc-l">Total cadastrados</div><div class="mc-v" style="color:var(--gold);">${total}</div></div>
@@ -1342,7 +1821,83 @@ function renderNots(){const el=document.getElementById('nlist');if(!notifs.lengt
 function toggleNotif(){const p=document.getElementById('npanel');p.classList.toggle('hidden');if(!p.classList.contains('hidden'))renderNots();}
 function showToast(icon,msg){const old=document.getElementById('toast-el');if(old)old.remove();const t=document.createElement('div');t.id='toast-el';t.className='toast';t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;document.body.appendChild(t);setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),400);},3000);}
 
-// ── LOGIN ─────────────────────────────────────────────────────────────────────
+// ── TROCAR SENHA ─────────────────────────────────────────────────────────────
+function abrirTS(emailPre){
+  document.getElementById('ts-nova').value='';
+  document.getElementById('ts-confirma').value='';
+  document.getElementById('ts-error').style.display='none';
+  const emailField=document.getElementById('ts-email-field');
+  const emailInput=document.getElementById('ts-email');
+  if(emailPre){
+    // Chamado da tela de login — mostra campo de e-mail
+    emailField.style.display='block';
+    emailInput.value='';
+    document.getElementById('ts-subtitulo').textContent='Informe seu e-mail e crie uma nova senha';
+  } else {
+    // Chamado dentro do sistema — e-mail já é o do usuário logado
+    emailField.style.display='none';
+    emailInput.value=usuarioLogado?usuarioLogado.email:'';
+    document.getElementById('ts-subtitulo').textContent=`Alterando senha de: ${usuarioLogado?usuarioLogado.email:''}`;
+  }
+  document.getElementById('m-trocar-senha').classList.add('show');
+  setTimeout(()=>{
+    const first=emailPre?emailInput:document.getElementById('ts-nova');
+    first.focus();
+  },100);
+}
+
+function fecharTS(){
+  document.getElementById('m-trocar-senha').classList.remove('show');
+}
+function handleBackdropTS(e){if(e.target===document.getElementById('m-trocar-senha'))fecharTS();}
+
+function toggleSenhaField(inputId,btnId){
+  const inp=document.getElementById(inputId);
+  const btn=document.getElementById(btnId);
+  if(inp.type==='password'){inp.type='text';btn.textContent='🙈';}
+  else{inp.type='password';btn.textContent='👁';}
+}
+
+function salvarNovaSenha(){
+  const emailInput=document.getElementById('ts-email');
+  const emailField=document.getElementById('ts-email-field');
+  const nova=document.getElementById('ts-nova').value.trim();
+  const confirma=document.getElementById('ts-confirma').value.trim();
+  const errEl=document.getElementById('ts-error');
+  const errMsg=document.getElementById('ts-error-msg');
+
+  const mostrarErro=(msg)=>{errMsg.textContent=msg;errEl.style.display='flex';};
+  errEl.style.display='none';
+
+  // Determina o e-mail alvo
+  let emailAlvo='';
+  if(emailField.style.display!=='none'){
+    emailAlvo=emailInput.value.trim().toLowerCase();
+    if(!emailAlvo){document.getElementById('ts-email').focus();mostrarErro('Informe o e-mail.');return;}
+    const existe=USUARIOS.find(u=>u.email.toLowerCase()===emailAlvo);
+    if(!existe){mostrarErro('E-mail não encontrado no sistema.');return;}
+  } else {
+    emailAlvo=usuarioLogado?usuarioLogado.email.toLowerCase():'';
+  }
+
+  if(!nova){document.getElementById('ts-nova').focus();mostrarErro('Informe a nova senha.');return;}
+  if(nova.length<6){document.getElementById('ts-nova').focus();mostrarErro('A senha deve ter pelo menos 6 caracteres.');return;}
+  if(nova!==confirma){document.getElementById('ts-confirma').focus();mostrarErro('As senhas não coincidem.');return;}
+
+  // Atualiza a senha — como a senha é global (SENHA_PADRAO), atualizamos apenas para esse usuário
+  // Armazenamos em um mapa de senhas individuais
+  SENHAS_INDIVIDUAIS[emailAlvo]=nova;
+
+  fecharTS();
+  showToast('✅','Senha alterada com sucesso!');
+  if(usuarioLogado&&usuarioLogado.email.toLowerCase()===emailAlvo){
+    // Se trocou a própria senha, faz logout para relogar com a nova
+    setTimeout(()=>{
+      showToast('ℹ️','Entre novamente com sua nova senha.');
+      fazerLogout();
+    },1500);
+  }
+}
 const PERFIL_ROLE={Corretor:'cor',Capitão:'cap',Gerente:'ger',Diretor:'dir',Financeiro:'fin',RH:'rh'};
 
 let usuarioLogado=null;
@@ -1370,7 +1925,9 @@ function fazerLogin(){
       errEl.classList.add('show');
       btn.classList.remove('loading');btn.textContent='Entrar no sistema';return;
     }
-    if(senha!==SENHA_PADRAO){
+    // Verifica senha — individual ou padrão
+    const senhaEsperada=SENHAS_INDIVIDUAIS[usuario.email.toLowerCase()]||SENHA_PADRAO;
+    if(senha!==senhaEsperada){
       document.getElementById('lg-error-msg').textContent='Senha incorreta. Tente novamente.';
       errEl.classList.add('show');
       btn.classList.remove('loading');btn.textContent='Entrar no sistema';
@@ -1428,14 +1985,153 @@ function toggleSenha(){
     btnToggle.addEventListener('click',toggleSenha);
     emailInp.addEventListener('keydown',e=>{if(e.key==='Enter')senhaInp.focus();});
     senhaInp.addEventListener('keydown',e=>{if(e.key==='Enter')fazerLogin();});
+    // Botão trocar senha na tela de login
+    const btnTS=document.getElementById('lg-trocar-senha');
+    if(btnTS) btnTS.addEventListener('click',()=>abrirTS(true));
     emailInp.focus();
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bind);
   else bind();
 })();
 
+// ── EMAILJS + CONVITES ───────────────────────────────────────────────────────
+const EJS_SERVICE='service_wirqv1v';
+const EJS_TEMPLATE='template_ylfp3ad';
+const EJS_PUBKEY='GEXIho24PuM7N3RTZ';
+const CONVITES_PENDENTES={};
+let conviteAtivo=null;
+let pixSelCV='';
+
+function gerarToken(){return 'ZEL-'+Math.random().toString(36).substr(2,6).toUpperCase();}
+
+function abrirConvite(){
+  ['inv-nome','inv-email','inv-equipe'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('inv-perfil').value='';
+  document.getElementById('inv-rh').checked=false;
+  document.getElementById('inv-rh-field').style.display='none';
+  document.getElementById('inv-error').style.display='none';
+  document.getElementById('inv-btn').textContent='✉️ Enviar convite';
+  document.getElementById('inv-btn').disabled=false;
+  document.getElementById('m-convite').classList.add('show');
+  setTimeout(()=>document.getElementById('inv-nome').focus(),100);
+}
+function fecharConvite(){document.getElementById('m-convite').classList.remove('show');}
+function handleBackdropConv(e){if(e.target===document.getElementById('m-convite'))fecharConvite();}
+function toggleInvRH(){
+  const p=document.getElementById('inv-perfil').value;
+  document.getElementById('inv-rh-field').style.display=p==='Corretor'?'block':'none';
+}
+
+function enviarConvite(){
+  const nome=document.getElementById('inv-nome').value.trim();
+  const email=document.getElementById('inv-email').value.trim().toLowerCase();
+  const perfil=document.getElementById('inv-perfil').value;
+  const equipe=document.getElementById('inv-equipe').value.trim();
+  const rhContratacao=document.getElementById('inv-rh').checked;
+  const errEl=document.getElementById('inv-error');
+  const errMsg=document.getElementById('inv-error-msg');
+  errEl.style.display='none';
+  const erro=(m)=>{errMsg.textContent=m;errEl.style.display='flex';};
+  if(!nome){document.getElementById('inv-nome').focus();erro('Informe o nome.');return;}
+  if(!email||!email.includes('@')){document.getElementById('inv-email').focus();erro('Informe um e-mail válido.');return;}
+  if(!perfil){erro('Selecione o perfil de acesso.');return;}
+  if(USUARIOS.find(u=>u.email.toLowerCase()===email)){erro('Este e-mail já está cadastrado.');return;}
+  const btn=document.getElementById('inv-btn');
+  const token=gerarToken();
+  const link=window.location.origin+window.location.pathname+'?convite='+token;
+  CONVITES_PENDENTES[token]={nome,email,perfil,equipe,rhContratacao};
+  btn.textContent='Enviando...';btn.disabled=true;
+  emailjs.init(EJS_PUBKEY);
+  emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
+    nome,email_para:email,cargo:perfil,
+    diretor:usuarioLogado?usuarioLogado.nome:'Diretor Zelony',link
+  }).then(()=>{
+    USUARIOS.push({id:nextUserId++,nome,email,tel:'',perfil,status:'Pendente',
+      banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao,equipe,token});
+    fecharConvite();renderUsuarios();
+    showToast('✅',`Convite enviado para ${nome}!`);
+  }).catch(err=>{
+    console.error('EmailJS:',err);
+    btn.textContent='✉️ Enviar convite';btn.disabled=false;
+    erro('Erro ao enviar e-mail. Verifique a configuração do EmailJS.');
+  });
+}
+
+function verificarConviteURL(){
+  const params=new URLSearchParams(window.location.search);
+  const token=params.get('convite');
+  if(!token)return;
+  const conv=CONVITES_PENDENTES[token];
+  if(!conv)return;
+  conviteAtivo={...conv,token};
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('convite-screen').classList.add('show');
+  document.getElementById('conv-nome-bv').textContent=`Olá, ${conv.nome.split(' ')[0]}!`;
+  document.getElementById('conv-cargo-bv').textContent=conv.perfil;
+  document.getElementById('cv-nome').value=conv.nome;
+}
+
+function selPixCV(tipo,el){
+  pixSelCV=tipo;
+  document.querySelectorAll('#cv-pix-types .pix-type').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  const phs={CPF:'000.000.000-00',CNPJ:'00.000.000/0001-00','E-mail':'email@exemplo.com',Telefone:'(41) 99999-9999',Aleatória:'Código gerado pelo banco'};
+  document.getElementById('cv-pix').placeholder=phs[tipo]||'';
+}
+
+async function buscarCEP(cep){
+  const c=cep.replace(/\D/g,'');
+  if(c.length!==8)return;
+  try{const r=await fetch(`https://viacep.com.br/ws/${c}/json/`);const d=await r.json();
+    if(!d.erro){document.getElementById('cv-end').value=`${d.logradouro}, ${d.bairro}`;document.getElementById('cv-cidade').value=d.localidade;document.getElementById('cv-estado').value=d.uf;}}catch(e){}
+}
+
+function concluirCadastro(){
+  if(!conviteAtivo)return;
+  const errEl=document.getElementById('conv-error');
+  errEl.style.display='none';
+  const erro=(m)=>{errEl.textContent=m;errEl.style.display='block';errEl.scrollIntoView({behavior:'smooth',block:'nearest'});};
+  const g=id=>document.getElementById(id).value.trim();
+  const nome=g('cv-nome'),tel=g('cv-tel'),nasc=g('cv-nasc'),cpf=g('cv-cpf'),cep=g('cv-cep');
+  const end=g('cv-end'),cidade=g('cv-cidade'),estado=g('cv-estado');
+  const banco=g('cv-banco'),agencia=g('cv-agencia'),conta=g('cv-conta');
+  const tipoConta=document.getElementById('cv-tipo-conta').value;
+  const pix=g('cv-pix'),senha=document.getElementById('cv-senha').value;
+  const confirma=document.getElementById('cv-confirma').value;
+  if(!nome){erro('Informe seu nome completo.');return;}
+  if(!tel){erro('Informe seu telefone.');return;}
+  if(!nasc){erro('Informe sua data de nascimento.');return;}
+  if(!cpf){erro('Informe seu CPF.');return;}
+  if(!end){erro('Informe seu endereço.');return;}
+  if(!cidade){erro('Informe sua cidade.');return;}
+  if(!banco){erro('Informe seu banco.');return;}
+  if(!conta){erro('Informe sua conta bancária.');return;}
+  if(!tipoConta){erro('Selecione o tipo de conta.');return;}
+  if(!pixSelCV){erro('Selecione o tipo de chave Pix.');return;}
+  if(!pix){erro('Informe sua chave Pix.');return;}
+  if(!senha||senha.length<6){erro('A senha deve ter pelo menos 6 caracteres.');return;}
+  if(senha!==confirma){erro('As senhas não coincidem.');return;}
+  const dados={nome,tel,status:'Ativo',banco,agencia,conta,tipoConta,pixTipo:pixSelCV,pix,cpf,nasc,cep,end,cidade,estado,token:null};
+  const idx=USUARIOS.findIndex(u=>u.email.toLowerCase()===conviteAtivo.email.toLowerCase());
+  if(idx>=0)USUARIOS[idx]={...USUARIOS[idx],...dados};
+  else USUARIOS.push({id:nextUserId++,email:conviteAtivo.email,perfil:conviteAtivo.perfil,rhContratacao:conviteAtivo.rhContratacao,...dados});
+  SENHAS_INDIVIDUAIS[conviteAtivo.email.toLowerCase()]=senha;
+  delete CONVITES_PENDENTES[conviteAtivo.token];
+  document.getElementById('conv-form').style.display='none';
+  document.getElementById('conv-success').style.display='block';
+}
+
+function irParaLogin(){
+  document.getElementById('convite-screen').classList.remove('show');
+  document.getElementById('login-screen').classList.remove('hidden');
+  if(conviteAtivo) document.getElementById('lg-email').value=conviteAtivo.email;
+  conviteAtivo=null;
+  window.history.replaceState({},'',window.location.pathname);
+}
+
 renderFiltros();renderVList();renderTrein();renderProc();
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();}});
+verificarConviteURL();
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();}});
 </script>
 </body>
 </html>
