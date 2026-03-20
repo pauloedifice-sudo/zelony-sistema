@@ -2004,6 +2004,25 @@ let pixSelCV='';
 
 function gerarToken(){return 'ZEL-'+Math.random().toString(36).substr(2,6).toUpperCase();}
 
+// Gera link com dados embutidos em base64 — funciona em qualquer navegador
+function gerarLinkConvite(nome,email,perfil,equipe,rhContratacao){
+  const dados={nome,email,perfil,equipe,rhContratacao,ts:Date.now()};
+  const b64=btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
+  const base=window.location.origin+window.location.pathname;
+  return base+'?c='+b64;
+}
+
+// Lê dados do convite da URL
+function lerConviteURL(){
+  const params=new URLSearchParams(window.location.search);
+  const c=params.get('c');
+  if(!c)return null;
+  try{
+    const dados=JSON.parse(decodeURIComponent(escape(atob(c))));
+    return dados;
+  }catch(e){return null;}
+}
+
 function abrirConvite(){
   ['inv-nome','inv-email','inv-equipe'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('inv-perfil').value='';
@@ -2037,17 +2056,17 @@ function enviarConvite(){
   if(!perfil){erro('Selecione o perfil de acesso.');return;}
   if(USUARIOS.find(u=>u.email.toLowerCase()===email)){erro('Este e-mail já está cadastrado.');return;}
   const btn=document.getElementById('inv-btn');
-  const token=gerarToken();
-  const link=window.location.origin+window.location.pathname+'?convite='+token;
-  CONVITES_PENDENTES[token]={nome,email,perfil,equipe,rhContratacao};
+  // Gera link com dados embutidos em base64
+  const link=gerarLinkConvite(nome,email,perfil,equipe,rhContratacao);
   btn.textContent='Enviando...';btn.disabled=true;
   emailjs.init(EJS_PUBKEY);
   emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
     nome,email_para:email,cargo:perfil,
     diretor:usuarioLogado?usuarioLogado.nome:'Diretor Zelony',link
   }).then(()=>{
+    // Adiciona como pendente no sistema
     USUARIOS.push({id:nextUserId++,nome,email,tel:'',perfil,status:'Pendente',
-      banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao,equipe,token});
+      banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao,equipe});
     fecharConvite();renderUsuarios();
     showToast('✅',`Convite enviado para ${nome}!`);
   }).catch(err=>{
@@ -2058,17 +2077,17 @@ function enviarConvite(){
 }
 
 function verificarConviteURL(){
-  const params=new URLSearchParams(window.location.search);
-  const token=params.get('convite');
-  if(!token)return;
-  const conv=CONVITES_PENDENTES[token];
-  if(!conv)return;
-  conviteAtivo={...conv,token};
+  const conv=lerConviteURL();
+  if(!conv||!conv.email||!conv.perfil)return;
+  // Mostra tela de onboarding com dados do convite
+  conviteAtivo=conv;
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('convite-screen').classList.add('show');
   document.getElementById('conv-nome-bv').textContent=`Olá, ${conv.nome.split(' ')[0]}!`;
   document.getElementById('conv-cargo-bv').textContent=conv.perfil;
   document.getElementById('cv-nome').value=conv.nome;
+  // Rola para o topo
+  document.getElementById('convite-screen').scrollTo(0,0);
 }
 
 function selPixCV(tipo,el){
