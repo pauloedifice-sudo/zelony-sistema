@@ -1132,6 +1132,10 @@ input[type=range]{width:100%;accent-color:var(--gold);}
               <option value="Ambas">⚡ Ambas as unidades</option>
             </select>
           </div>
+          <div class="f-field">
+            <label>Equipe</label>
+            <input type="text" id="mu-equipe" placeholder="Ex: Equipe Fênix, Equipe Alpha...">
+          </div>
           <!-- Campo RH — aparece só quando perfil = Corretor -->
           <div id="rh-field" style="display:none;">
             <div class="rh-toggle-wrap">
@@ -2295,6 +2299,7 @@ function abrirModalUser(){
   document.getElementById('mu-rh').checked=false;
   document.getElementById('rh-field').style.display='none';
   document.getElementById('mu-unidade').value='';
+  document.getElementById('mu-equipe').value='';
   document.querySelectorAll('.pix-type').forEach(b=>b.classList.remove('sel'));
   document.getElementById('muser').classList.add('show');
   setTimeout(()=>document.getElementById('mu-nome').focus(),100);
@@ -2317,6 +2322,7 @@ function editarUsuario(idx){
   document.getElementById('mu-rh').checked=u.rhContratacao||false;
   document.getElementById('rh-field').style.display=u.perfil==='Corretor'?'block':'none';
   document.getElementById('mu-unidade').value=u.unidade||'';
+  document.getElementById('mu-equipe').value=u.equipe||'';
   pixSel=u.pixTipo||'';
   document.getElementById('mu-pix').value=u.pix||'';
   document.querySelectorAll('.pix-type').forEach(b=>{b.classList.toggle('sel',b.textContent.trim()===pixSel);});
@@ -2359,6 +2365,7 @@ function salvarUsuario(){
   const pix=document.getElementById('mu-pix').value.trim();
   const rhContratacao=document.getElementById('mu-rh').checked;
   const unidade=document.getElementById('mu-unidade').value;
+  const equipe=document.getElementById('mu-equipe').value.trim();
 
   // Validações obrigatórias
   if(!nome){document.getElementById('mu-nome').focus();showToast('⚠️','Informe o nome completo.');return;}
@@ -2372,7 +2379,7 @@ function salvarUsuario(){
   if(!pixSel){showToast('⚠️','Selecione o tipo de chave Pix.');return;}
   if(!pix){document.getElementById('mu-pix').focus();showToast('⚠️','Informe a chave Pix.');return;}
 
-  const dados={nome,email,tel,perfil,status,banco,agencia,conta,tipoConta,pixTipo:pixSel,pix,rhContratacao,unidade};
+  const dados={nome,email,tel,perfil,status,banco,agencia,conta,tipoConta,pixTipo:pixSel,pix,rhContratacao,unidade,equipe};
 
   if(editUserIdx>=0){
     const uid=USUARIOS[editUserIdx].id;
@@ -2607,8 +2614,8 @@ let pixSelCV='';
 function gerarToken(){return 'ZEL-'+Math.random().toString(36).substr(2,6).toUpperCase();}
 
 // Gera link com dados embutidos em base64 — funciona em qualquer navegador
-function gerarLinkConvite(nome,email,perfil,equipe,rhContratacao){
-  const dados={nome,email,perfil,equipe,rhContratacao,ts:Date.now()};
+function gerarLinkConvite(nome,email,perfil,equipe,rhContratacao,unidade){
+  const dados={nome,email,perfil,equipe,rhContratacao,unidade,ts:Date.now()};
   const b64=btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
   const base=window.location.origin+window.location.pathname;
   return base+'?c='+b64;
@@ -2628,6 +2635,7 @@ function lerConviteURL(){
 function abrirConvite(){
   ['inv-nome','inv-email','inv-equipe'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('inv-perfil').value='';
+  document.getElementById('inv-unidade').value='';
   document.getElementById('inv-rh').checked=false;
   document.getElementById('inv-rh-field').style.display='none';
   document.getElementById('inv-error').style.display='none';
@@ -2648,6 +2656,7 @@ function enviarConvite(){
   const email=document.getElementById('inv-email').value.trim().toLowerCase();
   const perfil=document.getElementById('inv-perfil').value;
   const equipe=document.getElementById('inv-equipe').value.trim();
+  const unidade=document.getElementById('inv-unidade').value;
   const rhContratacao=document.getElementById('inv-rh').checked;
   const errEl=document.getElementById('inv-error');
   const errMsg=document.getElementById('inv-error-msg');
@@ -2656,20 +2665,19 @@ function enviarConvite(){
   if(!nome){document.getElementById('inv-nome').focus();erro('Informe o nome.');return;}
   if(!email||!email.includes('@')){document.getElementById('inv-email').focus();erro('Informe um e-mail válido.');return;}
   if(!perfil){erro('Selecione o perfil de acesso.');return;}
+  if(!unidade){erro('Selecione a unidade.');return;}
   if(USUARIOS.find(u=>u.email.toLowerCase()===email)){erro('Este e-mail já está cadastrado.');return;}
   const btn=document.getElementById('inv-btn');
-  // Gera link com dados embutidos em base64
-  const link=gerarLinkConvite(nome,email,perfil,equipe,rhContratacao);
+  const link=gerarLinkConvite(nome,email,perfil,equipe,rhContratacao,unidade);
   btn.textContent='Enviando...';btn.disabled=true;
   emailjs.init(EJS_PUBKEY);
   emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
     nome,email_para:email,cargo:perfil,
     diretor:usuarioLogado?usuarioLogado.nome:'Diretor Zelony',link
   }).then(()=>{
-    // Adiciona como pendente e salva imediatamente no Supabase
     const novoU={id:nextUserId++,nome,email,tel:'',perfil,status:'Pendente',
       banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',
-      rhContratacao,equipe,unidade:'',cpf:'',nasc:'',cep:'',
+      rhContratacao,equipe,unidade,cpf:'',nasc:'',cep:'',
       end:'',cidade:'',estado:''};
     USUARIOS.push(novoU);
     dbSalvarUsuario(novoU,null).catch(e=>console.error('Erro ao salvar convite:',e));
@@ -2737,7 +2745,7 @@ function concluirCadastro(){
   if(!pix){erro('Informe sua chave Pix.');return;}
   if(!senha||senha.length<6){erro('A senha deve ter pelo menos 6 caracteres.');return;}
   if(senha!==confirma){erro('As senhas não coincidem.');return;}
-  const dados={nome,tel,status:'Ativo',banco,agencia,conta,tipoConta,pixTipo:pixSelCV,pix,cpf,nasc,cep,end,cidade,estado,token:null};
+  const dados={nome,tel,status:'Ativo',banco,agencia,conta,tipoConta,pixTipo:pixSelCV,pix,cpf,nasc,cep,end,cidade,estado,token:null,unidade:conviteAtivo.unidade||''};
   const idx=USUARIOS.findIndex(u=>u.email.toLowerCase()===conviteAtivo.email.toLowerCase());
   if(idx>=0){
     USUARIOS[idx]={...USUARIOS[idx],...dados};
