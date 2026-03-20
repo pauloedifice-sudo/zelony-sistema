@@ -1445,13 +1445,21 @@ function vendasU(l, somenteMinhas=false){
     return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
   };
 
-  // Diretor com "Ambas": vê todas as vendas em Vendas/Comissão,
-  // mas na Carteira (somenteMinhas=true) vê só as suas
+  // Diretor com "Ambas": vê todas em Vendas/Comissão, só as suas na Carteira
   if(role==='dir'&&(unid==='Ambas'||!unid)){
     if(somenteMinhas&&usuarioLogado){
       return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado));
     }
     return base;
+  }
+
+  // Diretor com unidade específica: vê TODAS as vendas da unidade em Vendas/Comissão
+  // mas só as suas na Carteira
+  if(role==='dir'){
+    if(somenteMinhas&&usuarioLogado){
+      return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado));
+    }
+    return base; // vê todas da unidade
   }
 
   // Cada perfil vê APENAS as vendas onde aparece no seu campo específico
@@ -2503,6 +2511,14 @@ function salvarNovaSenha(){
   }
 }
 const PERFIL_ROLE={Dono:'dono',Corretor:'cor',Capitão:'cap',Gerente:'ger',Diretor:'dir',Financeiro:'fin',RH:'rh'};
+function getPerfil(p){
+  if(!p) return 'cor';
+  // Tenta exato primeiro, depois case-insensitive
+  if(PERFIL_ROLE[p]) return PERFIL_ROLE[p];
+  const lower=p.toLowerCase();
+  const found=Object.keys(PERFIL_ROLE).find(k=>k.toLowerCase()===lower);
+  return found?PERFIL_ROLE[found]:'cor';
+}
 
 let usuarioLogado=null;
 
@@ -2541,7 +2557,7 @@ function fazerLogin(){
 
     // Login bem-sucedido
     usuarioLogado=usuario;
-    const roleValue=PERFIL_ROLE[usuario.perfil]||'cor';
+    const roleValue=getPerfil(usuario.perfil);
 
     // Salva sessão no localStorage
     localStorage.setItem('zel_sessao',usuario.email.toLowerCase());
@@ -2584,7 +2600,7 @@ function restaurarSessao(){
   if(!usuario||usuario.status==='Pendente') return false;
 
   usuarioLogado=usuario;
-  const roleValue=PERFIL_ROLE[usuario.perfil]||'cor';
+  const roleValue=getPerfil(usuario.perfil);
   RD[roleValue]={
     av:ini(usuario.nome),
     nome:usuario.nome.split(' ')[0],
