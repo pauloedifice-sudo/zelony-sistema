@@ -1435,7 +1435,29 @@ async function dbSalvarVenda(v){
 
 // Atualizar venda (etapa, hist)
 async function dbAtualizarVenda(v){
-  await sb.from('vendas').update({etapa:v.etapa,hist:v.hist,distratada:v.distratada||false,cliente:v.cliente,produto:v.produto,construtora:v.construtora,valor:v.valor,pct:v.pct,cca:v.cca||''}).eq('id',v.id);
+  await sb.from('vendas').update({
+    etapa:v.etapa,
+    hist:v.hist,
+    distratada:v.distratada||false,
+    cliente:v.cliente,
+    produto:v.produto,
+    construtora:v.construtora,
+    origem:v.origem||'Indicação',
+    unidade:v.unidade||'',
+    valor:v.valor,
+    pct:v.pct,
+    imp:v.imp||0.11,
+    pct_cor:v.pct_cor||0,
+    pct_cap:v.pct_cap||0,
+    pct_ger:v.pct_ger||0,
+    pct_dir:v.pct_dir||0,
+    pct_dir2:v.pct_dir2||0,
+    bonus:v.bonus||0,
+    bonus_pct_dir:v.bonus_pct_dir||0,
+    bonus_pct_ger:v.bonus_pct_ger||0,
+    bonus_pct_cor:v.bonus_pct_cor||0,
+    cca:v.cca||''
+  }).eq('id',v.id);
 }
 
 // Salvar treinamento
