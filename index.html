@@ -952,7 +952,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 
     <!-- MODAL EDITAR VENDA -->
     <div class="modal-backdrop" id="m-edit-venda" onclick="if(event.target===this)fecharEditVenda()">
-      <div class="modal" style="max-width:480px;">
+      <div class="modal mv-modal" style="max-width:580px;">
         <div class="modal-top">
           <div>
             <div class="modal-title">✏️ Editar venda</div>
@@ -960,9 +960,11 @@ input[type=range]{width:100%;accent-color:var(--gold);}
           </div>
           <button class="mclose" onclick="fecharEditVenda()">✕</button>
         </div>
-        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+        <div class="mv-modal modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <!-- Dados do cliente -->
+          <div class="mv-section">Dados do Cliente</div>
           <div class="f-row">
-            <div class="f-field"><label>Nome do cliente</label><input type="text" id="ev-cliente"></div>
+            <div class="f-field"><label>Nome do cliente</label><input type="text" id="ev-cliente" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
             <div class="f-field"><label>Data da venda</label><input type="date" id="ev-data"></div>
           </div>
           <div class="f-row">
@@ -970,10 +972,49 @@ input[type=range]{width:100%;accent-color:var(--gold);}
             <div class="f-field"><label>Construtora</label><input type="text" id="ev-construtora"></div>
           </div>
           <div class="f-row">
-            <div class="f-field"><label>Valor de venda (R$)</label><input type="number" id="ev-valor" min="0"></div>
-            <div class="f-field"><label>% Comissão total</label><input type="number" id="ev-pct" min="0" max="100" step="0.1"></div>
+            <div class="f-field"><label>Origem do lead</label>
+              <select id="ev-origem">
+                <option value="Indicação">Indicação</option>
+                <option value="MKT">MKT</option>
+                <option value="Oferta Ativa">Oferta Ativa</option>
+              </select>
+            </div>
+            <div class="f-field"><label>Unidade</label>
+              <select id="ev-unidade">
+                <option value="Centro">🟠 Centro</option>
+                <option value="Cristo Rei">🟢 Cristo Rei</option>
+              </select>
+            </div>
           </div>
+          <div class="mv-divider"></div>
+          <!-- Valores -->
+          <div class="mv-section">Valores e Comissões</div>
+          <div class="f-row">
+            <div class="f-field"><label>Valor de venda (R$)</label><input type="number" id="ev-valor" min="0"></div>
+            <div class="f-field"><label>% Comissão total</label><input type="number" id="ev-pct" min="0" max="100" step="0.01"></div>
+          </div>
+          <div class="f-field"><label>Imposto (%)</label><input type="number" id="ev-imp" min="0" max="100" step="0.1"></div>
+          <div class="mv-section" style="margin-top:4px;">Distribuição por membro (%)</div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-pct-cor" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Capitão %</label><input type="number" id="ev-pct-cap" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-pct-ger" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-pct-dir" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Diretor 2 %</label><input type="number" id="ev-pct-dir2" min="0" step="0.01"></div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Bônus -->
+          <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional)</span></div>
+          <div class="f-field"><label>Valor do bônus (R$)</label><input type="number" id="ev-bonus" min="0" placeholder="0"></div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-bonus-dir" min="0" max="100" step="1" placeholder="0"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-bonus-ger" min="0" max="100" step="1" placeholder="0"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-bonus-cor" min="0" max="100" step="1" placeholder="0"></div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- CCA -->
           <div class="f-field"><label>CCA Responsável</label><input type="text" id="ev-cca"></div>
+          <!-- Motivo -->
           <div class="f-field">
             <label>Motivo da alteração *</label>
             <textarea id="ev-motivo" placeholder="Descreva o motivo da alteração para registro no histórico..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:70px;"></textarea>
@@ -2173,11 +2214,26 @@ function abrirEditVenda(id){
   editVendaId=id;
   document.getElementById('ev-subtitulo').textContent=`Editando: ${v.cliente.split('/')[0].trim()}`;
   document.getElementById('ev-cliente').value=v.cliente;
-  document.getElementById('ev-data').value=v.data.split('/').reverse().join('-').replace(/^(\d{4})-(\d{2})-(\d{2})$/,(_,a,b,c)=>`20${c}-${b}-${a}`)||'';
+  // Converte data DD/MM para YYYY-MM-DD
+  const partes=v.data?v.data.split('/'):[]; 
+  const anoAtual=new Date().getFullYear();
+  document.getElementById('ev-data').value=partes.length===2?`${anoAtual}-${partes[1]}-${partes[0]}`:'';
   document.getElementById('ev-produto').value=v.produto;
   document.getElementById('ev-construtora').value=v.construtora;
+  document.getElementById('ev-origem').value=v.origem||'Indicação';
+  document.getElementById('ev-unidade').value=v.unidade||'Centro';
   document.getElementById('ev-valor').value=v.valor;
   document.getElementById('ev-pct').value=(v.pct*100).toFixed(2);
+  document.getElementById('ev-imp').value=((v.imp||0.11)*100).toFixed(1);
+  document.getElementById('ev-pct-cor').value=((v.pct_cor||0)*100).toFixed(2);
+  document.getElementById('ev-pct-cap').value=((v.pct_cap||0)*100).toFixed(2);
+  document.getElementById('ev-pct-ger').value=((v.pct_ger||0)*100).toFixed(2);
+  document.getElementById('ev-pct-dir').value=((v.pct_dir||0)*100).toFixed(2);
+  document.getElementById('ev-pct-dir2').value=((v.pct_dir2||0)*100).toFixed(2);
+  document.getElementById('ev-bonus').value=v.bonus||0;
+  document.getElementById('ev-bonus-dir').value=v.bonus_pct_dir||0;
+  document.getElementById('ev-bonus-ger').value=v.bonus_pct_ger||0;
+  document.getElementById('ev-bonus-cor').value=v.bonus_pct_cor||0;
   document.getElementById('ev-cca').value=v.cca||'';
   document.getElementById('ev-motivo').value='';
   document.getElementById('m-edit-venda').classList.add('show');
@@ -2192,32 +2248,50 @@ function salvarEditVenda(){
   if(!v)return;
   const motivo=document.getElementById('ev-motivo').value.trim();
   if(!motivo){document.getElementById('ev-motivo').focus();showToast('⚠️','Informe o motivo da alteração.');return;}
-  // Detecta campos alterados para registrar no histórico
-  const novoCliente=document.getElementById('ev-cliente').value.trim();
+
+  const novoCliente=document.getElementById('ev-cliente').value.trim().toUpperCase();
   const novoProduto=document.getElementById('ev-produto').value.trim();
   const novaConstrutora=document.getElementById('ev-construtora').value.trim();
+  const novaOrigem=document.getElementById('ev-origem').value;
+  const novaUnidade=document.getElementById('ev-unidade').value;
   const novoValor=parseFloat(document.getElementById('ev-valor').value)||v.valor;
   const novoPct=(parseFloat(document.getElementById('ev-pct').value)||v.pct*100)/100;
+  const novoImp=(parseFloat(document.getElementById('ev-imp').value)||11)/100;
+  const novoPctCor=(parseFloat(document.getElementById('ev-pct-cor').value)||0)/100;
+  const novoPctCap=(parseFloat(document.getElementById('ev-pct-cap').value)||0)/100;
+  const novoPctGer=(parseFloat(document.getElementById('ev-pct-ger').value)||0)/100;
+  const novoPctDir=(parseFloat(document.getElementById('ev-pct-dir').value)||0)/100;
+  const novoPctDir2=(parseFloat(document.getElementById('ev-pct-dir2').value)||0)/100;
+  const novoBonus=parseFloat(document.getElementById('ev-bonus').value)||0;
+  const novoBonusDir=parseFloat(document.getElementById('ev-bonus-dir').value)||0;
+  const novoBonusGer=parseFloat(document.getElementById('ev-bonus-ger').value)||0;
+  const novoBonusCor=parseFloat(document.getElementById('ev-bonus-cor').value)||0;
   const novoCca=document.getElementById('ev-cca').value.trim();
-  // Monta resumo das alterações
+
+  // Detecta alterações para o histórico
   const alteracoes=[];
   if(novoCliente!==v.cliente) alteracoes.push(`Cliente: "${v.cliente}" → "${novoCliente}"`);
   if(novoProduto!==v.produto) alteracoes.push(`Produto: "${v.produto}" → "${novoProduto}"`);
-  if(novaConstrutora!==v.construtora) alteracoes.push(`Construtora: "${v.construtora}" → "${novaConstrutora}"`);
-  if(novoValor!==v.valor) alteracoes.push(`Valor: ${fmt(v.valor)} → ${fmt(novoValor)}`);
+  if(novaConstrutora!==v.construtora) alteracoes.push(`Construtora alterada`);
+  if(novaUnidade!==v.unidade) alteracoes.push(`Unidade: ${v.unidade} → ${novaUnidade}`);
+  if(Math.abs(novoValor-v.valor)>0.01) alteracoes.push(`Valor: ${fmt(v.valor)} → ${fmt(novoValor)}`);
   if(Math.abs(novoPct-v.pct)>0.0001) alteracoes.push(`Comissão: ${(v.pct*100).toFixed(2)}% → ${(novoPct*100).toFixed(2)}%`);
-  if(novoCca!==(v.cca||'')) alteracoes.push(`CCA: "${v.cca||''}" → "${novoCca}"`);
-  // Aplica alterações
-  v.cliente=novoCliente;
-  v.produto=novoProduto;
-  v.construtora=novaConstrutora;
-  v.valor=novoValor;
-  v.pct=novoPct;
+  if(novoBonus!==(v.bonus||0)) alteracoes.push(`Bônus: ${fmt(v.bonus||0)} → ${fmt(novoBonus)}`);
+  if(novoCca!==(v.cca||'')) alteracoes.push(`CCA: ${v.cca||'—'} → ${novoCca}`);
+
+  // Aplica todas as alterações
+  v.cliente=novoCliente; v.produto=novoProduto; v.construtora=novaConstrutora;
+  v.origem=novaOrigem; v.unidade=novaUnidade;
+  v.valor=novoValor; v.pct=novoPct; v.imp=novoImp;
+  v.pct_cor=novoPctCor; v.pct_cap=novoPctCap; v.pct_ger=novoPctGer;
+  v.pct_dir=novoPctDir; v.pct_dir2=novoPctDir2;
+  v.bonus=novoBonus; v.bonus_pct_dir=novoBonusDir;
+  v.bonus_pct_ger=novoBonusGer; v.bonus_pct_cor=novoBonusCor;
   v.cca=novoCca;
-  // Registra no histórico
+
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
-  const resumo=alteracoes.length>0?alteracoes.join(' | '):motivo;
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:`✏️ Edição: ${motivo}${alteracoes.length>0?' ('+resumo+')':''}`,tipo:'edicao'});
+  const resumo=alteracoes.length>0?' | '+alteracoes.join(' | '):'';
+  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:`✏️ ${motivo}${resumo}`,tipo:'edicao'});
   dbAtualizarVenda(v).catch(e=>console.error(e));
   salvarLS();
   fecharEditVenda();
