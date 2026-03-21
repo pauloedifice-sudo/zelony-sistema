@@ -920,6 +920,72 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       <div id="av-content"></div>
     </div>
 
+    <!-- MODAL DISTRATO -->
+    <div class="modal-backdrop" id="m-distrato" onclick="if(event.target===this)fecharDistrato()">
+      <div class="modal" style="max-width:440px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" style="color:#C05030;">⚠️ Registrar Distrato</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="dt-subtitulo">Esta ação marca a venda como distratada</div>
+          </div>
+          <button class="mclose" onclick="fecharDistrato()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:8px;padding:12px;font-size:11px;color:#C05030;">
+            ⚠️ <strong>Atenção:</strong> O distrato remove a venda do pipeline ativo e zera as comissões. Esta ação ficará registrada no histórico.
+          </div>
+          <div class="f-field">
+            <label>Motivo do distrato *</label>
+            <textarea id="dt-motivo" placeholder="Descreva o motivo do distrato..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:80px;"></textarea>
+          </div>
+          <div class="f-field">
+            <label>Data do distrato</label>
+            <input type="date" id="dt-data">
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharDistrato()">Cancelar</button>
+          <button style="background:#C05030;color:#fff;border:none;border-radius:7px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;" onclick="confirmarDistrato()">⚠️ Confirmar distrato</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EDITAR VENDA -->
+    <div class="modal-backdrop" id="m-edit-venda" onclick="if(event.target===this)fecharEditVenda()">
+      <div class="modal" style="max-width:480px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title">✏️ Editar venda</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="ev-subtitulo">Alterações ficam registradas no histórico</div>
+          </div>
+          <button class="mclose" onclick="fecharEditVenda()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <div class="f-row">
+            <div class="f-field"><label>Nome do cliente</label><input type="text" id="ev-cliente"></div>
+            <div class="f-field"><label>Data da venda</label><input type="date" id="ev-data"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Produto</label><input type="text" id="ev-produto"></div>
+            <div class="f-field"><label>Construtora</label><input type="text" id="ev-construtora"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Valor de venda (R$)</label><input type="number" id="ev-valor" min="0"></div>
+            <div class="f-field"><label>% Comissão total</label><input type="number" id="ev-pct" min="0" max="100" step="0.1"></div>
+          </div>
+          <div class="f-field"><label>CCA Responsável</label><input type="text" id="ev-cca"></div>
+          <div class="f-field">
+            <label>Motivo da alteração *</label>
+            <textarea id="ev-motivo" placeholder="Descreva o motivo da alteração para registro no histórico..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:70px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharEditVenda()">Cancelar</button>
+          <button class="btn-s" onclick="salvarEditVenda()">✓ Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL NOVA VENDA -->
     <div class="modal-backdrop" id="mvenda" onclick="handleBackdropV(event)">
       <div class="modal mv-modal">
@@ -1278,6 +1344,7 @@ function mapVendaIn(v){return{
   pct_rh:parseFloat(v.pct_rh||0),etapa:v.etapa||0,
   diretor2:v.diretor2||null,pct_dir2:parseFloat(v.pct_dir2||0),
   cca:v.cca||'',
+  distratada:v.distratada||false,dataDistrato:v.data_distrato||'',
   bonus:parseFloat(v.bonus||0),bonus_pct_dir:parseFloat(v.bonus_pct_dir||0),
   bonus_pct_ger:parseFloat(v.bonus_pct_ger||0),bonus_pct_cor:parseFloat(v.bonus_pct_cor||0),
   hist:v.hist||[],anexos:[]
@@ -1290,6 +1357,7 @@ function mapVendaOut(v){return{
   pct_ger:v.pct_ger,pct_dir:v.pct_dir,pct_rh:v.pct_rh,
   diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
   cca:v.cca||'',
+  distratada:v.distratada||false,
   bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
   bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
   etapa:v.etapa,hist:v.hist
@@ -1322,7 +1390,7 @@ async function dbSalvarVenda(v){
 
 // Atualizar venda (etapa, hist)
 async function dbAtualizarVenda(v){
-  await sb.from('vendas').update({etapa:v.etapa,hist:v.hist}).eq('id',v.id);
+  await sb.from('vendas').update({etapa:v.etapa,hist:v.hist,distratada:v.distratada||false,cliente:v.cliente,produto:v.produto,construtora:v.construtora,valor:v.valor,pct:v.pct,cca:v.cca||''}).eq('id',v.id);
 }
 
 // Salvar treinamento
@@ -1886,7 +1954,7 @@ function salvarVenda(){
   salvarLS();
   showToast('✅',`Venda de ${cliente.split(' ')[0]} cadastrada!`);
 }
-function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav">${ini(v.cliente)}</div><div style="flex:1;min-width:0;"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}</div></div></div>`;}).join('');}
+function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');}
 
 function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;return`<div class="si"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
@@ -1927,8 +1995,8 @@ const bonusH=v.bonus>0&&['dir','fin','dono','ger','cor'].includes(role)?`<div cl
 // Garante array de anexos na venda
 if(!v.anexos) v.anexos=[];
 const anexosH=renderAnexosSec(v);
-const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;">${ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
-document.getElementById('vd-body').innerHTML=`<div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd" style="${h.tipo==='edicao'?'background:#3060B8;':''}" ></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;${h.tipo==='edicao'?'color:#3060B8;':''}">${h.tipo==='edicao'?'✏️ Edição registrada':ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
+document.getElementById('vd-body').innerHTML=`<div><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}${v.distratada?` <span style="font-size:11px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:4px;padding:2px 8px;font-family:'Inter',sans-serif;font-weight:600;">⚠️ DISTRATADA</span>`:''}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div>${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;""><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">✏️ Editar</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">⚠️ Distrato</button></div>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
 // Bind do input de anexo após render
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
@@ -1936,6 +2004,10 @@ const drop=document.getElementById('anexo-drop-'+v.id);
 if(drop){drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='var(--gold)';drop.style.background='var(--gold-bg)';});drop.addEventListener('dragleave',()=>{drop.style.borderColor='';drop.style.background='';});drop.addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';drop.style.background='';const files=e.dataTransfer.files;if(files.length)processAnexoFiles(files,v.id);});}}
 // ── ANEXOS ───────────────────────────────────────────────────────────────────
 function renderAnexosSec(v){
+  const podeEditar=['dir','fin','dono'].includes(role);
+  const podeVer=['dir','fin','dono'].includes(role);
+  if(!podeVer) return ''; // outros perfis não veem seção de anexos
+
   const tipos={comprovante:{label:'Comprovante',badge:'badge-comp',icon:'🧾'},contrato:{label:'Contrato',badge:'badge-cont',icon:'📄'},outro:{label:'Outro',badge:'badge-outro',icon:'📎'}};
   const lista=v.anexos&&v.anexos.length?v.anexos.map((a,i)=>{
     const t=tipos[a.tipo]||tipos.outro;
@@ -1950,27 +2022,30 @@ function renderAnexosSec(v){
       <span class="anexo-badge ${t.badge}">${t.label}</span>
       <div class="anexo-btns">
         <button class="btn-anexo-view" onclick="verAnexo(${v.id},${i})">👁 Ver</button>
-        <button class="btn-anexo-del" onclick="delAnexo(${v.id},${i})">🗑</button>
+        ${podeEditar?`<button class="btn-anexo-del" onclick="delAnexo(${v.id},${i})">🗑</button>`:''}
       </div>
     </div>`;
-  }).join(''):`<div style="text-align:center;padding:14px;font-size:11px;color:var(--tm);">Nenhum anexo ainda. Adicione o comprovante ou contrato.</div>`;
+  }).join(''):`<div style="text-align:center;padding:14px;font-size:11px;color:var(--tm);">Nenhum anexo ainda.</div>`;
+
+  const uploadSection=podeEditar?`
+    <div class="anexo-drop" id="anexo-drop-${v.id}" onclick="document.getElementById('anexo-input-${v.id}').click()">
+      <div class="anexo-drop-icon">📤</div>
+      <div class="anexo-drop-txt"><strong>Clique para adicionar</strong> ou arraste o arquivo aqui<br>PDF, JPG, PNG — máx. 10MB</div>
+    </div>
+    <input type="file" class="anexo-input" id="anexo-input-${v.id}" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 2px;">
+      <span style="font-size:10px;color:var(--tm);">Classificar como:</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="comprovante" checked style="accent-color:var(--gold);"> Comprovante</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="contrato" style="accent-color:var(--gold);"> Contrato</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="outro" style="accent-color:var(--gold);"> Outro</label>
+    </div>`:'';
 
   return`<div class="anexos-sec">
     <div class="anexos-h">
       <span>📎 Anexos <span style="font-weight:400;color:var(--tm);text-transform:none;letter-spacing:0;">(${v.anexos?v.anexos.length:0} arquivo${v.anexos&&v.anexos.length!==1?'s':''})</span></span>
     </div>
     <div class="anexos-body">
-      <div class="anexo-drop" id="anexo-drop-${v.id}" onclick="document.getElementById('anexo-input-${v.id}').click()">
-        <div class="anexo-drop-icon">📤</div>
-        <div class="anexo-drop-txt"><strong>Clique para adicionar</strong> ou arraste o arquivo aqui<br>PDF, JPG, PNG — máx. 10MB</div>
-      </div>
-      <input type="file" class="anexo-input" id="anexo-input-${v.id}" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 2px;">
-        <span style="font-size:10px;color:var(--tm);">Classificar como:</span>
-        <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="comprovante" checked style="accent-color:var(--gold);"> Comprovante</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="contrato" style="accent-color:var(--gold);"> Contrato</label>
-        <label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="outro" style="accent-color:var(--gold);"> Outro</label>
-      </div>
+      ${uploadSection}
       <div class="anexo-list">${lista}</div>
     </div>
   </div>`;
@@ -2054,6 +2129,101 @@ function setRM(m,el){relMes=m;document.querySelectorAll('.rf').forEach(b=>b.clas
 
 function exportXLSX(){const btn=document.getElementById('bxl');btn.classList.add('loading');btn.textContent='Gerando...';setTimeout(()=>{let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const mb=role==='dir'||role==='fin';const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([['Data','Cliente','Produto','Corretor','Valor (R$)',...(mb?['Com. Bruta (R$)']:[]),lblCom()+' (R$)','Etapa','Mês'],...l.map(v=>[v.data,v.cliente,v.produto,v.corretor,v.valor,...(mb?[Math.round(v.valor*v.pct)]:[]),Math.round(comVis(v)),ETAPAS[v.etapa],v.mes])]);ws['!cols']=[{wch:8},{wch:34},{wch:16},{wch:14},{wch:16},...(mb?[{wch:16}]:[]),{wch:18},{wch:24},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.xlsx`);showToast('✅','Excel exportado!');btn.classList.remove('loading');btn.textContent='⬇ Excel';},300);}
 function exportPDF(){const btn=document.getElementById('bpdf');btn.classList.add('loading');btn.textContent='Gerando...';setTimeout(()=>{try{const{jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const W=doc.internal.pageSize.getWidth(),mb=role==='dir'||role==='fin';doc.setFillColor(184,144,42);doc.rect(0,0,W,30,'F');doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(255,255,255);doc.text('ZELONY IMÓVEIS',W/2,13,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,248,220);doc.text(`Relatório ${relMes} · ${hoje()}`,W/2,21,{align:'center'});doc.setDrawColor(255,255,255);doc.setLineWidth(0.3);doc.line(14,27,W-14,27);const vgv=l.reduce((s,v)=>s+v.valor,0),mc=l.reduce((s,v)=>s+comVis(v),0),conc=l.filter(v=>v.etapa===ETAPAS.length-1).length,kw=(W-28)/4;doc.setFillColor(253,248,238);doc.rect(14,29,W-28,20,'F');doc.setDrawColor(184,144,42);doc.rect(14,29,W-28,20);[['VGV TOTAL',fmt(vgv)],[lblCom().toUpperCase().slice(0,18),fmt(mc)],['VENDAS',String(l.length)],['CONCLUÍDAS',String(conc)]].forEach(([lb,val],i)=>{const x=14+i*kw+kw/2;doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(138,110,60);doc.text(lb,x,35,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(184,144,42);doc.text(val,x,45,{align:'center'});if(i<3){doc.setDrawColor(220,185,100);doc.line(14+i*kw+kw,30,14+i*kw+kw,48);}});doc.autoTable({startY:53,head:[['Data','Cliente','Produto','Corretor','Valor',...(mb?['Com. Bruta']:[]),lblCom(),'Etapa']],body:l.map(v=>[v.data,v.cliente.split('/')[0].trim().slice(0,24),v.produto,v.corretor,fmt(v.valor),...(mb?[fmt(v.valor*v.pct)]:[]),fmt(comVis(v)),ETAPAS[v.etapa]]),theme:'plain',headStyles:{fillColor:[253,248,238],textColor:[184,144,42],fontSize:7,fontStyle:'bold',halign:'center',lineColor:[220,185,100],lineWidth:0.3},bodyStyles:{fontSize:7,textColor:[60,48,30]},alternateRowStyles:{fillColor:[250,245,236]},margin:{left:14,right:14},didDrawPage:(d)=>{doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(140,110,60);doc.text(`Zelony Imóveis · ${hoje()} · Pág. ${d.pageNumber}`,W/2,doc.internal.pageSize.getHeight()-6,{align:'center'});}});doc.save(`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.pdf`);showToast('✅','PDF exportado!');}catch(e){showToast('❌','Erro ao gerar PDF.');}btn.classList.remove('loading');btn.textContent='⬇ PDF';},300);}
+
+// ── DISTRATO ──────────────────────────────────────────────────────────────────
+let distratoVendaId=null;
+function abrirDistrato(id){
+  if(!['dir','fin','dono'].includes(role)){showToast('🔒','Sem permissão para registrar distrato.');return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v)return;
+  distratoVendaId=id;
+  document.getElementById('dt-subtitulo').textContent=`Venda: ${v.cliente.split('/')[0].trim()} · ${v.produto}`;
+  document.getElementById('dt-motivo').value='';
+  document.getElementById('dt-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('m-distrato').classList.add('show');
+  setTimeout(()=>document.getElementById('dt-motivo').focus(),100);
+}
+function fecharDistrato(){
+  document.getElementById('m-distrato').classList.remove('show');
+  distratoVendaId=null;
+}
+function confirmarDistrato(){
+  const v=VENDAS.find(x=>x.id===distratoVendaId);
+  if(!v)return;
+  const motivo=document.getElementById('dt-motivo').value.trim();
+  const dataDistrato=document.getElementById('dt-data').value;
+  if(!motivo){document.getElementById('dt-motivo').focus();showToast('⚠️','Informe o motivo do distrato.');return;}
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  const dataFmt=dataDistrato?dataDistrato.split('-').reverse().join('/').slice(0,5):hoje().slice(0,5);
+  v.distratada=true;
+  v.dataDistrato=dataFmt;
+  v.hist.push({e:v.etapa,d:dataFmt,u:quem,o:`⚠️ DISTRATO: ${motivo}`,tipo:'distrato'});
+  dbAtualizarVenda(v).catch(e=>console.error(e));
+  salvarLS();
+  fecharDistrato();
+  renderFiltros();renderVList();showVDetail(v.id);
+  showToast('⚠️','Distrato registrado no histórico.');
+}
+
+// ── EDITAR VENDA ──────────────────────────────────────────────────────────────
+let editVendaId=null;
+function abrirEditVenda(id){
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v)return;
+  editVendaId=id;
+  document.getElementById('ev-subtitulo').textContent=`Editando: ${v.cliente.split('/')[0].trim()}`;
+  document.getElementById('ev-cliente').value=v.cliente;
+  document.getElementById('ev-data').value=v.data.split('/').reverse().join('-').replace(/^(\d{4})-(\d{2})-(\d{2})$/,(_,a,b,c)=>`20${c}-${b}-${a}`)||'';
+  document.getElementById('ev-produto').value=v.produto;
+  document.getElementById('ev-construtora').value=v.construtora;
+  document.getElementById('ev-valor').value=v.valor;
+  document.getElementById('ev-pct').value=(v.pct*100).toFixed(2);
+  document.getElementById('ev-cca').value=v.cca||'';
+  document.getElementById('ev-motivo').value='';
+  document.getElementById('m-edit-venda').classList.add('show');
+  setTimeout(()=>document.getElementById('ev-motivo').focus(),100);
+}
+function fecharEditVenda(){
+  document.getElementById('m-edit-venda').classList.remove('show');
+  editVendaId=null;
+}
+function salvarEditVenda(){
+  const v=VENDAS.find(x=>x.id===editVendaId);
+  if(!v)return;
+  const motivo=document.getElementById('ev-motivo').value.trim();
+  if(!motivo){document.getElementById('ev-motivo').focus();showToast('⚠️','Informe o motivo da alteração.');return;}
+  // Detecta campos alterados para registrar no histórico
+  const novoCliente=document.getElementById('ev-cliente').value.trim();
+  const novoProduto=document.getElementById('ev-produto').value.trim();
+  const novaConstrutora=document.getElementById('ev-construtora').value.trim();
+  const novoValor=parseFloat(document.getElementById('ev-valor').value)||v.valor;
+  const novoPct=(parseFloat(document.getElementById('ev-pct').value)||v.pct*100)/100;
+  const novoCca=document.getElementById('ev-cca').value.trim();
+  // Monta resumo das alterações
+  const alteracoes=[];
+  if(novoCliente!==v.cliente) alteracoes.push(`Cliente: "${v.cliente}" → "${novoCliente}"`);
+  if(novoProduto!==v.produto) alteracoes.push(`Produto: "${v.produto}" → "${novoProduto}"`);
+  if(novaConstrutora!==v.construtora) alteracoes.push(`Construtora: "${v.construtora}" → "${novaConstrutora}"`);
+  if(novoValor!==v.valor) alteracoes.push(`Valor: ${fmt(v.valor)} → ${fmt(novoValor)}`);
+  if(Math.abs(novoPct-v.pct)>0.0001) alteracoes.push(`Comissão: ${(v.pct*100).toFixed(2)}% → ${(novoPct*100).toFixed(2)}%`);
+  if(novoCca!==(v.cca||'')) alteracoes.push(`CCA: "${v.cca||''}" → "${novoCca}"`);
+  // Aplica alterações
+  v.cliente=novoCliente;
+  v.produto=novoProduto;
+  v.construtora=novaConstrutora;
+  v.valor=novoValor;
+  v.pct=novoPct;
+  v.cca=novoCca;
+  // Registra no histórico
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  const resumo=alteracoes.length>0?alteracoes.join(' | '):motivo;
+  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:`✏️ Edição: ${motivo}${alteracoes.length>0?' ('+resumo+')':''}`,tipo:'edicao'});
+  dbAtualizarVenda(v).catch(e=>console.error(e));
+  salvarLS();
+  fecharEditVenda();
+  renderFiltros();renderVList();showVDetail(v.id);
+  showToast('✅','Venda atualizada com sucesso!');
+}
 
 function abrirM(id){const v=VENDAS.find(x=>x.id===id);pendId=id;document.getElementById('mobs').value='';document.getElementById('mchars').textContent='0/400';document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>Etapa atual</span><strong>${ETAPAS[v.etapa]}</strong></div><div style="font-size:16px;color:var(--gold);">→</div><div class="sf to"><span>Próxima</span><strong>${ETAPAS[v.etapa+1]}</strong></div></div>`;document.getElementById('mbackdrop').classList.add('show');}
 function fecharM(){document.getElementById('mbackdrop').classList.remove('show');pendId=null;}
@@ -2828,7 +2998,7 @@ carregarDB().then(()=>{
   renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();fecharEditVenda();fecharDistrato();}});
 </script>
 </body>
 </html>
