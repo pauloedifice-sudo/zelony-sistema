@@ -2812,20 +2812,20 @@ function irParaLogin(){
 // ── INICIALIZAÇÃO ──────────────────────────────────────────────────────────
 // Carrega dados do Supabase antes de renderizar
 carregarDB().then(()=>{
-  renderFiltros();renderVList();renderTrein();renderProc();
-  // Tenta restaurar sessão — se tiver logado antes, não mostra login
+  // Restaura sessão PRIMEIRO para ter o role correto antes de renderizar
   if(!restaurarSessao()){
-    // Sem sessão salva — mostra tela de login normalmente
     document.getElementById('login-screen').classList.remove('hidden');
   }
+  // Renderiza com o role correto já setado
+  renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
 }).catch(e=>{
   console.error('Erro Supabase, usando localStorage:',e);
   carregarLS();
-  renderFiltros();renderVList();renderTrein();renderProc();
   if(!restaurarSessao()){
     document.getElementById('login-screen').classList.remove('hidden');
   }
+  renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();}});
