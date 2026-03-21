@@ -526,7 +526,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       </div>
       <div id="conv-form">
         <div class="convite-step">📋 Dados Pessoais</div>
-        <div class="conv-field"><label>Nome completo *</label><input type="text" id="cv-nome" placeholder="Seu nome completo" maxlength="80"></div>
+        <div class="conv-field"><label>Nome completo *</label><input type="text" id="cv-nome" placeholder="SEU NOME COMPLETO" maxlength="80" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="conv-row">
           <div class="conv-field"><label>Telefone / WhatsApp *</label><input type="tel" id="cv-tel" placeholder="(41) 99999-9999"></div>
           <div class="conv-field"><label>Data de nascimento *</label><input type="date" id="cv-nasc"></div>
@@ -601,7 +601,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
       <button class="mclose" onclick="fecharConvite()">✕</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
-      <div class="f-field"><label>Nome completo *</label><input type="text" id="inv-nome" placeholder="Nome do novo usuário" maxlength="80"></div>
+      <div class="f-field"><label>Nome completo *</label><input type="text" id="inv-nome" placeholder="NOME DO NOVO USUÁRIO" maxlength="80" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
       <div class="f-field"><label>E-mail *</label><input type="email" id="inv-email" placeholder="email@exemplo.com"></div>
       <div class="f-row">
         <div class="f-field">
@@ -1000,7 +1000,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
           <!-- Dados do cliente -->
           <div class="mv-section">Dados do Cliente</div>
           <div class="f-row">
-            <div class="f-field"><label>Nome do cliente *</label><input type="text" id="mv-cliente" placeholder="Nome completo do cliente"></div>
+            <div class="f-field"><label>Nome do cliente *</label><input type="text" id="mv-cliente" placeholder="NOME COMPLETO DO CLIENTE" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
             <div class="f-field"><label>Data da venda *</label><input type="date" id="mv-data"></div>
           </div>
           <div class="f-row">
@@ -1162,7 +1162,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
         </div>
         <div class="mu-modal modal-body">
           <div class="mu-section">Dados Pessoais</div>
-          <div class="f-field"><label>Nome completo *</label><input type="text" id="mu-nome" placeholder="Ex: João da Silva Santos" maxlength="80"></div>
+          <div class="f-field"><label>Nome completo *</label><input type="text" id="mu-nome" placeholder="EX: JOÃO DA SILVA SANTOS" maxlength="80" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
           <div class="f-row">
             <div class="f-field"><label>E-mail *</label><input type="email" id="mu-email" placeholder="joao@zelony.com.br"></div>
             <div class="f-field"><label>Telefone / WhatsApp *</label><input type="tel" id="mu-tel" placeholder="(41) 99999-9999" maxlength="20"></div>
@@ -1763,11 +1763,11 @@ function abrirModalVenda(){
   const optCor=perfilOrdem.flatMap(p=>{
     const lista=todos.filter(u=>u.perfil===p);
     if(!lista.length) return [];
-    return [`<optgroup label="${p}">`,...lista.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`),'</optgroup>'];
+    return [`<optgroup label="${p}">`,...lista.map(u=>`<option value="${u.nome}">${u.nome}</option>`),'</optgroup>'];
   }).join('');
-  const optCap=capitaes.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
-  const optGer=gerentes.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
-  const optDir=diretores.map(u=>`<option value="${u.nome.split(' ')[0]}">${u.nome}</option>`).join('');
+  const optCap=capitaes.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
+  const optGer=gerentes.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
+  const optDir=diretores.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
 
   document.getElementById('mv-corretor').innerHTML=`<option value="">Selecione...</option>${optCor}`;
   document.getElementById('mv-capitao').innerHTML=`<option value="">Nenhum</option>${optCap}`;
@@ -1794,7 +1794,7 @@ function abrirModalVenda(){
   } else {
     unidSel.value='';
   }
-  if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome.split(' ')[0];
+  if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome;
 
   // Limpa campos
   ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-ger','mv-bonus-cor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -2552,7 +2552,7 @@ function fecharMU(){document.getElementById('muser').classList.remove('show');ed
 function handleBackdropU(e){if(e.target===document.getElementById('muser'))fecharMU();}
 
 function salvarUsuario(){
-  const nome=document.getElementById('mu-nome').value.trim();
+  const nome=document.getElementById('mu-nome').value.trim().toUpperCase();
   const email=document.getElementById('mu-email').value.trim();
   const tel=document.getElementById('mu-tel').value.trim();
   const perfil=document.getElementById('mu-perfil').value;
@@ -2859,7 +2859,7 @@ function toggleInvRH(){
 }
 
 function enviarConvite(){
-  const nome=document.getElementById('inv-nome').value.trim();
+  const nome=document.getElementById('inv-nome').value.trim().toUpperCase();
   const email=document.getElementById('inv-email').value.trim().toLowerCase();
   const perfil=document.getElementById('inv-perfil').value;
   const equipe=document.getElementById('inv-equipe').value.trim();
@@ -2933,7 +2933,7 @@ function concluirCadastro(){
   errEl.style.display='none';
   const erro=(m)=>{errEl.textContent=m;errEl.style.display='block';errEl.scrollIntoView({behavior:'smooth',block:'nearest'});};
   const g=id=>document.getElementById(id).value.trim();
-  const nome=g('cv-nome'),tel=g('cv-tel'),nasc=g('cv-nasc'),cpf=g('cv-cpf'),cep=g('cv-cep');
+  const nome=g('cv-nome').toUpperCase(),tel=g('cv-tel'),nasc=g('cv-nasc'),cpf=g('cv-cpf'),cep=g('cv-cep');
   const end=g('cv-end'),cidade=g('cv-cidade'),estado=g('cv-estado');
   const banco=g('cv-banco'),agencia=g('cv-agencia'),conta=g('cv-conta');
   const tipoConta=document.getElementById('cv-tipo-conta').value;
