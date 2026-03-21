@@ -1359,9 +1359,13 @@ async function carregarDB(){
 }
 
 // Mappers banco → app
-function mapUsuarioIn(u){return{
+function mapUsuarioIn(u){
+  // Normaliza status para capitalização correta
+  const statusRaw=(u.status||'Ativo');
+  const status=statusRaw.charAt(0).toUpperCase()+statusRaw.slice(1).toLowerCase();
+  return{
   id:u.id,nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
-  status:u.status,unidade:u.unidade||'Ambas',banco:u.banco||'',
+  status,unidade:u.unidade||'Ambas',banco:u.banco||'',
   agencia:u.agencia||'',conta:u.conta||'',tipoConta:u.tipo_conta||'',
   pixTipo:u.pix_tipo||'',pix:u.pix||'',rhContratacao:u.rh_contratacao||false,
   cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',end:u.endereco||'',
@@ -2840,8 +2844,9 @@ function fazerLogout(){
 function restaurarSessao(){
   const emailSalvo=localStorage.getItem('zel_sessao');
   if(!emailSalvo) return false;
-  const usuario=USUARIOS.find(u=>u.email.toLowerCase()===emailSalvo);
-  if(!usuario||usuario.status==='Pendente') return false;
+  // Busca case-insensitive
+  const usuario=USUARIOS.find(u=>u.email.toLowerCase()===emailSalvo.toLowerCase());
+  if(!usuario||usuario.status?.toUpperCase()==='PENDENTE') return false;
 
   usuarioLogado=usuario;
   const roleValue=getPerfil(usuario.perfil);
