@@ -1392,7 +1392,7 @@ function mapVendaIn(v){return{
   distratada:v.distratada||false,dataDistrato:v.data_distrato||'',
   bonus:parseFloat(v.bonus||0),bonus_pct_dir:parseFloat(v.bonus_pct_dir||0),
   bonus_pct_ger:parseFloat(v.bonus_pct_ger||0),bonus_pct_cor:parseFloat(v.bonus_pct_cor||0),
-  hist:v.hist||[],anexos:[]
+  hist:v.hist||[],anexos:v.anexos||[]
 };}
 function mapVendaOut(v){return{
   data:v.data,mes:v.mes,cliente:v.cliente,produto:v.produto,
@@ -1403,6 +1403,7 @@ function mapVendaOut(v){return{
   diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
   cca:v.cca||'',
   distratada:v.distratada||false,
+  anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''})),
   bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
   bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
   etapa:v.etapa,hist:v.hist
@@ -1456,7 +1457,8 @@ async function dbAtualizarVenda(v){
     bonus_pct_dir:v.bonus_pct_dir||0,
     bonus_pct_ger:v.bonus_pct_ger||0,
     bonus_pct_cor:v.bonus_pct_cor||0,
-    cca:v.cca||''
+    cca:v.cca||'',
+    anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''}))
   }).eq('id',v.id);
 }
 
@@ -2153,6 +2155,9 @@ function processAnexoFiles(files,vendaId){
       });
       processados++;
       if(processados===total){
+        // Salva no Supabase
+        dbAtualizarVenda(v).catch(err=>console.error('Erro ao salvar anexo:',err));
+        salvarLS();
         showVDetail(vendaId);
         showToast('✅',`${total} arquivo${total>1?'s':''} adicionado${total>1?'s':''}!`);
       }
@@ -2166,6 +2171,9 @@ function delAnexo(vendaId,idx){
   if(!v||!v.anexos)return;
   if(!confirm(`Remover "${v.anexos[idx].nome}"?`))return;
   v.anexos.splice(idx,1);
+  // Salva remoção no Supabase
+  dbAtualizarVenda(v).catch(err=>console.error('Erro ao remover anexo:',err));
+  salvarLS();
   showVDetail(vendaId);
   showToast('🗑','Anexo removido.');
 }
@@ -2544,7 +2552,7 @@ function renderUsuarios(){
     <div class="u-search-bar">
       <div class="u-search-wrap">
         <span class="u-search-icon">🔍</span>
-        <input type="text" placeholder="Buscar por nome, e-mail ou equipe..." value="${uBusca}" oninput="uBusca=this.value;renderUsuarios()">
+        <input type="text" id="user-search-input" placeholder="Buscar por nome, e-mail ou equipe..." value="${uBusca}" oninput="uBusca=this.value;filtrarUsuarios()">
       </div>
       <select class="u-filter-sel" onchange="uFiltroPerfil=this.value;renderUsuarios()">
         <option value="">Todos os perfis</option>
@@ -2569,14 +2577,64 @@ function renderUsuarios(){
       ${(uBusca||uFiltroUnidade||uFiltroEquipe||uFiltroPerfil)?`<button onclick="uBusca='';uFiltroUnidade='';uFiltroEquipe='';uFiltroPerfil='';renderUsuarios();" style="font-size:10px;background:none;border:1px solid var(--bd);border-radius:5px;padding:4px 8px;cursor:pointer;color:var(--tm);font-family:'Inter',sans-serif;">✕ Limpar</button>`:''}
     </div>
 
-    <div class="usuarios-stats">
+    <div class="usuarios-stats" id="u-stats">
       <div class="mc a"><div class="mc-l">Total cadastrados</div><div class="mc-v" style="color:var(--gold);">${total}</div></div>
       <div class="mc" style="border-top-color:#2E9E6E;"><div class="mc-l">Usuários ativos</div><div class="mc-v" style="color:#2E9E6E;">${ativos}</div></div>
       <div class="mc" style="border-top-color:#C06030;"><div class="mc-l">Inativos</div><div class="mc-v" style="color:#C06030;">${total-ativos}</div></div>
-      <div class="mc"><div class="mc-l">Mostrando agora</div><div class="mc-v">${lista.length}</div></div>
+      <div class="mc"><div class="mc-l">Mostrando agora</div><div class="mc-v" id="u-mostrando">${lista.length}</div></div>
     </div>
-    <div class="user-grid">${cards||semResultado}</div>
+    <div class="user-grid" id="u-cards-grid">${cards||semResultado}</div>
   </div>`;
+}
+
+// Atualiza só os cards sem re-renderizar o input (mantém foco)
+function filtrarUsuarios(){
+  const grid=document.getElementById('u-cards-grid');
+  const mostrando=document.getElementById('u-mostrando');
+  if(!grid) return;
+
+  const equipes=[...new Set(USUARIOS.map(u=>u.equipe||'').filter(Boolean))].sort();
+  let lista=USUARIOS.filter(u=>{
+    const q=uBusca.toLowerCase();
+    const matchBusca=!q||(u.nome||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q)||(u.equipe||'').toLowerCase().includes(q);
+    const matchUnidade=!uFiltroUnidade||u.unidade===uFiltroUnidade||u.unidade==='Ambas';
+    const matchEquipe=!uFiltroEquipe||(u.equipe||'')===uFiltroEquipe;
+    const matchPerfil=!uFiltroPerfil||u.perfil===uFiltroPerfil;
+    return matchBusca&&matchUnidade&&matchEquipe&&matchPerfil;
+  });
+
+  if(mostrando) mostrando.textContent=lista.length;
+
+  const cards=lista.map((u)=>{
+    const idx=USUARIOS.indexOf(u);
+    const avatarColor=u.perfil==='Dono'?'#1A1A1A':u.perfil==='Diretor'?'var(--gold)':u.perfil==='Gerente'?'#2E7E5E':u.perfil==='Capitão'?'#6040A8':u.perfil==='Financeiro'?'#C05030':u.perfil==='RH'?'#1A56C4':'#3060B8';
+    const unidBadge=u.unidade?`<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}" style="margin-top:4px;display:inline-flex;">📍 ${u.unidade}</span>`:'';
+    const equipeBadge=u.equipe?`<span style="font-size:9px;background:var(--bg3);color:var(--ts);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;margin-top:3px;display:inline-block;">👥 ${u.equipe}</span>`:'';
+    return`<div class="user-card">
+      <div class="user-card-top">
+        <div class="user-av" style="background:${avatarColor};">${iniUser(u.nome)}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="user-name">${u.nome}</div>
+          <div style="display:flex;flex-direction:column;gap:3px;">
+            <span class="user-role-tag ${PERFIL_TAG[u.perfil]||'tag-cor'}">${PERFIL_ICON[u.perfil]||'👤'} ${u.perfil}</span>
+            ${unidBadge}${equipeBadge}
+          </div>
+        </div>
+      </div>
+      <div class="user-card-body">
+        <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 5l6 5 6-5"/></svg><span>${u.email}</span></div>
+        <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${u.tel||'—'}</span></div>
+        <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${u.banco?u.banco+' · '+(u.tipoConta||''):'—'}</span></div>
+        <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5h4.5a2.5 2.5 0 010 5H5m0-5V2m0 8v4"/></svg><span>${u.pixTipo?'Pix '+u.pixTipo+': '+u.pix:'—'}</span></div>
+      </div>
+      <div class="user-card-foot">
+        <div class="user-status"><div class="user-status-dot ${u.status==='Ativo'?'':'inativo'}"></div><span style="color:${u.status==='Ativo'?'#2E9E6E':u.status==='Pendente'?'#C08020':'#C05030'}">${u.status}</span></div>
+        <div class="user-actions"><button class="btn-user-edit" onclick="editarUsuario(${idx})">✏️ Editar</button><button class="btn-user-del" onclick="excluirUsuario(${idx})">🗑 Excluir</button></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.innerHTML=cards||`<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--tm);"><div style="font-size:28px;margin-bottom:8px;">🔍</div><div style="font-size:13px;">Nenhum usuário encontrado.</div></div>`;
 }
 
 function toggleRHField(){
