@@ -471,6 +471,54 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 </style>
 </head>
 <body>
+<!-- SPLASH: renderiza imediatamente, antes de qualquer JS -->
+<div id="app-splash" style="position:fixed;inset:0;z-index:99999;background:#0E0A00;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+  <style>
+    .sp-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+    .sp-p{position:absolute;border-radius:50%;animation:sp-float linear infinite;opacity:0;}
+    @keyframes sp-float{0%{transform:translateY(110vh) scale(0);opacity:0;}10%{opacity:1;}90%{opacity:0.4;}100%{transform:translateY(-10vh) scale(1.2);opacity:0;}}
+    .sp-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(184,144,42,0.12) 0%,transparent 70%);animation:sp-pulse 3s ease-in-out infinite;}
+    @keyframes sp-pulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.15);opacity:1;}}
+    .sp-logo-ring{width:90px;height:90px;border-radius:50%;border:1px solid rgba(184,144,42,0.3);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;animation:sp-ring 3s linear infinite;}
+    @keyframes sp-ring{0%{box-shadow:0 0 0 0 rgba(184,144,42,0.4);}70%{box-shadow:0 0 0 20px rgba(184,144,42,0);}100%{box-shadow:0 0 0 0 rgba(184,144,42,0);}}
+    .sp-logo-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(184,144,42,0.8);border-right-color:rgba(184,144,42,0.3);animation:sp-spin 1.5s linear infinite;}
+    .sp-logo-ring::after{content:'';position:absolute;inset:-16px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(184,144,42,0.3);border-left-color:rgba(184,144,42,0.1);animation:sp-spin 2.5s linear infinite reverse;}
+    @keyframes sp-spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    .sp-bar-bg{height:2px;background:rgba(184,144,42,0.15);border-radius:2px;overflow:hidden;width:220px;}
+    .sp-bar-fill{height:100%;background:linear-gradient(90deg,transparent,#B8902A,#F0D080,#B8902A,transparent);border-radius:2px;animation:sp-shimmer 1.8s ease-in-out infinite;background-size:200% 100%;}
+    @keyframes sp-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+    .sp-status{font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.15em;text-transform:uppercase;animation:sp-fade 1.8s ease-in-out infinite;}
+    @keyframes sp-fade{0%,100%{opacity:0.4;}50%{opacity:1;}}
+    .sp-dot{width:4px;height:4px;border-radius:50%;background:rgba(184,144,42,0.4);display:inline-block;}
+    .sp-dot:nth-child(1){animation:sp-dp 1.4s ease-in-out 0s infinite;}
+    .sp-dot:nth-child(2){animation:sp-dp 1.4s ease-in-out 0.2s infinite;}
+    .sp-dot:nth-child(3){animation:sp-dp 1.4s ease-in-out 0.4s infinite;}
+    @keyframes sp-dp{0%,100%{transform:scale(1);opacity:0.4;}50%{transform:scale(1.6);opacity:1;background:rgba(184,144,42,0.9);}}
+  </style>
+  <div class="sp-particles" id="sp-particles"></div>
+  <div class="sp-glow"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin-bottom:36px;">
+    <div class="sp-logo-ring"><span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#B8902A;text-shadow:0 0 30px rgba(184,144,42,0.5);">Z</span></div>
+    <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#F0D080;letter-spacing:0.12em;">ZELONY</div>
+    <div style="font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.4em;text-transform:uppercase;margin-top:6px;">Imóveis · Sistema de Gestão</div>
+  </div>
+  <div style="position:relative;z-index:2;width:1px;height:36px;background:linear-gradient(to bottom,transparent,rgba(184,144,42,0.4),transparent);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
+    <div class="sp-bar-bg"><div class="sp-bar-fill"></div></div>
+    <div class="sp-status" id="sp-status-txt">Carregando dados</div>
+    <div style="display:flex;gap:6px;margin-top:4px;"><div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div></div>
+  </div>
+  <script>
+    (function(){
+      const c=document.getElementById('sp-particles');
+      if(!c)return;
+      for(let i=0;i<18;i++){const p=document.createElement('div');p.className='sp-p';const s=Math.random()*4+2;p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;background:rgba(184,144,42,${Math.random()*0.3+0.05});animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*5}s;`;c.appendChild(p);}
+      const msgs=['Carregando dados','Conectando ao servidor','Sincronizando vendas','Preparando o sistema','Quase lá'];
+      let mi=0;
+      setInterval(()=>{mi=(mi+1)%msgs.length;const el=document.getElementById('sp-status-txt');if(el)el.textContent=msgs[mi];},1800);
+    })();
+  </script>
+</div>
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
@@ -747,130 +795,6 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 </div>
 
 <div class="app" id="main-app" style="opacity:0;transition:opacity 0.2s ease;">
-<!-- SPLASH LOADER PREMIUM -->
-<div id="app-splash">
-<style>
-#app-splash{
-  position:fixed;inset:0;z-index:99999;
-  background:#0E0A00;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;overflow:hidden;
-}
-/* Partículas de fundo */
-.sp-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
-.sp-p{position:absolute;border-radius:50%;animation:sp-float linear infinite;opacity:0;}
-@keyframes sp-float{
-  0%{transform:translateY(110vh) scale(0);opacity:0;}
-  10%{opacity:1;}
-  90%{opacity:0.4;}
-  100%{transform:translateY(-10vh) scale(1.2);opacity:0;}
-}
-/* Glow radial de fundo */
-.sp-glow{
-  position:absolute;width:600px;height:600px;border-radius:50%;
-  background:radial-gradient(circle,rgba(184,144,42,0.12) 0%,transparent 70%);
-  animation:sp-pulse 3s ease-in-out infinite;
-}
-@keyframes sp-pulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.15);opacity:1;}}
-/* Logo */
-.sp-logo-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin-bottom:40px;}
-.sp-logo-ring{
-  width:90px;height:90px;border-radius:50%;
-  border:1px solid rgba(184,144,42,0.3);
-  display:flex;align-items:center;justify-content:center;
-  position:relative;margin-bottom:20px;
-  animation:sp-ring 3s linear infinite;
-}
-@keyframes sp-ring{0%{box-shadow:0 0 0 0 rgba(184,144,42,0.4);}70%{box-shadow:0 0 0 20px rgba(184,144,42,0);}100%{box-shadow:0 0 0 0 rgba(184,144,42,0);}}
-.sp-logo-ring::before{
-  content:'';position:absolute;inset:-8px;border-radius:50%;
-  border:1px solid transparent;
-  border-top-color:rgba(184,144,42,0.8);
-  border-right-color:rgba(184,144,42,0.3);
-  animation:sp-spin 1.5s linear infinite;
-}
-.sp-logo-ring::after{
-  content:'';position:absolute;inset:-16px;border-radius:50%;
-  border:1px solid transparent;
-  border-top-color:rgba(184,144,42,0.3);
-  border-left-color:rgba(184,144,42,0.1);
-  animation:sp-spin 2.5s linear infinite reverse;
-}
-@keyframes sp-spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-.sp-logo-inner{
-  font-family:'Playfair Display',serif;font-size:22px;font-weight:700;
-  color:#B8902A;letter-spacing:0.08em;
-  text-shadow:0 0 30px rgba(184,144,42,0.5);
-}
-.sp-brand{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#F0D080;letter-spacing:0.12em;line-height:1;}
-.sp-sub{font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.4em;text-transform:uppercase;margin-top:6px;}
-/* Barra de progresso */
-.sp-bar-wrap{position:relative;z-index:2;width:220px;margin-bottom:16px;}
-.sp-bar-bg{height:2px;background:rgba(184,144,42,0.15);border-radius:2px;overflow:hidden;}
-.sp-bar-fill{height:100%;background:linear-gradient(90deg,transparent,#B8902A,#F0D080,#B8902A,transparent);border-radius:2px;animation:sp-shimmer 1.8s ease-in-out infinite;background-size:200% 100%;}
-@keyframes sp-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
-/* Texto de status */
-.sp-status{position:relative;z-index:2;font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.15em;text-transform:uppercase;animation:sp-fade 1.8s ease-in-out infinite;}
-@keyframes sp-fade{0%,100%{opacity:0.4;}50%{opacity:1;}}
-/* Dots */
-.sp-dots{position:relative;z-index:2;display:flex;gap:6px;margin-top:8px;}
-.sp-dot{width:4px;height:4px;border-radius:50%;background:rgba(184,144,42,0.4);}
-.sp-dot:nth-child(1){animation:sp-dot-pulse 1.4s ease-in-out 0s infinite;}
-.sp-dot:nth-child(2){animation:sp-dot-pulse 1.4s ease-in-out 0.2s infinite;}
-.sp-dot:nth-child(3){animation:sp-dot-pulse 1.4s ease-in-out 0.4s infinite;}
-@keyframes sp-dot-pulse{0%,100%{transform:scale(1);opacity:0.4;}50%{transform:scale(1.6);opacity:1;background:rgba(184,144,42,0.9);}}
-/* Linha decorativa */
-.sp-line{position:relative;z-index:2;width:1px;height:40px;background:linear-gradient(to bottom,transparent,rgba(184,144,42,0.4),transparent);margin:0;}
-</style>
-
-<!-- Partículas -->
-<div class="sp-particles" id="sp-particles"></div>
-<div class="sp-glow"></div>
-
-<!-- Logo -->
-<div class="sp-logo-wrap">
-  <div class="sp-logo-ring">
-    <div class="sp-logo-inner">Z</div>
-  </div>
-  <div class="sp-brand">ZELONY</div>
-  <div class="sp-sub">Imóveis · Sistema de Gestão</div>
-</div>
-
-<!-- Linha -->
-<div class="sp-line"></div>
-
-<!-- Barra + status -->
-<div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
-  <div class="sp-bar-wrap">
-    <div class="sp-bar-bg"><div class="sp-bar-fill"></div></div>
-  </div>
-  <div class="sp-status" id="sp-status-txt">Carregando dados</div>
-  <div class="sp-dots"><div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div></div>
-</div>
-
-<script>
-// Gera partículas flutuantes
-(function(){
-  const c=document.getElementById('sp-particles');
-  if(!c)return;
-  for(let i=0;i<18;i++){
-    const p=document.createElement('div');
-    p.className='sp-p';
-    const s=Math.random()*4+2;
-    p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;background:rgba(184,144,42,${Math.random()*0.3+0.05});animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*5}s;`;
-    c.appendChild(p);
-  }
-  // Rotaciona mensagens
-  const msgs=['Carregando dados','Conectando ao servidor','Sincronizando vendas','Preparando o sistema','Quase lá'];
-  let mi=0;
-  setInterval(()=>{
-    mi=(mi+1)%msgs.length;
-    const el=document.getElementById('sp-status-txt');
-    if(el)el.textContent=msgs[mi];
-  },1800);
-})();
-</script>
-</div>
 <div class="topbar">
   <div class="tb-logo">ZELONY <small>Imóveis</small></div>
   <div class="tb-right">
