@@ -1683,6 +1683,222 @@ function renderCarteira(){
   }
   return`<td class="pos" style="color:#2E9E6E;">${totalBonus>0?fmt(totalBonus):'—'}</td>`;
 }if(c==='bonus_total')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
+  // ── DASHBOARD EXCLUSIVO DO DONO ──────────────────────────────────────────
+  if(role==='dono'){
+    const ativas=lMinhas.filter(v=>!v.distratada);
+    const concluidas=ativas.filter(v=>v.etapa===ETAPAS.length-1);
+    const emAndamento=ativas.filter(v=>v.etapa<ETAPAS.length-1);
+
+    // 1. Comissão BRUTA (com imposto)
+    const brutaRec=concluidas.reduce((s,v)=>s+(v.valor*v.pct),0);
+    const brutaPend=emAndamento.reduce((s,v)=>s+(v.valor*v.pct),0);
+
+    // 2. Comissão LÍQUIDA (sem imposto)
+    const liqRec=concluidas.reduce((s,v)=>s+comTotal(v),0);
+    const liqPend=emAndamento.reduce((s,v)=>s+comTotal(v),0);
+
+    // 3. Imposto
+    const impRec=concluidas.reduce((s,v)=>s+(v.valor*v.pct*(v.imp||0.11)),0);
+    const impPend=emAndamento.reduce((s,v)=>s+(v.valor*v.pct*(v.imp||0.11)),0);
+
+    // 4. Média % comissão recebida das construtoras
+    const pctMediaCons=ativas.length>0?(ativas.reduce((s,v)=>s+v.pct,0)/ativas.length)*100:0;
+
+    // 5. Média % distribuída para o comercial
+    const pctComercial=(v)=>(v.pct_cor||0)+(v.pct_cap||0)+(v.pct_ger||0)+(v.pct_dir||0)+(v.pct_dir2||0)+(v.pct_rh||0);
+    const mediaComercial=ativas.length>0?(ativas.reduce((s,v)=>s+pctComercial(v),0)/ativas.length)*100:0;
+
+    // 6. Média % líquida da imobiliária
+    const pctZelony=(v)=>Math.max(v.pct-(v.pct_cor||0)-(v.pct_cap||0)-(v.pct_ger||0)-(v.pct_dir||0)-(v.pct_dir2||0)-(v.pct_rh||0),0);
+    const mediaZelony=ativas.length>0?(ativas.reduce((s,v)=>s+pctZelony(v),0)/ativas.length)*100:0;
+
+    const zelonyRec=concluidas.reduce((s,v)=>s+comZ(v),0);
+    const zelonyPend=emAndamento.reduce((s,v)=>s+comZ(v),0);
+    const vgvTotal=ativas.reduce((s,v)=>s+v.valor,0);
+    const pct2=n=>n.toFixed(2)+'%';
+
+    document.getElementById('carteira-content').innerHTML=`
+    <style>
+      .dono-wrap{max-width:1060px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:9px;}
+      .dono-hero{background:linear-gradient(135deg,#1A1200,#2A1E00);border-radius:11px;padding:16px 20px;position:relative;overflow:hidden;}
+      .dono-hero::after{content:'';position:absolute;right:-20px;top:-20px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(184,144,42,0.15),transparent 70%);}
+      .dono-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
+      .dono-hero-kpi{text-align:right;flex-shrink:0;}
+      .dono-hero-lbl{font-size:8px;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,220,100,0.6);font-weight:600;}
+      .dono-hero-val{font-size:22px;font-weight:700;color:#FFD060;font-family:'Playfair Display',serif;line-height:1.1;}
+      .dono-hero-sub{font-size:9px;color:rgba(255,220,100,0.5);margin-top:1px;}
+      .dono-badge-row{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
+      .dono-badge{background:rgba(255,208,96,0.12);border:1px solid rgba(255,208,96,0.25);border-radius:20px;padding:3px 9px;font-size:9px;color:#FFD060;font-weight:500;}
+      .dono-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+      .dono-grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+      .dono-card{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;}
+      .dono-card-title{font-size:8px;text-transform:uppercase;letter-spacing:0.08em;color:var(--tm);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
+      .dono-card-title span{font-size:12px;}
+      .dono-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+      .dono-mini{background:var(--bg2);border-radius:6px;padding:8px 10px;}
+      .dono-mini-lbl{font-size:8px;color:var(--tm);margin-bottom:2px;}
+      .dono-mini-val{font-size:13px;font-weight:700;}
+      .dono-stat{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd);}
+      .dono-stat:last-child{border-bottom:none;}
+      .dono-stat-lbl{font-size:10px;color:var(--ts);display:flex;align-items:center;gap:5px;}
+      .dono-stat-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+      .dono-stat-val{font-size:12px;font-weight:700;}
+      .dono-bar-wrap{margin-top:2px;}
+      .dono-bar-row{margin-bottom:7px;}
+      .dono-bar-info{display:flex;justify-content:space-between;font-size:8px;color:var(--tm);margin-bottom:2px;}
+      .dono-bar{height:8px;background:var(--bg2);border-radius:4px;overflow:hidden;}
+      .dono-bar-fill{height:100%;border-radius:4px;transition:width 0.6s ease;}
+      .lucro-card{background:linear-gradient(135deg,#0A1A0A,#0E2A18);border:1px solid #2E6E4E;border-radius:10px;padding:14px 16px;}
+      .lucro-title{font-size:8px;text-transform:uppercase;letter-spacing:0.1em;color:#70C090;font-weight:700;margin-bottom:10px;}
+      .lucro-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+      .lucro-item{background:rgba(46,110,78,0.2);border-radius:7px;padding:10px 12px;border-top:2px solid;}
+      .lucro-item-lbl{font-size:8px;color:#70C090;margin-bottom:3px;font-weight:500;}
+      .lucro-item-val{font-size:16px;font-weight:700;font-family:'Playfair Display',serif;}
+    </style>
+    <div class="dono-wrap">
+
+    <!-- HERO -->
+    <div class="dono-hero">
+      <div class="dono-hero-top">
+        <div>
+          <div class="dono-hero-lbl">Visão Geral · Zelony Imóveis</div>
+          <div class="dono-hero-val">${fmt(vgvTotal)}</div>
+          <div class="dono-hero-sub">Volume total de vendas (VGV)</div>
+        </div>
+        <div class="dono-hero-kpi">
+          <div class="dono-hero-lbl">Lucro líquido projetado</div>
+          <div class="dono-hero-val">${fmt(zelonyRec+zelonyPend)}</div>
+          <div class="dono-hero-sub">após comercial e impostos</div>
+        </div>
+      </div>
+      <div class="dono-badge-row">
+        <div class="dono-badge">📦 ${ativas.length} vendas ativas</div>
+        <div class="dono-badge">✅ ${concluidas.length} concluídas</div>
+        <div class="dono-badge">⏳ ${emAndamento.length} em andamento</div>
+        <div class="dono-badge">📊 ${pct2(pctMediaCons)} média construtoras</div>
+        <div class="dono-badge" style="background:rgba(100,180,255,0.12);border-color:rgba(100,180,255,0.3);color:#90C8FF;">🏦 ${pct2(mediaZelony)} fica na Zelony</div>
+        <div class="ch-badge" style="margin:0;padding:3px 9px;border-radius:20px;font-size:9px;"><div class="ch-dot"></div> Atualizado agora</div>
+      </div>
+    </div>
+
+    <!-- LINHA 1: Comissão Bruta | Comissão Líquida | Imposto -->
+    <div class="dono-grid3">
+      <div class="dono-card">
+        <div class="dono-card-title"><span>💰</span> Comissão Bruta</div>
+        <div class="dono-row2">
+          <div class="dono-mini" style="border-left:3px solid #2E9E6E;">
+            <div class="dono-mini-lbl">✅ Recebido</div>
+            <div class="dono-mini-val" style="color:#2E9E6E;">${fmt(brutaRec)}</div>
+          </div>
+          <div class="dono-mini" style="border-left:3px solid #C08020;">
+            <div class="dono-mini-lbl">⏳ A receber</div>
+            <div class="dono-mini-val" style="color:#C08020;">${fmt(brutaPend)}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--tm);text-align:right;">Total: <strong style="color:var(--gold);">${fmt(brutaRec+brutaPend)}</strong></div>
+      </div>
+      <div class="dono-card">
+        <div class="dono-card-title"><span>✨</span> Comissão Líquida</div>
+        <div class="dono-row2">
+          <div class="dono-mini" style="border-left:3px solid #2E9E6E;">
+            <div class="dono-mini-lbl">✅ Recebido</div>
+            <div class="dono-mini-val" style="color:#2E9E6E;">${fmt(liqRec)}</div>
+          </div>
+          <div class="dono-mini" style="border-left:3px solid #C08020;">
+            <div class="dono-mini-lbl">⏳ A receber</div>
+            <div class="dono-mini-val" style="color:#C08020;">${fmt(liqPend)}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--tm);text-align:right;">Total: <strong style="color:var(--gold);">${fmt(liqRec+liqPend)}</strong></div>
+      </div>
+      <div class="dono-card">
+        <div class="dono-card-title"><span>🧾</span> Imposto (${((ativas[0]?.imp||0.11)*100).toFixed(0)}%)</div>
+        <div class="dono-row2">
+          <div class="dono-mini" style="border-left:3px solid #C05030;">
+            <div class="dono-mini-lbl">✅ Pago</div>
+            <div class="dono-mini-val" style="color:#C05030;">${fmt(impRec)}</div>
+          </div>
+          <div class="dono-mini" style="border-left:3px solid #C08020;">
+            <div class="dono-mini-lbl">⏳ A pagar</div>
+            <div class="dono-mini-val" style="color:#C08020;">${fmt(impPend)}</div>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:10px;color:var(--tm);text-align:right;">Total: <strong style="color:#C05030;">${fmt(impRec+impPend)}</strong></div>
+      </div>
+    </div>
+
+    <!-- LUCRO LÍQUIDO -->
+    <div class="lucro-card">
+      <div class="lucro-title">🏦 Lucro Líquido da Imobiliária — após comercial e imposto</div>
+      <div class="lucro-grid">
+        <div class="lucro-item" style="border-color:#2E9E6E;">
+          <div class="lucro-item-lbl">✅ Já recebido</div>
+          <div class="lucro-item-val" style="color:#4ADA9A;">${fmt(zelonyRec)}</div>
+          <div style="font-size:9px;color:#70C090;margin-top:3px;">${concluidas.length} venda${concluidas.length!==1?'s':''} concluída${concluidas.length!==1?'s':''}</div>
+        </div>
+        <div class="lucro-item" style="border-color:#5AAA7A;">
+          <div class="lucro-item-lbl">⏳ A receber</div>
+          <div class="lucro-item-val" style="color:#80D8A0;">${fmt(zelonyPend)}</div>
+          <div style="font-size:9px;color:#70C090;margin-top:3px;">${emAndamento.length} venda${emAndamento.length!==1?'s':''} em andamento</div>
+        </div>
+        <div class="lucro-item" style="border-color:var(--gold);">
+          <div class="lucro-item-lbl">💰 Total projetado</div>
+          <div class="lucro-item-val" style="color:var(--gold);">${fmt(zelonyRec+zelonyPend)}</div>
+          <div style="font-size:9px;color:#70C090;margin-top:3px;">${pct2(mediaZelony)} médio p/ Zelony</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINHA 2: Distribuição % | Proporção visual -->
+    <div class="dono-grid2">
+      <div class="dono-card">
+        <div class="dono-card-title"><span>📊</span> Distribuição Média de Comissão</div>
+        <div class="dono-stat">
+          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:var(--gold);"></div>Construtoras (entrada)</div>
+          <div class="dono-stat-val" style="color:var(--gold);">${pct2(pctMediaCons)}</div>
+        </div>
+        <div class="dono-stat">
+          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#C05030;"></div>Comercial (equipe)</div>
+          <div class="dono-stat-val" style="color:#C05030;">${pct2(mediaComercial)}</div>
+        </div>
+        <div class="dono-stat">
+          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#C08020;"></div>Imposto</div>
+          <div class="dono-stat-val" style="color:#C08020;">${pct2(Math.max(pctMediaCons-mediaComercial-mediaZelony,0))}</div>
+        </div>
+        <div class="dono-stat" style="background:var(--bg2);margin-top:4px;padding:8px;border-radius:6px;border-bottom:none;">
+          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#3060B8;"></div>Zelony (líquido)</div>
+          <div class="dono-stat-val" style="color:#3060B8;">${pct2(mediaZelony)}</div>
+        </div>
+      </div>
+      <div class="dono-card">
+        <div class="dono-card-title"><span>📈</span> Proporção Visual</div>
+        <div class="dono-bar-wrap">
+          ${[
+            {label:'Comercial',pct:mediaComercial,base:pctMediaCons,cor:'#C05030'},
+            {label:'Zelony',pct:mediaZelony,base:pctMediaCons,cor:'#3060B8'},
+            {label:'Imposto',pct:Math.max(pctMediaCons-mediaComercial-mediaZelony,0),base:pctMediaCons,cor:'#C08020'},
+          ].map(b=>`<div class="dono-bar-row">
+            <div class="dono-bar-info"><span>${b.label}</span><span style="font-weight:600;color:${b.cor};">${pct2(b.pct)}</span></div>
+            <div class="dono-bar"><div class="dono-bar-fill" style="width:${b.base>0?Math.min((b.pct/b.base)*100,100).toFixed(1):0}%;background:${b.cor};"></div></div>
+          </div>`).join('')}
+          <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd);font-size:10px;color:var(--tm);">
+            Base: <strong style="color:var(--gold);">${pct2(pctMediaCons)}</strong> média recebida das construtoras
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="ctbl">
+      <div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div>
+      <div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div>
+    </div>
+
+    </div>`;
+    return;
+  }
+
+  // ── OUTROS PERFIS ────────────────────────────────────────────────────────
   document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">${saldoLabel}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Minhas vendas</div><div class="cmc-v go">${lMinhas.length}</div><div class="cmc-s">${lMinhas.filter(v=>v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div><div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function getCols(){
