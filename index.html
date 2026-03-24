@@ -1372,7 +1372,7 @@ const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP
 
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SB_URL='https://szaxwkfaferrfqcmzfab.supabase.co';
-const SB_KEY='sb_publishable_msIT4tw_go6f73uSpNQa-g_XDMYdcQ5';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6YXh3a2ZhZmVycmZxY216ZmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMTk4NjksImV4cCI6MjA4OTU5NTg2OX0.JhD9PraW5tIcR6gTP_K4olC0eka8KXITu0ajcFDsnOY';
 const sb=supabase.createClient(SB_URL,SB_KEY);
 
 // Dados em memória (carregados do Supabase)
@@ -1388,26 +1388,40 @@ const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyim
 
 // Carregar tudo do banco
 async function carregarDB(){
-  try{
-    // Usuários
-    const {data:us}=await sb.from('usuarios').select('*').order('id');
-    if(us&&us.length){
-      USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
-      nextUserId=Math.max(...USUARIOS.map(u=>u.id))+1;
+  // Carrega cada tabela independentemente — se uma falhar, continua as outras
+  const carregar=async(tabela,order='id')=>{
+    try{
+      const q=sb.from(tabela).select('*');
+      if(order) q.order(order);
+      const {data,error}=await q;
+      if(error) throw error;
+      return data||[];
+    }catch(e){
+      console.warn(`Falha ao carregar "${tabela}":`,e.message);
+      return null; // retorna null para indicar falha
     }
-    // Senhas
-    const {data:ss}=await sb.from('senhas').select('*');
-    if(ss) ss.forEach(s=>SENHAS_INDIVIDUAIS[s.email.toLowerCase()]=s.senha);
-    // Vendas
-    const {data:vs}=await sb.from('vendas').select('*').order('id');
-    if(vs&&vs.length){
-      VENDAS.splice(0,VENDAS.length,...vs.map(mapVendaIn));
-      nextVendaId=Math.max(...VENDAS.map(v=>v.id))+1;
-    }
-    // Treinamentos
-    const {data:ts}=await sb.from('treinamentos').select('*').order('id');
-    if(ts&&ts.length) TREIN.splice(0,TREIN.length,...ts.map(mapTreinIn));
-  }catch(e){console.error('Erro ao carregar DB:',e);}
+  };
+
+  const [us,ss,vs,ts]=await Promise.all([
+    carregar('usuarios','id'),
+    carregar('senhas',null),
+    carregar('vendas','id'),
+    carregar('treinamentos','id'),
+  ]);
+
+  if(us&&us.length){
+    USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
+    nextUserId=Math.max(...USUARIOS.map(u=>u.id))+1;
+  }
+  if(ss) ss.forEach(s=>SENHAS_INDIVIDUAIS[s.email.toLowerCase()]=s.senha);
+  if(vs&&vs.length){
+    VENDAS.splice(0,VENDAS.length,...vs.map(mapVendaIn));
+    nextVendaId=Math.max(...VENDAS.map(v=>v.id))+1;
+  }
+  if(ts&&ts.length) TREIN.splice(0,TREIN.length,...ts.map(mapTreinIn));
+
+  // Se nenhuma tabela carregou, lança erro para o retry pegar
+  if(us===null&&vs===null) throw new Error('Falha total no carregamento');
 }
 
 // Mappers banco → app
@@ -3445,30 +3459,8 @@ function irParaLogin(){
 
 // ── INICIALIZAÇÃO ──────────────────────────────────────────────────────────
 // Carrega dados do Supabase antes de renderizar
-carregarDB().then(()=>{
-  // Restaura sessão PRIMEIRO para ter o role correto antes de renderizar
-  const temSessao=restaurarSessao();
-  if(!temSessao){
-    document.getElementById('login-screen').classList.remove('hidden');
-  }
-  // Renderiza com o role correto já setado
-  renderFiltros();renderVList();renderTrein();renderProc();
-  verificarConviteURL();
-  // Remove splash loader com fade
-  const splash=document.getElementById('app-splash');
-  if(splash){
-    splash.style.transition='opacity 0.5s ease';
-    splash.style.opacity='0';
-    setTimeout(()=>splash.remove(),500);
-  }
-  // Mostra app
-  document.getElementById('main-app').style.opacity='1';
-}).catch(e=>{
-  console.error('Erro Supabase, usando localStorage:',e);
-  carregarLS();
-  if(!restaurarSessao()){
-    document.getElementById('login-screen').classList.remove('hidden');
-  }
+// ── INICIALIZAÇÃO COM RETRY ──────────────────────────────────────────────────
+function iniciarApp(){
   renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
   const splash=document.getElementById('app-splash');
@@ -3478,7 +3470,52 @@ carregarDB().then(()=>{
     setTimeout(()=>splash.remove(),500);
   }
   document.getElementById('main-app').style.opacity='1';
-});
+}
+
+async function carregarComRetry(tentativa=1){
+  const MAX=3, TIMEOUT=8000;
+  // Atualiza mensagem no splash
+  const st=document.getElementById('sp-status-txt');
+  if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Carregando dados';
+
+  try{
+    // Promise com timeout para não ficar travado
+    const comTimeout=(promise,ms)=>Promise.race([
+      promise,
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))
+    ]);
+
+    await comTimeout(carregarDB(), TIMEOUT);
+
+    const temSessao=restaurarSessao();
+    if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
+    iniciarApp();
+
+  }catch(e){
+    console.warn(`Tentativa ${tentativa} falhou:`,e.message);
+
+    if(tentativa<MAX){
+      // Aguarda 1.5s e tenta novamente
+      if(st) st.textContent=`Reconectando... (${tentativa}/${MAX})`;
+      await new Promise(r=>setTimeout(r,1500));
+      return carregarComRetry(tentativa+1);
+    }
+
+    // Todas as tentativas falharam — usa localStorage
+    console.error('Supabase indisponível após',MAX,'tentativas. Usando cache local.');
+    carregarLS();
+    const temSessao=restaurarSessao();
+    if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
+    iniciarApp();
+
+    // Mostra aviso discreto após carregar
+    setTimeout(()=>{
+      showToast('⚠️','Modo offline — dados podem estar desatualizados');
+    },1000);
+  }
+}
+
+carregarComRetry();
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();fecharEditVenda();fecharDistrato();}});
 </script>
 </body>
