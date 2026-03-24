@@ -1402,10 +1402,12 @@ async function carregarDB(){
     }
   };
 
+  const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,anexos,distratada';
+
   const [us,ss,vs,ts]=await Promise.all([
     carregar('usuarios','id'),
     carregar('senhas',null),
-    carregar('vendas','id'),
+    sb.from('vendas').select(VENDAS_COLS).order('id').then(({data,error})=>{if(error)throw error;return data||[];}).catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
     carregar('treinamentos','id'),
   ]);
 
@@ -3473,7 +3475,7 @@ function iniciarApp(){
 }
 
 async function carregarComRetry(tentativa=1){
-  const MAX=3, TIMEOUT=8000;
+  const MAX=3, TIMEOUT=15000;
   // Atualiza mensagem no splash
   const st=document.getElementById('sp-status-txt');
   if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Carregando dados';
