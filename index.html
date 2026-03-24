@@ -119,7 +119,7 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .sec-h{padding:8px 13px;border-bottom:1px solid var(--bd);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;background:var(--gold-bg);}
 .sec-b{padding:11px 13px;}
 .prog-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:13px;flex-shrink:0;}
-.prog-steps{display:flex;align-items:center;margin-bottom:9px;overflow-x:auto;padding-bottom:2px;}
+.prog-steps{display:flex;align-items:flex-start;margin-bottom:9px;overflow-x:auto;padding-bottom:4px;}
 .si{display:flex;align-items:center;flex-shrink:0;}
 .sc{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;border:2px solid var(--bd);background:var(--bg3);color:var(--tm);flex-shrink:0;}
 .sc.done{background:var(--gold);border-color:var(--gold);color:#fff;}
@@ -746,7 +746,16 @@ input[type=range]{width:100%;accent-color:var(--gold);}
   </div>
 </div>
 
-<div class="app" id="main-app">
+<div class="app" id="main-app" style="opacity:0;transition:opacity 0.2s ease;">
+<!-- SPLASH LOADER -->
+<div id="app-splash" style="position:fixed;inset:0;z-index:99999;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);letter-spacing:0.05em;">ZELONY</div>
+  <div style="font-size:11px;color:var(--tm);letter-spacing:0.2em;text-transform:uppercase;">Imóveis</div>
+  <div style="width:40px;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin-top:8px;">
+    <div style="height:100%;background:var(--gold);border-radius:2px;animation:splashbar 1.2s ease-in-out infinite;"></div>
+  </div>
+  <style>@keyframes splashbar{0%{width:0%;margin-left:0}50%{width:100%;margin-left:0}100%{width:0%;margin-left:100%}}</style>
+</div>
 <div class="topbar">
   <div class="tb-logo">ZELONY <small>Imóveis</small></div>
   <div class="tb-right">
@@ -2205,7 +2214,7 @@ function salvarVenda(){
 }
 function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');}
 
-function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;return`<div class="si"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div>`;}).join('');
+function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;const nomeAbrev=e.length>10?e.slice(0,9)+'…':e;return`<div class="si" style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}${cur?`<div style="font-size:7px;color:var(--gold);font-weight:600;white-space:nowrap;max-width:52px;text-align:center;line-height:1.2;margin-top:1px;">${nomeAbrev}</div>`:done?`<div style="font-size:7px;color:var(--tm);white-space:nowrap;max-width:52px;text-align:center;line-height:1.2;opacity:0.6;">${nomeAbrev}</div>`:`<div style="font-size:7px;color:var(--tm);white-space:nowrap;max-width:52px;text-align:center;line-height:1.2;opacity:0.35;">${nomeAbrev}</div>`}</div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
 const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin','dono'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin','dono'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin','dono'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(['dir','fin','dono'].includes(role)&&v.diretor2)mbs.push({n:v.diretor2,c:'Diretor 2',val:comD2(v),pct:v.pct_dir2});if(['fin','dono'].includes(role))mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0)});
 // Linha RH — aparece para Diretor, Financeiro e RH quando pct_rh > 0
@@ -2244,8 +2253,8 @@ const bonusH=v.bonus>0&&['dir','fin','dono','ger','cor'].includes(role)?`<div cl
 // Garante array de anexos na venda
 if(!v.anexos) v.anexos=[];
 const anexosH=renderAnexosSec(v);
-const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd" style="${h.tipo==='edicao'?'background:#3060B8;':''}" ></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;${h.tipo==='edicao'?'color:#3060B8;':''}">${h.tipo==='edicao'?'✏️ Edição registrada':ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
-document.getElementById('vd-body').innerHTML=`<div><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}${v.distratada?` <span style="font-size:11px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:4px;padding:2px 8px;font-family:'Inter',sans-serif;font-weight:600;">⚠️ DISTRATADA</span>`:''}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div>${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;""><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">✏️ Editar</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">⚠️ Distrato</button></div>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd" style="${h.tipo==='edicao'?'background:#3060B8;':h.tipo==='distrato'?'background:#C05030;':h.tipo==='reversao'?'background:#C08020;':''}"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;${h.tipo==='edicao'?'color:#3060B8;':h.tipo==='distrato'?'color:#C05030;':h.tipo==='reversao'?'color:#C08020;':''}">${h.tipo==='edicao'?'✏️ Edição registrada':h.tipo==='distrato'?'⚠️ Distrato':h.tipo==='reversao'?'↩ Etapa revertida':ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
+document.getElementById('vd-body').innerHTML=`<div><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}${v.distratada?` <span style="font-size:11px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:4px;padding:2px 8px;font-family:'Inter',sans-serif;font-weight:600;">⚠️ DISTRATADA</span>`:''}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div>${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;""><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">✏️ Editar</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">⚠️ Distrato</button></div>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${['fin','dir','dono'].includes(role)&&v.etapa>0&&!isFinal?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);margin-left:6px;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">← Voltar etapa</button>`:''}${isFinal&&['fin','dir','dono'].includes(role)&&v.etapa>0?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">← Voltar etapa</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
 // Bind do input de anexo após render
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
@@ -2511,6 +2520,20 @@ function salvarEditVenda(){
   fecharEditVenda();
   renderFiltros();renderVList();showVDetail(v.id);
   showToast('✅','Venda atualizada com sucesso!');
+}
+
+function voltarEtapa(id){
+  if(!['fin','dir','dono'].includes(role)){showToast('🔒','Sem permissão.');return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v||v.etapa<=0)return;
+  if(!confirm(`Voltar de "${ETAPAS[v.etapa]}" para "${ETAPAS[v.etapa-1]}"?`))return;
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  v.etapa--;
+  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:`↩ Etapa revertida para: ${ETAPAS[v.etapa]}`,tipo:'reversao'});
+  dbAtualizarVenda(v).catch(e=>console.error(e));
+  salvarLS();
+  renderFiltros();renderVList();showVDetail(v.id);
+  showToast('↩',`Voltou para: ${ETAPAS[v.etapa]}`);
 }
 
 function abrirM(id){const v=VENDAS.find(x=>x.id===id);pendId=id;document.getElementById('mobs').value='';document.getElementById('mchars').textContent='0/400';document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>Etapa atual</span><strong>${ETAPAS[v.etapa]}</strong></div><div style="font-size:16px;color:var(--gold);">→</div><div class="sf to"><span>Próxima</span><strong>${ETAPAS[v.etapa+1]}</strong></div></div>`;document.getElementById('mbackdrop').classList.add('show');}
@@ -3322,12 +3345,18 @@ function irParaLogin(){
 // Carrega dados do Supabase antes de renderizar
 carregarDB().then(()=>{
   // Restaura sessão PRIMEIRO para ter o role correto antes de renderizar
-  if(!restaurarSessao()){
+  const temSessao=restaurarSessao();
+  if(!temSessao){
     document.getElementById('login-screen').classList.remove('hidden');
   }
   // Renderiza com o role correto já setado
   renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
+  // Remove splash loader
+  const splash=document.getElementById('app-splash');
+  if(splash) splash.remove();
+  // Mostra app
+  document.getElementById('main-app').style.opacity='1';
 }).catch(e=>{
   console.error('Erro Supabase, usando localStorage:',e);
   carregarLS();
@@ -3336,6 +3365,9 @@ carregarDB().then(()=>{
   }
   renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
+  const splash=document.getElementById('app-splash');
+  if(splash) splash.remove();
+  document.getElementById('main-app').style.opacity='1';
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();fecharEditVenda();fecharDistrato();}});
 </script>
