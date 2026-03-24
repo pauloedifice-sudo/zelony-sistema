@@ -119,8 +119,8 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .sec-h{padding:8px 13px;border-bottom:1px solid var(--bd);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;background:var(--gold-bg);}
 .sec-b{padding:11px 13px;}
 .prog-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:13px;flex-shrink:0;}
-.prog-steps{display:flex;align-items:flex-start;margin-bottom:9px;overflow-x:auto;padding-bottom:4px;}
-.si{display:flex;align-items:center;flex-shrink:0;}
+.prog-steps{display:flex;align-items:flex-start;margin-bottom:9px;overflow-x:auto;padding-bottom:4px;gap:0;}
+.si{display:flex;flex-direction:column;align-items:center;min-width:0;}.si{display:flex;align-items:center;flex-shrink:0;}
 .sc{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;border:2px solid var(--bd);background:var(--bg3);color:var(--tm);flex-shrink:0;}
 .sc.done{background:var(--gold);border-color:var(--gold);color:#fff;}
 .sc.cur{background:var(--gold-bg);border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(184,144,42,0.15);}
@@ -747,14 +747,129 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 </div>
 
 <div class="app" id="main-app" style="opacity:0;transition:opacity 0.2s ease;">
-<!-- SPLASH LOADER -->
-<div id="app-splash" style="position:fixed;inset:0;z-index:99999;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
-  <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);letter-spacing:0.05em;">ZELONY</div>
-  <div style="font-size:11px;color:var(--tm);letter-spacing:0.2em;text-transform:uppercase;">Imóveis</div>
-  <div style="width:40px;height:3px;background:var(--bd);border-radius:2px;overflow:hidden;margin-top:8px;">
-    <div style="height:100%;background:var(--gold);border-radius:2px;animation:splashbar 1.2s ease-in-out infinite;"></div>
+<!-- SPLASH LOADER PREMIUM -->
+<div id="app-splash">
+<style>
+#app-splash{
+  position:fixed;inset:0;z-index:99999;
+  background:#0E0A00;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;overflow:hidden;
+}
+/* Partículas de fundo */
+.sp-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+.sp-p{position:absolute;border-radius:50%;animation:sp-float linear infinite;opacity:0;}
+@keyframes sp-float{
+  0%{transform:translateY(110vh) scale(0);opacity:0;}
+  10%{opacity:1;}
+  90%{opacity:0.4;}
+  100%{transform:translateY(-10vh) scale(1.2);opacity:0;}
+}
+/* Glow radial de fundo */
+.sp-glow{
+  position:absolute;width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,rgba(184,144,42,0.12) 0%,transparent 70%);
+  animation:sp-pulse 3s ease-in-out infinite;
+}
+@keyframes sp-pulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.15);opacity:1;}}
+/* Logo */
+.sp-logo-wrap{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin-bottom:40px;}
+.sp-logo-ring{
+  width:90px;height:90px;border-radius:50%;
+  border:1px solid rgba(184,144,42,0.3);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;margin-bottom:20px;
+  animation:sp-ring 3s linear infinite;
+}
+@keyframes sp-ring{0%{box-shadow:0 0 0 0 rgba(184,144,42,0.4);}70%{box-shadow:0 0 0 20px rgba(184,144,42,0);}100%{box-shadow:0 0 0 0 rgba(184,144,42,0);}}
+.sp-logo-ring::before{
+  content:'';position:absolute;inset:-8px;border-radius:50%;
+  border:1px solid transparent;
+  border-top-color:rgba(184,144,42,0.8);
+  border-right-color:rgba(184,144,42,0.3);
+  animation:sp-spin 1.5s linear infinite;
+}
+.sp-logo-ring::after{
+  content:'';position:absolute;inset:-16px;border-radius:50%;
+  border:1px solid transparent;
+  border-top-color:rgba(184,144,42,0.3);
+  border-left-color:rgba(184,144,42,0.1);
+  animation:sp-spin 2.5s linear infinite reverse;
+}
+@keyframes sp-spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+.sp-logo-inner{
+  font-family:'Playfair Display',serif;font-size:22px;font-weight:700;
+  color:#B8902A;letter-spacing:0.08em;
+  text-shadow:0 0 30px rgba(184,144,42,0.5);
+}
+.sp-brand{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#F0D080;letter-spacing:0.12em;line-height:1;}
+.sp-sub{font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.4em;text-transform:uppercase;margin-top:6px;}
+/* Barra de progresso */
+.sp-bar-wrap{position:relative;z-index:2;width:220px;margin-bottom:16px;}
+.sp-bar-bg{height:2px;background:rgba(184,144,42,0.15);border-radius:2px;overflow:hidden;}
+.sp-bar-fill{height:100%;background:linear-gradient(90deg,transparent,#B8902A,#F0D080,#B8902A,transparent);border-radius:2px;animation:sp-shimmer 1.8s ease-in-out infinite;background-size:200% 100%;}
+@keyframes sp-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+/* Texto de status */
+.sp-status{position:relative;z-index:2;font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.15em;text-transform:uppercase;animation:sp-fade 1.8s ease-in-out infinite;}
+@keyframes sp-fade{0%,100%{opacity:0.4;}50%{opacity:1;}}
+/* Dots */
+.sp-dots{position:relative;z-index:2;display:flex;gap:6px;margin-top:8px;}
+.sp-dot{width:4px;height:4px;border-radius:50%;background:rgba(184,144,42,0.4);}
+.sp-dot:nth-child(1){animation:sp-dot-pulse 1.4s ease-in-out 0s infinite;}
+.sp-dot:nth-child(2){animation:sp-dot-pulse 1.4s ease-in-out 0.2s infinite;}
+.sp-dot:nth-child(3){animation:sp-dot-pulse 1.4s ease-in-out 0.4s infinite;}
+@keyframes sp-dot-pulse{0%,100%{transform:scale(1);opacity:0.4;}50%{transform:scale(1.6);opacity:1;background:rgba(184,144,42,0.9);}}
+/* Linha decorativa */
+.sp-line{position:relative;z-index:2;width:1px;height:40px;background:linear-gradient(to bottom,transparent,rgba(184,144,42,0.4),transparent);margin:0;}
+</style>
+
+<!-- Partículas -->
+<div class="sp-particles" id="sp-particles"></div>
+<div class="sp-glow"></div>
+
+<!-- Logo -->
+<div class="sp-logo-wrap">
+  <div class="sp-logo-ring">
+    <div class="sp-logo-inner">Z</div>
   </div>
-  <style>@keyframes splashbar{0%{width:0%;margin-left:0}50%{width:100%;margin-left:0}100%{width:0%;margin-left:100%}}</style>
+  <div class="sp-brand">ZELONY</div>
+  <div class="sp-sub">Imóveis · Sistema de Gestão</div>
+</div>
+
+<!-- Linha -->
+<div class="sp-line"></div>
+
+<!-- Barra + status -->
+<div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
+  <div class="sp-bar-wrap">
+    <div class="sp-bar-bg"><div class="sp-bar-fill"></div></div>
+  </div>
+  <div class="sp-status" id="sp-status-txt">Carregando dados</div>
+  <div class="sp-dots"><div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div></div>
+</div>
+
+<script>
+// Gera partículas flutuantes
+(function(){
+  const c=document.getElementById('sp-particles');
+  if(!c)return;
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');
+    p.className='sp-p';
+    const s=Math.random()*4+2;
+    p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;background:rgba(184,144,42,${Math.random()*0.3+0.05});animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*5}s;`;
+    c.appendChild(p);
+  }
+  // Rotaciona mensagens
+  const msgs=['Carregando dados','Conectando ao servidor','Sincronizando vendas','Preparando o sistema','Quase lá'];
+  let mi=0;
+  setInterval(()=>{
+    mi=(mi+1)%msgs.length;
+    const el=document.getElementById('sp-status-txt');
+    if(el)el.textContent=msgs[mi];
+  },1800);
+})();
+</script>
 </div>
 <div class="topbar">
   <div class="tb-logo">ZELONY <small>Imóveis</small></div>
@@ -2214,7 +2329,7 @@ function salvarVenda(){
 }
 function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');}
 
-function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;const nomeAbrev=e.length>10?e.slice(0,9)+'…':e;return`<div class="si" style="display:flex;flex-direction:column;align-items:center;gap:3px;"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}${cur?`<div style="font-size:7px;color:var(--gold);font-weight:600;white-space:nowrap;max-width:52px;text-align:center;line-height:1.2;margin-top:1px;">${nomeAbrev}</div>`:done?`<div style="font-size:7px;color:var(--tm);white-space:nowrap;max-width:52px;text-align:center;line-height:1.2;opacity:0.6;">${nomeAbrev}</div>`:`<div style="font-size:7px;color:var(--tm);white-space:nowrap;max-width:52px;text-align:center;line-height:1.2;opacity:0.35;">${nomeAbrev}</div>`}</div>`;}).join('');
+function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;const nomeAbrev=e.length>8?e.slice(0,7)+'…':e;return`<div class="si" style="display:flex;flex-direction:column;align-items:center;position:relative;"><div style="display:flex;align-items:center;"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div><div style="font-size:7px;font-weight:${cur?'700':'400'};color:${cur?'var(--gold)':done?'var(--tm)':'rgba(0,0,0,0.2)'};white-space:nowrap;margin-top:4px;text-align:center;letter-spacing:0.01em;">${nomeAbrev}</div></div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
 const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin','dono'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin','dono'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin','dono'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(['dir','fin','dono'].includes(role)&&v.diretor2)mbs.push({n:v.diretor2,c:'Diretor 2',val:comD2(v),pct:v.pct_dir2});if(['fin','dono'].includes(role))mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0)});
 // Linha RH — aparece para Diretor, Financeiro e RH quando pct_rh > 0
@@ -2542,6 +2657,16 @@ function handleBackdrop(e){if(e.target===document.getElementById('mbackdrop'))fe
 function confirmAv(){const v=VENDAS.find(x=>x.id===pendId);if(!v)return;const obs=document.getElementById('mobs').value.trim();const quemAvancou=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';v.etapa++;v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quemAvancou,o:obs});notifs.unshift({venda:v.cliente.split('/')[0].trim(),etapa:ETAPAS[v.etapa],obs,hora:'agora'});const b=document.getElementById('nbadge');b.textContent=notifs.length;b.classList.remove('hidden');fecharM();renderFiltros();renderVList();showVDetail(v.id);renderNots();dbAtualizarVenda(v).catch(e=>console.error(e));salvarLS();if(!document.getElementById('mod-carteira').classList.contains('hidden'))renderCarteira();}
 
 function renderTrein(){
+  // Cor, Cap, Ger veem "Em breve"
+  if(['cor','cap','ger'].includes(role)){
+    document.getElementById('mod-trein').innerHTML=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;">
+      <div style="font-size:48px;">🚀</div>
+      <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--gold);">Em Breve</div>
+      <div style="font-size:12px;color:var(--tm);text-align:center;max-width:280px;line-height:1.6;">O módulo de Treinamentos está sendo preparado com conteúdo exclusivo para a sua equipe. Em breve estará disponível!</div>
+      <div style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:8px 20px;font-size:11px;color:var(--gold);font-weight:600;">🔔 Em desenvolvimento</div>
+    </div>`;
+    return;
+  }
   const cats=['Corretor','Capitão','Gerente'];
   document.getElementById('tcats').innerHTML=cats.map(c=>`<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}',this)">${CAT_ICON[c]} ${c}</button>`).join('');
 
@@ -2957,7 +3082,30 @@ function salvarUsuario(){
   renderUsuarios();
 }
 
-function renderProc(){const ic={'Comercial':['🔑','🤝','🏠'],'Jurídico':['⚖️'],'Financeiro':['💰'],'RH / Pessoas':['👤','📣']};let h='';Object.entries(PROC_DATA).forEach(([s,pp])=>{h+=`<div class="proc-sec"><div class="psec-lbl">${s}</div>`;pp.forEach((p,i)=>{h+=`<div class="pitem" onclick="showProc('${s}',${i})"><div class="picon">${ic[s]?.[i]||'📋'}</div><div style="flex:1"><div class="pname">${p.nome}</div><div class="pdesc">${p.etapas} etapas</div></div><span class="zbg ${p.badge}">${p.status}</span></div>`;});h+='</div>';});document.getElementById('proc-grid').innerHTML=h;document.getElementById('proc-det').classList.add('hidden');}
+function renderProc(){
+  if(['cor','cap','ger'].includes(role)){
+    document.getElementById('proc-grid').innerHTML='';
+    document.getElementById('proc-det').classList.add('hidden');
+    document.getElementById('mod-proc').querySelector('.page-body')?.remove?.();
+    const cont=document.getElementById('mod-proc');
+    // Remove conteúdo anterior e mostra em breve
+    const existing=cont.querySelector('#proc-embreve');
+    if(!existing){
+      const div=document.createElement('div');
+      div.id='proc-embreve';
+      div.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;';
+      div.innerHTML=`<div style="font-size:48px;">📋</div>
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--gold);">Em Breve</div>
+        <div style="font-size:12px;color:var(--tm);text-align:center;max-width:280px;line-height:1.6;">Os Processos Operacionais estão sendo estruturados para orientar o trabalho da equipe. Em breve estarão disponíveis!</div>
+        <div style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:8px 20px;font-size:11px;color:var(--gold);font-weight:600;">🔔 Em desenvolvimento</div>`;
+      cont.appendChild(div);
+    }
+    return;
+  }
+  // Remove "em breve" se existir (quando dono/dir acessa)
+  const eb=document.getElementById('proc-embreve');
+  if(eb) eb.remove();
+  const ic={'Comercial':['🔑','🤝','🏠'],'Jurídico':['⚖️'],'Financeiro':['💰'],'RH / Pessoas':['👤','📣']};let h='';Object.entries(PROC_DATA).forEach(([s,pp])=>{h+=`<div class="proc-sec"><div class="psec-lbl">${s}</div>`;pp.forEach((p,i)=>{h+=`<div class="pitem" onclick="showProc('${s}',${i})"><div class="picon">${ic[s]?.[i]||'📋'}</div><div style="flex:1"><div class="pname">${p.nome}</div><div class="pdesc">${p.etapas} etapas</div></div><span class="zbg ${p.badge}">${p.status}</span></div>`;});h+='</div>';});document.getElementById('proc-grid').innerHTML=h;document.getElementById('proc-det').classList.add('hidden');}
 function showProc(s,i){const p=PROC_DATA[s][i];const det=document.getElementById('proc-det');det.classList.remove('hidden');det.innerHTML=`<div class="proc-d-top"><div class="proc-d-title">${p.nome}</div><div style="display:flex;align-items:center;gap:8px;"><span class="zbg ${p.badge}">${p.status}</span><button class="proc-close" onclick="document.getElementById('proc-det').classList.add('hidden')">✕</button></div></div><div class="etapa-list">${p.steps.map((s,i)=>`<div class="etapa-item"><div class="enum">${i+1}</div><div class="etxt">${s}</div></div>`).join('')}</div>`;det.scrollIntoView({behavior:'smooth',block:'nearest'});}
 
 function renderNots(){const el=document.getElementById('nlist');if(!notifs.length){el.innerHTML='<div style="padding:13px;font-size:11px;color:var(--tm);text-align:center;">Sem notificações</div>';return;}el.innerHTML=notifs.slice(0,8).map(n=>`<div class="ni"><div style="font-size:14px;flex-shrink:0;color:var(--gold);margin-top:1px;">◈</div><div><div class="ntxt"><strong>${n.venda}</strong> → <strong>${n.etapa}</strong></div>${n.obs?`<div class="nobs">"${n.obs}"</div>`:''}<div style="font-size:9px;color:var(--tm);margin-top:1px;">${n.hora} · Financeiro</div></div></div>`).join('');}
@@ -3352,9 +3500,13 @@ carregarDB().then(()=>{
   // Renderiza com o role correto já setado
   renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
-  // Remove splash loader
+  // Remove splash loader com fade
   const splash=document.getElementById('app-splash');
-  if(splash) splash.remove();
+  if(splash){
+    splash.style.transition='opacity 0.5s ease';
+    splash.style.opacity='0';
+    setTimeout(()=>splash.remove(),500);
+  }
   // Mostra app
   document.getElementById('main-app').style.opacity='1';
 }).catch(e=>{
@@ -3366,7 +3518,11 @@ carregarDB().then(()=>{
   renderFiltros();renderVList();renderTrein();renderProc();
   verificarConviteURL();
   const splash=document.getElementById('app-splash');
-  if(splash) splash.remove();
+  if(splash){
+    splash.style.transition='opacity 0.5s ease';
+    splash.style.opacity='0';
+    setTimeout(()=>splash.remove(),500);
+  }
   document.getElementById('main-app').style.opacity='1';
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){fecharM();fecharMT();fecharMU();fecharMV();fecharTS();fecharConvite();fecharEditVenda();fecharDistrato();}});
