@@ -923,7 +923,32 @@ input[type=range]{width:100%;accent-color:var(--gold);}
               <button class="vtab active" onclick="setVTab('acomp',this)">Acompanhamento</button>
               <button class="vtab" onclick="setVTab('rel',this)">Relatório</button>
             </div>
-            <div class="vl-srch"><span class="vl-si">🔍</span><input type="text" id="vsearch" placeholder="Buscar..." oninput="renderVList()"></div>
+            <div class="vl-srch"><span class="vl-si">🔍</span><input type="text" id="vsearch" placeholder="Buscar cliente, produto..." oninput="renderVList()"></div>
+            <div id="v-adv-filters" style="display:flex;flex-direction:column;gap:4px;padding:0 8px 6px;border-bottom:1px solid var(--bd);">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+                <select id="vf-mes" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
+                  <option value="">📅 Todos os meses</option>
+                </select>
+                <select id="vf-construtora" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
+                  <option value="">🏗️ Todas construtoras</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+                <select id="vf-equipe" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
+                  <option value="">👥 Todas as equipes</option>
+                </select>
+                <select id="vf-cca" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
+                  <option value="">🧑‍💼 Todos os CCA</option>
+                </select>
+              </div>
+              <select id="vf-origem" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
+                <option value="">📌 Todas as origens</option>
+                <option value="Indicação">Indicação</option>
+                <option value="MKT">MKT</option>
+                <option value="Oferta Ativa">Oferta Ativa</option>
+              </select>
+              <div id="vf-active-tags" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:1px;"></div>
+            </div>
           </div>
           <div class="vl-filters" id="vfilters"></div>
           <div class="unid-filter hidden" id="unid-filter">
@@ -1988,7 +2013,58 @@ function renderFiltros(){
   const temAmbas=['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas');
   if(unidEl) unidEl.classList.toggle('hidden',!temAmbas);
   renderBtnNovaVenda();
+
+  // Popula selects de filtros avançados com valores únicos das vendas
+  const todasVendas=vendasU(VENDAS);
+  const selMes=document.getElementById('vf-mes');
+  const selConst=document.getElementById('vf-construtora');
+  const selEquipe=document.getElementById('vf-equipe');
+  const selCca=document.getElementById('vf-cca');
+  if(!selMes) return;
+
+  const curMes=selMes.value,curConst=selConst.value,curEq=selEquipe.value,curCca=selCca.value;
+
+  const meses=[...new Set(todasVendas.map(v=>v.mes).filter(Boolean))].sort();
+  const construtoras=[...new Set(todasVendas.map(v=>v.construtora).filter(Boolean))].sort();
+  const ccas=[...new Set(todasVendas.map(v=>v.cca).filter(Boolean))].sort();
+  // Equipes: busca nos usuários das vendas
+  const equipesSet=new Set();
+  todasVendas.forEach(v=>{
+    [v.corretor,v.gerente,v.diretor].forEach(nome=>{
+      if(!nome) return;
+      const u=USUARIOS.find(u=>u.nome===nome);
+      if(u&&u.equipe) equipesSet.add(u.equipe);
+    });
+  });
+  const equipes=[...equipesSet].sort();
+
+  selMes.innerHTML=`<option value="">📅 Todos os meses</option>`+meses.map(m=>`<option value="${m}" ${curMes===m?'selected':''}>${m}</option>`).join('');
+  selConst.innerHTML=`<option value="">🏗️ Todas construtoras</option>`+construtoras.map(c=>`<option value="${c}" ${curConst===c?'selected':''}>${c}</option>`).join('');
+  selEquipe.innerHTML=`<option value="">👥 Todas as equipes</option>`+equipes.map(e=>`<option value="${e}" ${curEq===e?'selected':''}>${e}</option>`).join('');
+  selCca.innerHTML=`<option value="">🧑‍💼 Todos os CCA</option>`+ccas.map(c=>`<option value="${c}" ${curCca===c?'selected':''}>${c}</option>`).join('');
+
+  // Mostra tags dos filtros ativos
+  atualizarTagsFiltros();
 }
+
+function atualizarTagsFiltros(){
+  const wrap=document.getElementById('vf-active-tags');
+  if(!wrap) return;
+  const tags=[];
+  const vfMes=document.getElementById('vf-mes')?.value;
+  const vfConst=document.getElementById('vf-construtora')?.value;
+  const vfEq=document.getElementById('vf-equipe')?.value;
+  const vfCca=document.getElementById('vf-cca')?.value;
+  const vfOrigem=document.getElementById('vf-origem')?.value;
+  if(vfMes) tags.push({label:`📅 ${vfMes}`,clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
+  if(vfConst) tags.push({label:`🏗️ ${vfConst}`,clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
+  if(vfEq) tags.push({label:`👥 ${vfEq}`,clear:()=>{document.getElementById('vf-equipe').value='';renderVList();}});
+  if(vfCca) tags.push({label:`🧑‍💼 ${vfCca}`,clear:()=>{document.getElementById('vf-cca').value='';renderVList();}});
+  if(vfOrigem) tags.push({label:`📌 ${vfOrigem}`,clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
+  wrap.innerHTML=tags.map((t,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:10px;padding:2px 8px;font-size:9px;color:var(--gold);cursor:pointer;" onclick="clearTag(${i})">${t.label} ✕</span>`).join('');
+  wrap._tags=tags;
+}
+function clearTag(i){const wrap=document.getElementById('vf-active-tags');if(wrap&&wrap._tags)wrap._tags[i].clear();}
 function setFE(v){fEtapa=v==='all'?'all':parseInt(v);renderFiltros();renderVList();}
 
 function setUnidade(u,el){
@@ -2297,7 +2373,33 @@ function salvarVenda(){
   salvarLS();
   showToast('✅',`Venda de ${cliente.split(' ')[0]} cadastrada!`);
 }
-function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');}
+function renderVList(){
+  let l=vendasU(VENDAS);
+  if(fEtapa!=='all') l=l.filter(v=>v.etapa===parseInt(fEtapa));
+  const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();
+  if(q) l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q)||v.construtora.toLowerCase().includes(q)||v.corretor.toLowerCase().includes(q));
+  // Filtros avançados
+  const vfMes=document.getElementById('vf-mes')?.value;
+  const vfConst=document.getElementById('vf-construtora')?.value;
+  const vfEq=document.getElementById('vf-equipe')?.value;
+  const vfCca=document.getElementById('vf-cca')?.value;
+  const vfOrigem=document.getElementById('vf-origem')?.value;
+  if(vfMes) l=l.filter(v=>v.mes===vfMes);
+  if(vfConst) l=l.filter(v=>v.construtora===vfConst);
+  if(vfCca) l=l.filter(v=>v.cca===vfCca);
+  if(vfOrigem) l=l.filter(v=>v.origem===vfOrigem);
+  if(vfEq) l=l.filter(v=>{
+    return [v.corretor,v.gerente,v.diretor].some(nome=>{
+      if(!nome) return false;
+      const u=USUARIOS.find(u=>u.nome===nome);
+      return u&&u.equipe===vfEq;
+    });
+  });
+  atualizarTagsFiltros();
+  document.getElementById('vc').textContent=l.length;
+  if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}
+  document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');
+}
 
 async function carregarAnexosVenda(id){
   try{
@@ -2489,7 +2591,115 @@ function fecharViewer(){
   document.getElementById('av-content').innerHTML='';
 }
 
-function renderRel(){const meses=['TODOS',...new Set(VENDAS.map(v=>v.mes))];document.getElementById('rel-filters').innerHTML=meses.map(m=>`<button class="rf ${relMes===m?'active':''}" onclick="setRM('${m}',this)">${m}</button>`).join('');let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const vgv=l.reduce((s,v)=>s+v.valor,0),mc=l.reduce((s,v)=>s+comVis(v),0),conc=l.filter(v=>v.etapa===ETAPAS.length-1).length;document.getElementById('rel-mets').innerHTML=`<div class="mc a"><div class="mc-l">VGV total</div><div class="mc-v g">${fmtK(vgv)}</div><div class="mc-s">${l.length} vendas</div></div><div class="mc"><div class="mc-l">${lblCom()}</div><div class="mc-v g">${fmtK(mc)}</div><div class="mc-s">total período</div></div><div class="mc"><div class="mc-l">Em andamento</div><div class="mc-v">${l.length-conc}</div></div><div class="mc"><div class="mc-l">Concluídas</div><div class="mc-v">${conc}</div></div>`;document.getElementById('rel-n').textContent=`${l.length} vendas`;const mb=role==='dir'||role==='fin';document.getElementById('rel-thead').innerHTML=`<th>Data</th><th>Cliente</th><th>Produto</th><th>Corretor</th><th>Valor</th>${mb?'<th>Com. bruta</th>':''}<th>${lblCom()}</th><th>Etapa</th>`;document.getElementById('rel-body').innerHTML=l.map(v=>`<tr><td>${v.data}</td><td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td><td>${v.produto}</td><td>${v.corretor}</td><td class="pos">${fmt(v.valor)}</td>${mb?`<td class="pos">${fmt(v.valor*v.pct)}</td>`:''}<td class="pos">${fmt(comVis(v))}</td><td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td></tr>`).join('');}
+function renderRel(){
+  const meses=['TODOS',...new Set(VENDAS.map(v=>v.mes).filter(Boolean))];
+  document.getElementById('rel-filters').innerHTML=meses.map(m=>`<button class="rf ${relMes===m?'active':''}" onclick="setRM('${m}',this)">${m}</button>`).join('');
+  let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));
+  const ativas=l.filter(v=>!v.distratada);
+  const distratadas=l.filter(v=>v.distratada);
+  const conc=ativas.filter(v=>v.etapa===ETAPAS.length-1);
+  const emAnd=ativas.filter(v=>v.etapa<ETAPAS.length-1);
+  const vgv=ativas.reduce((s,v)=>s+v.valor,0);
+  const comBruta=ativas.reduce((s,v)=>s+(v.valor*v.pct),0);
+  const comLiq=ativas.reduce((s,v)=>s+comTotal(v),0);
+  const comZel=ativas.reduce((s,v)=>s+comZ(v),0);
+  const mc=ativas.reduce((s,v)=>s+comVis(v),0);
+  const totalBonus=ativas.reduce((s,v)=>s+(v.bonus||0),0);
+  const isAdmin=['dir','fin','dono'].includes(role);
+
+  // KPIs por origem
+  const porOrigem={};
+  ativas.forEach(v=>{const o=v.origem||'Outros';porOrigem[o]=(porOrigem[o]||0)+1;});
+  // KPIs por construtora
+  const porConst={};
+  ativas.forEach(v=>{const c=v.construtora||'—';if(!porConst[c])porConst[c]={n:0,vgv:0};porConst[c].n++;porConst[c].vgv+=v.valor;});
+
+  document.getElementById('rel-mets').innerHTML=`
+    <!-- KPIs principais -->
+    <div class="mc a"><div class="mc-l">VGV Total</div><div class="mc-v g">${fmtK(vgv)}</div><div class="mc-s">${ativas.length} venda${ativas.length!==1?'s':''} ativas</div></div>
+    ${isAdmin?`<div class="mc"><div class="mc-l">Com. Bruta</div><div class="mc-v g">${fmtK(comBruta)}</div><div class="mc-s">antes do imposto</div></div>`:''}
+    ${isAdmin?`<div class="mc"><div class="mc-l">Com. Líquida</div><div class="mc-v g">${fmtK(comLiq)}</div><div class="mc-s">após imposto</div></div>`:''}
+    ${isAdmin?`<div class="mc"><div class="mc-l">Zelony</div><div class="mc-v g">${fmtK(comZel)}</div><div class="mc-s">lucro líquido</div></div>`:''}
+    ${!isAdmin?`<div class="mc"><div class="mc-l">${lblCom()}</div><div class="mc-v g">${fmtK(mc)}</div><div class="mc-s">total período</div></div>`:''}
+    <div class="mc"><div class="mc-l">Concluídas</div><div class="mc-v" style="color:#2E9E6E;">${conc.length}</div><div class="mc-s">comissão recebida</div></div>
+    <div class="mc"><div class="mc-l">Em andamento</div><div class="mc-v">${emAnd.length}</div><div class="mc-s">em processo</div></div>
+    ${distratadas.length>0?`<div class="mc"><div class="mc-l">Distratos</div><div class="mc-v" style="color:#C05030;">${distratadas.length}</div><div class="mc-s">canceladas</div></div>`:''}
+    ${totalBonus>0&&isAdmin?`<div class="mc"><div class="mc-l">Bônus Total</div><div class="mc-v g">${fmtK(totalBonus)}</div><div class="mc-s">construtoras</div></div>`:''}
+  `;
+
+  // Análise por Origem
+  const origemHTML=Object.entries(porOrigem).sort((a,b)=>b[1]-a[1]).map(([o,n])=>{
+    const pct=ativas.length>0?Math.round(n/ativas.length*100):0;
+    return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);">
+      <div style="width:80px;font-size:10px;color:var(--ts);">${o}</div>
+      <div style="flex:1;height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;background:var(--gold);border-radius:3px;width:${pct}%;"></div>
+      </div>
+      <div style="font-size:10px;font-weight:600;color:var(--gold);width:20px;text-align:right;">${n}</div>
+      <div style="font-size:9px;color:var(--tm);width:30px;">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  // Análise por Construtora
+  const constHTML=Object.entries(porConst).sort((a,b)=>b[1].vgv-a[1].vgv).slice(0,6).map(([c,d])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--bd);">
+      <div style="font-size:10px;color:var(--ts);">${c}</div>
+      <div style="display:flex;gap:12px;align-items:center;">
+        <span style="font-size:9px;color:var(--tm);">${d.n} venda${d.n!==1?'s':''}</span>
+        <span style="font-size:11px;font-weight:600;color:var(--gold);">${fmtK(d.vgv)}</span>
+      </div>
+    </div>`).join('');
+
+  // Tabela completa
+  document.getElementById('rel-n').textContent=`${l.length} venda${l.length!==1?'s':''}`;
+  document.getElementById('rel-thead').innerHTML=`
+    <th>Data</th><th>Mês</th><th>Cliente</th><th>Produto</th><th>Construtora</th>
+    <th>Origem</th><th>Corretor</th><th>Gerente</th>
+    ${isAdmin?'<th>CCA</th>':''}
+    <th>Valor</th>
+    ${isAdmin?'<th>Com. Bruta</th><th>Com. Líquida</th><th>Zelony</th>':''}
+    ${!isAdmin?`<th>${lblCom()}</th>`:''}
+    ${totalBonus>0&&isAdmin?'<th>Bônus</th>':''}
+    <th>Etapa</th><th>Unidade</th>`;
+
+  document.getElementById('rel-body').innerHTML=l.map(v=>`<tr style="${v.distratada?'opacity:0.5;text-decoration:line-through;':''}">
+    <td>${v.data}</td>
+    <td><span class="zbg bg-b" style="font-size:8px;">${v.mes}</span></td>
+    <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>
+    <td>${v.produto}</td>
+    <td>${v.construtora}</td>
+    <td><span style="font-size:9px;background:var(--bg2);border:1px solid var(--bd);border-radius:3px;padding:1px 5px;">${v.origem||'—'}</span></td>
+    <td>${v.corretor}</td>
+    <td>${v.gerente||'—'}</td>
+    ${isAdmin?`<td style="font-size:9px;">${v.cca||'—'}</td>`:''}
+    <td class="pos">${fmt(v.valor)}</td>
+    ${isAdmin?`<td class="pos">${fmt(v.valor*v.pct)}</td><td class="pos">${fmt(comTotal(v))}</td><td class="pos" style="color:var(--gold);">${fmt(comZ(v))}</td>`:''}
+    ${!isAdmin?`<td class="pos">${fmt(comVis(v))}</td>`:''}
+    ${totalBonus>0&&isAdmin?`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`:''}
+    <td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span>${v.distratada?'<span style="font-size:8px;color:#C05030;margin-left:3px;">⚠️</span>':''}</td>
+    <td style="font-size:9px;">${v.unidade||'—'}</td>
+  </tr>`).join('');
+
+  // Insere análises acima da tabela
+  const relMets=document.getElementById('rel-mets');
+  const existing=document.getElementById('rel-analises');
+  if(existing) existing.remove();
+  if(ativas.length>0){
+    const div=document.createElement('div');
+    div.id='rel-analises';
+    div.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;';
+    div.innerHTML=`
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--tm);font-weight:600;margin-bottom:8px;">📌 Origem dos leads</div>
+        ${origemHTML||'<div style="font-size:11px;color:var(--tm);">Sem dados</div>'}
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--tm);font-weight:600;margin-bottom:8px;">🏗️ Top construtoras (VGV)</div>
+        ${constHTML||'<div style="font-size:11px;color:var(--tm);">Sem dados</div>'}
+      </div>`;
+    relMets.after(div);
+  }
+}
 function setRM(m,el){relMes=m;document.querySelectorAll('.rf').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderRel();}
 
 function exportXLSX(){const btn=document.getElementById('bxl');btn.classList.add('loading');btn.textContent='Gerando...';setTimeout(()=>{let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const mb=role==='dir'||role==='fin';const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([['Data','Cliente','Produto','Corretor','Valor (R$)',...(mb?['Com. Bruta (R$)']:[]),lblCom()+' (R$)','Etapa','Mês'],...l.map(v=>[v.data,v.cliente,v.produto,v.corretor,v.valor,...(mb?[Math.round(v.valor*v.pct)]:[]),Math.round(comVis(v)),ETAPAS[v.etapa],v.mes])]);ws['!cols']=[{wch:8},{wch:34},{wch:16},{wch:14},{wch:16},...(mb?[{wch:16}]:[]),{wch:18},{wch:24},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.xlsx`);showToast('✅','Excel exportado!');btn.classList.remove('loading');btn.textContent='⬇ Excel';},300);}
