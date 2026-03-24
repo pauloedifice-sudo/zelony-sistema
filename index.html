@@ -1719,7 +1719,7 @@ function renderCarteira(){
 
     document.getElementById('carteira-content').innerHTML=`
     <style>
-      .dono-wrap{max-width:1060px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:9px;}
+      .dono-wrap{width:100%;display:flex;flex-direction:column;gap:9px;}
       .dono-hero{background:linear-gradient(135deg,#1A1200,#2A1E00);border-radius:11px;padding:16px 20px;position:relative;overflow:hidden;}
       .dono-hero::after{content:'';position:absolute;right:-20px;top:-20px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(184,144,42,0.15),transparent 70%);}
       .dono-hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;}
@@ -1730,7 +1730,8 @@ function renderCarteira(){
       .dono-badge-row{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap;}
       .dono-badge{background:rgba(255,208,96,0.12);border:1px solid rgba(255,208,96,0.25);border-radius:20px;padding:3px 9px;font-size:9px;color:#FFD060;font-weight:500;}
       .dono-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-      .dono-grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+      .dono-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+      .dono-row-full{display:grid;grid-template-columns:3fr 2fr;gap:8px;}
       .dono-card{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:12px 14px;}
       .dono-card-title{font-size:8px;text-transform:uppercase;letter-spacing:0.08em;color:var(--tm);font-weight:600;margin-bottom:9px;display:flex;align-items:center;gap:5px;}
       .dono-card-title span{font-size:12px;}
@@ -1781,108 +1782,71 @@ function renderCarteira(){
       </div>
     </div>
 
-    <!-- LINHA 1: Comissão Bruta | Comissão Líquida | Imposto -->
-    <div class="dono-grid3">
-      <div class="dono-card">
-        <div class="dono-card-title"><span>💰</span> Comissão Bruta</div>
-        <div class="dono-row2">
-          <div class="dono-mini" style="border-left:3px solid #2E9E6E;">
-            <div class="dono-mini-lbl">✅ Recebido</div>
-            <div class="dono-mini-val" style="color:#2E9E6E;">${fmt(brutaRec)}</div>
+    <!-- LINHA PRINCIPAL: Comissões (esq) + Lucro (dir) -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <!-- Coluna esquerda: 3 cards de comissão empilhados -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="dono-card">
+          <div class="dono-card-title"><span>💰</span> Comissão Bruta</div>
+          <div class="dono-row2">
+            <div class="dono-mini" style="border-left:3px solid #2E9E6E;"><div class="dono-mini-lbl">✅ Recebido</div><div class="dono-mini-val" style="color:#2E9E6E;">${fmt(brutaRec)}</div></div>
+            <div class="dono-mini" style="border-left:3px solid #C08020;"><div class="dono-mini-lbl">⏳ A receber</div><div class="dono-mini-val" style="color:#C08020;">${fmt(brutaPend)}</div></div>
           </div>
-          <div class="dono-mini" style="border-left:3px solid #C08020;">
-            <div class="dono-mini-lbl">⏳ A receber</div>
-            <div class="dono-mini-val" style="color:#C08020;">${fmt(brutaPend)}</div>
-          </div>
+          <div style="margin-top:7px;font-size:9px;color:var(--tm);text-align:right;">Total: <strong style="color:var(--gold);">${fmt(brutaRec+brutaPend)}</strong></div>
         </div>
-        <div style="margin-top:8px;font-size:10px;color:var(--tm);text-align:right;">Total: <strong style="color:var(--gold);">${fmt(brutaRec+brutaPend)}</strong></div>
-      </div>
-      <div class="dono-card">
-        <div class="dono-card-title"><span>✨</span> Comissão Líquida</div>
-        <div class="dono-row2">
-          <div class="dono-mini" style="border-left:3px solid #2E9E6E;">
-            <div class="dono-mini-lbl">✅ Recebido</div>
-            <div class="dono-mini-val" style="color:#2E9E6E;">${fmt(liqRec)}</div>
+        <div class="dono-card">
+          <div class="dono-card-title"><span>✨</span> Comissão Líquida</div>
+          <div class="dono-row2">
+            <div class="dono-mini" style="border-left:3px solid #2E9E6E;"><div class="dono-mini-lbl">✅ Recebido</div><div class="dono-mini-val" style="color:#2E9E6E;">${fmt(liqRec)}</div></div>
+            <div class="dono-mini" style="border-left:3px solid #C08020;"><div class="dono-mini-lbl">⏳ A receber</div><div class="dono-mini-val" style="color:#C08020;">${fmt(liqPend)}</div></div>
           </div>
-          <div class="dono-mini" style="border-left:3px solid #C08020;">
-            <div class="dono-mini-lbl">⏳ A receber</div>
-            <div class="dono-mini-val" style="color:#C08020;">${fmt(liqPend)}</div>
+          <div style="margin-top:7px;font-size:9px;color:var(--tm);text-align:right;">Total: <strong style="color:var(--gold);">${fmt(liqRec+liqPend)}</strong></div>
+        </div>
+        <div class="dono-card">
+          <div class="dono-card-title"><span>🧾</span> Imposto (${((ativas[0]?.imp||0.11)*100).toFixed(0)}%)</div>
+          <div class="dono-row2">
+            <div class="dono-mini" style="border-left:3px solid #C05030;"><div class="dono-mini-lbl">✅ Pago</div><div class="dono-mini-val" style="color:#C05030;">${fmt(impRec)}</div></div>
+            <div class="dono-mini" style="border-left:3px solid #C08020;"><div class="dono-mini-lbl">⏳ A pagar</div><div class="dono-mini-val" style="color:#C08020;">${fmt(impPend)}</div></div>
           </div>
-        </div>
-        <div style="margin-top:8px;font-size:10px;color:var(--tm);text-align:right;">Total: <strong style="color:var(--gold);">${fmt(liqRec+liqPend)}</strong></div>
-      </div>
-      <div class="dono-card">
-        <div class="dono-card-title"><span>🧾</span> Imposto (${((ativas[0]?.imp||0.11)*100).toFixed(0)}%)</div>
-        <div class="dono-row2">
-          <div class="dono-mini" style="border-left:3px solid #C05030;">
-            <div class="dono-mini-lbl">✅ Pago</div>
-            <div class="dono-mini-val" style="color:#C05030;">${fmt(impRec)}</div>
-          </div>
-          <div class="dono-mini" style="border-left:3px solid #C08020;">
-            <div class="dono-mini-lbl">⏳ A pagar</div>
-            <div class="dono-mini-val" style="color:#C08020;">${fmt(impPend)}</div>
-          </div>
-        </div>
-        <div style="margin-top:8px;font-size:10px;color:var(--tm);text-align:right;">Total: <strong style="color:#C05030;">${fmt(impRec+impPend)}</strong></div>
-      </div>
-    </div>
-
-    <!-- LUCRO LÍQUIDO -->
-    <div class="lucro-card">
-      <div class="lucro-title">🏦 Lucro Líquido da Imobiliária — após comercial e imposto</div>
-      <div class="lucro-grid">
-        <div class="lucro-item" style="border-color:#2E9E6E;">
-          <div class="lucro-item-lbl">✅ Já recebido</div>
-          <div class="lucro-item-val" style="color:#4ADA9A;">${fmt(zelonyRec)}</div>
-          <div style="font-size:9px;color:#70C090;margin-top:3px;">${concluidas.length} venda${concluidas.length!==1?'s':''} concluída${concluidas.length!==1?'s':''}</div>
-        </div>
-        <div class="lucro-item" style="border-color:#5AAA7A;">
-          <div class="lucro-item-lbl">⏳ A receber</div>
-          <div class="lucro-item-val" style="color:#80D8A0;">${fmt(zelonyPend)}</div>
-          <div style="font-size:9px;color:#70C090;margin-top:3px;">${emAndamento.length} venda${emAndamento.length!==1?'s':''} em andamento</div>
-        </div>
-        <div class="lucro-item" style="border-color:var(--gold);">
-          <div class="lucro-item-lbl">💰 Total projetado</div>
-          <div class="lucro-item-val" style="color:var(--gold);">${fmt(zelonyRec+zelonyPend)}</div>
-          <div style="font-size:9px;color:#70C090;margin-top:3px;">${pct2(mediaZelony)} médio p/ Zelony</div>
+          <div style="margin-top:7px;font-size:9px;color:var(--tm);text-align:right;">Total: <strong style="color:#C05030;">${fmt(impRec+impPend)}</strong></div>
         </div>
       </div>
-    </div>
-
-    <!-- LINHA 2: Distribuição % | Proporção visual -->
-    <div class="dono-grid2">
-      <div class="dono-card">
-        <div class="dono-card-title"><span>📊</span> Distribuição Média de Comissão</div>
-        <div class="dono-stat">
-          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:var(--gold);"></div>Construtoras (entrada)</div>
-          <div class="dono-stat-val" style="color:var(--gold);">${pct2(pctMediaCons)}</div>
+      <!-- Coluna direita: Lucro + Distribuição + Proporção -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div class="lucro-card" style="flex:1;">
+          <div class="lucro-title">🏦 Lucro Líquido da Imobiliária — após comercial e imposto</div>
+          <div class="lucro-grid">
+            <div class="lucro-item" style="border-color:#2E9E6E;">
+              <div class="lucro-item-lbl">✅ Já recebido</div>
+              <div class="lucro-item-val" style="color:#4ADA9A;">${fmt(zelonyRec)}</div>
+              <div style="font-size:9px;color:#70C090;margin-top:3px;">${concluidas.length} venda${concluidas.length!==1?'s':''} concluída${concluidas.length!==1?'s':''}</div>
+            </div>
+            <div class="lucro-item" style="border-color:#5AAA7A;">
+              <div class="lucro-item-lbl">⏳ A receber</div>
+              <div class="lucro-item-val" style="color:#80D8A0;">${fmt(zelonyPend)}</div>
+              <div style="font-size:9px;color:#70C090;margin-top:3px;">${emAndamento.length} venda${emAndamento.length!==1?'s':''} em andamento</div>
+            </div>
+            <div class="lucro-item" style="border-color:var(--gold);">
+              <div class="lucro-item-lbl">💰 Total projetado</div>
+              <div class="lucro-item-val" style="color:var(--gold);">${fmt(zelonyRec+zelonyPend)}</div>
+              <div style="font-size:9px;color:#70C090;margin-top:3px;">${pct2(mediaZelony)} médio p/ Zelony</div>
+            </div>
+          </div>
         </div>
-        <div class="dono-stat">
-          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#C05030;"></div>Comercial (equipe)</div>
-          <div class="dono-stat-val" style="color:#C05030;">${pct2(mediaComercial)}</div>
-        </div>
-        <div class="dono-stat">
-          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#C08020;"></div>Imposto</div>
-          <div class="dono-stat-val" style="color:#C08020;">${pct2(Math.max(pctMediaCons-mediaComercial-mediaZelony,0))}</div>
-        </div>
-        <div class="dono-stat" style="background:var(--bg2);margin-top:4px;padding:8px;border-radius:6px;border-bottom:none;">
-          <div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#3060B8;"></div>Zelony (líquido)</div>
-          <div class="dono-stat-val" style="color:#3060B8;">${pct2(mediaZelony)}</div>
-        </div>
-      </div>
-      <div class="dono-card">
-        <div class="dono-card-title"><span>📈</span> Proporção Visual</div>
-        <div class="dono-bar-wrap">
-          ${[
-            {label:'Comercial',pct:mediaComercial,base:pctMediaCons,cor:'#C05030'},
-            {label:'Zelony',pct:mediaZelony,base:pctMediaCons,cor:'#3060B8'},
-            {label:'Imposto',pct:Math.max(pctMediaCons-mediaComercial-mediaZelony,0),base:pctMediaCons,cor:'#C08020'},
-          ].map(b=>`<div class="dono-bar-row">
-            <div class="dono-bar-info"><span>${b.label}</span><span style="font-weight:600;color:${b.cor};">${pct2(b.pct)}</span></div>
-            <div class="dono-bar"><div class="dono-bar-fill" style="width:${b.base>0?Math.min((b.pct/b.base)*100,100).toFixed(1):0}%;background:${b.cor};"></div></div>
-          </div>`).join('')}
-          <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--bd);font-size:10px;color:var(--tm);">
-            Base: <strong style="color:var(--gold);">${pct2(pctMediaCons)}</strong> média recebida das construtoras
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;">
+          <div class="dono-card">
+            <div class="dono-card-title"><span>📊</span> Distribuição Média</div>
+            <div class="dono-stat"><div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:var(--gold);"></div>Construtoras</div><div class="dono-stat-val" style="color:var(--gold);">${pct2(pctMediaCons)}</div></div>
+            <div class="dono-stat"><div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#C05030;"></div>Comercial</div><div class="dono-stat-val" style="color:#C05030;">${pct2(mediaComercial)}</div></div>
+            <div class="dono-stat"><div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#C08020;"></div>Imposto</div><div class="dono-stat-val" style="color:#C08020;">${pct2(Math.max(pctMediaCons-mediaComercial-mediaZelony,0))}</div></div>
+            <div class="dono-stat" style="background:var(--bg2);margin-top:4px;padding:6px 8px;border-radius:5px;border-bottom:none;"><div class="dono-stat-lbl"><div class="dono-stat-dot" style="background:#3060B8;"></div>Zelony</div><div class="dono-stat-val" style="color:#3060B8;">${pct2(mediaZelony)}</div></div>
+          </div>
+          <div class="dono-card">
+            <div class="dono-card-title"><span>📈</span> Proporção Visual</div>
+            <div class="dono-bar-wrap">
+              ${[{label:'Comercial',pct:mediaComercial,base:pctMediaCons,cor:'#C05030'},{label:'Zelony',pct:mediaZelony,base:pctMediaCons,cor:'#3060B8'},{label:'Imposto',pct:Math.max(pctMediaCons-mediaComercial-mediaZelony,0),base:pctMediaCons,cor:'#C08020'}].map(b=>`<div class="dono-bar-row"><div class="dono-bar-info"><span>${b.label}</span><span style="font-weight:600;color:${b.cor};">${pct2(b.pct)}</span></div><div class="dono-bar"><div class="dono-bar-fill" style="width:${b.base>0?Math.min((b.pct/b.base)*100,100).toFixed(1):0}%;background:${b.cor};"></div></div></div>`).join('')}
+              <div style="margin-top:8px;padding-top:6px;border-top:1px solid var(--bd);font-size:9px;color:var(--tm);">Base: <strong style="color:var(--gold);">${pct2(pctMediaCons)}</strong></div>
+            </div>
           </div>
         </div>
       </div>
