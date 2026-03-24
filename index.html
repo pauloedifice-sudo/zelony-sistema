@@ -1402,7 +1402,7 @@ async function carregarDB(){
     }
   };
 
-  const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,anexos,distratada';
+  const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
 
   const [us,ss,vs,ts]=await Promise.all([
     carregar('usuarios','id'),
@@ -1460,7 +1460,7 @@ function mapVendaIn(v){return{
   distratada:v.distratada||false,dataDistrato:v.data_distrato||'',
   bonus:parseFloat(v.bonus||0),bonus_pct_dir:parseFloat(v.bonus_pct_dir||0),
   bonus_pct_ger:parseFloat(v.bonus_pct_ger||0),bonus_pct_cor:parseFloat(v.bonus_pct_cor||0),
-  hist:v.hist||[],anexos:v.anexos||[]
+  hist:v.hist||[],anexos:[]  // anexos carregados sob demanda ao abrir a venda
 };}
 function mapVendaOut(v){return{
   data:v.data,mes:v.mes,cliente:v.cliente,produto:v.produto,
@@ -2299,6 +2299,20 @@ function salvarVenda(){
 }
 function renderVList(){let l=vendasU(VENDAS);if(fEtapa!=='all')l=l.filter(v=>v.etapa===parseInt(fEtapa));const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();if(q)l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q));document.getElementById('vc').textContent=l.length;if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');}
 
+async function carregarAnexosVenda(id){
+  try{
+    const {data,error}=await sb.from('vendas').select('anexos').eq('id',id).single();
+    if(error||!data) return;
+    const v=VENDAS.find(x=>x.id===id);
+    if(v&&data.anexos){
+      v.anexos=data.anexos;
+      // Re-renderiza seção de anexos
+      const el=document.getElementById('vd-body');
+      if(el&&curVId===id) showVDetail(id);
+    }
+  }catch(e){console.warn('Erro ao carregar anexos:',e.message);}
+}
+
 function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;const nomeAbrev=e.length>8?e.slice(0,7)+'…':e;return`<div class="si" style="display:flex;flex-direction:column;align-items:center;position:relative;"><div style="display:flex;align-items:center;"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div><div style="font-size:7px;font-weight:${cur?'700':'400'};color:${cur?'var(--gold)':done?'var(--tm)':'rgba(0,0,0,0.2)'};white-space:nowrap;margin-top:4px;text-align:center;letter-spacing:0.01em;">${nomeAbrev}</div></div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
 const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin','dono'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin','dono'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin','dono'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(['dir','fin','dono'].includes(role)&&v.diretor2)mbs.push({n:v.diretor2,c:'Diretor 2',val:comD2(v),pct:v.pct_dir2});if(['fin','dono'].includes(role))mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0)});
@@ -2344,7 +2358,9 @@ document.getElementById('vd-body').innerHTML=`<div><div style="display:flex;alig
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
 const drop=document.getElementById('anexo-drop-'+v.id);
-if(drop){drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='var(--gold)';drop.style.background='var(--gold-bg)';});drop.addEventListener('dragleave',()=>{drop.style.borderColor='';drop.style.background='';});drop.addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';drop.style.background='';const files=e.dataTransfer.files;if(files.length)processAnexoFiles(files,v.id);});}}
+if(drop){drop.addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='var(--gold)';drop.style.background='var(--gold-bg)';});drop.addEventListener('dragleave',()=>{drop.style.borderColor='';drop.style.background='';});drop.addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';drop.style.background='';const files=e.dataTransfer.files;if(files.length)processAnexoFiles(files,v.id);});}
+// Carrega anexos do banco em segundo plano (só se não tiver carregado ainda)
+if(['dir','fin','dono'].includes(role)&&(!v.anexos||v.anexos.length===0)) carregarAnexosVenda(v.id);}
 // ── ANEXOS ───────────────────────────────────────────────────────────────────
 function renderAnexosSec(v){
   const podeEditar=['dir','fin','dono'].includes(role);
