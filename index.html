@@ -1116,6 +1116,10 @@ input[type=range]{width:100%;accent-color:var(--gold);}
           <div class="f-row">
             <div class="f-field"><label>Corretor *</label>
               <select id="mv-corretor"><option value="">Selecione...</option></select>
+              <div id="mv-corretor-ext-wrap" style="display:none;margin-top:6px;">
+                <input type="text" id="mv-corretor-ext" placeholder="Nome completo do corretor externo..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+                <div style="font-size:9px;color:var(--tm);margin-top:3px;">⚠️ Corretor externo — sem acesso ao sistema</div>
+              </div>
             </div>
             <div class="f-field"><label>Capitão</label>
               <select id="mv-capitao"><option value="">Nenhum</option></select>
@@ -2048,29 +2052,49 @@ function abrirModalVenda(){
   });
   // Popula selects — filtra por unidade quando usuário tem unidade específica
   const unidadeUser=usuarioLogado?usuarioLogado.unidade||'Ambas':'Ambas';
-  const filtrarUnid=(u)=>u.status==='Ativo'&&(u.unidade===unidadeUser||u.unidade==='Ambas'||unidadeUser==='Ambas');
-  // Corretor: qualquer usuário ativo pode ser o corretor da venda
+  // Inclui Ativos E Inativos nos selects (inativos marcados com 🔴)
+  const filtrarUnid=(u)=>(u.status==='Ativo'||u.status==='Inativo')&&(u.unidade===unidadeUser||u.unidade==='Ambas'||unidadeUser==='Ambas');
   const todos=USUARIOS.filter(u=>filtrarUnid(u));
   const capitaes=USUARIOS.filter(u=>u.perfil==='Capitão'&&filtrarUnid(u));
   const gerentes=USUARIOS.filter(u=>['Gerente','Diretor','Capitão'].includes(u.perfil)&&filtrarUnid(u));
   const diretores=USUARIOS.filter(u=>u.perfil==='Diretor'&&filtrarUnid(u));
 
-  // Agrupa por perfil para o select de corretor ficar organizado
+  const optLabel=(u)=>`${u.status==='Inativo'?'🔴 ':''} ${u.nome}${u.status==='Inativo'?' (inativo)':''}`;
+
+  // Agrupa por perfil, separando ativos e inativos
   const perfilOrdem=['Dono','Diretor','Gerente','Capitão','Corretor','Financeiro','RH'];
   const optCor=perfilOrdem.flatMap(p=>{
-    const lista=todos.filter(u=>u.perfil===p);
+    const ativos=todos.filter(u=>u.perfil===p&&u.status==='Ativo');
+    const inativos=todos.filter(u=>u.perfil===p&&u.status==='Inativo');
+    const lista=[...ativos,...inativos];
     if(!lista.length) return [];
-    return [`<optgroup label="${p}">`,...lista.map(u=>`<option value="${u.nome}">${u.nome}</option>`),'</optgroup>'];
+    return [`<optgroup label="${p}">`,...lista.map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`),'</optgroup>'];
   }).join('');
-  const optCap=capitaes.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
-  const optGer=gerentes.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
-  const optDir=diretores.map(u=>`<option value="${u.nome}">${u.nome}</option>`).join('');
+  // Opção "Externo" para corretor não cadastrado
+  const optExterno=`<optgroup label="── Externo ──"><option value="__externo__">✏️ Digitar nome externo...</option></optgroup>`;
 
-  document.getElementById('mv-corretor').innerHTML=`<option value="">Selecione...</option>${optCor}`;
+  const optCap=[...capitaes.filter(u=>u.status==='Ativo'),...capitaes.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');
+  const optGer=[...gerentes.filter(u=>u.status==='Ativo'),...gerentes.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');
+  const optDir=[...diretores.filter(u=>u.status==='Ativo'),...diretores.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');
+
+  document.getElementById('mv-corretor').innerHTML=`<option value="">Selecione...</option>${optCor}${optExterno}`;
   document.getElementById('mv-capitao').innerHTML=`<option value="">Nenhum</option>${optCap}`;
   document.getElementById('mv-gerente').innerHTML=`<option value="">Selecione...</option>${optGer}`;
   document.getElementById('mv-diretor').innerHTML=`<option value="">Selecione...</option>${optDir}`;
   document.getElementById('mv-diretor2').innerHTML=`<option value="">Nenhum</option>${optDir}`;
+
+  // Campo texto para corretor externo
+  document.getElementById('mv-corretor').onchange=function(){
+    const extField=document.getElementById('mv-corretor-ext-wrap');
+    if(this.value==='__externo__'){
+      extField.style.display='block';
+      document.getElementById('mv-corretor-ext').focus();
+    } else {
+      extField.style.display='none';
+      document.getElementById('mv-corretor-ext').value='';
+    }
+    calcularPrevV();
+  };
 
   // Mostra/oculta campo dir2 % quando diretor2 é selecionado
   document.getElementById('mv-diretor2').onchange=function(){
@@ -2094,11 +2118,13 @@ function abrirModalVenda(){
   if(diretores.length===1) document.getElementById('mv-diretor').value=diretores[0].nome;
 
   // Limpa campos
-  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-ger','mv-bonus-cor'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-ger','mv-bonus-cor','mv-corretor-ext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('mv-dir2-pct-field');
   if(f) f.style.display='none';
   const pw=document.getElementById('pv-dir2-wrap');
   if(pw) pw.style.display='none';
+  const extWrap=document.getElementById('mv-corretor-ext-wrap');
+  if(extWrap) extWrap.style.display='none';
   document.getElementById('mv-imp').value='11';
   document.getElementById('mv-data').value=new Date().toISOString().split('T')[0];
   document.getElementById('mv-origem').value='Indicação';
@@ -2169,7 +2195,11 @@ function salvarVenda(){
   const construtora=document.getElementById('mv-construtora').value.trim();
   const origem=document.getElementById('mv-origem').value;
   const unidade=document.getElementById('mv-unidade').value;
-  const corretor=document.getElementById('mv-corretor').value;
+  let corretor=document.getElementById('mv-corretor').value;
+  if(corretor==='__externo__'){
+    corretor=document.getElementById('mv-corretor-ext').value.trim().toUpperCase();
+    if(!corretor){document.getElementById('mv-corretor-ext').focus();showToast('⚠️','Informe o nome do corretor externo.');return;}
+  }
   const capitao=document.getElementById('mv-capitao').value||null;
   const gerente=document.getElementById('mv-gerente').value;
   const diretor=document.getElementById('mv-diretor').value;
