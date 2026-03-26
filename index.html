@@ -118,13 +118,13 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .sec{background:var(--bg);border:1px solid var(--bd);border-radius:9px;overflow:hidden;flex-shrink:0;}
 .sec-h{padding:8px 13px;border-bottom:1px solid var(--bd);font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;background:var(--gold-bg);}
 .sec-b{padding:11px 13px;}
-.prog-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:13px;flex-shrink:0;}
-.prog-steps{display:flex;align-items:flex-start;margin-bottom:9px;overflow-x:auto;padding-bottom:4px;gap:0;}
-.si{display:flex;flex-direction:column;align-items:center;min-width:0;}.si{display:flex;align-items:center;flex-shrink:0;}
-.sc{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;border:2px solid var(--bd);background:var(--bg3);color:var(--tm);flex-shrink:0;}
+.prog-wrap{background:var(--bg);border:1px solid var(--bd);border-radius:9px;padding:16px;flex-shrink:0;}
+.prog-steps{display:flex;align-items:flex-start;margin-bottom:14px;overflow-x:visible;padding-bottom:0;gap:0;width:100%;}
+.si{display:flex;flex-direction:column;align-items:center;flex:1;min-width:0;}
+.sc{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid var(--bd);background:var(--bg3);color:var(--tm);flex-shrink:0;}
 .sc.done{background:var(--gold);border-color:var(--gold);color:#fff;}
 .sc.cur{background:var(--gold-bg);border-color:var(--gold);color:var(--gold);box-shadow:0 0 0 3px rgba(184,144,42,0.15);}
-.sl{height:2px;width:14px;background:var(--bg4);flex-shrink:0;}
+.sl{height:3px;flex:1;background:var(--bg4);flex-shrink:1;min-width:6px;}
 .sl.done{background:var(--gold);}
 .pcur{display:flex;align-items:center;gap:8px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:7px;padding:8px 11px;margin-bottom:9px;}
 .pdot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;animation:pulse 2s infinite;}
@@ -924,30 +924,28 @@ input[type=range]{width:100%;accent-color:var(--gold);}
               <button class="vtab" onclick="setVTab('rel',this)">Relatório</button>
             </div>
             <div class="vl-srch"><span class="vl-si">🔍</span><input type="text" id="vsearch" placeholder="Buscar cliente, produto..." oninput="renderVList()"></div>
-            <div id="v-adv-filters" style="display:flex;flex-direction:column;gap:4px;padding:0 8px 6px;border-bottom:1px solid var(--bd);">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-                <select id="vf-mes" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
-                  <option value="">📅 Todos os meses</option>
+            <div id="v-adv-filters" style="padding:0 8px 8px;border-bottom:1px solid var(--bd);">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
+                <select id="vf-mes" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">📅 Mês</option>
                 </select>
-                <select id="vf-construtora" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
-                  <option value="">🏗️ Todas construtoras</option>
+                <select id="vf-construtora" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">🏗️ Construtora</option>
+                </select>
+                <select id="vf-equipe" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">👥 Equipe</option>
+                </select>
+                <select id="vf-cca" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">🧑‍💼 CCA</option>
+                </select>
+                <select id="vf-origem" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;grid-column:span 2;">
+                  <option value="">📌 Origem</option>
+                  <option value="Indicação">Indicação</option>
+                  <option value="MKT">MKT</option>
+                  <option value="Oferta Ativa">Oferta Ativa</option>
                 </select>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-                <select id="vf-equipe" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
-                  <option value="">👥 Todas as equipes</option>
-                </select>
-                <select id="vf-cca" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
-                  <option value="">🧑‍💼 Todos os CCA</option>
-                </select>
-              </div>
-              <select id="vf-origem" onchange="renderVList()" style="font-size:10px;padding:4px 6px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;">
-                <option value="">📌 Todas as origens</option>
-                <option value="Indicação">Indicação</option>
-                <option value="MKT">MKT</option>
-                <option value="Oferta Ativa">Oferta Ativa</option>
-              </select>
-              <div id="vf-active-tags" style="display:flex;flex-wrap:wrap;gap:3px;margin-top:1px;"></div>
+              <div id="vf-active-tags" style="display:flex;flex-wrap:wrap;gap:3px;"></div>
             </div>
           </div>
           <div class="vl-filters" id="vfilters"></div>
@@ -1394,6 +1392,92 @@ input[type=range]{width:100%;accent-color:var(--gold);}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
+// Prazo em dias para avançar DESTA etapa para a próxima (null = indefinido)
+const PRAZOS_ETAPA=[null,5,5,6,3,3,4,15,null];
+
+// Calcula dias de atraso de uma venda (negativo = no prazo, positivo = atrasada)
+function calcAtraso(v){
+  const prazo=PRAZOS_ETAPA[v.etapa];
+  if(prazo===null||v.etapa===ETAPAS.length-1||v.distratada) return null;
+  const histEtapa=[...v.hist].reverse().find(h=>h.e===v.etapa&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+  const ref=histEtapa||(v.hist&&v.hist.length?v.hist[0]:null);
+  if(!ref||!ref.d) return 0;
+  const partes=ref.d.split('/');
+  if(partes.length<2) return 0;
+  const ano=new Date().getFullYear();
+  const dataInicio=new Date(ano,parseInt(partes[1])-1,parseInt(partes[0]));
+  const hoje2=new Date();hoje2.setHours(0,0,0,0);
+  const diasPassados=Math.floor((hoje2-dataInicio)/(1000*60*60*24));
+  return diasPassados-prazo;
+}
+
+function labelAtraso(v){
+  const a=calcAtraso(v);
+  if(a===null) return null;
+  if(a<0) return {tipo:'ok',label:`${Math.abs(a)}d restante${Math.abs(a)!==1?'s':''}`};
+  if(a===0) return {tipo:'alerta',label:'Vence hoje!'};
+  return {tipo:'atrasada',label:`${a} dia${a!==1?'s':''} atrasada`};
+}
+
+function calcPrevisao(v){
+  // Só calcula se saiu de aguardando demanda (etapa > 0)
+  if(v.etapa===0||v.distratada||v.etapa>=ETAPAS.length-1) return null;
+
+  // 1. Acha a data que saiu de aguardando demanda (entrada na etapa 1)
+  const histEtapa1=[...v.hist].find(h=>h.e===1&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+  const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
+  if(!refInicio||!refInicio.d) return null;
+  const partes=refInicio.d.split('/');
+  if(partes.length<2) return null;
+  const ano=new Date().getFullYear();
+  let dataBase=new Date(ano,parseInt(partes[1])-1,parseInt(partes[0]));
+
+  // 2. Soma todos os prazos das etapas (1 até penúltima)
+  let prazosRestantes=0;
+  for(let i=1;i<ETAPAS.length-1;i++){
+    if(PRAZOS_ETAPA[i]) prazosRestantes+=PRAZOS_ETAPA[i];
+  }
+
+  // 3. Calcula atrasos acumulados em etapas já concluídas
+  let atrasosAcumulados=0;
+  for(let i=1;i<v.etapa;i++){
+    // Acha quando entrou nesta etapa
+    const hEntrada=[...v.hist].find(h=>h.e===i&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+    // Acha quando saiu desta etapa (entrada na próxima)
+    const hSaida=[...v.hist].find(h=>h.e===i+1&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+    if(!hEntrada||!hSaida||!hEntrada.d||!hSaida.d) continue;
+    const pE=hEntrada.d.split('/');
+    const pS=hSaida.d.split('/');
+    if(pE.length<2||pS.length<2) continue;
+    const dEntrada=new Date(ano,parseInt(pE[1])-1,parseInt(pE[0]));
+    const dSaida=new Date(ano,parseInt(pS[1])-1,parseInt(pS[0]));
+    const diasNaEtapa=Math.floor((dSaida-dEntrada)/(1000*60*60*24));
+    const prazoEtapa=PRAZOS_ETAPA[i]||0;
+    if(diasNaEtapa>prazoEtapa) atrasosAcumulados+=diasNaEtapa-prazoEtapa;
+  }
+
+  // 4. Atraso atual na etapa corrente
+  const atrasoAtual=calcAtraso(v);
+  const atrasoCorrente=atrasoAtual!==null&&atrasoAtual>0?atrasoAtual:0;
+
+  // 5. Previsão = dataBase + prazosRestantes + atrasos
+  const totalDias=prazosRestantes+atrasosAcumulados+atrasoCorrente;
+  const dataFinal=new Date(dataBase.getTime());
+  dataFinal.setDate(dataFinal.getDate()+totalDias);
+
+  // Formata DD/MM/AAAA
+  const d=String(dataFinal.getDate()).padStart(2,'0');
+  const m=String(dataFinal.getMonth()+1).padStart(2,'0');
+  const y=dataFinal.getFullYear();
+
+  return{
+    data:`${d}/${m}/${y}`,
+    atrasosAcumulados,
+    atrasoCorrente,
+    totalAtraso:atrasosAcumulados+atrasoCorrente,
+    prazosRestantes
+  };
+}
 
 // ── SUPABASE ──────────────────────────────────────────────────────────────────
 const SB_URL='https://szaxwkfaferrfqcmzfab.supabase.co';
@@ -1734,9 +1818,12 @@ function renderCarteira(){
     }
     return total;
   };
-  const saldo=lMinhas.reduce((s,v)=>s+calcSaldo(v),0);
-  const pend=lMinhas.filter(v=>v.etapa<ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
-  const rec=lMinhas.filter(v=>v.etapa===ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
+  const saldo=lMinhas.filter(v=>!v.distratada).reduce((s,v)=>s+calcSaldo(v),0);
+  const pend=lMinhas.filter(v=>!v.distratada&&v.etapa<ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
+  const rec=lMinhas.filter(v=>!v.distratada&&v.etapa===ETAPAS.length-1).reduce((s,v)=>s+calcSaldo(v),0);
+  // Valor perdido com distratos
+  const distratas=lMinhas.filter(v=>v.distratada);
+  const perdido=distratas.reduce((s,v)=>s+calcSaldo(v),0);
   const l=lMinhas; // tabela também mostra só as minhas
   const rd=RD[role];
   const saldoLabel='Saldo a receber';
@@ -1752,7 +1839,7 @@ function renderCarteira(){
     bonus_cor:'🎁 Bônus',bonus_ger:'🎁 Bônus',bonus_dir:'🎁 Bônus',bonus_total:'🎁 Bônus total',
     etapa:'Etapa'
   };
-  const rows=l.map(v=>`<tr>${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='bonus_cor'||c==='bonus_ger'||c==='bonus_dir'){
+  const rows=l.map(v=>`<tr style="${v.distratada?'opacity:0.55;background:#FEF8F6;':''}">${cols.map(c=>{if(c==='data')return`<td>${v.data}</td>`;if(c==='cliente')return`<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.cliente.split('/')[0].trim()}</td>`;if(c==='produto')return`<td>${v.produto}</td>`;if(c==='corretor')return`<td>${v.corretor}</td>`;if(c==='capitao')return`<td>${v.capitao||'—'}</td>`;if(c==='gerente')return`<td>${v.gerente}</td>`;if(c==='com_cor')return`<td class="pos">${fmt(comC(v))}</td>`;if(c==='com_cap')return`<td class="pos">${fmt(comCap(v))}</td>`;if(c==='com_ger')return`<td class="pos">${fmt(comG(v))}</td>`;if(c==='com_dir')return`<td class="pos">${fmt(comD(v))}</td>`;if(c==='com_zel')return`<td class="pos">${fmt(comZ(v))}</td>`;if(c==='vgv')return`<td class="pos">${fmt(v.valor)}</td>`;if(c==='com_bruta')return`<td class="pos">${fmt(v.valor*v.pct)}</td>`;if(c==='com_total')return`<td class="pos">${fmt(comTotal(v))}</td>`;if(c==='minha')return`<td class="pos">${fmt(comVis(v))}</td>`;if(c==='bonus_cor'||c==='bonus_ger'||c==='bonus_dir'){
   // Soma todos os bônus dos papéis que o usuário logado exerceu nessa venda
   if(!v.bonus||v.bonus<=0) return`<td class="pos" style="color:#2E9E6E;">—</td>`;
   let totalBonus=0;
@@ -1775,7 +1862,7 @@ function renderCarteira(){
     if(c==='bonus_dir') totalBonus=bonusDir(v);
   }
   return`<td class="pos" style="color:#2E9E6E;">${totalBonus>0?fmt(totalBonus):'—'}</td>`;
-}if(c==='bonus_total')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span></td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
+}if(c==='bonus_total')return`<td class="pos" style="color:#2E9E6E;">${v.bonus>0?fmt(v.bonus):'—'}</td>`;if(c==='etapa')return`<td><span class="spill${v.etapa===ETAPAS.length-1?' f':''}">${ETAPAS[v.etapa]}</span>${v.distratada?`<span style="font-size:8px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 4px;margin-left:3px;">⚠️ Distrato</span>`:''}</td>`;return'<td>—</td>';}).join('')}</tr>`).join('');
   // ── DASHBOARD EXCLUSIVO DO DONO ──────────────────────────────────────────
   if(role==='dono'){
     const ativas=lMinhas.filter(v=>!v.distratada);
@@ -1956,7 +2043,7 @@ function renderCarteira(){
   }
 
   // ── OUTROS PERFIS ────────────────────────────────────────────────────────
-  document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">${saldoLabel}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Minhas vendas</div><div class="cmc-v go">${lMinhas.length}</div><div class="cmc-s">${lMinhas.filter(v=>v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div><div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  document.getElementById('carteira-content').innerHTML=`<div class="ch"><div class="ch-lbl">${saldoLabel}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> Atualizado agora</div></div><div class="c3"><div class="cmc a"><div class="cmc-l">Minhas vendas</div><div class="cmc-v go">${lMinhas.filter(v=>!v.distratada).length}</div><div class="cmc-s">${lMinhas.filter(v=>!v.distratada&&v.etapa===ETAPAS.length-1).length} concluídas</div></div><div class="cmc g"><div class="cmc-l">Já recebido</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">comissão recebida</div></div><div class="cmc r"><div class="cmc-l">A receber</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">em andamento</div></div></div>${perdido>0?`<div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#C05030;font-weight:700;margin-bottom:2px;">⚠️ Perdido com distrato${distratas.length>1?'s':''}</div><div style="font-size:11px;color:#C05030;opacity:0.8;">${distratas.length} venda${distratas.length>1?'s':''} distratada${distratas.length>1?'s':''}</div></div><div style="font-size:22px;font-weight:700;color:#C05030;font-family:'Playfair Display',serif;">- ${fmt(perdido)}</div></div>`:''}<div class="ctbl"><div class="ctbl-h"><span class="ctbl-t">Detalhe por venda</span><span style="font-size:10px;color:var(--tm);">${l.length} venda${l.length!==1?'s':''}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c=>`<th>${hdrMap[c]||c}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 function getCols(){
   if(role==='cor') return['data','cliente','produto','corretor','gerente','vgv','com_cor','minha','bonus_cor','etapa'];
@@ -2007,6 +2094,13 @@ function renderFiltros(){
   const base=vendasU(VENDAS);
   let h=`<button class="fe ${fEtapa==='all'?'active':''}" onclick="setFE('all')">Todas (${base.length})</button>`;
   ETAPAS.forEach((e,i)=>{if(cnt[i])h+=`<button class="fe ${fEtapa==i?'active':''}" onclick="setFE(${i})">${e.split(' ')[0]} (${cnt[i]})</button>`;});
+  const comPrazo=base.filter(v=>!v.distratada&&PRAZOS_ETAPA[v.etapa]!==null&&v.etapa<ETAPAS.length-1);
+  const atrasadas=comPrazo.filter(v=>calcAtraso(v)>0);
+  const vencem=comPrazo.filter(v=>calcAtraso(v)===0);
+  const noPrazo=comPrazo.filter(v=>calcAtraso(v)<=0);
+  if(atrasadas.length) h+=`<button class="fe" onclick="filtrarPrazo('atrasada')" style="background:#FEF0EC;color:#C05030;border-color:#E0A090;">🔴 Atrasadas (${atrasadas.length})</button>`;
+  if(vencem.length) h+=`<button class="fe" onclick="filtrarPrazo('alerta')" style="background:#FFF8E8;color:#C08020;border-color:#E8C060;">🟡 Vence hoje (${vencem.length})</button>`;
+  if(noPrazo.length) h+=`<button class="fe" onclick="filtrarPrazo('ok')" style="background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;">🟢 No prazo (${noPrazo.length})</button>`;
   document.getElementById('vfilters').innerHTML=h;
   // Mostra filtro de unidade para Dono, Financeiro e RH (acesso a ambas)
   const unidEl=document.getElementById('unid-filter');
@@ -2398,7 +2492,13 @@ function renderVList(){
   atualizarTagsFiltros();
   document.getElementById('vc').textContent=l.length;
   if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}
-  document.getElementById('vlista').innerHTML=l.map(v=>{const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}</div></div></div>`;}).join('');
+  document.getElementById('vlista').innerHTML=l.map(v=>{
+    const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';
+    const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">⚠️ Distrato</span>`:'';
+    const atraso=labelAtraso(v);
+    const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">🔴 ${atraso.label}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">🟡 ${atraso.label}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">🟢 ${atraso.label}</span>`:'';
+    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${ETAPAS[v.etapa]}</span>${ubadge}${dbadge}${abadge}</div></div></div>`;
+  }).join('');
 }
 
 async function carregarAnexosVenda(id){
@@ -2415,7 +2515,7 @@ async function carregarAnexosVenda(id){
   }catch(e){console.warn('Erro ao carregar anexos:',e.message);}
 }
 
-function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;const nomeAbrev=e.length>8?e.slice(0,7)+'…':e;return`<div class="si" style="display:flex;flex-direction:column;align-items:center;position:relative;"><div style="display:flex;align-items:center;"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div><div style="font-size:7px;font-weight:${cur?'700':'400'};color:${cur?'var(--gold)':done?'var(--tm)':'rgba(0,0,0,0.2)'};white-space:nowrap;margin-top:4px;text-align:center;letter-spacing:0.01em;">${nomeAbrev}</div></div>`;}).join('');
+function showVDetail(id){curVId=id;const v=VENDAS.find(x=>x.id===id);document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));const row=document.getElementById('vr-'+id);if(row)row.classList.add('active');document.getElementById('vd-empty').classList.add('hidden');document.getElementById('vd-body').classList.remove('hidden');const isFinal=v.etapa>=ETAPAS.length-1;const steps=ETAPAS.map((e,i)=>{const done=i<v.etapa,cur=i===v.etapa,last=i===ETAPAS.length-1;const nomeAbrev=e.length>9?e.slice(0,8)+'…':e;return`<div class="si"><div style="display:flex;align-items:center;width:100%;"><div class="sc ${done?'done':cur?'cur':''}" title="${e}">${done?'✓':i+1}</div>${!last?`<div class="sl ${done?'done':''}"></div>`:''}</div><div style="font-size:8px;font-weight:${cur?'700':'400'};color:${cur?'var(--gold)':done?'var(--ts)':'var(--tm)'};text-align:center;margin-top:5px;line-height:1.2;padding:0 2px;opacity:${cur?1:done?0.8:0.5};">${nomeAbrev}</div></div>`;}).join('');
 let mH='';if(role==='cor'){mH=`<div class="mc a"><div class="mc-l">Valor de venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Minha comissão</div><div class="mc-v g">${fmt(comC(v))}</div><div class="mc-s">${(v.pct_cor*100).toFixed(1)}% líq.</div></div><div class="mc"><div class="mc-l">Etapa</div><div class="mc-v">${v.etapa+1}/${ETAPAS.length}</div></div><div class="mc"><div class="mc-l">Status</div><div class="mc-v" style="font-size:13px;">${isFinal?'✓ Pago':'Andamento'}</div></div>`;}else if(role==='cap'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v g">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Total visível</div><div class="mc-v g">${fmt(comCap(v)+comC(v))}</div></div>`;}else if(role==='ger'){mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. corretor</div><div class="mc-v">${fmt(comC(v))}</div></div><div class="mc"><div class="mc-l">Com. capitão</div><div class="mc-v">${fmt(comCap(v))}</div></div><div class="mc"><div class="mc-l">Com. gerente</div><div class="mc-v g">${fmt(comG(v))}</div></div>`;}else{mH=`<div class="mc a"><div class="mc-l">Valor venda</div><div class="mc-v g">${fmt(v.valor)}</div></div><div class="mc"><div class="mc-l">Com. bruta</div><div class="mc-v">${fmt(v.valor*v.pct)}</div><div class="mc-s">${(v.pct*100).toFixed(0)}%</div></div><div class="mc"><div class="mc-l">Com. líquida</div><div class="mc-v g">${fmt(comTotal(v))}</div></div><div class="mc"><div class="mc-l">Zelony</div><div class="mc-v">${fmt(comZ(v))}</div></div>`;}
 const mbs=[];mbs.push({n:v.corretor,c:'Corretor',val:comC(v),pct:v.pct_cor});if(['cap','ger','dir','fin','dono'].includes(role)&&v.capitao)mbs.push({n:v.capitao,c:'Capitão',val:comCap(v),pct:v.pct_cap});if(['ger','dir','fin','dono'].includes(role))mbs.push({n:v.gerente,c:'Gerente',val:comG(v),pct:v.pct_ger});if(['dir','fin','dono'].includes(role))mbs.push({n:v.diretor,c:'Diretor',val:comD(v),pct:v.pct_dir});if(['dir','fin','dono'].includes(role)&&v.diretor2)mbs.push({n:v.diretor2,c:'Diretor 2',val:comD2(v),pct:v.pct_dir2});if(['fin','dono'].includes(role))mbs.push({n:'Zelony',c:'Imobiliária',val:comZ(v),pct:Math.max(v.pct-v.pct_cor-v.pct_cap-v.pct_ger-v.pct_dir-(v.pct_dir2||0),0)});
 // Linha RH — aparece para Diretor, Financeiro e RH quando pct_rh > 0
@@ -2455,7 +2555,28 @@ const bonusH=v.bonus>0&&['dir','fin','dono','ger','cor'].includes(role)?`<div cl
 if(!v.anexos) v.anexos=[];
 const anexosH=renderAnexosSec(v);
 const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd" style="${h.tipo==='edicao'?'background:#3060B8;':h.tipo==='distrato'?'background:#C05030;':h.tipo==='reversao'?'background:#C08020;':''}"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;${h.tipo==='edicao'?'color:#3060B8;':h.tipo==='distrato'?'color:#C05030;':h.tipo==='reversao'?'color:#C08020;':''}">${h.tipo==='edicao'?'✏️ Edição registrada':h.tipo==='distrato'?'⚠️ Distrato':h.tipo==='reversao'?'↩ Etapa revertida':ETAPAS[h.e]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${h.d} · por ${h.u}</div>${h.o?`<div class="hobs">"${h.o}"</div>`:''}</div></div>`).join('');
-document.getElementById('vd-body').innerHTML=`<div><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}${v.distratada?` <span style="font-size:11px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:4px;padding:2px 8px;font-family:'Inter',sans-serif;font-weight:600;">⚠️ DISTRATADA</span>`:''}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div>${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;""><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">✏️ Editar</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">⚠️ Distrato</button></div>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${['fin','dir','dono'].includes(role)&&v.etapa>0&&!isFinal?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);margin-left:6px;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">← Voltar etapa</button>`:''}${isFinal&&['fin','dir','dono'].includes(role)&&v.etapa>0?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">← Voltar etapa</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
+document.getElementById('vd-body').innerHTML=`<div><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;"><div><div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${v.cliente.split('/')[0].trim()}${v.distratada?` <span style="font-size:11px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:4px;padding:2px 8px;font-family:'Inter',sans-serif;font-weight:600;">⚠️ DISTRATADA</span>`:''}</div><div style="font-size:11px;color:var(--tm);margin-top:2px;">${v.produto} · ${v.construtora} · ${v.data}</div><div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;"><span class="zbg bg-b">${v.mes}</span><span class="zbg bg-a">${fmt(v.valor)}</span><span class="zbg bg-g">${lblCom()}: ${fmt(comVis(v))}</span>${v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}">📍 ${v.unidade}</span>`:''} ${v.cca?`<span class="zbg" style="background:#F0F4FF;color:#3060B8;border:1px solid #93B4F5;">🧑‍💼 CCA: ${v.cca}</span>`:''}${v.bonus>0?`<span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;">🎁 Bônus: ${fmt(v.bonus)}</span>`:''}</div></div>${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;""><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">✏️ Editar</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">⚠️ Distrato</button></div>`:''}</div></div><div class="mets">${mH}</div><div class="prog-wrap"><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);font-weight:600;margin-bottom:10px;">Evolução da venda</div><div class="prog-steps">${steps}</div><div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${ETAPAS[v.etapa]}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">Etapa ${v.etapa+1}/${ETAPAS.length} · ${v.hist.slice(-1)[0]?.d||'—'}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>${(()=>{
+  const prev=calcPrevisao(v);
+  if(!prev) return '';
+  const temAtraso=prev.totalAtraso>0;
+  const cor=temAtraso?'#C05030':'#2E7E5E';
+  const bg=temAtraso?'#FEF0EC':'#E8F5EE';
+  const bd=temAtraso?'#E0A090':'#80C8A0';
+  return`<div style="background:${bg};border:1px solid ${bd};border-radius:7px;padding:10px 14px;margin-top:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:${cor};font-weight:700;margin-bottom:2px;">📅 Previsão de recebimento</div>
+        <div style="font-size:18px;font-weight:700;color:${cor};font-family:'Playfair Display',serif;">${prev.data}</div>
+      </div>
+      ${temAtraso?`<div style="text-align:right;">
+        <div style="font-size:9px;color:#C05030;font-weight:600;">⚠️ ${prev.totalAtraso} dia${prev.totalAtraso!==1?'s':''} de atraso acumulado</div>
+        ${prev.atrasosAcumulados>0?`<div style="font-size:8px;color:#C07060;">${prev.atrasosAcumulados}d em etapas anteriores</div>`:''}
+        ${prev.atrasoCorrente>0?`<div style="font-size:8px;color:#C07060;">${prev.atrasoCorrente}d na etapa atual</div>`:''}
+      </div>`:`<div style="font-size:9px;color:#2E7E5E;">✅ No prazo estimado</div>`}
+    </div>
+  </div>`;
+})()}
+${(()=>{const a=labelAtraso(v);if(!a)return'';const cores={ok:'background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;',alerta:'background:#FFF8E8;color:#C08020;border:1px solid #E8C060;',atrasada:'background:#FEF0EC;color:#C05030;border:1px solid #E0A090;'};const icones={ok:'🟢',alerta:'🟡',atrasada:'🔴'};const prazo=PRAZOS_ETAPA[v.etapa];return`<div style="${cores[a.tipo]}border-radius:7px;padding:7px 12px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;"><div style="font-size:11px;font-weight:600;">${icones[a.tipo]} Etapa atual: ${a.label}</div><div style="font-size:9px;opacity:0.8;">Prazo desta etapa: ${prazo} dia${prazo!==1?'s':''}</div></div>`;})()}${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">Avançar: ${ETAPAS[v.etapa+1]} →</button>`:''}${['fin','dir','dono'].includes(role)&&v.etapa>0&&!isFinal?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);margin-left:6px;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">← Voltar etapa</button>`:''}${isFinal&&['fin','dir','dono'].includes(role)&&v.etapa>0?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">← Voltar etapa</button>`:''}${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">Apenas Financeiro ou Diretor podem avançar etapas.</div>`:''}</div>${distH}${bonusH}<div class="sec"><div class="sec-h">Histórico</div><div class="sec-b">${hH}</div></div>${anexosH}`;
 // Bind do input de anexo após render
 const inp=document.getElementById('anexo-input-'+v.id);
 if(inp) inp.addEventListener('change',e=>handleAnexoUpload(e,v.id));
@@ -2831,6 +2952,27 @@ function salvarEditVenda(){
   fecharEditVenda();
   renderFiltros();renderVList();showVDetail(v.id);
   showToast('✅','Venda atualizada com sucesso!');
+}
+
+function filtrarPrazo(tipo){
+  const base=vendasU(VENDAS);
+  const l=base.filter(v=>{
+    if(v.distratada) return false;
+    if(PRAZOS_ETAPA[v.etapa]===null||v.etapa>=ETAPAS.length-1) return false;
+    const a=calcAtraso(v);
+    if(tipo==='atrasada') return a!==null&&a>0;
+    if(tipo==='alerta')   return a===0;
+    if(tipo==='ok')       return a!==null&&a<=0;
+    return false;
+  });
+  const cores={atrasada:{bg:'#FEF0EC',cor:'#C05030',bd:'#E0A090',icone:'🔴'},alerta:{bg:'#FFF8E8',cor:'#C08020',bd:'#E8C060',icone:'🟡'},ok:{bg:'#E8F5EE',cor:'#2E7E5E',bd:'#80C8A0',icone:'🟢'}};
+  const c=cores[tipo];
+  document.getElementById('vc').textContent=l.length;
+  document.getElementById('vlista').innerHTML=l.map(v=>{
+    const atraso=labelAtraso(v);
+    const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">📍 ${v.unidade}</span>`:'';
+    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="border-left:3px solid ${c.cor};"><div class="vav">${ini(v.cliente)}</div><div style="flex:1;min-width:0;"><div class="vnome">${v.cliente.split('/')[0].trim()}</div><div class="vsub">${v.produto} · ${v.construtora}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep">${ETAPAS[v.etapa]}</span>${ubadge}<span style="font-size:9px;background:${c.bg};color:${c.cor};border:1px solid ${c.bd};border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${c.icone} ${atraso?.label}</span></div></div></div>`;
+  }).join('')||`<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda nessa categoria</div>`;
 }
 
 function voltarEtapa(id){
