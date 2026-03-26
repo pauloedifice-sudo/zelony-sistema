@@ -3057,9 +3057,11 @@ function renderFinanceiro(){
     return p.length>=2&&parseInt(p[1])-1===mes;
   });
 
-  // Totais
-  const totalPrevisto=Object.values(previsoes).flat().reduce((s,{v})=>s+comZ(v),0);
-  const totalRecebido=recebidas.reduce((s,v)=>s+comZ(v),0);
+  // Totais — bruto e líquido
+  const totalPrevistoLiq=Object.values(previsoes).flat().reduce((s,{v})=>s+comZ(v),0);
+  const totalPrevistoBrut=Object.values(previsoes).flat().reduce((s,{v})=>s+(v.valor*v.pct),0);
+  const totalRecebidoLiq=recebidas.reduce((s,v)=>s+comZ(v),0);
+  const totalRecebidoBrut=recebidas.reduce((s,v)=>s+(v.valor*v.pct),0);
 
   // Monta calendário
   const primeiroDia=new Date(ano,mes,1).getDay(); // 0=dom
@@ -3079,19 +3081,19 @@ function renderFinanceiro(){
       const p=v.hist[v.hist.length-1]?.d?.split('/');
       return p&&parseInt(p[0])===d;
     });
-    const totalDia=prevs.reduce((s,{v})=>s+comZ(v),0)+receb.reduce((s,v)=>s+comZ(v),0);
+    const totalDiaBrut=prevs.reduce((s,{v})=>s+(v.valor*v.pct),0)+receb.reduce((s,v)=>s+(v.valor*v.pct),0);
 
     cells+=`<div class="fcal-cell${isHoje?' fcal-hoje':''}${isPast&&(prevs.length||receb.length)?' fcal-past':''}">
       <div class="fcal-num${isHoje?' fcal-num-hoje':''}">${d}</div>
       ${receb.map(v=>`<div class="fcal-ev fcal-recebida" onclick="irParaVenda(${v.id})" title="${v.cliente.split('/')[0].trim()} — clique para ver a venda" style="cursor:pointer;">
         <div class="fcal-ev-nome">✅ ${nomeCalendario(v.cliente)}</div>
-        <div class="fcal-ev-val">${fmt(comZ(v))}</div>
+        <div class="fcal-ev-val">${fmt(v.valor*v.pct)}</div>
       </div>`).join('')}
       ${prevs.map(({v,prev})=>`<div class="fcal-ev ${prev.totalAtraso>0?'fcal-atrasada':'fcal-prevista'}" onclick="irParaVenda(${v.id})" title="${v.cliente.split('/')[0].trim()} — clique para ver a venda" style="cursor:pointer;">
         <div class="fcal-ev-nome">${prev.totalAtraso>0?'🔴':'📅'} ${nomeCalendario(v.cliente)}</div>
-        <div class="fcal-ev-val">${fmt(comZ(v))}</div>
+        <div class="fcal-ev-val">${fmt(v.valor*v.pct)}</div>
       </div>`).join('')}
-      ${totalDia>0?`<div class="fcal-total">${fmtK(totalDia)}</div>`:''}
+      ${totalDiaBrut>0?`<div class="fcal-total">${fmtK(totalDiaBrut)}</div>`:''}
     </div>`;
   }
 
@@ -3144,18 +3146,21 @@ function renderFinanceiro(){
     <div class="fcal-kpis">
       <div class="fcal-kpi">
         <div class="fcal-kpi-l">💰 Previsto no mês</div>
-        <div class="fcal-kpi-v" style="color:var(--gold);">${fmt(totalPrevisto)}</div>
-        <div style="font-size:9px;color:var(--tm);margin-top:2px;">${Object.values(previsoes).flat().length} venda${Object.values(previsoes).flat().length!==1?'s':''} em andamento</div>
+        <div class="fcal-kpi-v" style="color:var(--gold);">${fmt(totalPrevistoBrut)}</div>
+        <div style="font-size:9px;color:#2E9E6E;margin-top:3px;">Líquido: ${fmt(totalPrevistoLiq)}</div>
+        <div style="font-size:9px;color:var(--tm);margin-top:1px;">${Object.values(previsoes).flat().length} venda${Object.values(previsoes).flat().length!==1?'s':''} em andamento</div>
       </div>
       <div class="fcal-kpi">
         <div class="fcal-kpi-l">✅ Já recebido</div>
-        <div class="fcal-kpi-v" style="color:#2E9E6E;">${fmt(totalRecebido)}</div>
-        <div style="font-size:9px;color:var(--tm);margin-top:2px;">${recebidas.length} venda${recebidas.length!==1?'s':''} concluída${recebidas.length!==1?'s':''}</div>
+        <div class="fcal-kpi-v" style="color:#2E9E6E;">${fmt(totalRecebidoBrut)}</div>
+        <div style="font-size:9px;color:#2E9E6E;margin-top:3px;">Líquido: ${fmt(totalRecebidoLiq)}</div>
+        <div style="font-size:9px;color:var(--tm);margin-top:1px;">${recebidas.length} venda${recebidas.length!==1?'s':''} concluída${recebidas.length!==1?'s':''}</div>
       </div>
       <div class="fcal-kpi">
         <div class="fcal-kpi-l">📊 Total do mês</div>
-        <div class="fcal-kpi-v" style="color:#3060B8;">${fmt(totalPrevisto+totalRecebido)}</div>
-        <div style="font-size:9px;color:var(--tm);margin-top:2px;">previsto + recebido</div>
+        <div class="fcal-kpi-v" style="color:#3060B8;">${fmt(totalPrevistoBrut+totalRecebidoBrut)}</div>
+        <div style="font-size:9px;color:#3060B8;margin-top:3px;">Líquido: ${fmt(totalPrevistoLiq+totalRecebidoLiq)}</div>
+        <div style="font-size:9px;color:var(--tm);margin-top:1px;">previsto + recebido</div>
       </div>
     </div>
 
