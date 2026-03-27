@@ -1588,11 +1588,19 @@ function mapVendaOut(v){return{
   diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
   cca:v.cca||'',
   distratada:v.distratada||false,
-  anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''})),
   bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
   bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
   etapa:v.etapa,hist:v.hist
+  // anexos: omitido do insert inicial — salvo separadamente via dbSalvarAnexos
 };}
+
+// Salva anexos separadamente para não travar o insert principal
+async function dbSalvarAnexos(vendaId, anexos){
+  if(!anexos||!anexos.length) return;
+  try{
+    await sb.from('vendas').update({anexos:anexos}).eq('id',vendaId);
+  }catch(e){console.warn('Erro ao salvar anexos:',e.message);}
+}
 function mapTreinIn(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
 function mapTreinOut(t){return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog};}
 
@@ -1614,9 +1622,29 @@ async function dbSalvarSenha(email,senha){
 }
 
 // Salvar venda no banco
-async function dbSalvarVenda(v){
-  const {data}=await sb.from('vendas').insert(mapVendaOut(v)).select().single();
-  if(data) v.id=data.id;
+async function dbSalvarVenda(v, tentativa=1){
+  try{
+    const {data,error}=await sb.from('vendas').insert(mapVendaOut(v)).select().single();
+    if(error) throw error;
+    if(data) v.id=data.id;
+    return true;
+  }catch(e){
+    console.error(`Erro ao salvar venda (tentativa ${tentativa}):`,e.message);
+    if(tentativa<3){
+      await new Promise(r=>setTimeout(r,1500));
+      return dbSalvarVenda(v,tentativa+1);
+    }
+    // Após 3 tentativas, avisa o usuário
+    showToast('❌',`Falha ao salvar no banco. Tente novamente.`);
+    // Mostra botão de retentar salvo na própria venda
+    const vId=v.id;
+    setTimeout(()=>{
+      const el=document.getElementById('vr-'+vId);
+      if(el) el.style.borderLeft='3px solid #C05030';
+      showToast('⚠️','Venda adicionada localmente mas NÃO salva no banco. Recarregue e tente novamente.');
+    },200);
+    return false;
+  }
 }
 
 // Atualizar venda (etapa, hist)
@@ -2469,13 +2497,20 @@ function salvarVenda(){
     ]
   };
   VENDAS.push(novaVenda);
-  dbSalvarVenda(novaVenda).catch(e=>console.error(e));
   fecharMV();
   renderFiltros();
   renderVList();
   showVDetail(novaVenda.id);
   salvarLS();
-  showToast('✅',`Venda de ${cliente.split(' ')[0]} cadastrada!`);
+  showToast('💾','Salvando no banco...');
+  dbSalvarVenda(novaVenda).then(ok=>{
+    if(ok){
+      showToast('✅',`Venda de ${cliente.split(' ')[0]} salva com sucesso!`);
+      // Salva anexos separadamente após ter o ID do banco
+      const anexosValidos=novaVenda.anexos.filter(a=>a.dataUrl);
+      if(anexosValidos.length) dbSalvarAnexos(novaVenda.id,novaVenda.anexos);
+    }
+  }).catch(e=>console.error(e));
 }
 function renderVList(){
   let l=vendasU(VENDAS);
