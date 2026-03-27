@@ -2834,8 +2834,171 @@ function renderRel(){
 }
 function setRM(m,el){relMes=m;document.querySelectorAll('.rf').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderRel();}
 
-function exportXLSX(){const btn=document.getElementById('bxl');btn.classList.add('loading');btn.textContent='Gerando...';setTimeout(()=>{let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const mb=role==='dir'||role==='fin';const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([['Data','Cliente','Produto','Corretor','Valor (R$)',...(mb?['Com. Bruta (R$)']:[]),lblCom()+' (R$)','Etapa','Mês'],...l.map(v=>[v.data,v.cliente,v.produto,v.corretor,v.valor,...(mb?[Math.round(v.valor*v.pct)]:[]),Math.round(comVis(v)),ETAPAS[v.etapa],v.mes])]);ws['!cols']=[{wch:8},{wch:34},{wch:16},{wch:14},{wch:16},...(mb?[{wch:16}]:[]),{wch:18},{wch:24},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,'Relatório');XLSX.writeFile(wb,`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.xlsx`);showToast('✅','Excel exportado!');btn.classList.remove('loading');btn.textContent='⬇ Excel';},300);}
-function exportPDF(){const btn=document.getElementById('bpdf');btn.classList.add('loading');btn.textContent='Gerando...';setTimeout(()=>{try{const{jsPDF}=window.jspdf,doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));const W=doc.internal.pageSize.getWidth(),mb=role==='dir'||role==='fin';doc.setFillColor(184,144,42);doc.rect(0,0,W,30,'F');doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(255,255,255);doc.text('ZELONY IMÓVEIS',W/2,13,{align:'center'});doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,248,220);doc.text(`Relatório ${relMes} · ${hoje()}`,W/2,21,{align:'center'});doc.setDrawColor(255,255,255);doc.setLineWidth(0.3);doc.line(14,27,W-14,27);const vgv=l.reduce((s,v)=>s+v.valor,0),mc=l.reduce((s,v)=>s+comVis(v),0),conc=l.filter(v=>v.etapa===ETAPAS.length-1).length,kw=(W-28)/4;doc.setFillColor(253,248,238);doc.rect(14,29,W-28,20,'F');doc.setDrawColor(184,144,42);doc.rect(14,29,W-28,20);[['VGV TOTAL',fmt(vgv)],[lblCom().toUpperCase().slice(0,18),fmt(mc)],['VENDAS',String(l.length)],['CONCLUÍDAS',String(conc)]].forEach(([lb,val],i)=>{const x=14+i*kw+kw/2;doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(138,110,60);doc.text(lb,x,35,{align:'center'});doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(184,144,42);doc.text(val,x,45,{align:'center'});if(i<3){doc.setDrawColor(220,185,100);doc.line(14+i*kw+kw,30,14+i*kw+kw,48);}});doc.autoTable({startY:53,head:[['Data','Cliente','Produto','Corretor','Valor',...(mb?['Com. Bruta']:[]),lblCom(),'Etapa']],body:l.map(v=>[v.data,v.cliente.split('/')[0].trim().slice(0,24),v.produto,v.corretor,fmt(v.valor),...(mb?[fmt(v.valor*v.pct)]:[]),fmt(comVis(v)),ETAPAS[v.etapa]]),theme:'plain',headStyles:{fillColor:[253,248,238],textColor:[184,144,42],fontSize:7,fontStyle:'bold',halign:'center',lineColor:[220,185,100],lineWidth:0.3},bodyStyles:{fontSize:7,textColor:[60,48,30]},alternateRowStyles:{fillColor:[250,245,236]},margin:{left:14,right:14},didDrawPage:(d)=>{doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(140,110,60);doc.text(`Zelony Imóveis · ${hoje()} · Pág. ${d.pageNumber}`,W/2,doc.internal.pageSize.getHeight()-6,{align:'center'});}});doc.save(`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.pdf`);showToast('✅','PDF exportado!');}catch(e){showToast('❌','Erro ao gerar PDF.');}btn.classList.remove('loading');btn.textContent='⬇ PDF';},300);}
+function exportXLSX(){
+  const btn=document.getElementById('bxl');
+  btn.classList.add('loading');btn.textContent='Gerando...';
+  setTimeout(()=>{
+    let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));
+    const isAdmin=['dir','fin','dono'].includes(role);
+    const cabecalho=['Data','Mês','Cliente','Produto','Construtora','Origem','Corretor','Gerente','CCA',
+      'Valor (R$)','Com. Bruta (R$)','Com. Líquida (R$)','Zelony (R$)',
+      'Bônus (R$)','Etapa','Unidade','Status'];
+    const linhas=l.map(v=>[
+      v.data, v.mes, v.cliente.split('/')[0].trim(), v.produto, v.construtora,
+      v.origem||'', v.corretor, v.gerente||'', v.cca||'',
+      v.valor, Math.round(v.valor*v.pct), Math.round(comTotal(v)),
+      isAdmin?Math.round(comZ(v)):Math.round(comVis(v)),
+      v.bonus||0, ETAPAS[v.etapa], v.unidade||'',
+      v.distratada?'Distratada':'Ativa'
+    ]);
+    const wb=XLSX.utils.book_new();
+    // Aba: Vendas
+    const ws=XLSX.utils.aoa_to_sheet([cabecalho,...linhas]);
+    ws['!cols']=[{wch:8},{wch:10},{wch:28},{wch:14},{wch:14},{wch:12},{wch:22},{wch:22},{wch:10},
+      {wch:14},{wch:14},{wch:14},{wch:12},{wch:10},{wch:20},{wch:10},{wch:10}];
+    XLSX.utils.book_append_sheet(wb,ws,'Vendas');
+    // Aba: Resumo por construtora
+    const porConst={};
+    l.filter(v=>!v.distratada).forEach(v=>{
+      const c=v.construtora||'—';
+      if(!porConst[c]) porConst[c]={vendas:0,vgv:0,comBruta:0,comLiq:0};
+      porConst[c].vendas++;porConst[c].vgv+=v.valor;
+      porConst[c].comBruta+=v.valor*v.pct;porConst[c].comLiq+=comTotal(v);
+    });
+    const wsConst=XLSX.utils.aoa_to_sheet([
+      ['Construtora','Vendas','VGV (R$)','Com. Bruta (R$)','Com. Líquida (R$)'],
+      ...Object.entries(porConst).sort((a,b)=>b[1].vgv-a[1].vgv)
+        .map(([c,d])=>[c,d.vendas,Math.round(d.vgv),Math.round(d.comBruta),Math.round(d.comLiq)])
+    ]);
+    XLSX.utils.book_append_sheet(wb,wsConst,'Por Construtora');
+    // Aba: Resumo por Origem
+    const porOrig={};
+    l.filter(v=>!v.distratada).forEach(v=>{const o=v.origem||'Outros';porOrig[o]=(porOrig[o]||0)+1;});
+    const wsOrig=XLSX.utils.aoa_to_sheet([
+      ['Origem','Quantidade','%'],
+      ...Object.entries(porOrig).sort((a,b)=>b[1]-a[1])
+        .map(([o,n])=>[o,n,((n/l.filter(v=>!v.distratada).length)*100).toFixed(1)+'%'])
+    ]);
+    XLSX.utils.book_append_sheet(wb,wsOrig,'Por Origem');
+    XLSX.writeFile(wb,`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.xlsx`);
+    showToast('✅','Excel exportado com 3 abas!');
+    btn.classList.remove('loading');btn.textContent='⬇ Excel';
+  },300);
+}
+
+function exportPDF(){
+  const btn=document.getElementById('bpdf');
+  btn.classList.add('loading');btn.textContent='Gerando...';
+  setTimeout(()=>{
+    try{
+      const{jsPDF}=window.jspdf;
+      const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+      let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));
+      const ativas=l.filter(v=>!v.distratada);
+      const W=doc.internal.pageSize.getWidth();
+      const isAdmin=['dir','fin','dono'].includes(role);
+      // Header
+      doc.setFillColor(184,144,42);doc.rect(0,0,W,28,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(255,255,255);
+      doc.text('ZELONY IMÓVEIS',W/2,12,{align:'center'});
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(255,248,220);
+      doc.text(`Relatório ${relMes} · Gerado em ${hoje()}`,W/2,20,{align:'center'});
+      doc.setDrawColor(255,255,255);doc.setLineWidth(0.3);doc.line(14,25,W-14,25);
+      // KPIs
+      const vgv=ativas.reduce((s,v)=>s+v.valor,0);
+      const comBruta=ativas.reduce((s,v)=>s+(v.valor*v.pct),0);
+      const comLiq=ativas.reduce((s,v)=>s+comTotal(v),0);
+      const zelony=ativas.reduce((s,v)=>s+comZ(v),0);
+      const conc=ativas.filter(v=>v.etapa===ETAPAS.length-1).length;
+      const bonus=ativas.reduce((s,v)=>s+(v.bonus||0),0);
+      const kpis=[
+        ['VGV TOTAL',fmt(vgv)],['COM. BRUTA',fmt(comBruta)],
+        ['COM. LÍQUIDA',fmt(comLiq)],['ZELONY',fmt(zelony)],
+        ['VENDAS',String(ativas.length)],['CONCLUÍDAS',String(conc)]
+      ];
+      const kw=(W-28)/kpis.length;
+      doc.setFillColor(253,248,238);doc.rect(14,27,W-28,18,'F');
+      doc.setDrawColor(184,144,42);doc.rect(14,27,W-28,18);
+      kpis.forEach(([lb,val],i)=>{
+        const x=14+i*kw+kw/2;
+        doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(138,110,60);
+        doc.text(lb,x,32,{align:'center'});
+        doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(184,144,42);
+        doc.text(val,x,41,{align:'center'});
+        if(i<kpis.length-1){doc.setDrawColor(220,185,100);doc.line(14+(i+1)*kw,28,14+(i+1)*kw,44);}
+      });
+      // Tabela principal
+      doc.autoTable({
+        startY:49,
+        head:[['Data','Mês','Cliente','Produto','Construtora','Origem','Corretor','Gerente','CCA',
+          'Valor','Com.Bruta','Com.Líq.','Zelony','Bônus','Etapa','Unid.']],
+        body:l.map(v=>[
+          v.data, v.mes,
+          v.cliente.split('/')[0].trim().slice(0,18),
+          v.produto.slice(0,12), v.construtora.slice(0,10),
+          v.origem||'', v.corretor.split(' ')[0], (v.gerente||'').split(' ')[0],
+          v.cca||'—',
+          fmt(v.valor), fmt(v.valor*v.pct), fmt(comTotal(v)),
+          fmt(comZ(v)), v.bonus>0?fmt(v.bonus):'—',
+          ETAPAS[v.etapa].slice(0,14)+(v.distratada?' ⚠️':''),
+          v.unidade||'—'
+        ]),
+        theme:'plain',
+        headStyles:{fillColor:[253,248,238],textColor:[184,144,42],fontSize:6,fontStyle:'bold',
+          halign:'center',lineColor:[220,185,100],lineWidth:0.3},
+        bodyStyles:{fontSize:6,textColor:[60,48,30]},
+        alternateRowStyles:{fillColor:[250,245,236]},
+        columnStyles:{
+          0:{cellWidth:10},1:{cellWidth:12},2:{cellWidth:25},3:{cellWidth:16},
+          4:{cellWidth:16},5:{cellWidth:14},6:{cellWidth:16},7:{cellWidth:16},
+          8:{cellWidth:12},9:{cellWidth:17},10:{cellWidth:16},11:{cellWidth:16},
+          12:{cellWidth:14},13:{cellWidth:12},14:{cellWidth:20},15:{cellWidth:10}
+        },
+        margin:{left:7,right:7},
+        didDrawPage:(d)=>{
+          doc.setFont('helvetica','normal');doc.setFontSize(5.5);doc.setTextColor(140,110,60);
+          doc.text(`Zelony Imóveis · ${hoje()} · Pág. ${d.pageNumber}`,W/2,doc.internal.pageSize.getHeight()-4,{align:'center'});
+        }
+      });
+      // Página 2: análises
+      doc.addPage();
+      doc.setFillColor(184,144,42);doc.rect(0,0,W,14,'F');
+      doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(255,255,255);
+      doc.text('Análise do Período',W/2,9,{align:'center'});
+      // Tabela por construtora
+      const porConst={};
+      ativas.forEach(v=>{const c=v.construtora||'—';if(!porConst[c])porConst[c]={n:0,vgv:0,com:0};porConst[c].n++;porConst[c].vgv+=v.valor;porConst[c].com+=comZ(v);});
+      doc.autoTable({
+        startY:18,tableWidth:(W-28)/2,
+        head:[['Construtora','Vendas','VGV','Zelony']],
+        body:Object.entries(porConst).sort((a,b)=>b[1].vgv-a[1].vgv)
+          .map(([c,d])=>[c,d.n,fmt(d.vgv),fmt(d.com)]),
+        theme:'plain',
+        headStyles:{fillColor:[253,248,238],textColor:[184,144,42],fontSize:7,fontStyle:'bold'},
+        bodyStyles:{fontSize:7,textColor:[60,48,30]},
+        alternateRowStyles:{fillColor:[250,245,236]},
+        margin:{left:14},
+      });
+      // Tabela por origem
+      const porOrig={};
+      ativas.forEach(v=>{const o=v.origem||'Outros';porOrig[o]=(porOrig[o]||0)+1;});
+      doc.autoTable({
+        startY:18,tableWidth:(W-28)/2,
+        head:[['Origem','Vendas','%']],
+        body:Object.entries(porOrig).sort((a,b)=>b[1]-a[1])
+          .map(([o,n])=>[o,n,((n/ativas.length)*100).toFixed(1)+'%']),
+        theme:'plain',
+        headStyles:{fillColor:[253,248,238],textColor:[184,144,42],fontSize:7,fontStyle:'bold'},
+        bodyStyles:{fontSize:7,textColor:[60,48,30]},
+        alternateRowStyles:{fillColor:[250,245,236]},
+        margin:{left:14+(W-28)/2+7},
+      });
+      doc.save(`Zelony_${relMes}_${hoje().replace(/\//g,'-')}.pdf`);
+      showToast('✅','PDF exportado com análises!');
+    }catch(e){console.error(e);showToast('❌','Erro ao gerar PDF.');}
+    btn.classList.remove('loading');btn.textContent='⬇ PDF';
+  },300);
+}
 
 // ── DISTRATO ──────────────────────────────────────────────────────────────────
 let distratoVendaId=null;
