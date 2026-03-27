@@ -1241,7 +1241,7 @@ input[type=range]{width:100%;accent-color:var(--gold);}
         </div>
         <div class="modal-foot">
           <button class="btn-c" onclick="fecharMV()">Cancelar</button>
-          <button class="btn-s" id="mv-save-btn" onclick="salvarVenda()">✓ Cadastrar venda</button>
+          <button class="btn-s" id="mv-salvar-btn" onclick="salvarVenda()">✓ Cadastrar venda</button>
         </div>
       </div>
     </div>
@@ -1524,7 +1524,21 @@ async function carregarDB(){
   const [us,ss,vs,ts]=await Promise.all([
     carregar('usuarios','id'),
     carregar('senhas',null),
-    sb.from('vendas').select(VENDAS_COLS).order('id').then(({data,error})=>{if(error)throw error;return data||[];}).catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
+    // Carrega vendas em lotes de 20 para evitar timeout
+    (async()=>{
+      let todas=[];
+      let pagina=0;
+      const LOTE=20;
+      while(true){
+        const {data,error}=await sb.from('vendas').select(VENDAS_COLS).order('id').range(pagina*LOTE,(pagina+1)*LOTE-1);
+        if(error) throw error;
+        if(!data||data.length===0) break;
+        todas=[...todas,...data];
+        if(data.length<LOTE) break;
+        pagina++;
+      }
+      return todas;
+    })().catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
     carregar('treinamentos','id'),
   ]);
 
@@ -2357,7 +2371,11 @@ function abrirModalVenda(){
   setTimeout(()=>document.getElementById('mv-cliente').focus(),100);
 }
 
-function fecharMV(){document.getElementById('mvenda').classList.remove('show');}
+function fecharMV(){
+  document.getElementById('mvenda').classList.remove('show');
+  const btn=document.getElementById('mv-salvar-btn');
+  if(btn){btn.disabled=false;btn.textContent='✓ Cadastrar venda';}
+}
 function handleBackdropV(e){if(e.target===document.getElementById('mvenda'))fecharMV();}
 
 function calcularPrevBonus(){
@@ -2496,21 +2514,34 @@ function salvarVenda(){
       {nome:mvDocs.cont.nome,tipo:'contrato',tamanho:mvDocs.cont.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.cont.dataUrl,mime:mvDocs.cont.mime}
     ]
   };
-  VENDAS.push(novaVenda);
-  fecharMV();
-  renderFiltros();
-  renderVList();
-  showVDetail(novaVenda.id);
-  salvarLS();
-  showToast('💾','Salvando no banco...');
+
+  // Bloqueia botão e mostra progresso
+  const btnSalvar=document.getElementById('mv-salvar-btn');
+  if(btnSalvar){btnSalvar.disabled=true;btnSalvar.textContent='💾 Salvando...';}
+  showToast('💾','Salvando venda no banco...');
+
   dbSalvarVenda(novaVenda).then(ok=>{
     if(ok){
+      VENDAS.push(novaVenda);
+      salvarLS();
+      fecharMV();
+      renderFiltros();
+      renderVList();
+      showVDetail(novaVenda.id);
       showToast('✅',`Venda de ${cliente.split(' ')[0]} salva com sucesso!`);
-      // Salva anexos separadamente após ter o ID do banco
+      // Salva anexos separadamente
       const anexosValidos=novaVenda.anexos.filter(a=>a.dataUrl);
       if(anexosValidos.length) dbSalvarAnexos(novaVenda.id,novaVenda.anexos);
+    } else {
+      // Falhou — desbloqueia botão para tentar de novo
+      if(btnSalvar){btnSalvar.disabled=false;btnSalvar.textContent='Salvar venda';}
+      showToast('❌','Falha ao salvar. Verifique sua conexão e tente novamente.');
     }
-  }).catch(e=>console.error(e));
+  }).catch(e=>{
+    console.error(e);
+    if(btnSalvar){btnSalvar.disabled=false;btnSalvar.textContent='Salvar venda';}
+    showToast('❌','Erro inesperado. Tente novamente.');
+  });
 }
 function renderVList(){
   let l=vendasU(VENDAS);
