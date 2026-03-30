@@ -1,0 +1,971 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zelony Imóveis — Sistema</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- CSS modular -->
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<body>
+<!-- SPLASH: renderiza imediatamente, antes de qualquer JS -->
+<div id="app-splash" style="position:fixed;inset:0;z-index:99999;background:#0E0A00;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;">
+  <style>
+    .sp-particles{position:absolute;inset:0;overflow:hidden;pointer-events:none;}
+    .sp-p{position:absolute;border-radius:50%;animation:sp-float linear infinite;opacity:0;}
+    @keyframes sp-float{0%{transform:translateY(110vh) scale(0);opacity:0;}10%{opacity:1;}90%{opacity:0.4;}100%{transform:translateY(-10vh) scale(1.2);opacity:0;}}
+    .sp-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(184,144,42,0.12) 0%,transparent 70%);animation:sp-pulse 3s ease-in-out infinite;}
+    @keyframes sp-pulse{0%,100%{transform:scale(1);opacity:0.8;}50%{transform:scale(1.15);opacity:1;}}
+    .sp-logo-ring{width:90px;height:90px;border-radius:50%;border:1px solid rgba(184,144,42,0.3);display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:20px;animation:sp-ring 3s linear infinite;}
+    @keyframes sp-ring{0%{box-shadow:0 0 0 0 rgba(184,144,42,0.4);}70%{box-shadow:0 0 0 20px rgba(184,144,42,0);}100%{box-shadow:0 0 0 0 rgba(184,144,42,0);}}
+    .sp-logo-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(184,144,42,0.8);border-right-color:rgba(184,144,42,0.3);animation:sp-spin 1.5s linear infinite;}
+    .sp-logo-ring::after{content:'';position:absolute;inset:-16px;border-radius:50%;border:1px solid transparent;border-top-color:rgba(184,144,42,0.3);border-left-color:rgba(184,144,42,0.1);animation:sp-spin 2.5s linear infinite reverse;}
+    @keyframes sp-spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    .sp-bar-bg{height:2px;background:rgba(184,144,42,0.15);border-radius:2px;overflow:hidden;width:220px;}
+    .sp-bar-fill{height:100%;background:linear-gradient(90deg,transparent,#B8902A,#F0D080,#B8902A,transparent);border-radius:2px;animation:sp-shimmer 1.8s ease-in-out infinite;background-size:200% 100%;}
+    @keyframes sp-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+    .sp-status{font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.15em;text-transform:uppercase;animation:sp-fade 1.8s ease-in-out infinite;}
+    @keyframes sp-fade{0%,100%{opacity:0.4;}50%{opacity:1;}}
+    .sp-dot{width:4px;height:4px;border-radius:50%;background:rgba(184,144,42,0.4);display:inline-block;}
+    .sp-dot:nth-child(1){animation:sp-dp 1.4s ease-in-out 0s infinite;}
+    .sp-dot:nth-child(2){animation:sp-dp 1.4s ease-in-out 0.2s infinite;}
+    .sp-dot:nth-child(3){animation:sp-dp 1.4s ease-in-out 0.4s infinite;}
+    @keyframes sp-dp{0%,100%{transform:scale(1);opacity:0.4;}50%{transform:scale(1.6);opacity:1;background:rgba(184,144,42,0.9);}}
+  </style>
+  <div class="sp-particles" id="sp-particles"></div>
+  <div class="sp-glow"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;margin-bottom:36px;">
+    <div class="sp-logo-ring"><span style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:#B8902A;text-shadow:0 0 30px rgba(184,144,42,0.5);">Z</span></div>
+    <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#F0D080;letter-spacing:0.12em;">ZELONY</div>
+    <div style="font-size:10px;color:rgba(184,144,42,0.5);letter-spacing:0.4em;text-transform:uppercase;margin-top:6px;">Imóveis · Sistema de Gestão</div>
+  </div>
+  <div style="position:relative;z-index:2;width:1px;height:36px;background:linear-gradient(to bottom,transparent,rgba(184,144,42,0.4),transparent);"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:16px;">
+    <div class="sp-bar-bg"><div class="sp-bar-fill"></div></div>
+    <div class="sp-status" id="sp-status-txt">Carregando dados</div>
+    <div style="display:flex;gap:6px;margin-top:4px;"><div class="sp-dot"></div><div class="sp-dot"></div><div class="sp-dot"></div></div>
+  </div>
+  <script>
+    (function(){
+      const c=document.getElementById('sp-particles');
+      if(!c)return;
+      for(let i=0;i<18;i++){const p=document.createElement('div');p.className='sp-p';const s=Math.random()*4+2;p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;background:rgba(184,144,42,${Math.random()*0.3+0.05});animation-duration:${Math.random()*8+6}s;animation-delay:${Math.random()*5}s;`;c.appendChild(p);}
+      const msgs=['Carregando dados','Conectando ao servidor','Sincronizando vendas','Preparando o sistema','Quase lá'];
+      let mi=0;
+      setInterval(()=>{mi=(mi+1)%msgs.length;const el=document.getElementById('sp-status-txt');if(el)el.textContent=msgs[mi];},1800);
+    })();
+  </script>
+</div>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+/* â”€â”€ CONVITE / ONBOARDING â”€â”€ */
+.convite-screen{position:fixed;inset:0;z-index:9998;display:none;background:var(--bg2);overflow-y:auto;}
+.convite-screen.show{display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;}
+.convite-box{background:var(--bg);border:1px solid var(--gold-bd);border-radius:16px;width:100%;max-width:500px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.12);}
+.convite-header{background:linear-gradient(135deg,#0A0A0A,#1C1200);padding:28px;text-align:center;}
+.convite-logo{font-family:'Playfair Display',serif;font-size:28px;color:var(--gold);letter-spacing:0.08em;}
+.convite-logo-sub{font-size:9px;letter-spacing:0.25em;color:var(--tm);text-transform:uppercase;margin-top:4px;}
+.convite-body{padding:24px;}
+.convite-boas-vindas{background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:10px;padding:14px;margin-bottom:20px;text-align:center;}
+.convite-boas-vindas .nome{font-family:'Playfair Display',serif;font-size:18px;color:var(--tx);margin-bottom:4px;}
+.convite-boas-vindas .cargo{font-size:11px;color:var(--tm);}
+.convite-step{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold);margin:16px 0 8px;}
+.conv-field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.conv-field label{font-size:11px;font-weight:600;color:var(--ts);}
+.conv-field input,.conv-field select{background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px 12px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;}
+.conv-field input:focus,.conv-field select:focus{border-color:var(--gold-l);}
+.conv-field input::placeholder{color:#B8A880;}
+.conv-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.conv-divider{height:1px;background:var(--bd);margin:16px 0;}
+.conv-btn{width:100%;padding:13px;background:var(--gold);color:#fff;font-size:13px;font-weight:600;border:none;border-radius:9px;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;margin-top:8px;}
+.conv-btn:hover{background:var(--gold-l);}
+.conv-btn:disabled{opacity:0.6;pointer-events:none;}
+.conv-error{background:#FEF0EC;border:1px solid #E0A090;border-radius:7px;padding:9px 13px;font-size:11px;color:#C05030;margin-bottom:12px;display:none;}
+.conv-success{background:#E8F5EE;border:1px solid #80C8A0;border-radius:10px;padding:20px;text-align:center;display:none;}
+.conv-success .icon{font-size:36px;margin-bottom:8px;}
+.conv-success .title{font-family:'Playfair Display',serif;font-size:18px;color:#2E7E5E;}
+.conv-success .sub{font-size:12px;color:#2E9E6E;margin-top:6px;}
+/* Modal convidar no mÃ³dulo usuÃ¡rios */
+.m-convite-modal{max-width:460px !important;}
+</style>
+
+<!-- TELA DE ONBOARDING â€” novo usuÃ¡rio completa cadastro -->
+<div class="convite-screen" id="convite-screen">
+  <div class="convite-box">
+    <div class="convite-header">
+      <div class="convite-logo">ZELONY</div>
+      <div class="convite-logo-sub">Imóveis — Cadastro</div>
+    </div>
+    <div class="convite-body">
+      <div class="convite-boas-vindas">
+        <div class="nome" id="conv-nome-bv">Olá!</div>
+        <div class="cargo">Você foi convidado(a) para o sistema Zelony Imóveis como <strong id="conv-cargo-bv"></strong></div>
+      </div>
+      <div class="conv-error" id="conv-error"></div>
+      <div class="conv-success" id="conv-success">
+        <div class="icon">🎉</div>
+        <div class="title">Cadastro concluído!</div>
+        <div class="sub">Sua conta foi criada com sucesso.<br>Você já pode fazer login com seu e-mail e senha.</div>
+        <button class="conv-btn" style="margin-top:16px;" onclick="irParaLogin()">Ir para o login →</button>
+      </div>
+      <div id="conv-form">
+        <div class="convite-step">📋 Dados Pessoais</div>
+        <div class="conv-field"><label>Nome completo *</label><input type="text" id="cv-nome" placeholder="SEU NOME COMPLETO" maxlength="80" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Telefone / WhatsApp *</label><input type="tel" id="cv-tel" placeholder="(41) 99999-9999"></div>
+          <div class="conv-field"><label>Data de nascimento *</label><input type="date" id="cv-nasc"></div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-field"><label>CPF *</label><input type="text" id="cv-cpf" placeholder="000.000.000-00" maxlength="14"></div>
+          <div class="conv-field"><label>CEP *</label><input type="text" id="cv-cep" placeholder="00000-000" maxlength="9" oninput="buscarCEP(this.value)"></div>
+        </div>
+        <div class="conv-field"><label>Endereço *</label><input type="text" id="cv-end" placeholder="Rua, número, bairro"></div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Cidade *</label><input type="text" id="cv-cidade" placeholder="Curitiba"></div>
+          <div class="conv-field"><label>Estado *</label><input type="text" id="cv-estado" placeholder="PR" maxlength="2"></div>
+        </div>
+        <div class="conv-divider"></div>
+        <div class="convite-step">🏦 Dados Bancários</div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Banco *</label><input type="text" id="cv-banco" placeholder="Ex: Nubank, Itaú"></div>
+          <div class="conv-field"><label>Agência</label><input type="text" id="cv-agencia" placeholder="0001"></div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-field"><label>Conta *</label><input type="text" id="cv-conta" placeholder="12345-6"></div>
+          <div class="conv-field"><label>Tipo *</label>
+            <select id="cv-tipo-conta">
+              <option value="">Selecione...</option>
+              <option value="Corrente">Corrente</option>
+              <option value="PoupanÃ§a">Poupança</option>
+              <option value="Pagamento">Pagamento</option>
+            </select>
+          </div>
+        </div>
+        <div class="conv-divider"></div>
+        <div class="convite-step">🔑 Chave Pix</div>
+        <div class="conv-field"><label>Tipo de chave *</label>
+          <div class="pix-types" id="cv-pix-types">
+            <div class="pix-type" onclick="selPixCV('CPF',this)">CPF</div>
+            <div class="pix-type" onclick="selPixCV('CNPJ',this)">CNPJ</div>
+            <div class="pix-type" onclick="selPixCV('E-mail',this)">E-mail</div>
+            <div class="pix-type" onclick="selPixCV('Telefone',this)">Telefone</div>
+            <div class="pix-type" onclick="selPixCV('AleatÃ³ria',this)">Aleatória</div>
+          </div>
+        </div>
+        <div class="conv-field"><label>Chave Pix *</label><input type="text" id="cv-pix" placeholder="Digite sua chave pix"></div>
+        <div class="conv-divider"></div>
+        <div class="convite-step">🔒 Criar Senha</div>
+        <div class="conv-field"><label>Nova senha *</label>
+          <div style="position:relative;">
+            <input type="password" id="cv-senha" placeholder="Mínimo 6 caracteres" style="padding-right:36px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px 36px 10px 12px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+            <button onclick="toggleSenhaField('cv-senha','cv-tog1')" id="cv-tog1" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <div class="conv-field"><label>Confirmar senha *</label>
+          <div style="position:relative;">
+            <input type="password" id="cv-confirma" placeholder="Repita a senha" style="padding-right:36px;background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px 36px 10px 12px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+            <button onclick="toggleSenhaField('cv-confirma','cv-tog2')" id="cv-tog2" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;" tabindex="-1">👁</button>
+          </div>
+        </div>
+        <button class="conv-btn" id="cv-btn" onclick="concluirCadastro()">✓ Concluir cadastro</button>
+        <div style="text-align:center;font-size:10px;color:var(--tm);margin-top:12px;">© 2026 Zelony Imóveis</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONVIDAR USUÃRIO -->
+<div class="modal-backdrop" id="m-convite" onclick="handleBackdropConv(event)">
+  <div class="modal m-convite-modal">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title">✉️ Convidar novo usuário</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:2px;">Um e-mail será enviado com link para cadastro</div>
+      </div>
+      <button class="mclose" onclick="fecharConvite()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+      <div class="f-field"><label>Nome completo *</label><input type="text" id="inv-nome" placeholder="NOME DO NOVO USUÁRIO" maxlength="80" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="f-field"><label>E-mail *</label><input type="email" id="inv-email" placeholder="email@exemplo.com"></div>
+      <div class="f-row">
+        <div class="f-field">
+          <label>Perfil de acesso *</label>
+          <select id="inv-perfil" onchange="toggleInvRH()">
+            <option value="">Selecione...</option>
+            <option value="Dono">Dono</option>
+            <option value="Corretor">Corretor</option>
+            <option value="CapitÃ£o">Capitão</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Diretor">Diretor</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="RH">RH</option>
+          </select>
+        </div>
+        <div class="f-field"><label>Equipe / Gestor</label><input type="text" id="inv-equipe" placeholder="Ex: Equipe Alpha"></div>
+      </div>
+      <div class="f-field">
+        <label>Unidade *</label>
+        <select id="inv-unidade">
+          <option value="">Selecione...</option>
+          <option value="Centro">🟠 Centro</option>
+          <option value="Cristo Rei">🟢 Cristo Rei</option>
+          <option value="Ambas">⚡ Ambas as unidades</option>
+        </select>
+      </div>
+      <div id="inv-rh-field" style="display:none;">
+        <div class="rh-toggle-wrap">
+          <div>
+            <div class="rh-toggle-label">Contratação realizada pelo RH?</div>
+            <div class="rh-toggle-sub">Se sim, 0,1% de comissão será destinado ao RH</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="inv-rh"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+      <div class="login-error" id="inv-error" style="display:none;margin:0;"><span>⚠️</span><span id="inv-error-msg"></span></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-c" onclick="fecharConvite()">Cancelar</button>
+      <button class="btn-s" id="inv-btn" onclick="enviarConvite()">✉️ Enviar convite</button>
+    </div>
+  </div>
+</div>
+
+<div class="login-screen" id="login-screen" style="display:none;">
+  <div class="login-left">
+    <div class="login-brand">
+      <div class="login-logo">ZELONY</div>
+      <div class="login-logo-sub">Imóveis</div>
+      <div class="login-logo-line"></div>
+      <div class="login-tagline">Plataforma de gestão de vendas, comissões e equipes</div>
+    </div>
+    <div class="login-features">
+      <div class="login-feat"><div class="login-feat-icon">📊</div><div class="login-feat-text">Acompanhe vendas e comissões em tempo real</div></div>
+      <div class="login-feat"><div class="login-feat-icon">👥</div><div class="login-feat-text">Controle de acesso por perfil de usuário</div></div>
+      <div class="login-feat"><div class="login-feat-icon">💰</div><div class="login-feat-text">Visualização financeira com dados bancários</div></div>
+      <div class="login-feat"><div class="login-feat-icon">🎓</div><div class="login-feat-text">Treinamentos e processos operacionais</div></div>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-box">
+      <div class="login-box-title">Bem-vindo de volta</div>
+      <div class="login-box-sub">Entre com suas credenciais para acessar o sistema Zelony.</div>
+
+      <div class="login-field">
+        <label>E-mail</label>
+        <div class="login-input-wrap">
+          <span class="login-input-icon">✉️</span>
+          <input class="login-input" type="email" id="lg-email" placeholder="seu@email.com.br" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="login-field">
+        <label>Senha</label>
+        <div class="login-input-wrap">
+          <span class="login-input-icon">🔒</span>
+          <input class="login-input" type="password" id="lg-senha" placeholder="Digite sua senha" id="lg-senha" autocomplete="current-password">
+          <button class="login-input-toggle" id="lg-toggle" tabindex="-1">👁</button>
+        </div>
+      </div>
+
+      <div class="login-error" id="lg-error">
+        <span>⚠️</span><span id="lg-error-msg">E-mail ou senha inválidos.</span>
+      </div>
+
+      <button class="login-btn" id="lg-btn">Entrar no sistema</button>
+
+      <div style="text-align:center;margin-top:14px;">
+        <button id="lg-trocar-senha" style="background:none;border:none;font-size:12px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;text-decoration:underline;padding:0;">
+          🔑 Trocar minha senha
+        </button>
+      </div>
+
+      <div class="login-footer">© 2026 Zelony Imóveis · Todos os direitos reservados</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TROCAR SENHA -->
+<div class="modal-backdrop" id="m-trocar-senha" style="z-index:10000;" onclick="handleBackdropTS(event)">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title">🔑 Trocar senha</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="ts-subtitulo">Informe seu e-mail e crie uma nova senha</div>
+      </div>
+      <button class="mclose" onclick="fecharTS()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+      <div class="f-field" id="ts-email-field">
+        <label>E-mail cadastrado *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">✉️</span>
+          <input type="email" id="ts-email" placeholder="seu@email.com.br" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 12px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+        </div>
+      </div>
+      <div class="f-field">
+        <label>Nova senha *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">🔒</span>
+          <input type="password" id="ts-nova" placeholder="Mínimo 6 caracteres" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 36px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+          <button onclick="toggleSenhaField('ts-nova','ts-tog1')" id="ts-tog1" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--tm);" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="f-field">
+        <label>Confirmar nova senha *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">🔒</span>
+          <input type="password" id="ts-confirma" placeholder="Repita a nova senha" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 36px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+          <button onclick="toggleSenhaField('ts-confirma','ts-tog2')" id="ts-tog2" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--tm);" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="login-error" id="ts-error" style="display:none;margin:0;">
+        <span>⚠️</span><span id="ts-error-msg"></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-c" onclick="fecharTS()">Cancelar</button>
+      <button class="btn-s" onclick="salvarNovaSenha()">✓ Salvar nova senha</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="main-app" style="opacity:0;transition:opacity 0.2s ease;">
+<div class="topbar">
+  <div class="tb-logo">ZELONY <small>Imóveis</small></div>
+  <div class="tb-right">
+    <!-- Info do usuÃ¡rio logado -->
+    <div id="tb-user-info" style="display:flex;align-items:center;gap:7px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:7px;padding:4px 12px;cursor:default;">
+      <span id="tb-user-avatar" style="width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;"></span>
+      <span id="tb-user-nome" style="font-size:11px;font-weight:600;color:var(--tx);"></span>
+      <span id="tb-user-perfil-badge" style="font-size:9px;color:var(--tm);"></span>
+    </div>
+    <!-- Seletor de visualização — APENAS para Dono e Diretor -->
+    <select class="role-sel" id="role-sel" onchange="trocaRole()" style="display:none;" title="Visualizar como...">
+      <option value="dono">🧑‍💼 Dono</option>
+      <option value="fin">👤 Financeiro</option>
+      <option value="cor">👤 Corretor</option>
+      <option value="cap">👤 Capitão</option>
+      <option value="ger">👤 Gerente</option>
+      <option value="dir">👤 Diretor</option>
+      <option value="rh">👤 RH</option>
+    </select>
+    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
+    <button onclick="fazerLogout()" style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Sair do sistema">↩ Sair</button>
+    <button onclick="abrirTS()" style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Trocar senha">🔑</button>
+  </div>
+</div>
+
+<div class="layout">
+<div class="sidebar">
+  <div class="sb-nav">
+    <div class="sb-lbl">Módulos</div>
+    <button class="sb-item" id="sb-financeiro" onclick="setMod('financeiro',this)" style="display:none;">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 7h14"/><path d="M5 11h2M10 11h1"/></svg>
+      Financeiro
+    </button>
+    <button class="sb-item" onclick="setMod('carteira',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M11 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg>
+      Minha Carteira
+    </button>
+    <button class="sb-item active" onclick="setMod('vendas',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg>
+      Vendas / Comissão
+    </button>
+    <button class="sb-item" onclick="setMod('trein',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="9" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
+      Treinamentos
+    </button>
+    <button class="sb-item" onclick="setMod('proc',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7M3 12h5"/></svg>
+      Proc. Operacional
+    </button>
+    <button class="sb-item" onclick="setMod('usuarios',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-3 2-4.5 5-4.5s5 1.5 5 4.5"/><circle cx="12" cy="5" r="2"/><path d="M11.5 8.5c1.5 0 3 .8 3 3.5"/></svg>
+      Usuários
+    </button>
+  </div>
+  <div class="sb-bottom">
+    <div style="display:flex;align-items:center;gap:9px;">
+      <div class="sb-av" id="sb-av">FI</div>
+      <div>
+        <div style="font-size:12px;font-weight:600;" id="sb-uname">Financeiro</div>
+        <div style="font-size:9px;color:var(--tm);margin-top:1px;" id="sb-urole">Master / Admin</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="pg-title" id="pg-title">Vendas &amp; Comissão</div>
+  <div class="content">
+
+    <div class="modal-backdrop" id="mbackdrop" onclick="handleBackdrop(event)">
+      <div class="modal">
+        <div class="modal-top"><div class="modal-title" id="m-titulo">Avançar etapa</div><button class="mclose" onclick="fecharM()">✕</button></div>
+        <div class="modal-body">
+          <div id="marrow"></div>
+          <label>Observação <span style="color:#B8A880;font-size:9px;">(opcional)</span></label>
+          <textarea id="mobs" placeholder="Descreva o que foi feito..." maxlength="400" oninput="document.getElementById('mchars').textContent=this.value.length+'/400'"></textarea>
+          <div style="font-size:9px;color:var(--tm);text-align:right;margin-top:2px;" id="mchars">0/400</div>
+        </div>
+        <div class="modal-foot"><button class="btn-c" onclick="fecharM()">Cancelar</button><button class="btn-s" onclick="confirmAv()">Confirmar</button></div>
+      </div>
+    </div>
+
+    <!-- MODAL NOVO TREINAMENTO -->
+    <div class="modal-backdrop" id="mtrein" onclick="handleBackdropT(event)">
+      <div class="modal mt-modal">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="mt-modal-title">Novo Treinamento</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Categoria: <strong id="mt-cat-lbl" style="color:var(--gold);"></strong></div>
+          </div>
+          <button class="mclose" onclick="fecharMT()">✕</button>
+        </div>
+        <div class="mt-modal modal-body">
+          <div class="f-field">
+            <label>Título do treinamento *</label>
+            <input type="text" id="mt-titulo" placeholder="Ex: Técnicas de prospecção ativa" maxlength="60">
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Nº de aulas *</label><input type="number" id="mt-aulas" placeholder="Ex: 5" min="1" max="99"></div>
+            <div class="f-field"><label>Duração *</label><input type="text" id="mt-dur" placeholder="Ex: 2h30"></div>
+          </div>
+          <div class="f-field">
+            <label>Ícone do curso</label>
+            <div class="emoji-grid" id="emoji-grid"></div>
+          </div>
+          <div class="f-field">
+            <label>Progresso inicial</label>
+            <input type="range" id="mt-prog" min="0" max="100" value="0" oninput="atualizarProgT()">
+            <div class="range-preview">
+              <div class="rbar"><div class="rfill" id="rfill" style="width:0%"></div></div>
+              <span class="rlbl" id="rlbl">0%</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-foot"><button class="btn-c" onclick="fecharMT()">Cancelar</button><button class="btn-s" id="mt-save-btn" onclick="salvarTrein()">✓ Adicionar treinamento</button></div>
+      </div>
+    </div>
+
+    <div class="page hidden" id="mod-financeiro"><div class="carteira-wrap" id="financeiro-content"></div></div>
+    <div class="page hidden" id="mod-carteira"><div class="carteira-wrap" id="carteira-content"></div></div>
+
+    <div class="page" id="mod-vendas">
+      <div class="v-split">
+        <div class="v-list">
+          <div class="vl-h">
+            <div class="vl-ht">
+              Vendas <span class="zbg bg-a" id="vc">0</span>
+              <div id="btn-nova-venda-wrap"></div>
+            </div>
+            <div class="vl-tabs">
+              <button class="vtab active" onclick="setVTab('acomp',this)">Acompanhamento</button>
+              <button class="vtab" onclick="setVTab('rel',this)">Relatório</button>
+            </div>
+            <div class="vl-srch"><span class="vl-si">🔍</span><input type="text" id="vsearch" placeholder="Buscar cliente, produto..." oninput="renderVList()"></div>
+            <div id="v-adv-filters" style="padding:0 8px 8px;border-bottom:1px solid var(--bd);">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
+                <select id="vf-mes" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">📅 Mês</option>
+                </select>
+                <select id="vf-construtora" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">🏗️ Construtora</option>
+                </select>
+                <select id="vf-equipe" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">👥 Equipe</option>
+                </select>
+                <select id="vf-cca" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
+                  <option value="">🧑‍💼 CCA</option>
+                </select>
+                <select id="vf-origem" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;grid-column:span 2;">
+                  <option value="">📌 Origem</option>
+                  <option value="IndicaÃ§Ã£o">Indicação</option>
+                  <option value="MKT">MKT</option>
+                  <option value="Oferta Ativa">Oferta Ativa</option>
+                </select>
+              </div>
+              <div id="vf-active-tags" style="display:flex;flex-wrap:wrap;gap:3px;"></div>
+            </div>
+          </div>
+          <div class="vl-filters" id="vfilters"></div>
+          <div class="unid-filter hidden" id="unid-filter">
+            <button class="uf active-all" id="uf-all" onclick="setUnidade('all',this)">🏢 Todas</button>
+            <button class="uf" id="uf-centro" onclick="setUnidade('Centro',this)">🟠 Centro</button>
+            <button class="uf" id="uf-cristo" onclick="setUnidade('Cristo Rei',this)">🟢 Cristo Rei</button>
+          </div>
+          <div class="vl-body" id="vlista"></div>
+        </div>
+        <div class="v-detail">
+          <div id="vd-acomp" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+            <div class="vd-empty" id="vd-empty"><div style="font-size:28px;opacity:0.25;color:var(--gold);">◈</div><div style="font-size:13px;color:var(--tm);">Selecione uma venda</div></div>
+            <div class="vd-body hidden" id="vd-body"></div>
+          </div>
+          <div class="v-rel hidden" id="vd-rel">
+            <div class="rel-top">
+              <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:500;">Relatório mensal</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <div class="rel-tf" id="rel-filters"></div>
+                <div class="exp-grp">
+                  <button class="btn-exp xl" id="bxl" onclick="exportXLSX()">⬇ Excel</button>
+                  <button class="btn-exp pd" id="bpdf" onclick="exportPDF()">⬇ PDF</button>
+                </div>
+              </div>
+            </div>
+            <div class="mets" id="rel-mets"></div>
+            <div class="rtbl">
+              <div class="rth"><span>Vendas do período</span><span id="rel-n" style="color:var(--tm);font-weight:400;text-transform:none;letter-spacing:0;font-size:10px;"></span></div>
+              <div class="tscroll" style="max-height:300px;"><table><thead><tr id="rel-thead"></tr></thead><tbody id="rel-body"></tbody></table></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISUALIZADOR DE ANEXO -->
+    <div class="anexo-viewer" id="anexo-viewer">
+      <div class="anexo-viewer-top">
+        <div class="anexo-viewer-nome" id="av-nome"></div>
+        <button class="btn-fechar-viewer" onclick="fecharViewer()">✕ Fechar</button>
+      </div>
+      <div id="av-content"></div>
+    </div>
+
+    <!-- MODAL DISTRATO -->
+    <div class="modal-backdrop" id="m-distrato" onclick="if(event.target===this)fecharDistrato()">
+      <div class="modal" style="max-width:440px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" style="color:#C05030;">⚠️ Registrar Distrato</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="dt-subtitulo">Esta ação marca a venda como distratada</div>
+          </div>
+          <button class="mclose" onclick="fecharDistrato()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:8px;padding:12px;font-size:11px;color:#C05030;">
+            ⚠️ <strong>Atenção:</strong> O distrato remove a venda do pipeline ativo e zera as comissões. Esta ação ficará registrada no histórico.
+          </div>
+          <div class="f-field">
+            <label>Motivo do distrato *</label>
+            <textarea id="dt-motivo" placeholder="Descreva o motivo do distrato..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:80px;"></textarea>
+          </div>
+          <div class="f-field">
+            <label>Data do distrato</label>
+            <input type="date" id="dt-data">
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharDistrato()">Cancelar</button>
+          <button style="background:#C05030;color:#fff;border:none;border-radius:7px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;" onclick="confirmarDistrato()">⚠️ Confirmar distrato</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL EDITAR VENDA -->
+    <div class="modal-backdrop" id="m-edit-venda" onclick="if(event.target===this)fecharEditVenda()">
+      <div class="modal mv-modal" style="max-width:580px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title">✏️ Editar venda</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="ev-subtitulo">Alterações ficam registradas no histórico</div>
+          </div>
+          <button class="mclose" onclick="fecharEditVenda()">✕</button>
+        </div>
+        <div class="mv-modal modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <!-- Dados do cliente -->
+          <div class="mv-section">Dados do Cliente</div>
+          <div class="f-row">
+            <div class="f-field"><label>Nome do cliente</label><input type="text" id="ev-cliente" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+            <div class="f-field"><label>Data da venda</label><input type="date" id="ev-data"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Produto</label><input type="text" id="ev-produto"></div>
+            <div class="f-field"><label>Construtora</label><input type="text" id="ev-construtora"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Origem do lead</label>
+              <select id="ev-origem">
+                <option value="IndicaÃ§Ã£o">Indicação</option>
+                <option value="MKT">MKT</option>
+                <option value="Oferta Ativa">Oferta Ativa</option>
+              </select>
+            </div>
+            <div class="f-field"><label>Unidade</label>
+              <select id="ev-unidade">
+                <option value="Centro">🟠 Centro</option>
+                <option value="Cristo Rei">🟢 Cristo Rei</option>
+              </select>
+            </div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Valores -->
+          <div class="mv-section">Valores e Comissões</div>
+          <div class="f-row">
+            <div class="f-field"><label>Valor de venda (R$)</label><input type="number" id="ev-valor" min="0"></div>
+            <div class="f-field"><label>% Comissão total</label><input type="number" id="ev-pct" min="0" max="100" step="0.01"></div>
+          </div>
+          <div class="f-field"><label>Imposto (%)</label><input type="number" id="ev-imp" min="0" max="100" step="0.1"></div>
+          <div class="mv-section" style="margin-top:4px;">Distribuição por membro (%)</div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-pct-cor" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Capitão %</label><input type="number" id="ev-pct-cap" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-pct-ger" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-pct-dir" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Diretor 2 %</label><input type="number" id="ev-pct-dir2" min="0" step="0.01"></div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Bônus -->
+          <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional)</span></div>
+          <div class="f-field"><label>Valor do bônus (R$)</label><input type="number" id="ev-bonus" min="0" placeholder="0"></div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-bonus-dir" min="0" max="100" step="1" placeholder="0"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-bonus-ger" min="0" max="100" step="1" placeholder="0"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-bonus-cor" min="0" max="100" step="1" placeholder="0"></div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- CCA -->
+          <div class="f-field"><label>CCA Responsável</label><input type="text" id="ev-cca"></div>
+          <!-- Motivo -->
+          <div class="f-field">
+            <label>Motivo da alteração *</label>
+            <textarea id="ev-motivo" placeholder="Descreva o motivo da alteração para registro no histórico..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:70px;"></textarea>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharEditVenda()">Cancelar</button>
+          <button class="btn-s" onclick="salvarEditVenda()">✓ Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NOVA VENDA -->
+    <div class="modal-backdrop" id="mvenda" onclick="handleBackdropV(event)">
+      <div class="modal mv-modal">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="mv-title">Nova Venda</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Preencha os dados da venda *</div>
+          </div>
+          <button class="mclose" onclick="fecharMV()">✕</button>
+        </div>
+        <div class="mv-modal modal-body">
+          <!-- Dados do cliente -->
+          <div class="mv-section">Dados do Cliente</div>
+          <div class="f-row">
+            <div class="f-field"><label>Nome do cliente *</label><input type="text" id="mv-cliente" placeholder="NOME COMPLETO DO CLIENTE" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+            <div class="f-field"><label>Data da venda *</label><input type="date" id="mv-data"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Produto / Empreendimento *</label><input type="text" id="mv-produto" placeholder="Ex: Palm Coast, Kentucky..."></div>
+            <div class="f-field"><label>Construtora *</label><input type="text" id="mv-construtora" placeholder="Ex: LYX, Prestes..."></div>
+          </div>
+          <div class="f-field"><label>Origem do lead</label>
+            <select id="mv-origem">
+              <option value="IndicaÃ§Ã£o">Indicação</option>
+              <option value="MKT">MKT</option>
+              <option value="Oferta Ativa">Oferta Ativa</option>
+            </select>
+          </div>
+          <div class="f-field"><label>Unidade *</label>
+            <select id="mv-unidade">
+              <option value="">Selecione...</option>
+              <option value="Centro">🟠 Centro</option>
+              <option value="Cristo Rei">🟢 Cristo Rei</option>
+            </select>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Equipe -->
+          <div class="mv-section">Equipe Responsável</div>
+          <div class="f-row">
+            <div class="f-field"><label>Corretor *</label>
+              <select id="mv-corretor"><option value="">Selecione...</option></select>
+              <div id="mv-corretor-ext-wrap" style="display:none;margin-top:6px;">
+                <input type="text" id="mv-corretor-ext" placeholder="Nome completo do corretor externo..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+                <div style="font-size:9px;color:var(--tm);margin-top:3px;">⚠️ Corretor externo — sem acesso ao sistema</div>
+              </div>
+            </div>
+            <div class="f-field"><label>Capitão</label>
+              <select id="mv-capitao"><option value="">Nenhum</option></select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Gerente *</label>
+              <select id="mv-gerente"><option value="">Selecione...</option></select>
+            </div>
+            <div class="f-field"><label>Diretor *</label>
+              <select id="mv-diretor"><option value="">Selecione...</option></select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Diretor 2 <span style="font-size:9px;color:var(--tm);">(opcional)</span></label>
+              <select id="mv-diretor2"><option value="">Nenhum</option></select>
+            </div>
+            <div class="f-field" id="mv-dir2-pct-field" style="display:none;">
+              <label>Diretor 2 %</label>
+              <input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()">
+            </div>
+          </div>
+          <div class="f-field"><label>CCA Responsável *</label><input type="text" id="mv-cca" placeholder="Nome do CCA responsável"></div>
+          <div class="mv-divider"></div>
+          <!-- Valores -->
+          <div class="mv-section">Valores e Comissões</div>
+          <div class="f-row">
+            <div class="f-field"><label>Valor de venda (R$) *</label><input type="number" id="mv-valor" placeholder="Ex: 248000" min="0" oninput="calcularPrevV()"></div>
+            <div class="f-field"><label>% Comissão total *</label><input type="number" id="mv-pct" placeholder="Ex: 5" min="0" max="100" step="0.1" oninput="calcularPrevV()"></div>
+          </div>
+          <div class="f-field"><label>Imposto (%) — padrão 11%</label><input type="number" id="mv-imp" value="11" min="0" max="100" step="0.1" oninput="calcularPrevV()"></div>
+          <div class="mv-section" style="margin-top:8px;">Distribuição por membro (%)</div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-pct-cor" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Capitão %</label><input type="number" id="mv-pct-cap" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-pct-ger" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-pct-dir" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Diretor 2 %</label><input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+          </div>
+          <!-- Preview comissões -->
+          <div class="pct-preview" id="mv-preview" style="display:none;">
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Com. bruta</div><div class="pct-prev-val" id="pv-bruta">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Imposto</div><div class="pct-prev-val" style="color:#C06030;" id="pv-imp">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Corretor</div><div class="pct-prev-val" id="pv-cor">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Capitão</div><div class="pct-prev-val" id="pv-cap">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pv-ger">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pv-dir">—</div></div>
+            <div class="pct-prev-item" id="pv-dir2-wrap" style="display:none;"><div class="pct-prev-lbl">Diretor 2</div><div class="pct-prev-val" id="pv-dir2">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Zelony</div><div class="pct-prev-val" id="pv-zel">—</div></div>
+          </div>
+          <div class="mv-divider"></div>
+          <!-- Bônus -->
+          <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional)</span></div>
+          <div class="f-field">
+            <label>Valor do bônus (R$)</label>
+            <input type="number" id="mv-bonus" placeholder="Ex: 2000" min="0" oninput="calcularPrevBonus()">
+          </div>
+          <div class="mv-section" style="margin-top:8px;font-size:9px;">Distribuição do bônus (%)</div>
+          <div class="pct-row">
+            <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-bonus-dir" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-bonus-ger" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-bonus-cor" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+          </div>
+          <!-- Preview bônus -->
+          <div class="pct-preview" id="mv-bonus-preview" style="display:none;">
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Total bônus</div><div class="pct-prev-val" id="pb-total">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pb-dir">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pb-ger">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Corretor</div><div class="pct-prev-val" id="pb-cor">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl" id="pb-resto-lbl">Restante</div><div class="pct-prev-val" id="pb-resto" style="color:#C06030;">—</div></div>
+          </div>
+          <div class="mv-section">Documentos Obrigatórios</div>
+          <!-- Comprovante -->
+          <div class="doc-upload-box" id="dbox-comp" onclick="document.getElementById('mv-comp-input').click()">
+            <div id="dbox-comp-inner">
+              <div style="font-size:22px;margin-bottom:4px;">🧾</div>
+              <div style="font-size:12px;font-weight:600;color:var(--ts);">Comprovante de pagamento <span style="color:#C05030;">*</span></div>
+              <div style="font-size:10px;color:var(--tm);margin-top:3px;">Clique para selecionar · PDF, JPG, PNG</div>
+            </div>
+          </div>
+          <input type="file" id="mv-comp-input" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleDocUpload(this,'comp')">
+          <!-- Contrato -->
+          <div class="doc-upload-box" id="dbox-cont" onclick="document.getElementById('mv-cont-input').click()">
+            <div id="dbox-cont-inner">
+              <div style="font-size:22px;margin-bottom:4px;">📄</div>
+              <div style="font-size:12px;font-weight:600;color:var(--ts);">Contrato assinado <span style="color:#C05030;">*</span></div>
+              <div style="font-size:10px;color:var(--tm);margin-top:3px;">Clique para selecionar · PDF, JPG, PNG</div>
+            </div>
+          </div>
+          <input type="file" id="mv-cont-input" accept=".pdf,.jpg,.jpeg,.png,.webp" style="display:none;" onchange="handleDocUpload(this,'cont')">
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharMV()">Cancelar</button>
+          <button class="btn-s" id="mv-salvar-btn" onclick="salvarVenda()">✓ Cadastrar venda</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="page hidden" id="mod-trein">
+      <div class="trein-wrap">
+        <div class="trein-top">
+          <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">Treinamentos</div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div class="trein-cats" id="tcats"></div>
+            <div id="btn-add-wrap"></div>
+          </div>
+        </div>
+        <div class="mets" id="trein-stats"></div>
+        <div class="trein-grid" id="trein-grid"></div>
+      </div>
+    </div>
+
+    <div class="page hidden" id="mod-proc">
+      <div class="proc-wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+          <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">Processos Operacionais</div>
+          <span class="zbg bg-gr">7 processos</span>
+        </div>
+        <div class="proc-grid" id="proc-grid"></div>
+        <div class="proc-det hidden" id="proc-det"></div>
+      </div>
+    </div>
+
+    <!-- MODAL USUÁRIO -->
+    <div class="modal-backdrop" id="muser" onclick="handleBackdropU(event)">
+      <div class="modal mu-modal">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="mu-title">Novo Usuário</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Preencha todos os campos obrigatórios *</div>
+          </div>
+          <button class="mclose" onclick="fecharMU()">✕</button>
+        </div>
+        <div class="mu-modal modal-body">
+          <div class="mu-section">Dados Pessoais</div>
+          <div class="f-field"><label>Nome completo *</label><input type="text" id="mu-nome" placeholder="EX: JOÃO DA SILVA SANTOS" maxlength="80" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="f-row">
+            <div class="f-field"><label>E-mail *</label><input type="email" id="mu-email" placeholder="joao@zelony.com.br"></div>
+            <div class="f-field"><label>Telefone / WhatsApp *</label><input type="tel" id="mu-tel" placeholder="(41) 99999-9999" maxlength="20"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field">
+              <label>Perfil de acesso *</label>
+              <select id="mu-perfil" onchange="toggleRHField()">
+                <option value="">Selecione...</option>
+                <option value="Dono">Dono</option>
+                <option value="Corretor">Corretor</option>
+                <option value="CapitÃ£o">Capitão</option>
+                <option value="Gerente">Gerente</option>
+                <option value="Diretor">Diretor</option>
+                <option value="Financeiro">Financeiro</option>
+                <option value="RH">RH</option>
+              </select>
+            </div>
+            <div class="f-field">
+              <label>Status</label>
+              <select id="mu-status">
+                <option value="Ativo">Ativo</option>
+                <option value="Inativo">Inativo</option>
+              </select>
+            </div>
+          </div>
+          <div class="f-field">
+            <label>Unidade *</label>
+            <select id="mu-unidade">
+              <option value="">Selecione...</option>
+              <option value="Centro">🟠 Centro</option>
+              <option value="Cristo Rei">🟢 Cristo Rei</option>
+              <option value="Ambas">⚡ Ambas as unidades</option>
+            </select>
+          </div>
+          <div class="f-field">
+            <label>Equipe</label>
+            <input type="text" id="mu-equipe" placeholder="Ex: Equipe Fênix, Equipe Alpha...">
+          </div>
+          <!-- Campo RH — aparece só quando perfil = Corretor -->
+          <div id="rh-field" style="display:none;">
+            <div class="rh-toggle-wrap">
+              <div>
+                <div class="rh-toggle-label">Contratação realizada pelo RH?</div>
+                <div class="rh-toggle-sub">Se sim, 0,1% de comissão será destinado ao RH em cada venda deste corretor</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="mu-rh">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="mu-divider"></div>
+          <div class="mu-section">Dados Bancários</div>
+          <div class="f-row">
+            <div class="f-field"><label>Banco *</label><input type="text" id="mu-banco" placeholder="Ex: Nubank, Itaú, Bradesco" maxlength="40"></div>
+            <div class="f-field"><label>Agência</label><input type="text" id="mu-agencia" placeholder="Ex: 0001" maxlength="10"></div>
+          </div>
+          <div class="f-row">
+            <div class="f-field"><label>Conta *</label><input type="text" id="mu-conta" placeholder="Ex: 12345-6" maxlength="20"></div>
+            <div class="f-field">
+              <label>Tipo de conta *</label>
+              <select id="mu-tipo-conta">
+                <option value="">Selecione...</option>
+                <option value="Corrente">Corrente</option>
+                <option value="PoupanÃ§a">Poupança</option>
+                <option value="Pagamento">Pagamento</option>
+              </select>
+            </div>
+          </div>
+          <div class="mu-divider"></div>
+          <div class="mu-section">Chave Pix</div>
+          <div class="f-field">
+            <label>Tipo de chave *</label>
+            <div class="pix-types" id="pix-types">
+              <div class="pix-type" onclick="selPix('CPF',this)">CPF</div>
+              <div class="pix-type" onclick="selPix('CNPJ',this)">CNPJ</div>
+              <div class="pix-type" onclick="selPix('E-mail',this)">E-mail</div>
+              <div class="pix-type" onclick="selPix('Telefone',this)">Telefone</div>
+              <div class="pix-type" onclick="selPix('AleatÃ³ria',this)">Chave Aleatória</div>
+            </div>
+          </div>
+          <div class="f-field"><label>Chave Pix *</label><input type="text" id="mu-pix" placeholder="Digite a chave pix..." maxlength="80"></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharMU()">Cancelar</button>
+          <button class="btn-s" id="mu-save-btn" onclick="salvarUsuario()">✓ Cadastrar usuário</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÓDULO USUÁRIOS -->
+    <div class="page hidden" id="mod-usuarios">
+      <div id="usuarios-content" style="flex:1;display:flex;overflow:hidden;"></div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+</div><!-- /main-app -->
+
+<div class="notif-panel hidden" id="npanel">
+  <div class="notif-top">Notificações <span style="font-size:9px;color:var(--tm);cursor:pointer;" onclick="toggleNotif()">✕</span></div>
+  <div id="nlist"></div>
+</div>
+
+
+<!-- â”€â”€â”€ CDNs EXTERNOS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- EmailJS jÃ¡ carregado acima pelo bloco original do splash -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.6.0/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- â”€â”€â”€ MÃ“DULOS JS â€” ORDEM IMPORTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<!-- 1. UtilitÃ¡rios base (sem dependÃªncias) -->
+<script src="js/utils.js"></script>
+<!-- 2. Supabase: conexÃ£o, dados globais, mappers, CRUD, retry -->
+<script src="js/supabase.js"></script>
+<!-- 3. Auth: login, sessÃ£o, topbar, navegaÃ§Ã£o â€” depende de supabase + utils -->
+<script src="js/auth.js"></script>
+<!-- 4. Vendas: etapas, comissÃµes, filtros, nova venda, distrato â€” depende de auth -->
+<script src="js/vendas.js"></script>
+<!-- 5. Carteira: saldo por perfil â€” depende de vendas -->
+<script src="js/carteira.js"></script>
+<!-- 6. Financeiro: calendÃ¡rio de previsÃµes â€” depende de vendas -->
+<script src="js/financeiro.js"></script>
+<!-- 7. Treinamentos + Processos Operacionais -->
+<script src="js/treinamentos.js"></script>
+<!-- 8. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
+<script src="js/usuarios.js"></script>
+<!-- 9. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
+<script src="js/app.js"></script>
+
+<!-- â”€â”€â”€ INICIALIZAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+<script>
+  // Inicializa EmailJS
+  emailjs.init('GEXIho24PuM7N3RTZ');
+
+  // Carrega dados do Supabase com retry e restaura sessÃ£o
+  carregarComRetry();
+</script>
+</body>
+</html>
