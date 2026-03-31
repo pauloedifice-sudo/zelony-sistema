@@ -36,16 +36,16 @@ zSetState('state.ui.editTreinIdx', editIdx);
 function renderTrein(){
   if(['cor','cap','ger'].includes(role)){
     document.getElementById('mod-trein').innerHTML = `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;">
-      <div style="font-size:48px;">${zUiText('ðŸš€')}</div>
+      <div style="font-size:48px;">${zUiText('🚀')}</div>
       <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--gold);">${zUiText('Em Breve')}</div>
       <div style="font-size:12px;color:var(--tm);text-align:center;max-width:280px;line-height:1.6;">${zUiText('O mÃ³dulo de Treinamentos estÃ¡ sendo preparado com conteÃºdo exclusivo para a sua equipe.')}</div>
-      <div style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:8px 20px;font-size:11px;color:var(--gold);font-weight:600;">${zUiText('ðŸ”” Em desenvolvimento')}</div>
+      <div style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:8px 20px;font-size:11px;color:var(--gold);font-weight:600;">${zUiText('🔔 Em desenvolvimento')}</div>
     </div>`;
     return;
   }
 
   const cats = ['Corretor','CapitÃ£o','Gerente'];
-  document.getElementById('tcats').innerHTML = cats.map(c => `<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}',this)">${zUiText(CAT_ICON[c]||'â­')} ${zUiText(c)}</button>`).join('');
+  document.getElementById('tcats').innerHTML = cats.map(c => `<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}',this)">${zUiText(CAT_ICON[c]||'⭐')} ${zUiText(c)}</button>`).join('');
 
   const isDiretor = role === 'dir';
   document.getElementById('btn-add-wrap').innerHTML = isDiretor
@@ -63,7 +63,7 @@ function renderTrein(){
     ? l.map(t => {
         const idx = TREIN.indexOf(t);
         const editBtn = isDiretor ? `<div class="tcard-edit" onclick="editarTrein(${idx})" title="${zUiText('Editar treinamento')}">${zUiText('✏️')}</div>` : '';
-        return `<div class="tcard"><div class="tcard-th" style="background:${t.bg};">${editBtn}${zUiText(t.thumb)}</div><div class="tcard-b"><div><span class="zbg ${CAT_BADGE[t.cat]||'bg-gr'}" style="margin-bottom:4px;display:inline-block;">${zUiText(t.cat)}</span></div><div class="tcard-t">${zUiText(t.titulo)}</div><div class="tcard-m">${t.aulas} ${zUiText('aulas')} ${zUiText('Â·')} ${zUiText(t.dur)}</div><div class="pb"><div class="pf ${t.prog===100?'done':''}" style="width:${t.prog}%"></div></div><div class="pl" style="color:${t.prog===100?'#2E9E6E':'var(--tm)'}">${t.prog===100?zUiText('âœ“ ConcluÃ­do'):t.prog>0?`${t.prog}% ${zUiText('em andamento')}`:zUiText('NÃ£o iniciado')}</div></div></div>`;
+        return `<div class="tcard"><div class="tcard-th" style="background:${t.bg};">${editBtn}${zUiText(t.thumb)}</div><div class="tcard-b"><div><span class="zbg ${CAT_BADGE[t.cat]||'bg-gr'}" style="margin-bottom:4px;display:inline-block;">${zUiText(t.cat)}</span></div><div class="tcard-t">${zUiText(t.titulo)}</div><div class="tcard-m">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div><div class="pb"><div class="pf ${t.prog===100?'done':''}" style="width:${t.prog}%"></div></div><div class="pl" style="color:${t.prog===100?'#2E9E6E':'var(--tm)'}">${t.prog===100?zUiText('✓ Concluído'):t.prog>0?`${t.prog}% ${zUiText('em andamento')}`:zUiText('Não iniciado')}</div></div></div>`;
       }).join('')
     : `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--tm);"><div style="font-size:28px;margin-bottom:8px;">${zUiText('📭')}</div><div style="font-size:13px;">${zUiText(`Nenhum treinamento ainda.${isDiretor?' Clique em "Novo treinamento" para adicionar.':''}`)}</div></div>`;
 }
@@ -77,7 +77,7 @@ function setTcat(c,el){
 }
 
 function abrirModalTrein(){
-  if(role!=='dir'){ showToast(zUiText('ðŸ”’'), zUiText('Apenas o Diretor pode adicionar treinamentos.')); return; }
+  if(role!=='dir'){ showToast(zUiText('🔒'), zUiText('Apenas o Diretor pode adicionar treinamentos.')); return; }
   editIdx = -1;
   document.getElementById('mt-titulo').value = '';
   document.getElementById('mt-aulas').value = '';
@@ -94,7 +94,7 @@ function abrirModalTrein(){
 }
 
 function editarTrein(idx){
-  if(role!=='dir'){ showToast(zUiText('ðŸ”’'), zUiText('Apenas o Diretor pode editar treinamentos.')); return; }
+  if(role!=='dir'){ showToast(zUiText('🔒'), zUiText('Apenas o Diretor pode editar treinamentos.')); return; }
   const t = TREIN[idx];
   editIdx = idx;
   document.getElementById('mt-titulo').value = t.titulo;
@@ -139,15 +139,15 @@ function salvarTrein(){
   const aulas = parseInt(document.getElementById('mt-aulas').value);
   const dur = document.getElementById('mt-dur').value.trim();
   const prog = parseInt(document.getElementById('mt-prog').value);
-  if(!titulo){ document.getElementById('mt-titulo').focus(); showToast(zUiText('âš ï¸'), zUiText('Informe o tÃ­tulo do treinamento.')); return; }
-  if(!aulas||aulas<1){ document.getElementById('mt-aulas').focus(); showToast(zUiText('âš ï¸'), zUiText('Informe o nÃºmero de aulas.')); return; }
-  if(!dur){ document.getElementById('mt-dur').focus(); showToast(zUiText('âš ï¸'), zUiText('Informe a duraÃ§Ã£o.')); return; }
+  if(!titulo){ document.getElementById('mt-titulo').focus(); showToast(zUiText('⚠️'), zUiText('Informe o título do treinamento.')); return; }
+  if(!aulas||aulas<1){ document.getElementById('mt-aulas').focus(); showToast(zUiText('⚠️'), zUiText('Informe o número de aulas.')); return; }
+  if(!dur){ document.getElementById('mt-dur').focus(); showToast(zUiText('⚠️'), zUiText('Informe a duração.')); return; }
   if(editIdx>=0){
     TREIN[editIdx] = { ...TREIN[editIdx], titulo, aulas, dur, thumb:emojiSel, prog };
     fecharMT(); renderTrein();
     dbSalvarTrein(TREIN[editIdx],editIdx).catch(e=>console.error(e));
     salvarLS();
-    showToast(zUiText('âœ…'), zUiText(`"${titulo}" atualizado com sucesso!`));
+    showToast(zUiText('✅'), zUiText(`"${titulo}" atualizado com sucesso!`));
   } else {
     const novo = { titulo, cat:tcatAtivo, aulas, dur, thumb:emojiSel, bg:CAT_BG_T[tcatAtivo], prog };
     TREIN.push(novo);
@@ -155,7 +155,7 @@ function salvarTrein(){
     fecharMT(); renderTrein();
     dbSalvarTrein(novo,-1).catch(e=>console.error(e));
     salvarLS();
-    showToast(zUiText('âœ…'), zUiText(`"${titulo}" adicionado com sucesso!`));
+    showToast(zUiText('✅'), zUiText(`"${titulo}" adicionado com sucesso!`));
   }
 }
 

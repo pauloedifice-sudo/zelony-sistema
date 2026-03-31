@@ -228,16 +228,22 @@ async function carregarAnexosVenda(id){
 async function dbSalvarUsuario(u, id){
   const dados=mapUsuarioOut(u);
   if(id){
-    await sb.from('usuarios').update(dados).eq('id',id);
+    const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
+    if(error) throw error;
+    if(data&&data.id) u.id=data.id;
   } else {
-    const {data}=await sb.from('usuarios').insert(dados).select().single();
+    const {data,error}=await sb.from('usuarios').insert(dados).select().single();
+    if(error) throw error;
+    if(!data) throw new Error('Usuário não retornado pelo banco.');
     if(data) u.id=data.id;
   }
   zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
+  return u;
 }
 
 async function dbExcluirUsuario(email){
-  await sb.from('usuarios').delete().eq('email',email);
+  const {error}=await sb.from('usuarios').delete().eq('email',email);
+  if(error) throw error;
   zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
 }
 

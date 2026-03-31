@@ -22,9 +22,11 @@ const EJS_SERVICE  = 'service_wirqv1v';
 const EJS_TEMPLATE = 'template_ylfp3ad';
 const EJS_PUBKEY   = 'GEXIho24PuM7N3RTZ';
 const CONVITES_PENDENTES = {};
+const EXCLUSOES_PENDENTES = {};
 let conviteAtivo = null;
 let pixSelCV = '';
 zSetState('state.ui.convitesPendentes', CONVITES_PENDENTES);
+zSetState('state.ui.exclusoesPendentesUsuarios', EXCLUSOES_PENDENTES);
 zSetState('state.ui.conviteAtivo', conviteAtivo);
 zSetState('state.ui.pixSelCV', pixSelCV);
 
@@ -49,24 +51,24 @@ function lerConviteURL() {
 
 function _buildUserCard(u, idx) {
   const avatarColor = u.perfil==='Dono'?'#1A1A1A':u.perfil==='Diretor'?'var(--gold)':u.perfil==='Gerente'?'#2E7E5E':u.perfil==='CapitÃƒÂ£o'?'#6040A8':u.perfil==='Financeiro'?'#C05030':u.perfil==='RH'?'#1A56C4':'#3060B8';
-  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}" style="margin-top:4px;display:inline-flex;">${zUiText('ðŸ“')} ${zUiText(u.unidade)}</span>` : '';
-  const equipeBadge = u.equipe ? `<span style="font-size:9px;background:var(--bg3);color:var(--ts);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;margin-top:3px;display:inline-block;">${zUiText('ðŸ‘¥')} ${zUiText(u.equipe)}</span>` : '';
+  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}" style="margin-top:4px;display:inline-flex;">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
+  const equipeBadge = u.equipe ? `<span style="font-size:9px;background:var(--bg3);color:var(--ts);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;margin-top:3px;display:inline-block;">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
   return `<div class="user-card">
     <div class="user-card-top">
       <div class="user-av" style="background:${avatarColor};">${iniUser(u.nome)}</div>
       <div style="flex:1;min-width:0;">
         <div class="user-name">${zUiText(u.nome)}</div>
         <div style="display:flex;flex-direction:column;gap:3px;">
-          <span class="user-role-tag ${PERFIL_TAG[u.perfil]||'tag-cor'}">${zUiText(PERFIL_ICON[u.perfil]||'ðŸ‘¤')} ${zUiText(u.perfil)}</span>
+          <span class="user-role-tag ${PERFIL_TAG[u.perfil]||'tag-cor'}">${zUiText(PERFIL_ICON[u.perfil]||'👤')} ${zUiText(u.perfil)}</span>
           ${unidBadge}${equipeBadge}
         </div>
       </div>
     </div>
     <div class="user-card-body">
       <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 5l6 5 6-5"/></svg><span>${zUiText(u.email)}</span></div>
-      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${zUiText(u.tel||'â€”')}</span></div>
-      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${u.banco?`${zUiText(u.banco)} ${zUiText('Â·')} ${zUiText(u.tipoConta||'')}`:zUiText('â€”')}</span></div>
-      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5h4.5a2.5 2.5 0 010 5H5m0-5V2m0 8v4"/></svg><span>${u.pixTipo?`${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`:zUiText('â€”')}</span></div>
+      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${zUiText(u.tel||'—')}</span></div>
+      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${u.banco?`${zUiText(u.banco)} ${zUiText('·')} ${zUiText(u.tipoConta||'')}`:zUiText('—')}</span></div>
+      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5h4.5a2.5 2.5 0 010 5H5m0-5V2m0 8v4"/></svg><span>${u.pixTipo?`${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`:zUiText('—')}</span></div>
     </div>
     <div class="user-card-foot">
       <div class="user-status">
@@ -74,8 +76,8 @@ function _buildUserCard(u, idx) {
         <span style="color:${u.status==='Ativo'?'#2E9E6E':u.status==='Pendente'?'#C08020':'#C05030'}">${zUiText(u.status)}</span>
       </div>
       <div class="user-actions">
-        <button class="btn-user-edit" onclick="editarUsuario(${idx})">${zUiText('âœï¸ Editar')}</button>
-        <button class="btn-user-del"  onclick="excluirUsuario(${idx})">${zUiText('ðŸ—‘ Excluir')}</button>
+        <button class="btn-user-edit" onclick="editarUsuario(${idx})">${zUiText('✏️ Editar')}</button>
+        <button class="btn-user-del"  onclick="excluirUsuario(${idx})">${zUiText('🗑 Excluir')}</button>
       </div>
     </div>
   </div>`;
@@ -85,7 +87,7 @@ function renderUsuarios() {
   const isAdmin = ['dir','dono','fin','rh'].includes(role);
   const cont = document.getElementById('usuarios-content');
   if (!isAdmin) {
-    cont.innerHTML = `<div class="usuarios-locked"><div class="locked-icon">${zUiText('ðŸ”’')}</div><div class="locked-title">${zUiText('Acesso restrito')}</div><div class="locked-sub">${zUiText('Apenas o')} <strong>${zUiText('Diretor')}</strong> ${zUiText('tem acesso ao mÃ³dulo de usuÃ¡rios para proteger os dados pessoais e bancÃ¡rios da equipe.')}</div></div>`;
+    cont.innerHTML = `<div class="usuarios-locked"><div class="locked-icon">${zUiText('🔒')}</div><div class="locked-title">${zUiText('Acesso restrito')}</div><div class="locked-sub">${zUiText('Apenas o')} <strong>${zUiText('Diretor')}</strong> ${zUiText('tem acesso ao módulo de usuários para proteger os dados pessoais e bancários da equipe.')}</div></div>`;
     return;
   }
   const equipes = [...new Set(USUARIOS.map(u => u.equipe||'').filter(Boolean))].sort();
@@ -110,24 +112,24 @@ function renderUsuarios() {
     </div>
     <div class="u-search-bar">
       <div class="u-search-wrap">
-        <span class="u-search-icon">${zUiText('ðŸ”')}</span>
+        <span class="u-search-icon">${zUiText('🔍')}</span>
         <input type="text" id="user-search-input" placeholder="${zUiText('Buscar por nome, e-mail ou equipe...')}"
           value="${zUiText(uBusca)}" oninput="uBusca=this.value;filtrarUsuarios()">
       </div>
       <select class="u-filter-sel" onchange="uFiltroPerfil=this.value;renderUsuarios()">
         <option value="">${zUiText('Todos os perfis')}</option>
-        <option value="Dono"       ${uFiltroPerfil==='Dono'?'selected':''}>${zUiText('ðŸ‘‘ Dono')}</option>
-        <option value="Diretor"    ${uFiltroPerfil==='Diretor'?'selected':''}>${zUiText('ðŸ’¼ Diretor')}</option>
-        <option value="Gerente"    ${uFiltroPerfil==='Gerente'?'selected':''}>${zUiText('ðŸ† Gerente')}</option>
-        <option value="CapitÃƒÂ£o"    ${uFiltroPerfil==='CapitÃƒÂ£o'?'selected':''}>${zUiText('â­ CapitÃ£o')}</option>
-        <option value="Corretor"   ${uFiltroPerfil==='Corretor'?'selected':''}>${zUiText('ðŸ‘¤ Corretor')}</option>
-        <option value="Financeiro" ${uFiltroPerfil==='Financeiro'?'selected':''}>${zUiText('ðŸ’° Financeiro')}</option>
-        <option value="RH"         ${uFiltroPerfil==='RH'?'selected':''}>${zUiText('ðŸ¤ RH')}</option>
+        <option value="Dono"       ${uFiltroPerfil==='Dono'?'selected':''}>${zUiText('👑 Dono')}</option>
+        <option value="Diretor"    ${uFiltroPerfil==='Diretor'?'selected':''}>${zUiText('💼 Diretor')}</option>
+        <option value="Gerente"    ${uFiltroPerfil==='Gerente'?'selected':''}>${zUiText('🏆 Gerente')}</option>
+        <option value="CapitÃƒÂ£o"    ${uFiltroPerfil==='CapitÃƒÂ£o'?'selected':''}>${zUiText('⭐ Capitão')}</option>
+        <option value="Corretor"   ${uFiltroPerfil==='Corretor'?'selected':''}>${zUiText('👤 Corretor')}</option>
+        <option value="Financeiro" ${uFiltroPerfil==='Financeiro'?'selected':''}>${zUiText('💰 Financeiro')}</option>
+        <option value="RH"         ${uFiltroPerfil==='RH'?'selected':''}>${zUiText('🤝 RH')}</option>
       </select>
       <select class="u-filter-sel" onchange="uFiltroUnidade=this.value;renderUsuarios()">
         <option value="">${zUiText('Todas as unidades')}</option>
-        <option value="Centro"    ${uFiltroUnidade==='Centro'?'selected':''}>${zUiText('ðŸŸ  Centro')}</option>
-        <option value="Cristo Rei"${uFiltroUnidade==='Cristo Rei'?'selected':''}>${zUiText('ðŸŸ¢ Cristo Rei')}</option>
+        <option value="Centro"    ${uFiltroUnidade==='Centro'?'selected':''}>${zUiText('🟠 Centro')}</option>
+        <option value="Cristo Rei"${uFiltroUnidade==='Cristo Rei'?'selected':''}>${zUiText('🟢 Cristo Rei')}</option>
       </select>
       ${equipes.length ? `<select class="u-filter-sel" onchange="uFiltroEquipe=this.value;renderUsuarios()">
         <option value="">${zUiText('Todas as equipes')}</option>
@@ -136,7 +138,7 @@ function renderUsuarios() {
       <span class="u-count">${lista.length} ${zUiText('de')} ${total} ${zUiText(`usuÃ¡rio${total!==1?'s':''}`)}</span>
       ${(uBusca||uFiltroUnidade||uFiltroEquipe||uFiltroPerfil) ?
         `<button onclick="uBusca='';uFiltroUnidade='';uFiltroEquipe='';uFiltroPerfil='';renderUsuarios();"
-          style="font-size:10px;background:none;border:1px solid var(--bd);border-radius:5px;padding:4px 8px;cursor:pointer;color:var(--tm);font-family:'Inter',sans-serif;">${zUiText('âœ• Limpar')}</button>` : ''}
+          style="font-size:10px;background:none;border:1px solid var(--bd);border-radius:5px;padding:4px 8px;cursor:pointer;color:var(--tm);font-family:'Inter',sans-serif;">${zUiText('✕ Limpar')}</button>` : ''}
     </div>
     <div class="usuarios-stats">
       <div class="mc a"><div class="mc-l">${zUiText('Total cadastrados')}</div><div class="mc-v" style="color:var(--gold);">${total}</div></div>
@@ -145,7 +147,7 @@ function renderUsuarios() {
       <div class="mc"><div class="mc-l">${zUiText('Mostrando')}</div><div class="mc-v" id="u-mostrando">${lista.length}</div></div>
     </div>
     <div class="user-grid" id="u-cards-grid">
-      ${cards || `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--tm);"><div style="font-size:28px;margin-bottom:8px;">${zUiText('ðŸ”')}</div><div style="font-size:13px;">${zUiText('Nenhum usuÃ¡rio encontrado.')}</div></div>`}
+      ${cards || `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--tm);"><div style="font-size:28px;margin-bottom:8px;">${zUiText('🔍')}</div><div style="font-size:13px;">${zUiText('Nenhum usuário encontrado.')}</div></div>`}
     </div>
   </div>`;
 }
@@ -182,7 +184,7 @@ function abrirModalUser() {
   zSetState('state.ui.editUserIdx', editUserIdx);
   zSetState('state.ui.pixSel', pixSel);
   document.getElementById('mu-title').textContent    = zUiText('Novo UsuÃ¡rio');
-  document.getElementById('mu-save-btn').textContent = zUiText('âœ“ Cadastrar usuÃ¡rio');
+  document.getElementById('mu-save-btn').textContent = zUiText('✓ Cadastrar usuário');
   ['mu-nome','mu-email','mu-tel','mu-banco','mu-agencia','mu-conta','mu-pix'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -202,7 +204,7 @@ function editarUsuario(idx) {
   const u = USUARIOS[idx]; editUserIdx = idx;
   zSetState('state.ui.editUserIdx', editUserIdx);
   document.getElementById('mu-title').textContent    = zUiText('Editar UsuÃ¡rio');
-  document.getElementById('mu-save-btn').textContent = zUiText('âœ“ Salvar alteraÃ§Ãµes');
+  document.getElementById('mu-save-btn').textContent = zUiText('✓ Salvar alterações');
   document.getElementById('mu-nome').value       = u.nome;
   document.getElementById('mu-email').value      = u.email;
   document.getElementById('mu-tel').value        = u.tel||'';
@@ -224,14 +226,31 @@ function editarUsuario(idx) {
   document.getElementById('muser').classList.add('show');
 }
 
-function excluirUsuario(idx) {
+async function excluirUsuario(idx) {
   const u = USUARIOS[idx];
+  const emailKey = (u.email || '').toLowerCase();
   if (!confirm(zUiText(`Excluir o usuÃ¡rio "${u.nome}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`))) return;
-  dbExcluirUsuario(u.email).catch(e => console.error(e));
+  if (EXCLUSOES_PENDENTES[emailKey]) {
+    showToast(zUiText('⚠️'), zUiText('A exclusão deste usuário ainda está em processamento.'));
+    return;
+  }
+  EXCLUSOES_PENDENTES[emailKey] = true;
+  zSetState('state.ui.exclusoesPendentesUsuarios', EXCLUSOES_PENDENTES);
+  try {
+    await dbExcluirUsuario(u.email);
+  } catch (e) {
+    console.error(e);
+    delete EXCLUSOES_PENDENTES[emailKey];
+    zSetState('state.ui.exclusoesPendentesUsuarios', EXCLUSOES_PENDENTES);
+    showToast(zUiText('❌'), zUiText('Não foi possível concluir a exclusão. Aguarde e tente novamente.'));
+    return;
+  }
   USUARIOS.splice(idx, 1);
   zSetState('state.data.usuarios', USUARIOS);
+  delete EXCLUSOES_PENDENTES[emailKey];
+  zSetState('state.ui.exclusoesPendentesUsuarios', EXCLUSOES_PENDENTES);
   salvarLS(); renderUsuarios();
-  showToast(zUiText('ðŸ—‘'), zUiText('UsuÃ¡rio excluÃ­do.'));
+  showToast(zUiText('🗑'), zUiText('Usuário excluído.'));
 }
 
 function selPix(tipo, el) {
@@ -262,28 +281,28 @@ function salvarUsuario() {
   const unidade   = document.getElementById('mu-unidade').value;
   const equipe    = document.getElementById('mu-equipe').value.trim();
 
-  if (!nome)                 { document.getElementById('mu-nome').focus();  showToast(zUiText('âš ï¸'),zUiText('Informe o nome completo.')); return; }
-  if (!email||!email.includes('@')) { document.getElementById('mu-email').focus(); showToast(zUiText('âš ï¸'),zUiText('Informe um e-mail vÃ¡lido.')); return; }
-  if (!tel)                  { document.getElementById('mu-tel').focus();   showToast(zUiText('âš ï¸'),zUiText('Informe o telefone.')); return; }
-  if (!perfil)               { showToast(zUiText('âš ï¸'),zUiText('Selecione o perfil de acesso.')); return; }
-  if (!unidade)              { showToast(zUiText('âš ï¸'),zUiText('Selecione a unidade.')); return; }
-  if (!banco)                { document.getElementById('mu-banco').focus(); showToast(zUiText('âš ï¸'),zUiText('Informe o banco.')); return; }
-  if (!conta)                { document.getElementById('mu-conta').focus(); showToast(zUiText('âš ï¸'),zUiText('Informe a conta bancÃ¡ria.')); return; }
-  if (!tipoConta)            { showToast(zUiText('âš ï¸'),zUiText('Selecione o tipo de conta.')); return; }
-  if (!pixSel)               { showToast(zUiText('âš ï¸'),zUiText('Selecione o tipo de chave Pix.')); return; }
-  if (!pix)                  { document.getElementById('mu-pix').focus();   showToast(zUiText('âš ï¸'),zUiText('Informe a chave Pix.')); return; }
+  if (!nome)                 { document.getElementById('mu-nome').focus();  showToast(zUiText('⚠️'),zUiText('Informe o nome completo.')); return; }
+  if (!email||!email.includes('@')) { document.getElementById('mu-email').focus(); showToast(zUiText('⚠️'),zUiText('Informe um e-mail válido.')); return; }
+  if (!tel)                  { document.getElementById('mu-tel').focus();   showToast(zUiText('⚠️'),zUiText('Informe o telefone.')); return; }
+  if (!perfil)               { showToast(zUiText('⚠️'),zUiText('Selecione o perfil de acesso.')); return; }
+  if (!unidade)              { showToast(zUiText('⚠️'),zUiText('Selecione a unidade.')); return; }
+  if (!banco)                { document.getElementById('mu-banco').focus(); showToast(zUiText('⚠️'),zUiText('Informe o banco.')); return; }
+  if (!conta)                { document.getElementById('mu-conta').focus(); showToast(zUiText('⚠️'),zUiText('Informe a conta bancária.')); return; }
+  if (!tipoConta)            { showToast(zUiText('⚠️'),zUiText('Selecione o tipo de conta.')); return; }
+  if (!pixSel)               { showToast(zUiText('⚠️'),zUiText('Selecione o tipo de chave Pix.')); return; }
+  if (!pix)                  { document.getElementById('mu-pix').focus();   showToast(zUiText('⚠️'),zUiText('Informe a chave Pix.')); return; }
 
   const dados = { nome, email, tel, perfil, status, banco, agencia, conta, tipoConta, pixTipo:pixSel, pix, rhContratacao:rhContr, unidade, equipe };
   if (editUserIdx >= 0) {
     const uid = USUARIOS[editUserIdx].id;
     USUARIOS[editUserIdx] = { ...USUARIOS[editUserIdx], ...dados };
-    showToast(zUiText('âœ…'), zUiText(`UsuÃ¡rio "${nome}" atualizado!`));
+    showToast(zUiText('✅'), zUiText(`Usuário "${nome}" atualizado!`));
     dbSalvarUsuario(USUARIOS[editUserIdx], uid).catch(e => console.error(e));
   } else {
     const novoU = { id: nextUserId++, ...dados };
     USUARIOS.push(novoU);
     zSetState('state.ui.nextUserId', nextUserId);
-    showToast(zUiText('âœ…'), zUiText(`UsuÃ¡rio "${nome}" cadastrado!`));
+    showToast(zUiText('✅'), zUiText(`Usuário "${nome}" cadastrado!`));
     dbSalvarUsuario(novoU, null).catch(e => console.error(e));
   }
   zSetState('state.data.usuarios', USUARIOS);
@@ -324,8 +343,8 @@ function handleBackdropTS(e) { if (e.target === document.getElementById('m-troca
 function toggleSenhaField(inputId, btnId) {
   const inp = document.getElementById(inputId);
   const btn = document.getElementById(btnId);
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = zUiText('ðŸ™ˆ'); }
-  else { inp.type = 'password'; btn.textContent = zUiText('ðŸ‘'); }
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = zUiText('🙈'); }
+  else { inp.type = 'password'; btn.textContent = zUiText('👁'); }
 }
 
 function salvarNovaSenha() {
@@ -355,7 +374,7 @@ function salvarNovaSenha() {
   dbSalvarSenha(emailAlvo, nova).catch(e => console.error(e));
   salvarLS();
   fecharTS();
-  showToast(zUiText('âœ…'), zUiText('Senha alterada com sucesso!'));
+  showToast(zUiText('✅'), zUiText('Senha alterada com sucesso!'));
 
   if (usuarioLogado && usuarioLogado.email.toLowerCase() === emailAlvo) {
     setTimeout(() => {
@@ -383,7 +402,7 @@ function abrirConvite() {
   const invError = document.getElementById('inv-error');
   if (invError) invError.style.display = 'none';
   const invBtn = document.getElementById('inv-btn');
-  if (invBtn) { invBtn.textContent = zUiText('âœ‰ï¸ Enviar convite'); invBtn.disabled = false; }
+  if (invBtn) { invBtn.textContent = zUiText('✉️ Enviar convite'); invBtn.disabled = false; }
   document.getElementById('m-convite').classList.add('show');
   setTimeout(() => { const el = document.getElementById('inv-nome'); if (el) el.focus(); }, 100);
 }
@@ -411,6 +430,7 @@ function enviarConvite() {
 
   if (!nome)                      { document.getElementById('inv-nome').focus();  erro('Informe o nome.'); return; }
   if (!email || !email.includes('@')) { document.getElementById('inv-email').focus(); erro('Informe um e-mail vÃ¡lido.'); return; }
+  if (EXCLUSOES_PENDENTES[email]) { erro('A exclusão deste usuário ainda está em processamento. Aguarde concluir para reenviar o convite.'); return; }
   if (!perfil)                    { erro('Selecione o perfil de acesso.'); return; }
   if (!unidade)                   { erro('Selecione a unidade.'); return; }
   if (USUARIOS.find(u => u.email.toLowerCase() === email)) { erro('Este e-mail jÃ¡ estÃ¡ cadastrado.'); return; }
@@ -426,22 +446,31 @@ function enviarConvite() {
     cargo:      perfil,
     diretor:    usuarioLogado ? usuarioLogado.nome : 'Diretor Zelony',
     link
-  }).then(() => {
+  }).then(async () => {
     const novoU = {
-      id: nextUserId++, nome, email, tel: '', perfil, status: 'Pendente',
+      id: nextUserId, nome, email, tel: '', perfil, status: 'Pendente',
       banco:'', agencia:'', conta:'', tipoConta:'', pixTipo:'', pix:'',
       rhContratacao, equipe, unidade, cpf:'', nasc:'', cep:'', end:'', cidade:'', estado:''
     };
+    try {
+      await dbSalvarUsuario(novoU, null);
+    } catch (e) {
+      console.error('Erro ao salvar convite:', e);
+      btn.textContent = zUiText('✉️ Enviar convite');
+      btn.disabled = false;
+      erro('O e-mail foi enviado, mas o convite não foi salvo no banco. Tente novamente após alguns instantes.');
+      return;
+    }
+    nextUserId = Math.max(nextUserId + 1, (novoU.id || 0) + 1);
     USUARIOS.push(novoU);
     zSetState('state.ui.nextUserId', nextUserId);
     zSetState('state.data.usuarios', USUARIOS);
-    dbSalvarUsuario(novoU, null).catch(e => console.error('Erro ao salvar convite:', e));
     salvarLS();
     fecharConvite(); renderUsuarios();
-    showToast(zUiText('âœ…'), zUiText(`Convite enviado para ${nome}!`));
+    showToast(zUiText('✅'), zUiText(`Convite enviado para ${nome}!`));
   }).catch(err => {
     console.error('EmailJS:', err);
-    btn.textContent = zUiText('âœ‰ï¸ Enviar convite'); btn.disabled = false;
+    btn.textContent = zUiText('✉️ Enviar convite'); btn.disabled = false;
     erro('Erro ao enviar e-mail. Verifique a configuraÃ§Ã£o do EmailJS.');
   });
 }

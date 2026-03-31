@@ -76,7 +76,7 @@ function fazerLogin() {
     document.getElementById('login-screen').classList.add('hidden');
     renderFiltros(); renderVList(); renderTrein(); renderProc();
     resetBtn();
-    showToast(zUiText('ðŸ‘‹'), zUiText(`Bem-vindo(a), ${usuario.nome.split(' ')[0]}!`));
+    showToast(zUiText('👋'), zUiText(`Bem-vindo(a), ${usuario.nome.split(' ')[0]}!`));
   }, 800);
 }
 
