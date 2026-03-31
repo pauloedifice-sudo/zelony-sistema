@@ -126,7 +126,7 @@ function mapUsuarioOut(u){
     tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',
     cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',
     endereco:u.end||'',cidade:u.cidade||'',estado:u.estado||'',
-    rh_contratacao:!!u.rhContratacao,token:u.token||null
+    rh_contratacao:!!u.rhContratacao
   };
 }
 
