@@ -22,10 +22,21 @@ const RD = {
 
 function getPerfil(p) {
   if (!p) return 'cor';
-  const MAP = { Dono:'dono', Corretor:'cor', Capitao:'cap', Gerente:'ger', Diretor:'dir', Financeiro:'fin', RH:'rh' };
-  if (MAP[p]) return MAP[p];
-  const k = Object.keys(MAP).find(k => k.toLowerCase() === p.toLowerCase());
-  return k ? MAP[k] : 'cor';
+  const bruto = zUiText(String(p)).trim();
+  const normalizado = bruto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+  const MAP = {
+    dono:'dono',
+    corretor:'cor',
+    capitao:'cap',
+    gerente:'ger',
+    diretor:'dir',
+    financeiro:'fin',
+    rh:'rh'
+  };
+  return MAP[normalizado] || 'cor';
 }
 
 // LOGIN

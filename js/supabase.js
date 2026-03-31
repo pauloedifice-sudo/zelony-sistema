@@ -247,6 +247,52 @@ async function dbExcluirUsuario(email){
   zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
 }
 
+function mapUsuarioOutSnake(u){
+  return{
+    nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
+    status:u.status||'Ativo',unidade:u.unidade||'',equipe:u.equipe||'',
+    banco:u.banco||'',agencia:u.agencia||'',conta:u.conta||'',
+    tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',
+    cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',
+    endereco:u.end||'',cidade:u.cidade||'',estado:u.estado||'',
+    rh_contratacao:!!u.rhContratacao,token:u.token||null
+  };
+}
+
+async function dbSalvarUsuario(u, id){
+  const tentativas=[mapUsuarioOut(u), mapUsuarioOutSnake(u)];
+  let salvo=null;
+  let ultimoErro=null;
+
+  for(const dados of tentativas){
+    if(id){
+      const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
+      if(!error){
+        salvo=data;
+        break;
+      }
+      ultimoErro=error;
+      console.warn('Falha ao atualizar usuário com campos:', Object.keys(dados).join(', '), error.message);
+    } else {
+      const {data,error}=await sb.from('usuarios').insert(dados).select().single();
+      if(!error && data){
+        salvo=data;
+        break;
+      }
+      ultimoErro=error || new Error('Usuario nao retornado pelo banco.');
+      console.warn('Falha ao criar usuário com campos:', Object.keys(dados).join(', '), ultimoErro.message);
+    }
+  }
+
+  if(!salvo){
+    throw ultimoErro || new Error('Falha ao salvar usuario no banco.');
+  }
+
+  if(salvo&&salvo.id) u.id=salvo.id;
+  zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
+  return u;
+}
+
 async function dbSalvarSenha(email, senha){
   await sb.from('senhas').upsert({email:email.toLowerCase(),senha},{onConflict:'email'});
   SENHAS_INDIVIDUAIS[email.toLowerCase()]=senha;
