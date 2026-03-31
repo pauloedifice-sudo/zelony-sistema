@@ -123,10 +123,10 @@ function mapUsuarioOut(u){
     nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
     status:u.status||'Ativo',unidade:u.unidade||'',equipe:u.equipe||'',
     banco:u.banco||'',agencia:u.agencia||'',conta:u.conta||'',
-    tipoConta:u.tipoConta||'',pixTipo:u.pixTipo||'',pix:u.pix||'',
+    tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',
     cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',
-    end:u.end||'',cidade:u.cidade||'',estado:u.estado||'',
-    rhContratacao:!!u.rhContratacao,token:u.token||null
+    endereco:u.end||'',cidade:u.cidade||'',estado:u.estado||'',
+    rh_contratacao:!!u.rhContratacao,token:u.token||null
   };
 }
 
@@ -248,47 +248,21 @@ async function dbExcluirUsuario(email){
 }
 
 function mapUsuarioOutSnake(u){
-  return{
-    nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
-    status:u.status||'Ativo',unidade:u.unidade||'',equipe:u.equipe||'',
-    banco:u.banco||'',agencia:u.agencia||'',conta:u.conta||'',
-    tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',
-    cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',
-    endereco:u.end||'',cidade:u.cidade||'',estado:u.estado||'',
-    rh_contratacao:!!u.rhContratacao,token:u.token||null
-  };
+  return mapUsuarioOut(u);
 }
 
 async function dbSalvarUsuario(u, id){
-  const tentativas=[mapUsuarioOut(u), mapUsuarioOutSnake(u)];
-  let salvo=null;
-  let ultimoErro=null;
-
-  for(const dados of tentativas){
-    if(id){
-      const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
-      if(!error){
-        salvo=data;
-        break;
-      }
-      ultimoErro=error;
-      console.warn('Falha ao atualizar usuário com campos:', Object.keys(dados).join(', '), error.message);
-    } else {
-      const {data,error}=await sb.from('usuarios').insert(dados).select().single();
-      if(!error && data){
-        salvo=data;
-        break;
-      }
-      ultimoErro=error || new Error('Usuario nao retornado pelo banco.');
-      console.warn('Falha ao criar usuário com campos:', Object.keys(dados).join(', '), ultimoErro.message);
-    }
+  const dados=mapUsuarioOut(u);
+  if(id){
+    const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
+    if(error) throw error;
+    if(data&&data.id) u.id=data.id;
+  } else {
+    const {data,error}=await sb.from('usuarios').insert(dados).select().single();
+    if(error) throw error;
+    if(!data) throw new Error('Usuário não retornado pelo banco.');
+    if(data&&data.id) u.id=data.id;
   }
-
-  if(!salvo){
-    throw ultimoErro || new Error('Falha ao salvar usuario no banco.');
-  }
-
-  if(salvo&&salvo.id) u.id=salvo.id;
   zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
   return u;
 }
