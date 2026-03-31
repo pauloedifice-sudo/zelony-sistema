@@ -67,7 +67,7 @@ function fazerLogin() {
     RD[rv] = {
       av: ini(usuario.nome),
       nome: usuario.nome.split(' ')[0],
-      role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' Â· ' + usuario.unidade : '')
+      role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' · ' + usuario.unidade : '')
     };
     role = rv;
     zSetState('state.auth.role', role);
@@ -102,7 +102,7 @@ function restaurarSessao() {
   RD[rv] = {
     av: ini(usuario.nome),
     nome: usuario.nome.split(' ')[0],
-    role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' Â· ' + usuario.unidade : '')
+    role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' · ' + usuario.unidade : '')
   };
   role = rv;
   zSetState('state.auth.role', role);
@@ -115,14 +115,14 @@ function restaurarSessao() {
 function toggleSenha() {
   const inp = document.getElementById('lg-senha');
   const btn = document.getElementById('lg-toggle');
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = zUiText('ðŸ™ˆ'); }
-  else { inp.type = 'password'; btn.textContent = zUiText('ðŸ‘'); }
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = zUiText('🙈'); }
+  else { inp.type = 'password'; btn.textContent = zUiText('👁'); }
 }
 
 // TOPBAR
 function atualizarTopbar(usuario, rv) {
   const nome = usuario.nome.split(' ')[0];
-  const perfil = usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' Â· ' + usuario.unidade : '');
+  const perfil = usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' · ' + usuario.unidade : '');
   document.getElementById('tb-user-avatar').textContent       = ini(usuario.nome);
   document.getElementById('tb-user-nome').textContent         = zUiText(nome);
   document.getElementById('tb-user-perfil-badge').textContent = zUiText(perfil);
@@ -154,9 +154,9 @@ function trocaRole() {
 
 // NAVEGACAO
 const modTitles = {
-  carteira:'Minha Carteira', vendas:'Vendas &amp; Comissao',
+  carteira:'Minha Carteira', vendas:'Vendas e Comissão',
   trein:'Treinamentos', proc:'Processos Operacionais',
-  usuarios:'Usuarios', financeiro:'Financeiro'
+  usuarios:'Usuários', financeiro:'Financeiro'
 };
 
 function setMod(m, el) {
@@ -165,7 +165,7 @@ function setMod(m, el) {
   document.getElementById('mod-' + m).classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  document.getElementById('pg-title').innerHTML = zUiText(modTitles[m]);
+  document.getElementById('pg-title').textContent = zUiText(modTitles[m]);
   if (m === 'carteira')   renderCarteira();
   if (m === 'trein')      renderTrein();
   if (m === 'proc')       renderProc();
