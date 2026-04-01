@@ -197,6 +197,39 @@ function nomeCalendario(cliente) {
   return cliente.split('/')[0].trim().split(' ').filter(p=>p.length>0).slice(0,2).join(' ');
 }
 
+async function copiarTexto(texto, rotulo = 'Texto') {
+  const valor = String(texto || '').trim();
+  if (!valor) {
+    showToast('⚠️', `${zUiText(rotulo)} ${zUiText('indisponível para cópia')}`);
+    return false;
+  }
+
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(valor);
+    } else {
+      const area = document.createElement('textarea');
+      area.value = valor;
+      area.setAttribute('readonly', '');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      area.style.pointerEvents = 'none';
+      document.body.appendChild(area);
+      area.focus();
+      area.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(area);
+      if (!ok) throw new Error('copy-fallback-failed');
+    }
+    showToast('✅', `${zUiText(rotulo)} ${zUiText('copiada com sucesso')}`);
+    return true;
+  } catch (e) {
+    console.warn('Falha ao copiar texto:', e.message);
+    showToast('❌', `${zUiText('Não foi possível copiar')} ${zUiText(rotulo).toLowerCase()}`);
+    return false;
+  }
+}
+
 function showToast(icon, msg) {
   let t = document.getElementById('toast-el');
   if (t) t.remove();
@@ -232,6 +265,8 @@ function renderNots() {
     </div>`
   ).join('');
 }
+
+window.copiarTexto = copiarTexto;
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;

@@ -64,6 +64,7 @@ function _buildUserCard(u, idx) {
   const avatarColor = perfilMeta.color;
   const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}" style="margin-top:4px;display:inline-flex;">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
   const equipeBadge = u.equipe ? `<span style="font-size:9px;background:var(--bg3);color:var(--ts);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;margin-top:3px;display:inline-block;">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
+  const pixCopyArg = encodeURIComponent(String(u.pix || ''));
   return `<div class="user-card">
     <div class="user-card-top">
       <div class="user-av" style="background:${avatarColor};">${iniUser(u.nome)}</div>
@@ -79,7 +80,7 @@ function _buildUserCard(u, idx) {
       <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 5l6 5 6-5"/></svg><span>${zUiText(u.email)}</span></div>
       <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${zUiText(u.tel||'—')}</span></div>
       <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${u.banco?`${zUiText(u.banco)} ${zUiText('·')} ${zUiText(u.tipoConta||'')}`:zUiText('—')}</span></div>
-      <div class="user-info-row"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5h4.5a2.5 2.5 0 010 5H5m0-5V2m0 8v4"/></svg><span>${u.pixTipo?`${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`:zUiText('—')}</span></div>
+      <div class="user-info-row" style="align-items:flex-start;justify-content:space-between;flex-wrap:wrap;"><div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5h4.5a2.5 2.5 0 010 5H5m0-5V2m0 8v4"/></svg><span>${u.pixTipo?`${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`:zUiText('—')}</span></div>${u.pix?`<button class="copy-chip-btn" type="button" onmousedown="event.preventDefault()" onclick="event.preventDefault();event.stopPropagation();copiarTexto(decodeURIComponent('${pixCopyArg}'),'Chave Pix');return false;">${zUiText('📋')} ${zUiText('Copiar')}</button>`:''}</div>
     </div>
     <div class="user-card-foot">
       <div class="user-status">
