@@ -144,6 +144,7 @@ function mapVendaIn(v){
     bonus_pct_ger:parseFloat(v.bonus_pct_ger)||0,bonus_pct_cor:parseFloat(v.bonus_pct_cor)||0,
     etapa:parseInt(v.etapa)||0,
     hist:v.hist||[],
+    distratada:!!v.distratada,
     anexos:[] // carregado sob demanda
   };
 }
