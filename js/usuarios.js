@@ -9,6 +9,16 @@ const PERFIL_TAG  = { Dono:'tag-dono', Corretor:'tag-cor', Capitao:'tag-cap', Ca
 const PERFIL_ICON = { Dono:'👑', Corretor:'👤', Capitao:'⭐', Capitão:'⭐', Gerente:'🏆', Diretor:'💼', Financeiro:'💰', RH:'🤝' };
 let uBusca = '', uFiltroUnidade = '', uFiltroEquipe = '', uFiltroPerfil = '';
 function iniUser(n) { return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
+function perfilRoleUsuario(u) { return typeof getPerfil==='function' ? getPerfil(u && u.perfil) : String((u && u.perfil) || '').toLowerCase(); }
+const PERFIL_META = {
+  dono: { tag:'tag-dono', icon:'👑', label:'Dono', color:'#1A1A1A' },
+  dir:  { tag:'tag-dir',  icon:'💼', label:'Diretor', color:'var(--gold)' },
+  ger:  { tag:'tag-ger',  icon:'🏆', label:'Gerente', color:'#2E7E5E' },
+  cap:  { tag:'tag-cap',  icon:'⭐', label:'Capitão', color:'#6040A8' },
+  cor:  { tag:'tag-cor',  icon:'👤', label:'Corretor', color:'#3060B8' },
+  fin:  { tag:'tag-fin',  icon:'💰', label:'Financeiro', color:'#C05030' },
+  rh:   { tag:'tag-rh',   icon:'🤝', label:'RH', color:'#1A56C4' }
+};
 zSetState('state.data.usuarios', USUARIOS);
 zSetState('state.ui.editUserIdx', editUserIdx);
 zSetState('state.ui.pixSel', pixSel);
@@ -50,7 +60,8 @@ function lerConviteURL() {
 }
 
 function _buildUserCard(u, idx) {
-  const avatarColor = u.perfil==='Dono'?'#1A1A1A':u.perfil==='Diretor'?'var(--gold)':u.perfil==='Gerente'?'#2E7E5E':u.perfil==='CapitÃƒÂ£o'?'#6040A8':u.perfil==='Financeiro'?'#C05030':u.perfil==='RH'?'#1A56C4':'#3060B8';
+  const perfilMeta = PERFIL_META[perfilRoleUsuario(u)] || PERFIL_META.cor;
+  const avatarColor = perfilMeta.color;
   const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}" style="margin-top:4px;display:inline-flex;">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
   const equipeBadge = u.equipe ? `<span style="font-size:9px;background:var(--bg3);color:var(--ts);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;margin-top:3px;display:inline-block;">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
   return `<div class="user-card">
@@ -59,7 +70,7 @@ function _buildUserCard(u, idx) {
       <div style="flex:1;min-width:0;">
         <div class="user-name">${zUiText(u.nome)}</div>
         <div style="display:flex;flex-direction:column;gap:3px;">
-          <span class="user-role-tag ${PERFIL_TAG[u.perfil]||'tag-cor'}">${zUiText(PERFIL_ICON[u.perfil]||'👤')} ${zUiText(u.perfil)}</span>
+          <span class="user-role-tag ${perfilMeta.tag}">${zUiText(perfilMeta.icon)} ${zUiText(perfilMeta.label)}</span>
           ${unidBadge}${equipeBadge}
         </div>
       </div>
@@ -118,13 +129,13 @@ function renderUsuarios() {
       </div>
       <select class="u-filter-sel" onchange="uFiltroPerfil=this.value;renderUsuarios()">
         <option value="">${zUiText('Todos os perfis')}</option>
-        <option value="Dono"       ${uFiltroPerfil==='Dono'?'selected':''}>${zUiText('👑 Dono')}</option>
-        <option value="Diretor"    ${uFiltroPerfil==='Diretor'?'selected':''}>${zUiText('💼 Diretor')}</option>
-        <option value="Gerente"    ${uFiltroPerfil==='Gerente'?'selected':''}>${zUiText('🏆 Gerente')}</option>
-        <option value="CapitÃƒÂ£o"    ${uFiltroPerfil==='CapitÃƒÂ£o'?'selected':''}>${zUiText('⭐ Capitão')}</option>
-        <option value="Corretor"   ${uFiltroPerfil==='Corretor'?'selected':''}>${zUiText('👤 Corretor')}</option>
-        <option value="Financeiro" ${uFiltroPerfil==='Financeiro'?'selected':''}>${zUiText('💰 Financeiro')}</option>
-        <option value="RH"         ${uFiltroPerfil==='RH'?'selected':''}>${zUiText('🤝 RH')}</option>
+        <option value="dono" ${uFiltroPerfil==='dono'?'selected':''}>${zUiText('👑 Dono')}</option>
+        <option value="dir"  ${uFiltroPerfil==='dir'?'selected':''}>${zUiText('💼 Diretor')}</option>
+        <option value="ger"  ${uFiltroPerfil==='ger'?'selected':''}>${zUiText('🏆 Gerente')}</option>
+        <option value="cap"  ${uFiltroPerfil==='cap'?'selected':''}>${zUiText('⭐ Capitão')}</option>
+        <option value="cor"  ${uFiltroPerfil==='cor'?'selected':''}>${zUiText('👤 Corretor')}</option>
+        <option value="fin"  ${uFiltroPerfil==='fin'?'selected':''}>${zUiText('💰 Financeiro')}</option>
+        <option value="rh"   ${uFiltroPerfil==='rh'?'selected':''}>${zUiText('🤝 RH')}</option>
       </select>
       <select class="u-filter-sel" onchange="uFiltroUnidade=this.value;renderUsuarios()">
         <option value="">${zUiText('Todas as unidades')}</option>
@@ -158,7 +169,7 @@ function _filtrarUsuarios() {
     return (!q || (u.nome||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.equipe||'').toLowerCase().includes(q))
       && (!uFiltroUnidade || u.unidade===uFiltroUnidade || u.unidade==='Ambas')
       && (!uFiltroEquipe  || (u.equipe||'')===uFiltroEquipe)
-      && (!uFiltroPerfil  || u.perfil===uFiltroPerfil);
+      && (!uFiltroPerfil  || perfilRoleUsuario(u)===uFiltroPerfil);
   });
 }
 

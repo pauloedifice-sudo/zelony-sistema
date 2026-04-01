@@ -211,6 +211,16 @@ async function dbSalvarAnexos(vendaId, anexos){
   catch(e){ console.warn('Erro ao salvar anexos:',e.message); }
 }
 
+async function dbAtualizarVenda(v){
+  const payload={
+    ...mapVendaOut(v),
+    anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''}))
+  };
+  const {error}=await sb.from('vendas').update(payload).eq('id',v.id);
+  if(error) throw error;
+  return true;
+}
+
 async function carregarAnexosVenda(id){
   try{
     const {data,error}=await sb.from('vendas').select('anexos').eq('id',id).single();

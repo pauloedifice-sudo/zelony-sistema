@@ -114,6 +114,12 @@ function lblCom(){
 function getUnidadeUsuario(){ return(!usuarioLogado)?'Ambas':(usuarioLogado.unidade||'Ambas'); }
 function vendaNaUnidade(v){ const u=getUnidadeUsuario(); if(u==='Ambas') return true; return v.unidade===u; }
 function vendaNoFiltro(v){ if(filtroUnidade==='all') return true; return v.unidade===filtroUnidade; }
+function aplicarFiltroSituacao(lista){
+  const vfSituacao=document.getElementById('vf-situacao')?.value;
+  if(vfSituacao==='ativas') return lista.filter(v=>!v.distratada);
+  if(vfSituacao==='distratos') return lista.filter(v=>!!v.distratada);
+  return lista;
+}
 
 function vendasU(l, somenteMinhas=false){
   const unid=getUnidadeUsuario();
@@ -225,23 +231,25 @@ function renderBtnNovaVenda(){
   }
 }
 function renderFiltros(){
-  const cnt={}; vendasU(VENDAS).forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});
-  const base=vendasU(VENDAS);
+  const base=aplicarFiltroSituacao(vendasU(VENDAS));
+  const cnt={}; base.forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});
   let h=`<button class="fe ${fEtapa==='all'?'active':''}" onclick="setFE('all')">Todas (${base.length})</button>`;
   ETAPAS.forEach((e,i)=>{if(cnt[i])h+=`<button class="fe ${fEtapa==i?'active':''}" onclick="setFE(${i})">${zUiText(e).split(' ')[0]} (${cnt[i]})</button>`;});
-  const comPrazo=base.filter(v=>!v.distratada&&PRAZOS_ETAPA[v.etapa]!==null&&v.etapa<ETAPAS.length-1);
-  const atrasadas=comPrazo.filter(v=>calcAtraso(v)>0);
-  const vencem=comPrazo.filter(v=>calcAtraso(v)===0);
-  const noPrazo=comPrazo.filter(v=>calcAtraso(v)<=0);
-  if(atrasadas.length) h+=`<button class="fe" onclick="filtrarPrazo('atrasada')" style="background:#FEF0EC;color:#C05030;border-color:#E0A090;">${zUiText('❗')} Atrasadas (${atrasadas.length})</button>`;
-  if(vencem.length) h+=`<button class="fe" onclick="filtrarPrazo('alerta')" style="background:#FFF8E8;color:#C08020;border-color:#E8C060;">${zUiText('⚠️')} Vence hoje (${vencem.length})</button>`;
-  if(noPrazo.length) h+=`<button class="fe" onclick="filtrarPrazo('ok')" style="background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;">${zUiText('✓')} No prazo (${noPrazo.length})</button>`;
+  if(document.getElementById('vf-situacao')?.value!=='distratos'){
+    const comPrazo=base.filter(v=>!v.distratada&&PRAZOS_ETAPA[v.etapa]!==null&&v.etapa<ETAPAS.length-1);
+    const atrasadas=comPrazo.filter(v=>calcAtraso(v)>0);
+    const vencem=comPrazo.filter(v=>calcAtraso(v)===0);
+    const noPrazo=comPrazo.filter(v=>calcAtraso(v)<=0);
+    if(atrasadas.length) h+=`<button class="fe" onclick="filtrarPrazo('atrasada')" style="background:#FEF0EC;color:#C05030;border-color:#E0A090;">${zUiText('❗')} Atrasadas (${atrasadas.length})</button>`;
+    if(vencem.length) h+=`<button class="fe" onclick="filtrarPrazo('alerta')" style="background:#FFF8E8;color:#C08020;border-color:#E8C060;">${zUiText('⚠️')} Vence hoje (${vencem.length})</button>`;
+    if(noPrazo.length) h+=`<button class="fe" onclick="filtrarPrazo('ok')" style="background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;">${zUiText('✓')} No prazo (${noPrazo.length})</button>`;
+  }
   document.getElementById('vfilters').innerHTML=h;
   const unidEl=document.getElementById('unid-filter');
   const temAmbas=['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas');
   if(unidEl) unidEl.classList.toggle('hidden',!temAmbas);
   renderBtnNovaVenda();
-  const todasVendas=vendasU(VENDAS);
+  const todasVendas=base;
   const selMes=document.getElementById('vf-mes');
   const selConst=document.getElementById('vf-construtora');
   const selEquipe=document.getElementById('vf-equipe');
@@ -269,11 +277,13 @@ function atualizarTagsFiltros(){
   const vfEq=document.getElementById('vf-equipe')?.value;
   const vfCca=document.getElementById('vf-cca')?.value;
   const vfOrigem=document.getElementById('vf-origem')?.value;
+  const vfSituacao=document.getElementById('vf-situacao')?.value;
   if(vfMes) tags.push({label:zUiText(`📅 ${vfMes}`),clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
   if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
   if(vfEq) tags.push({label:zUiText(`👥 ${vfEq}`),clear:()=>{document.getElementById('vf-equipe').value='';renderVList();}});
   if(vfCca) tags.push({label:zUiText(`🧑‍💼 ${vfCca}`),clear:()=>{document.getElementById('vf-cca').value='';renderVList();}});
   if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
+  if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
   wrap.innerHTML=tags.map((t,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:10px;padding:2px 8px;font-size:9px;color:var(--gold);cursor:pointer;" onclick="clearTag(${i})">${zUiText(t.label)} ${zUiText('✕')}</span>`).join('');
   wrap._tags=tags;
 }
@@ -296,7 +306,7 @@ function setVTab(t,el){
 }
 
 function filtrarPrazo(tipo){
-  const base=vendasU(VENDAS);
+  const base=aplicarFiltroSituacao(vendasU(VENDAS));
   const l=base.filter(v=>{
     if(v.distratada) return false;
     if(PRAZOS_ETAPA[v.etapa]===null||v.etapa>=ETAPAS.length-1) return false;
@@ -316,7 +326,7 @@ function filtrarPrazo(tipo){
   }).join('')||`<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda nessa categoria</div>`;
 }
 function renderVList(){
-  let l=vendasU(VENDAS);
+  let l=aplicarFiltroSituacao(vendasU(VENDAS));
   if(fEtapa!=='all') l=l.filter(v=>v.etapa===parseInt(fEtapa));
   const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();
   if(q) l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q)||v.construtora.toLowerCase().includes(q)||v.corretor.toLowerCase().includes(q));
@@ -413,16 +423,23 @@ function confirmarDistrato(){
   const motivo=document.getElementById('dt-motivo').value.trim();
   const dataDistrato=document.getElementById('dt-data').value;
   if(!motivo){document.getElementById('dt-motivo').focus();showToast(zUiText('⚠️'),zUiText('Informe o motivo do distrato.'));return;}
+  const original=JSON.parse(JSON.stringify(v));
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   const dataFmt=dataDistrato?dataDistrato.split('-').reverse().join('/').slice(0,5):hoje().slice(0,5);
   v.distratada=true;
   v.dataDistrato=dataFmt;
   v.hist.push({e:v.etapa,d:dataFmt,u:quem,o:zUiText(`⚠️ DISTRATO: ${motivo}`),tipo:'distrato'});
-  dbAtualizarVenda(v).catch(e=>console.error(e));
-  salvarLS();
-  fecharDistrato();
-  renderFiltros(); renderVList(); showVDetail(v.id);
-  showToast(zUiText('⚠️'),zUiText('Distrato registrado no histórico.'));
+  dbAtualizarVenda(v).then(()=>{
+    salvarLS();
+    fecharDistrato();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    showToast(zUiText('⚠️'),zUiText('Distrato registrado no histórico.'));
+  }).catch(e=>{
+    Object.assign(v, original);
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    console.error('Erro ao registrar distrato:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao registrar distrato no banco. Tente novamente.'));
+  });
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ EDITAR VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
@@ -463,6 +480,7 @@ function salvarEditVenda(){
   if(!v)return;
   const motivo=document.getElementById('ev-motivo').value.trim();
   if(!motivo){document.getElementById('ev-motivo').focus();showToast('Ã¢Å¡Â Ã¯Â¸Â','Informe o motivo da alteraÃƒÂ§ÃƒÂ£o.');return;}
+  const original=JSON.parse(JSON.stringify(v));
   const dataVal=document.getElementById('ev-data').value;
   const d2=new Date(dataVal+'T12:00:00');
   const meses=['JANEIRO','FEVEREIRO','MARÃƒâ€¡O','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
@@ -488,28 +506,43 @@ function salvarEditVenda(){
   v.cca=document.getElementById('ev-cca').value.trim();
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:motivo,tipo:'edicao'});
-  fecharEditVenda();
-  renderFiltros(); renderVList(); showVDetail(v.id);
-  dbAtualizarVenda(v).catch(e=>console.error(e));
-  salvarLS();
-  showToast('Ã¢Å“â€¦','Venda atualizada com sucesso.');
+  dbAtualizarVenda(v).then(()=>{
+    fecharEditVenda();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    salvarLS();
+    showToast(zUiText('✅'),zUiText('Venda atualizada com sucesso.'));
+  }).catch(e=>{
+    Object.assign(v, original);
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    console.error('Erro ao atualizar venda:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar alteração no banco. Tente novamente.'));
+  });
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ NOVA VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
 function abrirModalVenda(){
   const filtrarUnid=(u)=>['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas')||!u.unidade||u.unidade===usuarioLogado.unidade;
+  const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
   const todos=USUARIOS.filter(u=>filtrarUnid(u));
-  const capitaes=USUARIOS.filter(u=>u.perfil==='Capitão'&&filtrarUnid(u));
-  const gerentes=USUARIOS.filter(u=>['Gerente','Diretor','Capitão'].includes(u.perfil)&&filtrarUnid(u));
-  const diretores=USUARIOS.filter(u=>u.perfil==='Diretor'&&filtrarUnid(u));
+  const capitaes=USUARIOS.filter(u=>perfilRole(u)==='cap'&&filtrarUnid(u));
+  const gerentes=USUARIOS.filter(u=>['ger','dir','cap'].includes(perfilRole(u))&&filtrarUnid(u));
+  const diretores=USUARIOS.filter(u=>perfilRole(u)==='dir'&&filtrarUnid(u));
   const optLabel=(u)=>zUiText(`${u.status==='Inativo'?'📍 ':''}${u.nome}${u.status==='Inativo'?' (inativo)':''}`);
-  const perfilOrdem=['Dono','Diretor','Gerente','Capitão','Corretor','Financeiro','RH'];
-  const optCor=perfilOrdem.flatMap(p=>{
-    const ativos=todos.filter(u=>u.perfil===p&&u.status==='Ativo');
-    const inativos=todos.filter(u=>u.perfil===p&&u.status==='Inativo');
+  const perfilOrdem=[
+    {label:'Dono', role:'dono'},
+    {label:'Diretor', role:'dir'},
+    {label:'Gerente', role:'ger'},
+    {label:'Capitão', role:'cap'},
+    {label:'Corretor', role:'cor'},
+    {label:'Financeiro', role:'fin'},
+    {label:'RH', role:'rh'}
+  ];
+  const optCor=perfilOrdem.flatMap(({label,role:perfilKey})=>{
+    const ativos=todos.filter(u=>perfilRole(u)===perfilKey&&u.status==='Ativo');
+    const inativos=todos.filter(u=>perfilRole(u)===perfilKey&&u.status==='Inativo');
     const lista=[...ativos,...inativos];
     if(!lista.length) return [];
-    return [`<optgroup label="${zUiText(p)}">`,...lista.map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`),'</optgroup>'];
+    return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`),'</optgroup>'];
   }).join('');
   const optExterno=`<optgroup label="${zUiText('— Externo —')}"><option value="__externo__">${zUiText('✏️ Digitar nome externo...')}</option></optgroup>`;
   const optCap=[...capitaes.filter(u=>u.status==='Ativo'),...capitaes.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');

@@ -489,6 +489,11 @@
                   <option value="MKT">MKT</option>
                   <option value="Oferta Ativa">Oferta Ativa</option>
                 </select>
+                <select id="vf-situacao" onchange="renderFiltros();renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;grid-column:span 2;">
+                  <option value="">📂 Situação</option>
+                  <option value="ativas">Ativas</option>
+                  <option value="distratos">Distratos</option>
+                </select>
               </div>
               <div id="vf-active-tags" style="display:flex;flex-wrap:wrap;gap:3px;"></div>
             </div>
