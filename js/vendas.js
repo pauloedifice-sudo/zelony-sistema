@@ -29,6 +29,8 @@ let nextVendaId=1;
 let mvDocs={comp:null,cont:null};
 let distratoVendaId=null;
 let editVendaId=null;
+let distratoSalvando=false;
+let editVendaSalvando=false;
 zSetState('config.etapas', ETAPAS);
 zSetState('config.prazosEtapa', PRAZOS_ETAPA);
 zSetState('config.procData', PROC_DATA);
@@ -42,6 +44,8 @@ zSetState('state.ui.nextVendaId', nextVendaId);
 zSetState('state.ui.mvDocs', mvDocs);
 zSetState('state.ui.distratoVendaId', distratoVendaId);
 zSetState('state.ui.editVendaId', editVendaId);
+zSetState('state.ui.distratoSalvando', distratoSalvando);
+zSetState('state.ui.editVendaSalvando', editVendaSalvando);
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ CÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂLCULOS DE COMISSÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
 function com(v,p){ return(v.valor*p)-(v.valor*p*v.imp); }
@@ -413,11 +417,40 @@ function abrirDistrato(id){
   document.getElementById('dt-subtitulo').textContent=zUiText(`Venda: ${v.cliente.split('/')[0].trim()} · ${v.produto}`);
   document.getElementById('dt-motivo').value='';
   document.getElementById('dt-data').value=new Date().toISOString().split('T')[0];
+  setDistratoLoading(false);
   document.getElementById('m-distrato').classList.add('show');
   setTimeout(()=>document.getElementById('dt-motivo').focus(),100);
 }
-function fecharDistrato(){ document.getElementById('m-distrato').classList.remove('show'); distratoVendaId=null; zSetState('state.ui.distratoVendaId', distratoVendaId); }
+function setDistratoLoading(loading){
+  distratoSalvando=loading;
+  zSetState('state.ui.distratoSalvando', distratoSalvando);
+  const motivo=document.getElementById('dt-motivo');
+  const data=document.getElementById('dt-data');
+  const cancelar=document.getElementById('dt-cancel-btn');
+  const confirmar=document.getElementById('dt-confirm-btn');
+  const fechar=document.getElementById('dt-close-btn');
+  const status=document.getElementById('dt-status');
+  if(motivo) motivo.disabled=loading;
+  if(data) data.disabled=loading;
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(confirmar){
+    confirmar.disabled=loading;
+    confirmar.textContent=loading?zUiText('⏳ Registrando distrato...'):zUiText('⚠️ Confirmar distrato');
+    confirmar.style.opacity=loading?'0.75':'1';
+    confirmar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+function fecharDistrato(){
+  if(distratoSalvando) return;
+  setDistratoLoading(false);
+  document.getElementById('m-distrato').classList.remove('show');
+  distratoVendaId=null;
+  zSetState('state.ui.distratoVendaId', distratoVendaId);
+}
 function confirmarDistrato(){
+  if(distratoSalvando) return;
   const v=VENDAS.find(x=>x.id===distratoVendaId);
   if(!v)return;
   const motivo=document.getElementById('dt-motivo').value.trim();
@@ -429,13 +462,16 @@ function confirmarDistrato(){
   v.distratada=true;
   v.dataDistrato=dataFmt;
   v.hist.push({e:v.etapa,d:dataFmt,u:quem,o:zUiText(`⚠️ DISTRATO: ${motivo}`),tipo:'distrato'});
+  setDistratoLoading(true);
   dbAtualizarVenda(v).then(()=>{
     salvarLS();
+    setDistratoLoading(false);
     fecharDistrato();
     renderFiltros(); renderVList(); showVDetail(v.id);
     showToast(zUiText('⚠️'),zUiText('Distrato registrado no histórico.'));
   }).catch(e=>{
     Object.assign(v, original);
+    setDistratoLoading(false);
     renderFiltros(); renderVList(); showVDetail(v.id);
     console.error('Erro ao registrar distrato:', e);
     showToast(zUiText('❌'),zUiText('Falha ao registrar distrato no banco. Tente novamente.'));
@@ -470,12 +506,42 @@ function abrirEditVenda(id){
   document.getElementById('ev-bonus-cor').value=v.bonus_pct_cor||0;
   document.getElementById('ev-cca').value=v.cca||'';
   document.getElementById('ev-motivo').value='';
+  setEditVendaLoading(false);
   document.getElementById('m-edit-venda').classList.add('show');
   setTimeout(()=>document.getElementById('ev-motivo').focus(),100);
 }
-function fecharEditVenda(){ document.getElementById('m-edit-venda').classList.remove('show'); editVendaId=null; zSetState('state.ui.editVendaId', editVendaId); }
+function setEditVendaLoading(loading){
+  editVendaSalvando=loading;
+  zSetState('state.ui.editVendaSalvando', editVendaSalvando);
+  ['ev-cliente','ev-data','ev-produto','ev-construtora','ev-origem','ev-unidade','ev-valor','ev-pct','ev-imp','ev-pct-cor','ev-pct-cap','ev-pct-ger','ev-pct-dir','ev-pct-dir2','ev-bonus','ev-bonus-dir','ev-bonus-ger','ev-bonus-cor','ev-cca','ev-motivo']
+    .forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.disabled=loading;
+    });
+  const cancelar=document.getElementById('ev-cancel-btn');
+  const fechar=document.getElementById('ev-close-btn');
+  const salvar=document.getElementById('ev-save-btn');
+  const status=document.getElementById('ev-status');
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(salvar){
+    salvar.disabled=loading;
+    salvar.textContent=loading?zUiText('⏳ Salvando alterações...'):zUiText('✓ Salvar alterações');
+    salvar.style.opacity=loading?'0.75':'1';
+    salvar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+function fecharEditVenda(){
+  if(editVendaSalvando) return;
+  setEditVendaLoading(false);
+  document.getElementById('m-edit-venda').classList.remove('show');
+  editVendaId=null;
+  zSetState('state.ui.editVendaId', editVendaId);
+}
 
 function salvarEditVenda(){
+  if(editVendaSalvando) return;
   const v=VENDAS.find(x=>x.id===editVendaId);
   if(!v)return;
   const motivo=document.getElementById('ev-motivo').value.trim();
@@ -506,13 +572,16 @@ function salvarEditVenda(){
   v.cca=document.getElementById('ev-cca').value.trim();
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:motivo,tipo:'edicao'});
+  setEditVendaLoading(true);
   dbAtualizarVenda(v).then(()=>{
+    setEditVendaLoading(false);
     fecharEditVenda();
     renderFiltros(); renderVList(); showVDetail(v.id);
     salvarLS();
     showToast(zUiText('✅'),zUiText('Venda atualizada com sucesso.'));
   }).catch(e=>{
     Object.assign(v, original);
+    setEditVendaLoading(false);
     renderFiltros(); renderVList(); showVDetail(v.id);
     console.error('Erro ao atualizar venda:', e);
     showToast(zUiText('❌'),zUiText('Falha ao salvar alteração no banco. Tente novamente.'));

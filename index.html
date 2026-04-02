@@ -549,7 +549,7 @@
             <div class="modal-title" style="color:#C05030;">⚠️ Registrar Distrato</div>
             <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="dt-subtitulo">Esta ação marca a venda como distratada</div>
           </div>
-          <button class="mclose" onclick="fecharDistrato()">✕</button>
+          <button class="mclose" id="dt-close-btn" onclick="fecharDistrato()">✕</button>
         </div>
         <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
           <div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:8px;padding:12px;font-size:11px;color:#C05030;">
@@ -564,9 +564,13 @@
             <input type="date" id="dt-data">
           </div>
         </div>
+        <div id="dt-status" style="display:none;padding:0 18px 12px;font-size:11px;color:var(--tm);align-items:center;gap:8px;">
+          <span style="font-size:13px;">⏳</span>
+          <span>Registrando distrato no banco de dados...</span>
+        </div>
         <div class="modal-foot">
-          <button class="btn-c" onclick="fecharDistrato()">Cancelar</button>
-          <button style="background:#C05030;color:#fff;border:none;border-radius:7px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;" onclick="confirmarDistrato()">⚠️ Confirmar distrato</button>
+          <button class="btn-c" id="dt-cancel-btn" onclick="fecharDistrato()">Cancelar</button>
+          <button style="background:#C05030;color:#fff;border:none;border-radius:7px;padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;" id="dt-confirm-btn" onclick="confirmarDistrato()">⚠️ Confirmar distrato</button>
         </div>
       </div>
     </div>
@@ -579,7 +583,7 @@
             <div class="modal-title">✏️ Editar venda</div>
             <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="ev-subtitulo">Alterações ficam registradas no histórico</div>
           </div>
-          <button class="mclose" onclick="fecharEditVenda()">✕</button>
+          <button class="mclose" id="ev-close-btn" onclick="fecharEditVenda()">✕</button>
         </div>
         <div class="mv-modal modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
           <!-- Dados do cliente -->
@@ -641,9 +645,13 @@
             <textarea id="ev-motivo" placeholder="Descreva o motivo da alteração para registro no histórico..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:70px;"></textarea>
           </div>
         </div>
+        <div id="ev-status" style="display:none;padding:0 18px 12px;font-size:11px;color:var(--tm);align-items:center;gap:8px;">
+          <span style="font-size:13px;">⏳</span>
+          <span>Salvando alterações da venda...</span>
+        </div>
         <div class="modal-foot">
-          <button class="btn-c" onclick="fecharEditVenda()">Cancelar</button>
-          <button class="btn-s" onclick="salvarEditVenda()">✓ Salvar alterações</button>
+          <button class="btn-c" id="ev-cancel-btn" onclick="fecharEditVenda()">Cancelar</button>
+          <button class="btn-s" id="ev-save-btn" onclick="salvarEditVenda()">✓ Salvar alterações</button>
         </div>
       </div>
     </div>
