@@ -145,7 +145,8 @@ function mapVendaIn(v){
     etapa:parseInt(v.etapa)||0,
     hist:v.hist||[],
     distratada:!!v.distratada,
-    anexos:[] // carregado sob demanda
+    anexos:[], // carregado sob demanda
+    anexosCarregados:false
   };
 }
 
@@ -165,8 +166,29 @@ function mapVendaOut(v){
   };
 }
 
-function mapTreinIn(t){ return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog}; }
-function mapTreinOut(t){ return{titulo:t.titulo,cat:t.cat,aulas:t.aulas,dur:t.dur,thumb:t.thumb,bg:t.bg,prog:t.prog}; }
+function mapTreinIn(t){
+  return{
+    id:t.id,
+    titulo:t.titulo,
+    cat:t.cat,
+    aulas:t.aulas,
+    dur:t.dur,
+    thumb:t.thumb,
+    bg:t.bg,
+    prog:t.prog
+  };
+}
+function mapTreinOut(t){
+  return{
+    titulo:t.titulo,
+    cat:t.cat,
+    aulas:t.aulas,
+    dur:t.dur,
+    thumb:t.thumb,
+    bg:t.bg,
+    prog:t.prog
+  };
+}
 
 // ── CRUD VENDAS ───────────────────────────────────────────────────────────────
 async function dbSalvarVenda(v, tentativa=1){
@@ -227,8 +249,9 @@ async function carregarAnexosVenda(id){
     const {data,error}=await sb.from('vendas').select('anexos').eq('id',id).single();
     if(error||!data) return;
     const v=VENDAS.find(x=>x.id===id);
-    if(v&&data.anexos){
-      v.anexos=data.anexos;
+    if(v){
+      v.anexos=data.anexos||[];
+      v.anexosCarregados=true;
       const el=document.getElementById('vd-body');
       if(el&&curVId===id) showVDetail(id);
     }
@@ -287,16 +310,22 @@ async function dbSalvarSenha(email, senha){
 // ── CRUD TREINAMENTOS ─────────────────────────────────────────────────────────
 async function dbSalvarTrein(t, idx){
   const dados=mapTreinOut(t);
-  if(idx!==undefined&&idx>=0){
-    const {data:todos}=await sb.from('treinamentos').select('id,titulo,cat');
-    if(todos){
-      const found=todos.find(x=>x.titulo===TREIN[idx].titulo&&x.cat===TREIN[idx].cat);
-      if(found) await sb.from('treinamentos').update(dados).eq('id',found.id);
-      else await sb.from('treinamentos').insert(dados);
-    }
+  if(t && t.id){
+    const {data,error}=await sb.from('treinamentos').update(dados).eq('id',t.id).select().single();
+    if(error) throw error;
+    if(data && data.id) t.id = data.id;
   } else {
-    await sb.from('treinamentos').insert(dados);
+    const {data,error}=await sb.from('treinamentos').insert(dados).select().single();
+    if(error) throw error;
+    if(data && data.id) t.id = data.id;
   }
+}
+
+async function dbExcluirTrein(t){
+  if(!t || !t.id) return true;
+  const {error}=await sb.from('treinamentos').delete().eq('id', t.id);
+  if(error) throw error;
+  return true;
 }
 
 // ── LOCAL STORAGE (fallback offline) ─────────────────────────────────────────
@@ -371,5 +400,6 @@ zRegisterModule('supabase', {
   dbSalvarUsuario,
   dbExcluirUsuario,
   dbSalvarSenha,
-  dbSalvarTrein
+  dbSalvarTrein,
+  dbExcluirTrein
 });

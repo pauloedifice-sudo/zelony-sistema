@@ -1,10 +1,192 @@
 ﻿// APP.JS
 // Relatorio, detalhe de venda, anexos, exportacoes
 
+let histObsSalvando=false;
+let pendComercialSalvando=false;
+let pendComercialModo='fechado';
+
+function setHistObsLoading(loading){
+  histObsSalvando=loading;
+  const campo=document.getElementById('vh-obs-input');
+  const botao=document.getElementById('vh-obs-btn');
+  const status=document.getElementById('vh-obs-status');
+  if(campo) campo.disabled=loading;
+  if(botao){
+    botao.disabled=loading;
+    botao.textContent=loading?zUiText('⏳ Registrando observação...'):zUiText('📝 Registrar observação');
+    botao.style.opacity=loading?'0.8':'1';
+    botao.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+
+async function salvarObsHistorico(){
+  if(histObsSalvando) return;
+  const v=VENDAS.find(x=>x.id===curVId);
+  if(!v) return;
+  const campo=document.getElementById('vh-obs-input');
+  if(!campo) return;
+  const obs=campo.value.trim();
+  if(!obs){
+    campo.focus();
+    showToast(zUiText('⚠️'),zUiText('Digite uma observação para registrar no histórico.'));
+    return;
+  }
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:obs,tipo:'obs'});
+  setHistObsLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    setHistObsLoading(false);
+    showVDetail(v.id);
+    showToast(zUiText('📝'),zUiText('Observação registrada no histórico.'));
+  }catch(e){
+    Object.assign(v, original);
+    setHistObsLoading(false);
+    showVDetail(v.id);
+    console.error('Erro ao registrar observação no histórico:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao registrar observação no banco. Tente novamente.'));
+  }
+}
+
+function setPendenciaComercialLoading(loading){
+  pendComercialSalvando=loading;
+  const editando=pendComercialModo==='editar';
+  const campo=document.getElementById('pc-obs-input');
+  const status=document.getElementById('pc-status');
+  const salvar=document.getElementById('pc-btn-save');
+  const cancelar=document.getElementById('pc-btn-cancel');
+  const editar=document.getElementById('pc-btn-edit');
+  const abrir=document.getElementById('pc-btn-open');
+  const resolver=document.getElementById('pc-btn-resolver');
+  if(campo) campo.disabled=loading;
+  if(status) status.style.display=loading?'flex':'none';
+  if(salvar){
+    salvar.disabled=loading;
+    salvar.textContent=loading?zUiText(editando?'⏳ Atualizando pendência...':'⏳ Registrando pendência...'):zUiText(editando?'✏️ Salvar pendência':'🟠 Registrar pendência');
+    salvar.style.opacity=loading?'0.8':'1';
+    salvar.style.cursor=loading?'wait':'pointer';
+  }
+  if(cancelar) cancelar.disabled=loading;
+  if(editar) editar.disabled=loading;
+  if(abrir) abrir.disabled=loading;
+  if(resolver){
+    resolver.disabled=loading;
+    resolver.textContent=loading?zUiText('⏳ Processando...'):zUiText('✅ Resolver pendência');
+    resolver.style.opacity=loading?'0.8':'1';
+    resolver.style.cursor=loading?'wait':'pointer';
+  }
+}
+
+function togglePendenciaComercialForm(modo='nova'){
+  pendComercialModo=modo;
+  if(curVId) showVDetail(curVId);
+  setTimeout(()=>{
+    const campo=document.getElementById('pc-obs-input');
+    if(campo){
+      campo.focus();
+      campo.setSelectionRange(campo.value.length,campo.value.length);
+    }
+  },0);
+}
+
+function fecharPendenciaComercialForm(){
+  pendComercialModo='fechado';
+  if(curVId) showVDetail(curVId);
+}
+
+async function salvarPendenciaComercial(){
+  if(pendComercialSalvando) return;
+  const v=VENDAS.find(x=>x.id===curVId);
+  if(!v) return;
+  const campo=document.getElementById('pc-obs-input');
+  if(!campo) return;
+  const obs=campo.value.trim();
+  if(!obs){
+    campo.focus();
+    showToast(zUiText('⚠️'),zUiText('Descreva a pendência comercial antes de registrar.'));
+    return;
+  }
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  const jaExiste=typeof temPendenciaComercial==='function'&&temPendenciaComercial(v);
+  v.hist=v.hist||[];
+  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:obs,tipo:jaExiste?'pend_comercial_editada':'pend_comercial'});
+  setPendenciaComercialLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    pendComercialModo='fechado';
+    setPendenciaComercialLoading(false);
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    showToast(zUiText('🟠'),zUiText(jaExiste?'Pendência comercial atualizada com sucesso.':'Pendência comercial registrada com sucesso.'));
+  }catch(e){
+    Object.assign(v,original);
+    pendComercialModo='fechado';
+    setPendenciaComercialLoading(false);
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    console.error('Erro ao salvar pendência comercial:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar a pendência comercial no banco. Tente novamente.'));
+  }
+}
+
+async function resolverPendenciaComercial(){
+  if(pendComercialSalvando) return;
+  const v=VENDAS.find(x=>x.id===curVId);
+  if(!v||(typeof temPendenciaComercial==='function'&&!temPendenciaComercial(v))) return;
+  if(!confirm(zUiText('Resolver a pendência comercial desta venda?'))) return;
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  v.hist=v.hist||[];
+  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:'Pendência comercial resolvida.',tipo:'pend_comercial_resolvida'});
+  setPendenciaComercialLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    pendComercialModo='fechado';
+    setPendenciaComercialLoading(false);
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    showToast(zUiText('✅'),zUiText('Pendência comercial resolvida.'));
+  }catch(e){
+    Object.assign(v,original);
+    pendComercialModo='fechado';
+    setPendenciaComercialLoading(false);
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    console.error('Erro ao resolver pendência comercial:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao resolver a pendência comercial no banco. Tente novamente.'));
+  }
+}
+
+function getHistVisual(h){
+  if(h.tipo==='edicao') return {label:'✏️ Edição registrada',color:'#3060B8'};
+  if(h.tipo==='distrato') return {label:'⚠️ Distrato',color:'#C05030'};
+  if(h.tipo==='reversao') return {label:'↩ Etapa revertida',color:'#C08020'};
+  if(h.tipo==='obs') return {label:'📝 Observação registrada',color:'#7A5AC8'};
+  if(h.tipo==='pend_comercial') return {label:'🟠 Pendência comercial aberta',color:'#C08020'};
+  if(h.tipo==='pend_comercial_editada') return {label:'🟠 Pendência comercial atualizada',color:'#C08020'};
+  if(h.tipo==='pend_comercial_resolvida') return {label:'✅ Pendência comercial resolvida',color:'#2E7E5E'};
+  return {label:ETAPAS[h.e],color:'var(--gold)'};
+}
+
 function showVDetail(id){
+  if(curVId!==id) pendComercialModo='fechado';
   curVId=id;
   zSetState('state.ui.curVId', curVId);
   const v=VENDAS.find(x=>x.id===id);
+  const pendencia=typeof getPendenciaComercial==='function'?getPendenciaComercial(v):null;
+  if(!pendencia&&pendComercialModo==='editar') pendComercialModo='fechado';
+  const podeGerirPendencia=role!=='rh'&&!v.distratada;
+  const formPendAberto=(pendComercialModo==='nova'||pendComercialModo==='editar')&&podeGerirPendencia;
   document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));
   const row=document.getElementById('vr-'+id);
   if(row) row.classList.add('active');
@@ -53,7 +235,11 @@ function showVDetail(id){
 
   if(!v.anexos) v.anexos=[];
   const anexosH=renderAnexosSec(v);
-  const hH=[...v.hist].reverse().map(h=>`<div class="hist-item"><div class="hlw"><div class="hd" style="${h.tipo==='edicao'?'background:#3060B8;':h.tipo==='distrato'?'background:#C05030;':h.tipo==='reversao'?'background:#C08020;':''}"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;${h.tipo==='edicao'?'color:#3060B8;':h.tipo==='distrato'?'color:#C05030;':h.tipo==='reversao'?'color:#C08020;':''}">${h.tipo==='edicao'?zUiText('✏️ Edição registrada'):h.tipo==='distrato'?zUiText('⚠️ Distrato'):h.tipo==='reversao'?zUiText('↩ Etapa revertida'):zUiText(ETAPAS[h.e])}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${zUiText(h.d)} ${zUiText('·')} ${zUiText('por')} ${zUiText(h.u)}</div>${h.o?`<div class="hobs">"${zUiText(h.o)}"</div>`:''}</div></div>`).join('');
+  const hH=[...v.hist].reverse().map(h=>{
+    const hv=getHistVisual(h);
+    return`<div class="hist-item"><div class="hlw"><div class="hd" style="background:${hv.color};"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;color:${hv.color};">${zUiText(hv.label)}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${zUiText(h.d)} ${zUiText('·')} ${zUiText('por')} ${zUiText(h.u)}</div>${h.o?`<div class="hobs">"${zUiText(h.o)}"</div>`:''}</div></div>`;
+  }).join('');
+  const obsComposer=`<div style="display:flex;flex-direction:column;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px;"><div style="font-size:10px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">${zUiText('Registrar observação')}</div><textarea id="vh-obs-input" placeholder="${zUiText('Escreva uma observação para ficar registrada no histórico desta venda...')}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){salvarObsHistorico();}" style="background:#fff;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:72px;"></textarea><div id="vh-obs-status" style="display:none;font-size:11px;color:var(--tm);align-items:center;gap:8px;"><span style="font-size:13px;">⏳</span><span>${zUiText('Registrando observação no banco de dados...')}</span></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div style="font-size:10px;color:var(--tm);">${zUiText('Dica')}: ${zUiText('use Ctrl+Enter para registrar mais rápido.')}</div><button id="vh-obs-btn" type="button" onclick="salvarObsHistorico()" style="background:var(--gold);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">${zUiText('📝 Registrar observação')}</button></div></div>`;
 
   const prevCard=(()=>{
     const prev=calcPrevisao(v);
@@ -79,6 +265,22 @@ function showVDetail(id){
     return`<div style="${cores[a.tipo]}border-radius:7px;padding:7px 12px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;"><div style="font-size:11px;font-weight:600;">${icones[a.tipo]} ${zUiText('Etapa atual')}: ${zUiText(a.label)}</div><div style="font-size:9px;opacity:0.8;">${zUiText('Prazo desta etapa')}: ${prazo} ${zUiText(`dia${prazo!==1?'s':''}`)}</div></div>`;
   })();
 
+  const pendenciaBox=(()=>{
+    if(!podeGerirPendencia&&!pendencia) return '';
+    return`<div class="pend-comercial-box ${pendencia?'active':''}">
+      <div class="pend-comercial-head">
+        <div>
+          <div class="pend-comercial-kicker">${zUiText('Pendência comercial')}</div>
+          <div class="pend-comercial-title">${pendencia?zUiText('Pendência comercial em aberto'):zUiText('Fluxo comercial sem pendências ativas')}</div>
+        </div>
+        ${pendencia?`<span class="pend-comercial-badge">${zUiText('🟠 Ativa')}</span>`:''}
+      </div>
+      ${pendencia?`<div class="pend-comercial-copy">${zUiText(pendencia.obs||'Sem descrição registrada para esta pendência.')}</div><div class="pend-comercial-meta">${zUiText('Aberta por')} ${zUiText(pendencia.por||'Sistema')} ${zUiText('em')} ${zUiText(pendencia.em||'—')}</div>`:`<div class="pend-comercial-meta">${zUiText('Use esta sinalização quando o comercial ainda precisar resolver alguma pendência antes de a venda seguir com segurança.')}</div>`}
+      ${podeGerirPendencia?`<div class="pend-comercial-actions">${!pendencia?`<button id="pc-btn-open" type="button" class="btn-pend-primary" onclick="togglePendenciaComercialForm('nova')">${zUiText('🟠 Marcar pendência comercial')}</button>`:`${pendComercialModo!=='editar'?`<button id="pc-btn-edit" type="button" class="btn-pend-secondary" onclick="togglePendenciaComercialForm('editar')">${zUiText('✏️ Editar pendência')}</button>`:''}<button id="pc-btn-resolver" type="button" class="btn-pend-primary" onclick="resolverPendenciaComercial()">${zUiText('✅ Resolver pendência')}</button>`}</div>`:''}
+      ${formPendAberto?`<div class="pend-comercial-form"><textarea id="pc-obs-input" placeholder="${zUiText('Ex.: documento pendente, ajuste comercial, retorno do cliente, divergência de informação...')}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){salvarPendenciaComercial();}"></textarea><div id="pc-status" class="pend-comercial-status" style="display:none;"><span style="font-size:13px;">⏳</span><span>${zUiText('Salvando pendência comercial no banco de dados...')}</span></div><div class="pend-comercial-help">${zUiText('Dica')}: ${zUiText('registre aqui o que falta resolver e use Ctrl+Enter para salvar mais rápido.')}</div><div class="pend-comercial-actions"><button id="pc-btn-cancel" type="button" class="btn-pend-secondary" onclick="fecharPendenciaComercialForm()">${zUiText('Cancelar')}</button><button id="pc-btn-save" type="button" class="btn-pend-primary" onclick="salvarPendenciaComercial()">${zUiText(pendComercialModo==='editar'?'✏️ Salvar pendência':'🟠 Registrar pendência')}</button></div></div>`:''}
+    </div>`;
+  })();
+
   document.getElementById('vd-body').innerHTML=`
   <div>
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
@@ -101,13 +303,14 @@ function showVDetail(id){
     <div class="prog-steps">${steps}</div>
     <div class="pcur"><div class="pdot"></div><div style="flex:1"><div style="font-size:12px;font-weight:600;">${zUiText(ETAPAS[v.etapa])}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${zUiText('Etapa')} ${v.etapa+1}/${ETAPAS.length} ${zUiText('·')} ${zUiText(v.hist.slice(-1)[0]?.d||'—')}</div></div><span class="zbg ${isFinal?'bg-g':'bg-a'}">${v.etapa+1}/${ETAPAS.length}</span></div>
     ${prevCard}${prazoAtualCard}
+    ${pendenciaBox}
     ${['fin','dir','dono'].includes(role)&&!isFinal?`<button class="btn-av" onclick="abrirM(${v.id})">${zUiText('Avançar')}: ${zUiText(ETAPAS[v.etapa+1])} ${zUiText('→')}</button>`:''}
     ${['fin','dir','dono'].includes(role)&&v.etapa>0&&!isFinal?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);margin-left:6px;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">${zUiText('← Voltar etapa')}</button>`:''}
     ${isFinal&&['fin','dir','dono'].includes(role)&&v.etapa>0?`<button class="btn-av" onclick="voltarEtapa(${v.id})" style="background:var(--bg);border:1px solid var(--bd);color:var(--ts);" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">${zUiText('← Voltar etapa')}</button>`:''}
     ${!['fin','dir','dono'].includes(role)?`<div style="font-size:9px;color:var(--tm);margin-top:5px;">${zUiText('Apenas Financeiro ou Diretor podem avanÃ§ar etapas.')}</div>`:''}
   </div>
   ${distH}${bonusH}
-  <div class="sec"><div class="sec-h">${zUiText('HistÃ³rico')}</div><div class="sec-b">${hH}</div></div>
+  <div class="sec"><div class="sec-h">${zUiText('HistÃ³rico')}</div><div class="sec-b">${obsComposer}${hH||`<div style="text-align:center;padding:12px;font-size:11px;color:var(--tm);">${zUiText('Nenhum registro no histórico ainda.')}</div>`}</div></div>
   ${anexosH}`;
 
   const inp=document.getElementById('anexo-input-'+v.id);
@@ -118,7 +321,9 @@ function showVDetail(id){
     drop.addEventListener('dragleave',()=>{drop.style.borderColor='';drop.style.background='';});
     drop.addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';drop.style.background='';const files=e.dataTransfer.files;if(files.length)processAnexoFiles(files,v.id);});
   }
-  if(['dir','fin','dono'].includes(role)&&(!v.anexos||v.anexos.length===0)) carregarAnexosVenda(v.id);
+  const pcInput=document.getElementById('pc-obs-input');
+  if(pcInput&&pendencia&&pendComercialModo==='editar') pcInput.value=pendencia.obs||'';
+  if(['dir','fin','dono'].includes(role)&&!v.anexosCarregados) carregarAnexosVenda(v.id);
 }
 
 function renderAnexosSec(v){
@@ -261,6 +466,11 @@ function exportPDF(){
 
 zRegisterModule('app', {
   showVDetail,
+  salvarObsHistorico,
+  togglePendenciaComercialForm,
+  fecharPendenciaComercialForm,
+  salvarPendenciaComercial,
+  resolverPendenciaComercial,
   renderAnexosSec,
   handleAnexoUpload,
   processAnexoFiles,

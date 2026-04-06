@@ -420,36 +420,80 @@
     <!-- MODAL NOVO TREINAMENTO -->
     <div class="modal-backdrop" id="mtrein" onclick="handleBackdropT(event)">
       <div class="modal mt-modal">
-        <div class="modal-top">
-          <div>
+        <div class="modal-top mt-top">
+          <div class="mt-head-copy">
             <div class="modal-title" id="mt-modal-title">Novo Treinamento</div>
-            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Categoria: <strong id="mt-cat-lbl" style="color:var(--gold);"></strong></div>
+            <div class="mt-head-meta">Categoria do treinamento <span class="mt-cat-chip" id="mt-cat-lbl"></span></div>
           </div>
           <button class="mclose" onclick="fecharMT()">✕</button>
         </div>
         <div class="mt-modal modal-body">
-          <div class="f-field">
-            <label>Título do treinamento *</label>
-            <input type="text" id="mt-titulo" placeholder="Ex: Técnicas de prospecção ativa" maxlength="60">
+          <div class="mt-section">
+            <div class="mt-section-head">
+              <div class="mt-section-kicker">Dados básicos</div>
+              <div class="mt-section-sub">Defina o nome e a estrutura inicial da trilha de treinamento.</div>
+            </div>
+            <div class="f-field">
+              <label>Título do treinamento *</label>
+              <input type="text" id="mt-titulo" placeholder="Ex: Técnicas de prospecção ativa" maxlength="60">
+            </div>
+            <div class="f-row">
+              <div class="f-field"><label>Nº de aulas *</label><input type="number" id="mt-aulas" placeholder="Ex: 5" min="1" max="99"></div>
+              <div class="f-field"><label>Duração *</label><input type="text" id="mt-dur" placeholder="Ex: 2h30"></div>
+            </div>
           </div>
-          <div class="f-row">
-            <div class="f-field"><label>Nº de aulas *</label><input type="number" id="mt-aulas" placeholder="Ex: 5" min="1" max="99"></div>
-            <div class="f-field"><label>Duração *</label><input type="text" id="mt-dur" placeholder="Ex: 2h30"></div>
+
+          <div class="mt-section mt-section-soft">
+            <div class="mt-section-head">
+              <div class="mt-section-kicker">Identidade visual</div>
+              <div class="mt-section-sub">Escolha um ícone fácil de reconhecer e ajuste o progresso inicial do material.</div>
+            </div>
+            <div class="f-field">
+              <div class="mt-label-row">
+                <label>Ícone do curso</label>
+                <span class="mt-label-hint">Use um símbolo que represente o tema da trilha</span>
+              </div>
+              <div class="emoji-grid-wrap">
+                <div class="emoji-grid" id="emoji-grid"></div>
+              </div>
+            </div>
+            <div class="f-field">
+              <div class="mt-label-row">
+                <label>Progresso inicial</label>
+                <span class="mt-label-hint">Defina um ponto de partida para o card do treinamento</span>
+              </div>
+              <div class="mt-range-card">
+                <input type="range" id="mt-prog" min="0" max="100" value="0" oninput="atualizarProgT()">
+                <div class="range-preview">
+                  <div class="rbar"><div class="rfill" id="rfill" style="width:0%"></div></div>
+                  <span class="rlbl" id="rlbl">0%</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="f-field">
-            <label>Ícone do curso</label>
-            <div class="emoji-grid" id="emoji-grid"></div>
-          </div>
-          <div class="f-field">
-            <label>Progresso inicial</label>
-            <input type="range" id="mt-prog" min="0" max="100" value="0" oninput="atualizarProgT()">
-            <div class="range-preview">
-              <div class="rbar"><div class="rfill" id="rfill" style="width:0%"></div></div>
-              <span class="rlbl" id="rlbl">0%</span>
+
+          <div class="mt-section">
+            <div class="mt-section-head">
+              <div class="mt-section-kicker">Conteúdo em vídeo</div>
+              <div class="mt-section-sub">Anexe os vídeos que ficarão disponíveis dentro do treinamento.</div>
+            </div>
+            <div class="f-field">
+              <label>Vídeos do treinamento</label>
+              <div class="trein-video-upload" onclick="document.getElementById('mt-videos-input').click()">
+                <div class="trein-video-upload-icon">🎬</div>
+                <div class="trein-video-upload-main">
+                  <strong>Adicionar vídeos</strong>
+                  <span>MP4, WEBM ou MOV · até 80MB por arquivo</span>
+                </div>
+                <button type="button" class="btn-c trein-video-upload-btn">Selecionar</button>
+              </div>
+              <input type="file" id="mt-videos-input" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,video/*" multiple style="display:none;" onchange="handleTreinVideoUpload(this)">
+              <div class="trein-video-list" id="mt-videos-list"></div>
+              <div class="trein-video-help">Os vídeos ficam disponíveis neste navegador para o treinamento selecionado.</div>
             </div>
           </div>
         </div>
-        <div class="modal-foot"><button class="btn-c" onclick="fecharMT()">Cancelar</button><button class="btn-s" id="mt-save-btn" onclick="salvarTrein()">✓ Adicionar treinamento</button></div>
+        <div class="modal-foot mt-foot"><button class="btn-c" onclick="fecharMT()">Cancelar</button><button class="btn-s" id="mt-save-btn" onclick="salvarTrein()">✓ Adicionar treinamento</button></div>
       </div>
     </div>
 
@@ -457,54 +501,86 @@
     <div class="page hidden" id="mod-carteira"><div class="carteira-wrap" id="carteira-content"></div></div>
 
     <div class="page" id="mod-vendas">
-      <div class="v-split">
-        <div class="v-list">
-          <div class="vl-h">
-            <div class="vl-ht">
-              Vendas <span class="zbg bg-a" id="vc">0</span>
-              <div id="btn-nova-venda-wrap"></div>
-            </div>
-            <div class="vl-tabs">
-              <button class="vtab active" onclick="setVTab('acomp',this)">Acompanhamento</button>
-              <button class="vtab" onclick="setVTab('rel',this)">Relatório</button>
-            </div>
+      <div class="v-toolbar">
+        <div class="v-toolbar-top">
+          <div class="vl-ht">
+            Vendas <span class="zbg bg-a" id="vc">0</span>
+          </div>
+          <div class="vl-tabs">
+            <button class="vtab active" onclick="setVTab('acomp',this)">Acompanhamento</button>
+            <button class="vtab" onclick="setVTab('rel',this)">Relatório</button>
+          </div>
+          <div id="btn-nova-venda-wrap"></div>
+        </div>
+        <div class="vf-panel">
+          <div class="v-toolbar-main">
             <div class="vl-srch"><span class="vl-si">🔍</span><input type="text" id="vsearch" placeholder="Buscar cliente, produto..." oninput="renderVList()"></div>
-            <div id="v-adv-filters" style="padding:0 8px 8px;border-bottom:1px solid var(--bd);">
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:3px;">
-                <select id="vf-mes" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
-                  <option value="">📅 Mês</option>
-                </select>
-                <select id="vf-construtora" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
-                  <option value="">🏗️ Construtora</option>
-                </select>
-                <select id="vf-equipe" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
-                  <option value="">👥 Equipe</option>
-                </select>
-                <select id="vf-cca" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;">
-                  <option value="">🧑‍💼 CCA</option>
-                </select>
-                <select id="vf-origem" onchange="renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;grid-column:span 2;">
-                  <option value="">📌 Origem</option>
-                  <option value="IndicaÃ§Ã£o">Indicação</option>
-                  <option value="MKT">MKT</option>
-                  <option value="Oferta Ativa">Oferta Ativa</option>
-                </select>
-                <select id="vf-situacao" onchange="renderFiltros();renderVList()" style="font-size:9px;padding:3px 5px;border:1px solid var(--bd);border-radius:5px;background:var(--bg);color:var(--tx);font-family:'Inter',sans-serif;width:100%;min-width:0;grid-column:span 2;">
-                  <option value="">📂 Situação</option>
-                  <option value="ativas">Ativas</option>
-                  <option value="distratos">Distratos</option>
-                </select>
-              </div>
-              <div id="vf-active-tags" style="display:flex;flex-wrap:wrap;gap:3px;"></div>
+            <select id="vf-mes" class="vf-main-select" onchange="renderVList()">
+              <option value="">📅 Mês</option>
+            </select>
+            <select id="vf-situacao" class="vf-main-select" onchange="renderFiltros();renderVList()">
+              <option value="">📂 Situação</option>
+              <option value="ativas">Ativas</option>
+              <option value="distratos">Distratos</option>
+            </select>
+            <button id="vf-more-btn" class="vf-more-btn" type="button" onclick="toggleMaisFiltros()">Mais filtros</button>
+          </div>
+          <div class="v-toolbar-sub">
+            <div class="vf-quick" id="vf-quick">
+              <button class="vf-quick-btn vf-quick-situacao" id="qf-ativas" type="button" onclick="setFiltroSituacaoRapido('ativas')">Ativas</button>
+              <button class="vf-quick-btn vf-quick-distrato" id="qf-distratos" type="button" onclick="setFiltroSituacaoRapido('distratos')">Distratos</button>
+              <button class="vf-quick-btn vf-quick-pend" id="qf-pendencia" type="button" onclick="setFiltroPendenciaRapido('com')">Pend. comercial</button>
+              <button class="vf-quick-btn vf-quick-alerta" id="qf-atrasadas" type="button" onclick="setFiltroPrazoRapido('atrasada')">Atrasadas</button>
+              <button class="vf-quick-btn vf-quick-ok" id="qf-prazo" type="button" onclick="setFiltroPrazoRapido('ok')">No prazo</button>
+            </div>
+            <div class="unid-filter hidden" id="unid-filter">
+              <button class="uf active-all" id="uf-all" onclick="setUnidade('all',this)">🏢 Todas</button>
+              <button class="uf" id="uf-centro" onclick="setUnidade('Centro',this)">🟠 Centro</button>
+              <button class="uf" id="uf-cristo" onclick="setUnidade('Cristo Rei',this)">🟢 Cristo Rei</button>
             </div>
           </div>
-          <div class="vl-filters" id="vfilters"></div>
-          <div class="unid-filter hidden" id="unid-filter">
-            <button class="uf active-all" id="uf-all" onclick="setUnidade('all',this)">🏢 Todas</button>
-            <button class="uf" id="uf-centro" onclick="setUnidade('Centro',this)">🟠 Centro</button>
-            <button class="uf" id="uf-cristo" onclick="setUnidade('Cristo Rei',this)">🟢 Cristo Rei</button>
+          <div id="v-adv-filters" class="vf-advanced">
+            <div class="vf-advanced-grid">
+              <select id="vf-construtora" onchange="renderVList()">
+                <option value="">🏗️ Construtora</option>
+              </select>
+              <select id="vf-equipe" onchange="renderVList()">
+                <option value="">👥 Equipe</option>
+              </select>
+              <select id="vf-cca" onchange="renderVList()">
+                <option value="">🧑‍💼 CCA</option>
+              </select>
+              <select id="vf-pend-comercial" onchange="renderFiltros();renderVList()">
+                <option value="">🟠 Pendência comercial</option>
+                <option value="com">Com pendência</option>
+                <option value="sem">Sem pendência</option>
+              </select>
+              <select id="vf-origem" class="vf-field-wide" onchange="renderVList()">
+                <option value="">📌 Origem</option>
+                <option value="IndicaÃ§Ã£o">Indicação</option>
+                <option value="MKT">MKT</option>
+                <option value="Oferta Ativa">Oferta Ativa</option>
+              </select>
+            </div>
           </div>
-          <div class="vl-body" id="vlista"></div>
+          <div class="vf-active-wrap hidden" id="vf-active-wrap">
+            <div class="vf-active-head hidden" id="vf-active-head">
+              <span>Filtros ativos</span>
+              <button type="button" class="vf-clear-btn" onclick="limparTodosFiltrosVendas()">Limpar tudo</button>
+            </div>
+            <div id="vf-active-tags"></div>
+          </div>
+        </div>
+        <div class="vf-stage-wrap">
+          <div class="vf-section-title">Pipeline</div>
+          <div class="vl-filters" id="vfilters"></div>
+        </div>
+      </div>
+      <div class="v-split">
+        <div class="v-side">
+          <div class="v-list">
+            <div class="vl-body" id="vlista"></div>
+          </div>
         </div>
         <div class="v-detail">
           <div id="vd-acomp" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">

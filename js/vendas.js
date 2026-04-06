@@ -24,7 +24,7 @@ const PROC_DATA={
 };
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ ESTADO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
-let curVId=null, pendId=null, fEtapa='all', relMes='TODOS', vtab='acomp', filtroUnidade='all';
+let curVId=null, pendId=null, fEtapa='all', relMes='TODOS', vtab='acomp', filtroUnidade='all', fPrazo='all', maisFiltrosAbertos=false;
 let nextVendaId=1;
 let mvDocs={comp:null,cont:null};
 let distratoVendaId=null;
@@ -38,8 +38,29 @@ zSetState('state.ui.curVId', curVId);
 zSetState('state.ui.pendId', pendId);
 zSetState('state.ui.fEtapa', fEtapa);
 zSetState('state.ui.relMes', relMes);
+zSetState('state.ui.fPrazo', fPrazo);
+zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
+
+function histAfetaFluxo(h){
+  return h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao'&&h.tipo!=='obs'&&h.tipo!=='pend_comercial'&&h.tipo!=='pend_comercial_editada'&&h.tipo!=='pend_comercial_resolvida';
+}
+function getPendenciaComercial(v){
+  if(!v||!Array.isArray(v.hist)) return null;
+  let aberta=null;
+  v.hist.forEach(h=>{
+    if(h.tipo==='pend_comercial'||h.tipo==='pend_comercial_editada'){
+      aberta={obs:h.o||'',por:h.u||'',em:h.d||'',tipo:h.tipo};
+    }else if(h.tipo==='pend_comercial_resolvida'){
+      aberta=null;
+    }
+  });
+  return aberta;
+}
+function temPendenciaComercial(v){ return !!getPendenciaComercial(v); }
 zSetState('state.ui.vtab', vtab);
 zSetState('state.ui.filtroUnidade', filtroUnidade);
+zSetState('state.ui.fPrazo', fPrazo);
+zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
 zSetState('state.ui.nextVendaId', nextVendaId);
 zSetState('state.ui.mvDocs', mvDocs);
 zSetState('state.ui.distratoVendaId', distratoVendaId);
@@ -124,6 +145,12 @@ function aplicarFiltroSituacao(lista){
   if(vfSituacao==='distratos') return lista.filter(v=>!!v.distratada);
   return lista;
 }
+function aplicarFiltroPendencia(lista){
+  const vfPend=document.getElementById('vf-pend-comercial')?.value;
+  if(vfPend==='com') return lista.filter(v=>temPendenciaComercial(v));
+  if(vfPend==='sem') return lista.filter(v=>!temPendenciaComercial(v));
+  return lista;
+}
 
 function vendasU(l, somenteMinhas=false){
   const unid=getUnidadeUsuario();
@@ -165,7 +192,7 @@ function vendasU(l, somenteMinhas=false){
 function calcAtraso(v){
   const prazo=PRAZOS_ETAPA[v.etapa];
   if(prazo===null||v.etapa===ETAPAS.length-1||v.distratada) return null;
-  const histEtapa=[...v.hist].reverse().find(h=>h.e===v.etapa&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+  const histEtapa=[...v.hist].reverse().find(h=>h.e===v.etapa&&histAfetaFluxo(h));
   const ref=histEtapa||(v.hist&&v.hist.length?v.hist[0]:null);
   if(!ref||!ref.d) return 0;
   const partes=ref.d.split('/');
@@ -187,7 +214,7 @@ function labelAtraso(v){
 
 function calcPrevisao(v){
   if(v.etapa===0||v.distratada||v.etapa>=ETAPAS.length-1) return null;
-  const histEtapa1=[...v.hist].find(h=>h.e===1&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+  const histEtapa1=[...v.hist].find(h=>h.e===1&&histAfetaFluxo(h));
   const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
   if(!refInicio||!refInicio.d) return null;
   const partes=refInicio.d.split('/');
@@ -198,8 +225,8 @@ function calcPrevisao(v){
   for(let i=1;i<ETAPAS.length-1;i++){ if(PRAZOS_ETAPA[i]) prazosRestantes+=PRAZOS_ETAPA[i]; }
   let ajusteAcumulado=0, atrasosAcumulados=0, antecipacoes=0;
   for(let i=1;i<v.etapa;i++){
-    const hEntrada=[...v.hist].find(h=>h.e===i&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
-    const hSaida=[...v.hist].find(h=>h.e===i+1&&h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao');
+    const hEntrada=[...v.hist].find(h=>h.e===i&&histAfetaFluxo(h));
+    const hSaida=[...v.hist].find(h=>h.e===i+1&&histAfetaFluxo(h));
     if(!hEntrada||!hSaida||!hEntrada.d||!hSaida.d) continue;
     const pE=hEntrada.d.split('/'), pS=hSaida.d.split('/');
     if(pE.length<2||pS.length<2) continue;
@@ -234,21 +261,98 @@ function renderBtnNovaVenda(){
     wrap.innerHTML='';
   }
 }
+function toggleMaisFiltros(force){
+  maisFiltrosAbertos=typeof force==='boolean'?force:!maisFiltrosAbertos;
+  zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
+  const box=document.getElementById('v-adv-filters');
+  if(box) box.classList.toggle('open', maisFiltrosAbertos);
+  atualizarBotaoMaisFiltros();
+}
+function atualizarBotaoMaisFiltros(){
+  const btn=document.getElementById('vf-more-btn');
+  if(!btn) return;
+  const ativos=['vf-construtora','vf-equipe','vf-cca','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
+  btn.classList.toggle('active', maisFiltrosAbertos);
+  btn.textContent=ativos?zUiText(`Mais filtros (${ativos})`):(maisFiltrosAbertos?zUiText('Ocultar filtros'):zUiText('Mais filtros'));
+}
+function atualizarFiltrosRapidos(){
+  const vfSituacao=document.getElementById('vf-situacao')?.value||'';
+  const vfPend=document.getElementById('vf-pend-comercial')?.value||'';
+  document.getElementById('qf-ativas')?.classList.toggle('active',vfSituacao==='ativas');
+  document.getElementById('qf-distratos')?.classList.toggle('active',vfSituacao==='distratos');
+  document.getElementById('qf-pendencia')?.classList.toggle('active',vfPend==='com');
+  document.getElementById('qf-atrasadas')?.classList.toggle('active',fPrazo==='atrasada');
+  document.getElementById('qf-prazo')?.classList.toggle('active',fPrazo==='ok');
+}
+function setFiltroSituacaoRapido(valor){
+  const el=document.getElementById('vf-situacao');
+  if(!el) return;
+  el.value=el.value===valor?'':valor;
+  renderFiltros();
+  renderVList();
+}
+function setFiltroPendenciaRapido(valor){
+  const el=document.getElementById('vf-pend-comercial');
+  if(!el) return;
+  el.value=el.value===valor?'':valor;
+  renderFiltros();
+  renderVList();
+}
+function setFiltroPrazoRapido(valor){
+  fPrazo=fPrazo===valor?'all':valor;
+  zSetState('state.ui.fPrazo', fPrazo);
+  renderFiltros();
+  renderVList();
+}
+function limparTodosFiltrosVendas(){
+  const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-cca','vf-origem','vf-situacao','vf-pend-comercial'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  fEtapa='all';
+  fPrazo='all';
+  filtroUnidade='all';
+  zSetState('state.ui.fEtapa', fEtapa);
+  zSetState('state.ui.fPrazo', fPrazo);
+  zSetState('state.ui.filtroUnidade', filtroUnidade);
+  document.querySelectorAll('.uf').forEach(b=>{b.className='uf';});
+  const ufAll=document.getElementById('uf-all');
+  if(ufAll) ufAll.classList.add('active-all');
+  toggleMaisFiltros(false);
+  renderFiltros();
+  renderVList();
+}
+function labelFiltroEtapa(etapa){
+  const mapa={
+    'Aguardando demanda':'Aguard.',
+    'Entrevista':'Entrev.',
+    'Ass. formulários':'Ass. form.',
+    'Envio CEHOP':'CEHOP',
+    'Entrevista Caixa':'Entr. Cx',
+    'Aguard. Ass. CEF':'Ag. CEF',
+    'Assinado CEF':'Assinado',
+    'Nota emitida':'Nota',
+    'Comissão recebida':'Com.'
+  };
+  return mapa[zUiText(etapa)]||zUiText(etapa);
+}
+function chipFiltroHTML(label,count,onclick,extraClass='',extraStyle=''){
+  return `<button class="fe ${extraClass}" onclick="${onclick}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></button>`;
+}
 function renderFiltros(){
-  const base=aplicarFiltroSituacao(vendasU(VENDAS));
+  const base=aplicarFiltroPendencia(aplicarFiltroSituacao(vendasU(VENDAS)));
   const cnt={}; base.forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});
-  let h=`<button class="fe ${fEtapa==='all'?'active':''}" onclick="setFE('all')">Todas (${base.length})</button>`;
-  ETAPAS.forEach((e,i)=>{if(cnt[i])h+=`<button class="fe ${fEtapa==i?'active':''}" onclick="setFE(${i})">${zUiText(e).split(' ')[0]} (${cnt[i]})</button>`;});
+  let h=chipFiltroHTML('Todas',base.length,`setFE('all')`,fEtapa==='all'?'active':'');
+  ETAPAS.forEach((e,i)=>{if(cnt[i])h+=chipFiltroHTML(labelFiltroEtapa(e),cnt[i],`setFE(${i})`,fEtapa==i?'active':'');});
+  let hPrazo='';
   if(document.getElementById('vf-situacao')?.value!=='distratos'){
     const comPrazo=base.filter(v=>!v.distratada&&PRAZOS_ETAPA[v.etapa]!==null&&v.etapa<ETAPAS.length-1);
     const atrasadas=comPrazo.filter(v=>calcAtraso(v)>0);
     const vencem=comPrazo.filter(v=>calcAtraso(v)===0);
     const noPrazo=comPrazo.filter(v=>calcAtraso(v)<=0);
-    if(atrasadas.length) h+=`<button class="fe" onclick="filtrarPrazo('atrasada')" style="background:#FEF0EC;color:#C05030;border-color:#E0A090;">${zUiText('❗')} Atrasadas (${atrasadas.length})</button>`;
-    if(vencem.length) h+=`<button class="fe" onclick="filtrarPrazo('alerta')" style="background:#FFF8E8;color:#C08020;border-color:#E8C060;">${zUiText('⚠️')} Vence hoje (${vencem.length})</button>`;
-    if(noPrazo.length) h+=`<button class="fe" onclick="filtrarPrazo('ok')" style="background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;">${zUiText('✓')} No prazo (${noPrazo.length})</button>`;
+    if(atrasadas.length) hPrazo+=chipFiltroHTML('❗ Atrasadas',atrasadas.length,`filtrarPrazo('atrasada')`,`${fPrazo==='atrasada'?'is-highlighted ':''}fe-alerta`,'background:#FEF0EC;color:#C05030;border-color:#E0A090;');
+    if(vencem.length) hPrazo+=chipFiltroHTML('⚠️ Vence hoje',vencem.length,`filtrarPrazo('alerta')`,`${fPrazo==='alerta'?'is-highlighted ':''}fe-vence`,'background:#FFF8E8;color:#C08020;border-color:#E8C060;');
+    if(noPrazo.length) hPrazo+=chipFiltroHTML('✓ No prazo',noPrazo.length,`filtrarPrazo('ok')`,`${fPrazo==='ok'?'is-highlighted ':''}fe-ok`,'background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;');
   }
-  document.getElementById('vfilters').innerHTML=h;
+  document.getElementById('vfilters').innerHTML=`<div class="vf-chip-stage-row">${h}</div>${hPrazo?`<div class="vf-chip-row">${hPrazo}</div>`:''}`;
   const unidEl=document.getElementById('unid-filter');
   const temAmbas=['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas');
   if(unidEl) unidEl.classList.toggle('hidden',!temAmbas);
@@ -275,21 +379,41 @@ function renderFiltros(){
 function atualizarTagsFiltros(){
   const wrap=document.getElementById('vf-active-tags');
   if(!wrap) return;
+  const activeWrap=document.getElementById('vf-active-wrap');
+  const activeHead=document.getElementById('vf-active-head');
   const tags=[];
+  const busca=document.getElementById('vsearch')?.value?.trim();
   const vfMes=document.getElementById('vf-mes')?.value;
   const vfConst=document.getElementById('vf-construtora')?.value;
   const vfEq=document.getElementById('vf-equipe')?.value;
   const vfCca=document.getElementById('vf-cca')?.value;
   const vfOrigem=document.getElementById('vf-origem')?.value;
   const vfSituacao=document.getElementById('vf-situacao')?.value;
+  const vfPend=document.getElementById('vf-pend-comercial')?.value;
+  if(busca) tags.push({label:zUiText(`🔎 ${busca}`),clear:()=>{document.getElementById('vsearch').value='';renderVList();}});
   if(vfMes) tags.push({label:zUiText(`📅 ${vfMes}`),clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
   if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
   if(vfEq) tags.push({label:zUiText(`👥 ${vfEq}`),clear:()=>{document.getElementById('vf-equipe').value='';renderVList();}});
   if(vfCca) tags.push({label:zUiText(`🧑‍💼 ${vfCca}`),clear:()=>{document.getElementById('vf-cca').value='';renderVList();}});
   if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
   if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
-  wrap.innerHTML=tags.map((t,i)=>`<span style="display:inline-flex;align-items:center;gap:4px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:10px;padding:2px 8px;font-size:9px;color:var(--gold);cursor:pointer;" onclick="clearTag(${i})">${zUiText(t.label)} ${zUiText('✕')}</span>`).join('');
+  if(vfPend) tags.push({label:zUiText(`🟠 ${vfPend==='com'?'Com pendência comercial':'Sem pendência comercial'}`),clear:()=>{document.getElementById('vf-pend-comercial').value='';renderFiltros();renderVList();}});
+  if(filtroUnidade!=='all') tags.push({label:zUiText(`📍 ${filtroUnidade}`),clear:()=>{const ufAll=document.getElementById('uf-all');if(ufAll) setUnidade('all',ufAll);}});
+  if(fPrazo!=='all'){
+    const labels={atrasada:'❗ Atrasadas',alerta:'⚠️ Vence hoje',ok:'✓ No prazo'};
+    tags.push({label:zUiText(labels[fPrazo]||'Prazo'),clear:()=>{fPrazo='all';zSetState('state.ui.fPrazo', fPrazo);renderFiltros();renderVList();}});
+  }
+  wrap.innerHTML=tags.map((t,i)=>`<button type="button" class="vf-tag" onclick="clearTag(${i})">${zUiText(t.label)} <span>${zUiText('✕')}</span></button>`).join('');
   wrap._tags=tags;
+  if(activeWrap) activeWrap.classList.toggle('hidden',!tags.length);
+  if(activeHead) activeHead.classList.toggle('hidden',!tags.length);
+  atualizarFiltrosRapidos();
+  atualizarBotaoMaisFiltros();
+}
+function clearTag(i){
+  const wrap=document.getElementById('vf-active-tags');
+  const tags=wrap&&wrap._tags;
+  if(tags&&tags[i]&&typeof tags[i].clear==='function') tags[i].clear();
 }
 function setFE(v){fEtapa=v==='all'?'all':parseInt(v);zSetState('state.ui.fEtapa', fEtapa);renderFiltros();renderVList();}
 function setUnidade(u,el){
@@ -297,6 +421,7 @@ function setUnidade(u,el){
   zSetState('state.ui.filtroUnidade', filtroUnidade);
   document.querySelectorAll('.uf').forEach(b=>{b.className='uf';});
   if(el){ if(u==='all')el.classList.add('active-all'); else if(u==='Centro')el.classList.add('active-centro'); else el.classList.add('active-cristo'); }
+  renderFiltros();
   renderVList();
 }
 function setVTab(t,el){
@@ -310,27 +435,10 @@ function setVTab(t,el){
 }
 
 function filtrarPrazo(tipo){
-  const base=aplicarFiltroSituacao(vendasU(VENDAS));
-  const l=base.filter(v=>{
-    if(v.distratada) return false;
-    if(PRAZOS_ETAPA[v.etapa]===null||v.etapa>=ETAPAS.length-1) return false;
-    const a=calcAtraso(v);
-    if(tipo==='atrasada') return a!==null&&a>0;
-    if(tipo==='alerta') return a===0;
-    if(tipo==='ok') return a!==null&&a<=0;
-    return false;
-  });
-  const cores={atrasada:{bg:'#FEF0EC',cor:'#C05030',bd:'#E0A090',icone:'❗'},alerta:{bg:'#FFF8E8',cor:'#C08020',bd:'#E8C060',icone:'⚠️'},ok:{bg:'#E8F5EE',cor:'#2E9E6E',bd:'#80C8A0',icone:'✓'}};
-  const c=cores[tipo];
-  document.getElementById('vc').textContent=l.length;
-  document.getElementById('vlista').innerHTML=l.map(v=>{
-    const atraso=labelAtraso(v);
-    const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">${zUiText(`📍 ${v.unidade}`)}</span>`:'';
-    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="border-left:3px solid ${c.cor};"><div class="vav">${ini(v.cliente)}</div><div style="flex:1;min-width:0;"><div class="vnome">${zUiText(v.cliente.split('/')[0].trim())}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}<span style="font-size:9px;background:${c.bg};color:${c.cor};border:1px solid ${c.bd};border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText(c.icone)} ${zUiText(atraso?.label||'')}</span></div></div></div>`;
-  }).join('')||`<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda nessa categoria</div>`;
+  setFiltroPrazoRapido(tipo);
 }
 function renderVList(){
-  let l=aplicarFiltroSituacao(vendasU(VENDAS));
+  let l=aplicarFiltroPendencia(aplicarFiltroSituacao(vendasU(VENDAS)));
   if(fEtapa!=='all') l=l.filter(v=>v.etapa===parseInt(fEtapa));
   const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();
   if(q) l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q)||v.construtora.toLowerCase().includes(q)||v.corretor.toLowerCase().includes(q));
@@ -344,15 +452,27 @@ function renderVList(){
   if(vfCca) l=l.filter(v=>v.cca===vfCca);
   if(vfOrigem) l=l.filter(v=>v.origem===vfOrigem);
   if(vfEq) l=l.filter(v=>[v.corretor,v.gerente,v.diretor].some(nome=>{if(!nome)return false;const u=USUARIOS.find(u=>u.nome===nome);return u&&u.equipe===vfEq;}));
+  if(fPrazo!=='all'){
+    l=l.filter(v=>{
+      if(v.distratada) return false;
+      if(PRAZOS_ETAPA[v.etapa]===null||v.etapa>=ETAPAS.length-1) return false;
+      const a=calcAtraso(v);
+      if(fPrazo==='atrasada') return a!==null&&a>0;
+      if(fPrazo==='alerta') return a===0;
+      if(fPrazo==='ok') return a!==null&&a<=0;
+      return true;
+    });
+  }
   atualizarTagsFiltros();
   document.getElementById('vc').textContent=l.length;
   if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}
   document.getElementById('vlista').innerHTML=l.map(v=>{
     const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">${zUiText(`📍 ${v.unidade}`)}</span>`:'';
     const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('⚠️ Distrato')}</span>`:'';
+    const pbadge=temPendenciaComercial(v)?`<span class="badge-pend-comercial">${zUiText('🟠 Pend. comercial')}</span>`:'';
     const atraso=labelAtraso(v);
     const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('❗')} ${zUiText(atraso.label)}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚠️')} ${zUiText(atraso.label)}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('✓')} ${zUiText(atraso.label)}</span>`:'';
-    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${zUiText(v.cliente.split('/')[0].trim())}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${dbadge}${abadge}</div></div></div>`;
+    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${zUiText(v.cliente.split('/')[0].trim())}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${dbadge}${pbadge}${abadge}</div></div></div>`;
   }).join('');
 }
 function abrirM(id){
@@ -759,6 +879,8 @@ zRegisterModule('vendas', {
   calcAtraso,
   labelAtraso,
   calcPrevisao,
+  getPendenciaComercial,
+  temPendenciaComercial,
   renderFiltros,
   renderVList,
   renderBtnNovaVenda,
