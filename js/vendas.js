@@ -599,6 +599,35 @@ function confirmarDistrato(){
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ EDITAR VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function preencherDiretor2Edit(valorAtual){
+  const sel=document.getElementById('ev-diretor2');
+  if(!sel) return;
+  const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
+  const diretorPrincipal=sel.dataset.currentDiretor||'';
+  const diretores=USUARIOS
+    .filter(u=>{
+      if(perfilRole(u)!=='dir') return false;
+      return u.nome!==diretorPrincipal;
+    })
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const atual=(valorAtual!==undefined?valorAtual:sel.value)||'';
+  let options=`<option value="">Nenhum</option>`;
+  if(atual && !diretores.some(u=>u.nome===atual)){
+    options+=`<option value="${atual}">${zUiText(atual)}</option>`;
+  }
+  options+=diretores.map(u=>`<option value="${u.nome}">${zUiText(u.nome)}</option>`).join('');
+  sel.innerHTML=options;
+  sel.value=atual;
+  toggleDiretor2EditPct(false);
+}
+function toggleDiretor2EditPct(limpar){
+  const sel=document.getElementById('ev-diretor2');
+  const wrap=document.getElementById('ev-dir2-pct-field');
+  const pct=document.getElementById('ev-pct-dir2');
+  const ativo=!!(sel&&sel.value);
+  if(wrap) wrap.style.display=ativo?'block':'none';
+  if(!ativo&&limpar&&pct) pct.value='0.00';
+}
 function abrirEditVenda(id){
   const v=VENDAS.find(x=>x.id===id);
   if(!v)return;
@@ -620,6 +649,10 @@ function abrirEditVenda(id){
   document.getElementById('ev-pct-ger').value=((v.pct_ger||0)*100).toFixed(2);
   document.getElementById('ev-pct-dir').value=((v.pct_dir||0)*100).toFixed(2);
   document.getElementById('ev-pct-dir2').value=((v.pct_dir2||0)*100).toFixed(2);
+  document.getElementById('ev-diretor2').dataset.currentDiretor=v.diretor||'';
+  preencherDiretor2Edit(v.diretor2||'');
+  document.getElementById('ev-diretor2').onchange=function(){toggleDiretor2EditPct(true);};
+  document.getElementById('ev-unidade').onchange=function(){preencherDiretor2Edit();};
   document.getElementById('ev-bonus').value=v.bonus||0;
   document.getElementById('ev-bonus-dir').value=v.bonus_pct_dir||0;
   document.getElementById('ev-bonus-ger').value=v.bonus_pct_ger||0;
@@ -633,7 +666,7 @@ function abrirEditVenda(id){
 function setEditVendaLoading(loading){
   editVendaSalvando=loading;
   zSetState('state.ui.editVendaSalvando', editVendaSalvando);
-  ['ev-cliente','ev-data','ev-produto','ev-construtora','ev-origem','ev-unidade','ev-valor','ev-pct','ev-imp','ev-pct-cor','ev-pct-cap','ev-pct-ger','ev-pct-dir','ev-pct-dir2','ev-bonus','ev-bonus-dir','ev-bonus-ger','ev-bonus-cor','ev-cca','ev-motivo']
+  ['ev-cliente','ev-data','ev-produto','ev-construtora','ev-origem','ev-unidade','ev-diretor2','ev-valor','ev-pct','ev-imp','ev-pct-cor','ev-pct-cap','ev-pct-ger','ev-pct-dir','ev-pct-dir2','ev-bonus','ev-bonus-dir','ev-bonus-ger','ev-bonus-cor','ev-cca','ev-motivo']
     .forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.disabled=loading;
@@ -669,7 +702,7 @@ function salvarEditVenda(){
   const original=JSON.parse(JSON.stringify(v));
   const dataVal=document.getElementById('ev-data').value;
   const d2=new Date(dataVal+'T12:00:00');
-  const meses=['JANEIRO','FEVEREIRO','MARÃƒâ€¡O','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   v.cliente=document.getElementById('ev-cliente').value.toUpperCase().trim();
   v.data=`${d2.getDate().toString().padStart(2,'0')}/${(d2.getMonth()+1).toString().padStart(2,'0')}`;
   v.mes=meses[d2.getMonth()];
@@ -677,6 +710,7 @@ function salvarEditVenda(){
   v.construtora=document.getElementById('ev-construtora').value.trim();
   v.origem=document.getElementById('ev-origem').value;
   v.unidade=document.getElementById('ev-unidade').value;
+  v.diretor2=document.getElementById('ev-diretor2').value||'';
   v.valor=parseFloat(document.getElementById('ev-valor').value)||0;
   v.pct=parseFloat(document.getElementById('ev-pct').value)/100;
   v.imp=parseFloat(document.getElementById('ev-imp').value)/100;
@@ -684,7 +718,13 @@ function salvarEditVenda(){
   v.pct_cap=parseFloat(document.getElementById('ev-pct-cap').value)/100;
   v.pct_ger=parseFloat(document.getElementById('ev-pct-ger').value)/100;
   v.pct_dir=parseFloat(document.getElementById('ev-pct-dir').value)/100;
-  v.pct_dir2=parseFloat(document.getElementById('ev-pct-dir2').value)/100;
+  v.pct_dir2=v.diretor2?(parseFloat(document.getElementById('ev-pct-dir2').value)/100||0):0;
+  if(v.diretor2&&v.diretor2===v.diretor){
+    document.getElementById('ev-diretor2').focus();
+    showToast(zUiText('⚠️'),zUiText('O Diretor 2 precisa ser diferente do diretor principal.'));
+    Object.assign(v, original);
+    return;
+  }
   v.bonus=parseFloat(document.getElementById('ev-bonus').value)||0;
   v.bonus_pct_dir=parseFloat(document.getElementById('ev-bonus-dir').value)||0;
   v.bonus_pct_ger=parseFloat(document.getElementById('ev-bonus-ger').value)||0;

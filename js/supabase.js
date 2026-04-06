@@ -130,9 +130,16 @@ function mapUsuarioOut(u){
   };
 }
 
+function normalizarMesVenda(mes){
+  const bruto=String(mes||'').trim();
+  if(!bruto) return '';
+  const txt=(typeof zUiText==='function'?zUiText(bruto):bruto).trim().toUpperCase();
+  return txt==='MARCO'?'MARÇO':txt;
+}
+
 function mapVendaIn(v){
   return{
-    id:v.id,data:v.data,mes:v.mes,cliente:v.cliente,produto:v.produto,
+    id:v.id,data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
     construtora:v.construtora,origem:v.origem,unidade:v.unidade,
     corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
     diretor2:v.diretor2||'',cca:v.cca||'',
@@ -152,7 +159,7 @@ function mapVendaIn(v){
 
 function mapVendaOut(v){
   return{
-    data:v.data,mes:v.mes,cliente:v.cliente,produto:v.produto,
+    data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
     construtora:v.construtora,origem:v.origem,unidade:v.unidade,
     corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
     valor:v.valor,pct:v.pct,imp:v.imp,pct_cor:v.pct_cor,pct_cap:v.pct_cap,
