@@ -91,7 +91,7 @@ function resumoCarteira(lista) {
   const concluidas = ativas.filter(v => v.etapa === ETAPAS.length - 1);
   const emAndamento = ativas.filter(v => v.etapa < ETAPAS.length - 1);
   const vgv = ativas.reduce((s, v) => s + v.valor, 0);
-  const cBruta = ativas.reduce((s, v) => s + (v.valor * v.pct), 0);
+  const cBruta = ativas.reduce((s, v) => s + comBruta(v), 0);
   const cLiq = ativas.reduce((s, v) => s + comTotal(v), 0);
   const imposto = cBruta - cLiq;
   const cCor = ativas.reduce((s, v) => s + comC(v), 0);
@@ -246,7 +246,7 @@ function renderCarteiraTabelaRows(lista, cols) {
       if (c === 'com_dir') return `<td class="pos">${fmt(comD(v))}</td>`;
       if (c === 'com_zel') return `<td class="pos">${fmt(comZ(v))}</td>`;
       if (c === 'vgv') return `<td class="pos">${fmt(v.valor)}</td>`;
-      if (c === 'com_bruta') return `<td class="pos">${fmt(v.valor * v.pct)}</td>`;
+      if (c === 'com_bruta') return `<td class="pos">${fmt(comBruta(v))}</td>`;
       if (c === 'com_total') return `<td class="pos">${fmt(comTotal(v))}</td>`;
       if (c === 'minha') return `<td class="pos">${fmt(comVis(v))}</td>`;
       if (c === 'bonus_cor' || c === 'bonus_ger' || c === 'bonus_dir') {
