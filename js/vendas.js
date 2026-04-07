@@ -271,7 +271,7 @@ function toggleMaisFiltros(force){
 function atualizarBotaoMaisFiltros(){
   const btn=document.getElementById('vf-more-btn');
   if(!btn) return;
-  const ativos=['vf-construtora','vf-equipe','vf-cca','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
+  const ativos=['vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
   btn.classList.toggle('active', maisFiltrosAbertos);
   btn.textContent=ativos?zUiText(`Mais filtros (${ativos})`):(maisFiltrosAbertos?zUiText('Ocultar filtros'):zUiText('Mais filtros'));
 }
@@ -305,7 +305,7 @@ function setFiltroPrazoRapido(valor){
   renderVList();
 }
 function limparTodosFiltrosVendas(){
-  const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-cca','vf-origem','vf-situacao','vf-pend-comercial'];
+  const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem','vf-situacao','vf-pend-comercial'];
   ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   fEtapa='all';
   fPrazo='all';
@@ -361,11 +361,13 @@ function renderFiltros(){
   const selMes=document.getElementById('vf-mes');
   const selConst=document.getElementById('vf-construtora');
   const selEquipe=document.getElementById('vf-equipe');
+  const selCorretor=document.getElementById('vf-corretor');
   const selCca=document.getElementById('vf-cca');
   if(!selMes) return;
-  const curMes=selMes.value,curConst=selConst.value,curEq=selEquipe.value,curCca=selCca.value;
+  const curMes=selMes.value,curConst=selConst.value,curEq=selEquipe.value,curCorretor=selCorretor?.value||'',curCca=selCca.value;
   const meses=[...new Set(todasVendas.map(v=>v.mes).filter(Boolean))].sort();
   const construtoras=[...new Set(todasVendas.map(v=>v.construtora).filter(Boolean))].sort();
+  const corretores=[...new Set(todasVendas.map(v=>v.corretor).filter(Boolean))].sort();
   const ccas=[...new Set(todasVendas.map(v=>v.cca).filter(Boolean))].sort();
   const equipesSet=new Set();
   todasVendas.forEach(v=>{[v.corretor,v.gerente,v.diretor].forEach(nome=>{if(!nome)return;const u=USUARIOS.find(u=>u.nome===nome);if(u&&u.equipe)equipesSet.add(u.equipe);});});
@@ -373,6 +375,7 @@ function renderFiltros(){
   selMes.innerHTML=`<option value="">${zUiText('📅 Todos os meses')}</option>`+meses.map(m=>`<option value="${m}" ${curMes===m?'selected':''}>${zUiText(m)}</option>`).join('');
   selConst.innerHTML=`<option value="">${zUiText('🏗️ Todas construtoras')}</option>`+construtoras.map(c=>`<option value="${c}" ${curConst===c?'selected':''}>${zUiText(c)}</option>`).join('');
   selEquipe.innerHTML=`<option value="">${zUiText('👥 Todas as equipes')}</option>`+equipes.map(e=>`<option value="${e}" ${curEq===e?'selected':''}>${zUiText(e)}</option>`).join('');
+  if(selCorretor) selCorretor.innerHTML=`<option value="">${zUiText('🧑‍💼 Todos os corretores')}</option>`+corretores.map(c=>`<option value="${c}" ${curCorretor===c?'selected':''}>${zUiText(c)}</option>`).join('');
   selCca.innerHTML=`<option value="">${zUiText('🧑‍💼 Todos os CCA')}</option>`+ccas.map(c=>`<option value="${c}" ${curCca===c?'selected':''}>${zUiText(c)}</option>`).join('');
   atualizarTagsFiltros();
 }
@@ -386,6 +389,7 @@ function atualizarTagsFiltros(){
   const vfMes=document.getElementById('vf-mes')?.value;
   const vfConst=document.getElementById('vf-construtora')?.value;
   const vfEq=document.getElementById('vf-equipe')?.value;
+  const vfCorretor=document.getElementById('vf-corretor')?.value;
   const vfCca=document.getElementById('vf-cca')?.value;
   const vfOrigem=document.getElementById('vf-origem')?.value;
   const vfSituacao=document.getElementById('vf-situacao')?.value;
@@ -394,6 +398,7 @@ function atualizarTagsFiltros(){
   if(vfMes) tags.push({label:zUiText(`📅 ${vfMes}`),clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
   if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
   if(vfEq) tags.push({label:zUiText(`👥 ${vfEq}`),clear:()=>{document.getElementById('vf-equipe').value='';renderVList();}});
+  if(vfCorretor) tags.push({label:zUiText(`🧑‍💼 ${vfCorretor}`),clear:()=>{document.getElementById('vf-corretor').value='';renderVList();}});
   if(vfCca) tags.push({label:zUiText(`🧑‍💼 ${vfCca}`),clear:()=>{document.getElementById('vf-cca').value='';renderVList();}});
   if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
   if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
@@ -445,10 +450,12 @@ function renderVList(){
   const vfMes=document.getElementById('vf-mes')?.value;
   const vfConst=document.getElementById('vf-construtora')?.value;
   const vfEq=document.getElementById('vf-equipe')?.value;
+  const vfCorretor=document.getElementById('vf-corretor')?.value;
   const vfCca=document.getElementById('vf-cca')?.value;
   const vfOrigem=document.getElementById('vf-origem')?.value;
   if(vfMes) l=l.filter(v=>v.mes===vfMes);
   if(vfConst) l=l.filter(v=>v.construtora===vfConst);
+  if(vfCorretor) l=l.filter(v=>v.corretor===vfCorretor);
   if(vfCca) l=l.filter(v=>v.cca===vfCca);
   if(vfOrigem) l=l.filter(v=>v.origem===vfOrigem);
   if(vfEq) l=l.filter(v=>[v.corretor,v.gerente,v.diretor].some(nome=>{if(!nome)return false;const u=USUARIOS.find(u=>u.nome===nome);return u&&u.equipe===vfEq;}));

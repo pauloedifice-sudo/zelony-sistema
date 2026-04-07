@@ -363,11 +363,15 @@ function processAnexoFiles(files,vendaId){
 function delAnexo(vendaId,idx){const v=VENDAS.find(x=>x.id===vendaId);if(!v||!v.anexos)return;if(!confirm(zUiText(`Remover "${v.anexos[idx].nome}"?`)))return;v.anexos.splice(idx,1);dbAtualizarVenda(v).catch(err=>console.error(err));salvarLS();showVDetail(vendaId);showToast(zUiText('🗑'),zUiText('Anexo removido.'));}
 function verAnexo(vendaId,idx){const v=VENDAS.find(x=>x.id===vendaId);if(!v||!v.anexos||!v.anexos[idx])return;const a=v.anexos[idx];document.getElementById('av-nome').textContent=zUiText(a.nome);const cont=document.getElementById('av-content');if(a.mime&&a.mime.startsWith('image/')){cont.innerHTML=`<img src="${a.dataUrl}" alt="${zUiText(a.nome)}">`;}else if(a.mime==='application/pdf'){cont.innerHTML=`<iframe src="${a.dataUrl}" title="${zUiText(a.nome)}"></iframe>`;}else{cont.innerHTML=`<div style="color:#fff;font-size:13px;padding:20px;background:rgba(255,255,255,0.1);border-radius:8px;">${zUiText('Pré-visualização não disponível.')}<br><a href="${a.dataUrl}" download="${zUiText(a.nome)}" style="color:var(--gold-l);margin-top:10px;display:inline-block;">${zUiText('⬇ Baixar arquivo')}</a></div>`;}document.getElementById('anexo-viewer').classList.add('show');}
 function fecharViewer(){document.getElementById('anexo-viewer').classList.remove('show');document.getElementById('av-content').innerHTML='';}
+function aplicarFiltroCorretorRel(lista){
+  const vfCorretor=document.getElementById('vf-corretor')?.value;
+  return vfCorretor?lista.filter(v=>v.corretor===vfCorretor):lista;
+}
 
 function renderRel(){
   const meses=['TODOS',...new Set(VENDAS.map(v=>v.mes).filter(Boolean))];
   document.getElementById('rel-filters').innerHTML=meses.map(m=>`<button class="rf ${relMes===m?'active':''}" onclick="setRM('${m}',this)">${zUiText(m)}</button>`).join('');
-  let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));
+  let l=aplicarFiltroCorretorRel(vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes)));
   const ativas=l.filter(v=>!v.distratada);
   const distratadas=l.filter(v=>v.distratada);
   const conc=ativas.filter(v=>v.etapa===ETAPAS.length-1);
@@ -413,7 +417,7 @@ function setRM(m,el){relMes=m;zSetState('state.ui.relMes', relMes);document.quer
 function exportXLSX(){
   const btn=document.getElementById('bxl');btn.classList.add('loading');btn.textContent='Gerando...';
   setTimeout(()=>{
-    let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));
+    let l=aplicarFiltroCorretorRel(vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes)));
     const isAdmin=['dir','fin','dono'].includes(role);
     const cabecalho=[zUiText('Data'),zUiText('MÃªs'),zUiText('Cliente'),zUiText('Produto'),zUiText('Construtora'),zUiText('Origem'),zUiText('Corretor'),zUiText('Gerente'),'CCA','Valor (R$)',zUiText('Com. Bruta (R$)'),zUiText('Com. LÃ­quida (R$)'),'Zelony (R$)',zUiText('BÃ´nus (R$)'),zUiText('Etapa'),zUiText('Unidade'),zUiText('Status')];
     const linhas=l.map(v=>[zUiText(v.data),zUiText(v.mes),zUiText(v.cliente.split('/')[0].trim()),zUiText(v.produto),zUiText(v.construtora),zUiText(v.origem||''),zUiText(v.corretor),zUiText(v.gerente||''),zUiText(v.cca||''),v.valor,Math.round(v.valor*v.pct),Math.round(comTotal(v)),isAdmin?Math.round(comZ(v)):Math.round(comVis(v)),v.bonus||0,zUiText(ETAPAS[v.etapa]),zUiText(v.unidade||''),zUiText(v.distratada?'Distratada':'Ativa')]);
@@ -439,7 +443,7 @@ function exportPDF(){
     try{
       const{jsPDF}=window.jspdf;
       const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-      let l=vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes));
+      let l=aplicarFiltroCorretorRel(vendasU(relMes==='TODOS'?VENDAS:VENDAS.filter(v=>v.mes===relMes)));
       const ativas=l.filter(v=>!v.distratada);
       const W=doc.internal.pageSize.getWidth();
       doc.setFillColor(184,144,42);doc.rect(0,0,W,28,'F');
