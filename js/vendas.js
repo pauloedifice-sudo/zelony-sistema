@@ -92,6 +92,75 @@ function normalizarVendaNumeros(v){
 function pctSeguro(valor,casas=2){
   return `${(numSeguro(valor,0)*100).toFixed(casas)}%`;
 }
+function chavesNomePessoa(nome){
+  const base=String(nome||'').trim().toLowerCase();
+  if(!base) return [];
+  const chaves=[base];
+  const primeiroNome=base.split(' ')[0];
+  if(primeiroNome.length>=3&&!chaves.includes(primeiroNome)) chaves.push(primeiroNome);
+  return chaves;
+}
+function campoVendaBatePessoa(campo,nomeOuUsuario){
+  const alvo=String(campo||'').trim().toLowerCase();
+  if(!alvo) return false;
+  const nomeBase=typeof nomeOuUsuario==='string'?nomeOuUsuario:(nomeOuUsuario&&nomeOuUsuario.nome);
+  return chavesNomePessoa(nomeBase).includes(alvo);
+}
+function getUsuarioCorretorVenda(corretor){
+  return USUARIOS.find(u=>campoVendaBatePessoa(corretor,u))||null;
+}
+function pctRhCorretor(corretor,padrao=0){
+  const corretorUser=getUsuarioCorretorVenda(corretor);
+  if(!corretorUser) return padrao;
+  return corretorUser.rhContratacao?0.001:0;
+}
+function atualizarViewsPosSyncRh(){
+  if(typeof renderFiltros==='function') renderFiltros();
+  if(typeof renderVList==='function') renderVList();
+  if(typeof showVDetail==='function'&&curVId&&VENDAS.some(v=>v.id===curVId)) showVDetail(curVId);
+  const modCarteira=document.getElementById('mod-carteira');
+  if(modCarteira&&!modCarteira.classList.contains('hidden')&&typeof renderCarteira==='function') renderCarteira();
+  const modFinanceiro=document.getElementById('mod-financeiro');
+  if(modFinanceiro&&!modFinanceiro.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+}
+async function sincronizarPctRhVendas(vendasAlvo,opcoes={}){
+  const lista=Array.isArray(vendasAlvo)?vendasAlvo.filter(Boolean):[];
+  const alteradas=[];
+  lista.forEach(v=>{
+    if(!v||typeof v!=='object') return;
+    normalizarVendaNumeros(v);
+    const novoPct=typeof opcoes.forcarPctRh==='number'?opcoes.forcarPctRh:pctRhCorretor(v.corretor,null);
+    if(novoPct===null) return;
+    if(numSeguro(v.pct_rh,0)===novoPct) return;
+    v.pct_rh=novoPct;
+    alteradas.push(v);
+  });
+  if(!alteradas.length) return {alteradas:0,persistidas:0,falhas:0};
+  salvarLS();
+  let falhas=0;
+  if(opcoes.persistir!==false&&typeof dbAtualizarVenda==='function'){
+    const resultados=await Promise.allSettled(alteradas.map(v=>dbAtualizarVenda(v)));
+    falhas=resultados.filter(r=>r.status==='rejected').length;
+    if(falhas) console.warn('Falha ao sincronizar RH em parte das vendas.', resultados);
+  }
+  if(opcoes.renderizar!==false) atualizarViewsPosSyncRh();
+  return {alteradas:alteradas.length,persistidas:alteradas.length-falhas,falhas};
+}
+async function sincronizarRhContratacaoUsuario(usuarioAtual,usuarioAnterior=null,opcoes={}){
+  const chaves=[...new Set([
+    ...chavesNomePessoa(usuarioAtual&&usuarioAtual.nome),
+    ...chavesNomePessoa(usuarioAnterior&&usuarioAnterior.nome)
+  ])];
+  if(!chaves.length) return {alteradas:0,persistidas:0,falhas:0};
+  const vendasRelacionadas=VENDAS.filter(v=>{
+    const corretor=String(v&&v.corretor||'').trim().toLowerCase();
+    return !!corretor&&chaves.includes(corretor);
+  });
+  return sincronizarPctRhVendas(vendasRelacionadas,{...opcoes,forcarPctRh:(usuarioAtual&&usuarioAtual.rhContratacao)?0.001:0});
+}
+async function reconciliarPctRhVendas(opcoes={}){
+  return sincronizarPctRhVendas(VENDAS,opcoes);
+}
 function lerNumeroInput(id,padrao=0){
   return numSeguro(parseFloat(document.getElementById(id)?.value),padrao);
 }
@@ -130,7 +199,8 @@ function pctZelony(v){
     venda.pct_cap-
     venda.pct_ger-
     venda.pct_dir-
-    venda.pct_dir2,
+    venda.pct_dir2-
+    venda.pct_rh,
     0
   );
 }
@@ -917,8 +987,7 @@ function salvarVenda(){
   const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
   const mes=meses[mesNum];
-  const corretorUser=USUARIOS.find(u=>u.nome.split(' ')[0]===corretor||u.nome===corretor);
-  const pct_rh=(corretorUser&&corretorUser.rhContratacao)?0.001:0;
+  const pct_rh=pctRhCorretor(corretor);
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,

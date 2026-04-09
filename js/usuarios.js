@@ -278,7 +278,7 @@ function selPix(tipo, el) {
 function fecharMU() { document.getElementById('muser').classList.remove('show'); editUserIdx = -1; pixSel = ''; zSetState('state.ui.editUserIdx', editUserIdx); zSetState('state.ui.pixSel', pixSel); }
 function handleBackdropU(e) { if (e.target === document.getElementById('muser')) fecharMU(); }
 
-function salvarUsuario() {
+async function salvarUsuario() {
   const nome      = document.getElementById('mu-nome').value.trim().toUpperCase();
   const email     = document.getElementById('mu-email').value.trim();
   const tel       = document.getElementById('mu-tel').value.trim();
@@ -304,21 +304,67 @@ function salvarUsuario() {
   if (!pixSel)               { showToast(zUiText('⚠️'),zUiText('Selecione o tipo de chave Pix.')); return; }
   if (!pix)                  { document.getElementById('mu-pix').focus();   showToast(zUiText('⚠️'),zUiText('Informe a chave Pix.')); return; }
 
-  const dados = { nome, email, tel, perfil, status, banco, agencia, conta, tipoConta, pixTipo:pixSel, pix, rhContratacao:rhContr, unidade, equipe };
-  if (editUserIdx >= 0) {
-    const uid = USUARIOS[editUserIdx].id;
-    USUARIOS[editUserIdx] = { ...USUARIOS[editUserIdx], ...dados };
-    showToast(zUiText('✅'), zUiText(`Usuário "${nome}" atualizado!`));
-    dbSalvarUsuario(USUARIOS[editUserIdx], uid).catch(e => console.error(e));
-  } else {
-    const novoU = { id: nextUserId++, ...dados };
-    USUARIOS.push(novoU);
-    zSetState('state.ui.nextUserId', nextUserId);
-    showToast(zUiText('✅'), zUiText(`Usuário "${nome}" cadastrado!`));
-    dbSalvarUsuario(novoU, null).catch(e => console.error(e));
+  const emEdicao = editUserIdx >= 0;
+  const btnSalvar = document.getElementById('mu-save-btn');
+  const labelOriginalBtn = btnSalvar ? btnSalvar.textContent : '';
+  if (btnSalvar) {
+    btnSalvar.disabled = true;
+    btnSalvar.textContent = zUiText(emEdicao ? '✓ Salvando alterações...' : '✓ Cadastrando usuário...');
   }
-  zSetState('state.data.usuarios', USUARIOS);
-  salvarLS(); fecharMU(); renderUsuarios();
+
+  const dados = { nome, email, tel, perfil, status, banco, agencia, conta, tipoConta, pixTipo:pixSel, pix, rhContratacao:rhContr, unidade, equipe };
+  const nextUserIdAnterior = nextUserId;
+  const idxAnterior = editUserIdx;
+  const usuarioAnterior = emEdicao ? { ...USUARIOS[editUserIdx] } : null;
+  let usuarioSalvo = null;
+
+  try {
+    if (emEdicao) {
+      const uid = USUARIOS[editUserIdx].id;
+      USUARIOS[editUserIdx] = { ...USUARIOS[editUserIdx], ...dados };
+      usuarioSalvo = USUARIOS[editUserIdx];
+      await dbSalvarUsuario(usuarioSalvo, uid);
+    } else {
+      usuarioSalvo = { id: nextUserId++, ...dados };
+      USUARIOS.push(usuarioSalvo);
+      zSetState('state.ui.nextUserId', nextUserId);
+      await dbSalvarUsuario(usuarioSalvo, null);
+    }
+
+    const syncResumo = await sincronizarRhContratacaoUsuario(usuarioSalvo, usuarioAnterior, { renderizar:false });
+    zSetState('state.data.usuarios', USUARIOS);
+    salvarLS();
+    fecharMU();
+    renderUsuarios();
+    if (syncResumo.alteradas > 0) atualizarViewsPosSyncRh();
+
+    const acao = emEdicao ? 'atualizado' : 'cadastrado';
+    let mensagem = `Usuário "${nome}" ${acao}!`;
+    if (syncResumo.alteradas === 1) mensagem += ' 1 venda foi recalculada por causa da participação do RH.';
+    if (syncResumo.alteradas > 1) mensagem += ` ${syncResumo.alteradas} vendas foram recalculadas por causa da participação do RH.`;
+    showToast(zUiText('✅'), zUiText(mensagem));
+    if (syncResumo.falhas > 0) {
+      showToast(zUiText('⚠️'), zUiText('Parte das vendas foi ajustada na tela, mas não conseguiu sincronizar no banco. Recarregue e tente salvar novamente se notar divergência.'));
+    }
+  } catch (e) {
+    console.error(e);
+    if (emEdicao) {
+      USUARIOS[idxAnterior] = usuarioAnterior;
+    } else {
+      const idxNovo = USUARIOS.findIndex(u => u === usuarioSalvo);
+      if (idxNovo >= 0) USUARIOS.splice(idxNovo, 1);
+      nextUserId = nextUserIdAnterior;
+      zSetState('state.ui.nextUserId', nextUserId);
+    }
+    zSetState('state.data.usuarios', USUARIOS);
+    salvarLS();
+    showToast(zUiText('❌'), zUiText('Não foi possível salvar o usuário no banco. Tente novamente.'));
+  } finally {
+    if (btnSalvar) {
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = zUiText(labelOriginalBtn || (emEdicao ? '✓ Salvar alterações' : '✓ Cadastrar usuário'));
+    }
+  }
 }
 
 function abrirTS(fromLogin) {
@@ -409,12 +455,11 @@ function abrirConvite() {
   if (invUnidade) invUnidade.value = '';
   const invRh = document.getElementById('inv-rh');
   if (invRh) invRh.checked = false;
-  const invRhField = document.getElementById('inv-rh-field');
-  if (invRhField) invRhField.style.display = 'none';
   const invError = document.getElementById('inv-error');
   if (invError) invError.style.display = 'none';
   const invBtn = document.getElementById('inv-btn');
   if (invBtn) { invBtn.textContent = zUiText('✉️ Enviar convite'); invBtn.disabled = false; }
+  toggleInvRH();
   document.getElementById('m-convite').classList.add('show');
   setTimeout(() => { const el = document.getElementById('inv-nome'); if (el) el.focus(); }, 100);
 }
@@ -425,7 +470,20 @@ function handleBackdropConv(e) { if (e.target === document.getElementById('m-con
 function toggleInvRH() {
   const p   = document.getElementById('inv-perfil').value;
   const fld = document.getElementById('inv-rh-field');
-  if (fld) fld.style.display = p === 'Corretor' ? 'block' : 'none';
+  const chk = document.getElementById('inv-rh');
+  const help = document.getElementById('inv-rh-help');
+  const ativo = p === 'Corretor';
+  if (chk) {
+    chk.disabled = !ativo;
+    if (!ativo) chk.checked = false;
+  }
+  if (fld) {
+    fld.style.opacity = ativo ? '1' : '0.58';
+    fld.style.pointerEvents = ativo ? 'auto' : 'none';
+  }
+  if (help) {
+    help.textContent = zUiText(ativo ? 'Se sim, 0,1% de comissão será destinado ao RH em cada venda deste corretor' : 'Disponível para convites com perfil de Corretor');
+  }
 }
 
 function enviarConvite() {

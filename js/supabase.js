@@ -96,6 +96,9 @@ async function carregarDB(){
     TREIN.splice(0,TREIN.length,...ts.map(mapTreinIn));
     zSetState('state.data.treinamentos', TREIN);
   }
+  if(typeof reconciliarPctRhVendas==='function'&&USUARIOS.length&&VENDAS.length){
+    await reconciliarPctRhVendas({persistir:true,renderizar:false});
+  }
   zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
 
   if(us===null&&vs===null) throw new Error('Falha total no carregamento');
