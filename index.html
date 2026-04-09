@@ -470,26 +470,50 @@
                 </div>
               </div>
             </div>
+            <div class="f-field">
+              <div class="mt-label-row">
+                <label>Regras da trilha</label>
+                <span class="mt-label-hint">Defina se o curso e obrigatorio e se depende de outro treinamento</span>
+              </div>
+              <div class="mt-rule-card">
+                <div class="rh-toggle-wrap mt-toggle-wrap">
+                  <div>
+                    <div class="rh-toggle-label">Treinamento obrigatorio</div>
+                    <div class="rh-toggle-sub">Destaca o curso como prioridade para o colaborador</div>
+                  </div>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="mt-required">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                <div class="f-field">
+                  <label>Pre-requisito</label>
+                  <select id="mt-prereq">
+                    <option value="">Nenhum</option>
+                  </select>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="mt-section">
             <div class="mt-section-head">
-              <div class="mt-section-kicker">Conteúdo em vídeo</div>
-              <div class="mt-section-sub">Anexe os vídeos que ficarão disponíveis dentro do treinamento.</div>
+              <div class="mt-section-kicker">Conteudo em video</div>
+              <div class="mt-section-sub">Anexe os videos que ficarao disponiveis dentro do treinamento.</div>
             </div>
             <div class="f-field">
-              <label>Vídeos do treinamento</label>
+              <label>Videos do treinamento</label>
               <div class="trein-video-upload" onclick="document.getElementById('mt-videos-input').click()">
                 <div class="trein-video-upload-icon">🎬</div>
                 <div class="trein-video-upload-main">
-                  <strong>Adicionar vídeos</strong>
+                  <strong>Adicionar videos</strong>
                   <span>MP4, WEBM ou MOV · até 80MB por arquivo</span>
                 </div>
                 <button type="button" class="btn-c trein-video-upload-btn">Selecionar</button>
               </div>
               <input type="file" id="mt-videos-input" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,video/*" multiple style="display:none;" onchange="handleTreinVideoUpload(this)">
               <div class="trein-video-list" id="mt-videos-list"></div>
-              <div class="trein-video-help">Os vídeos ficam disponíveis neste navegador para o treinamento selecionado.</div>
+              <div class="trein-video-help">Os videos ficam disponiveis neste navegador para o treinamento selecionado.</div>
             </div>
           </div>
         </div>

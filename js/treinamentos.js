@@ -33,12 +33,15 @@ const TREIN_PROGRESS_KEY = 'zel_trein_progresso_v1';
 const TREIN_VIDEO_DB = 'zel_trein_videos_v1';
 const TREIN_VIDEO_STORE = 'videos';
 const TREIN_VIDEO_MAX_MB = 80;
+const TREIN_META_KEY = 'zel_trein_meta_v1';
 const TREIN_STATUS_META = {
   todos: { label: 'Todos' },
   nao_iniciado: { label: 'Não iniciados', badge: 'Não iniciado', cls: 'idle' },
   em_andamento: { label: 'Em andamento', badge: 'Em andamento', cls: 'progress' },
   concluido: { label: 'Concluído', badge: 'Concluído', cls: 'done' }
 };
+
+TREIN_STATUS_META.aprovado = { label: 'Aprovados', badge: 'Certificado', cls: 'approved' };
 
 let tcatAtivo = 'Corretor';
 let emojiSel = '🏠';
@@ -47,6 +50,7 @@ let tBusca = '';
 let tStatus = 'todos';
 let treinSelKey = '';
 let TREIN_PROGRESSO = {};
+let TREIN_META = {};
 let TREIN_VIDEOS = {};
 let TREIN_VIDEO_LOADING = {};
 let TREIN_VIDEO_SELECIONADO = {};
@@ -61,6 +65,7 @@ zSetState('state.ui.treinBusca', tBusca);
 zSetState('state.ui.treinStatus', tStatus);
 zSetState('state.ui.treinSelecionado', treinSelKey);
 zSetState('state.ui.treinProgresso', TREIN_PROGRESSO);
+zSetState('state.ui.treinMeta', TREIN_META);
 zSetState('state.ui.treinVideos', TREIN_VIDEOS);
 
 function normalizarCatTrein(cat){
@@ -100,6 +105,23 @@ function salvarTreinProgressoLS(){
   zSetState('state.ui.treinProgresso', TREIN_PROGRESSO);
 }
 
+function carregarTreinMetaLS(){
+  try{
+    const raw = localStorage.getItem(TREIN_META_KEY);
+    TREIN_META = raw ? JSON.parse(raw) : {};
+  }catch(e){
+    TREIN_META = {};
+  }
+  zSetState('state.ui.treinMeta', TREIN_META);
+}
+
+function salvarTreinMetaLS(){
+  try{
+    localStorage.setItem(TREIN_META_KEY, JSON.stringify(TREIN_META));
+  }catch(e){}
+  zSetState('state.ui.treinMeta', TREIN_META);
+}
+
 function getTreinUsuarioKey(){
   if(usuarioLogado && usuarioLogado.id) return `id:${usuarioLogado.id}`;
   if(usuarioLogado && usuarioLogado.email) return `mail:${String(usuarioLogado.email).toLowerCase()}`;
@@ -126,6 +148,65 @@ function decodeTreinToken(token){
 function getTreinPorToken(token){
   const chave = decodeTreinToken(token);
   return TREIN.find(t => treinKey(t) === chave) || null;
+}
+
+function getTreinMetaKey(t){
+  return treinKey(t);
+}
+
+function getTreinMeta(t){
+  if(!t) return { obrigatorio: false, prerequisito: '' };
+  const chave = getTreinMetaKey(t);
+  return {
+    obrigatorio: !!t.obrigatorio,
+    prerequisito: t.prerequisito || '',
+    ...((TREIN_META || {})[chave] || {})
+  };
+}
+
+function setTreinMeta(t, parcial){
+  const chave = getTreinMetaKey(t);
+  TREIN_META[chave] = { ...getTreinMeta(t), ...parcial };
+  if(t){
+    t.obrigatorio = !!TREIN_META[chave].obrigatorio;
+    t.prerequisito = TREIN_META[chave].prerequisito || '';
+  }
+  if(!TREIN_META[chave].obrigatorio && !TREIN_META[chave].prerequisito){
+    delete TREIN_META[chave];
+  }
+  salvarTreinMetaLS();
+}
+
+function limparTreinMeta(t){
+  const chave = getTreinMetaKey(t);
+  if(t){
+    delete t.obrigatorio;
+    delete t.prerequisito;
+  }
+  if(TREIN_META[chave]){
+    delete TREIN_META[chave];
+    salvarTreinMetaLS();
+  }
+}
+
+function limparDependenciasTrein(chaveTrein){
+  let alterou = false;
+  Object.keys(TREIN_META || {}).forEach(chave => {
+    const meta = TREIN_META[chave];
+    if(meta && meta.prerequisito === chaveTrein){
+      const treinamento = TREIN.find(item => treinKey(item) === chave);
+      if(treinamento) treinamento.prerequisito = '';
+      TREIN_META[chave] = { ...meta, prerequisito: '' };
+      if(!TREIN_META[chave].obrigatorio) delete TREIN_META[chave];
+      alterou = true;
+    }
+  });
+  if(alterou) salvarTreinMetaLS();
+}
+
+function getTreinPrerequisito(t){
+  const meta = getTreinMeta(t);
+  return meta.prerequisito ? TREIN.find(item => treinKey(item) === meta.prerequisito) || null : null;
 }
 
 function getTreinLicoes(t){
@@ -155,18 +236,41 @@ function getTreinProgressoBruto(t){
   return (((TREIN_PROGRESSO || {})[userKey] || {})[chave]) || null;
 }
 
+function getTreinAulasFallback(t, total){
+  const totalAulas = Number.isInteger(total) ? total : getTreinLicoes(t).length;
+  const pctFallback = Math.max(0, Math.min(100, parseInt(t && t.prog, 10) || 0));
+  const concluidas = !totalAulas
+    ? 0
+    : (pctFallback >= 100 ? totalAulas : Math.max(0, Math.floor((pctFallback / 100) * totalAulas)));
+  return Array.from({ length: concluidas }, (_, idx) => idx);
+}
+
+function criarTreinProgressoInicial(t){
+  const agora = new Date().toISOString();
+  const total = getTreinLicoes(t).length;
+  const aulas = getTreinAulasFallback(t, total);
+  return {
+    aulas,
+    iniciadaEm: agora,
+    atualizadaEm: agora,
+    concluidaEm: total && aulas.length >= total ? agora : null
+  };
+}
+
 function getTreinProgresso(t){
   const licoes = getTreinLicoes(t);
   const bruto = getTreinProgressoBruto(t);
   const aulasFeitas = Array.isArray(bruto && bruto.aulas)
     ? bruto.aulas.filter(n => Number.isInteger(n)).sort((a,b) => a - b)
-    : [];
+    : getTreinAulasFallback(t, licoes.length);
   const concluidas = aulasFeitas.length;
   const total = licoes.length;
   const pctReal = total ? Math.round((concluidas / total) * 100) : 0;
   const pctFallback = Math.max(0, Math.min(100, parseInt(t && t.prog, 10) || 0));
   const statusReal = concluidas === 0 ? 'nao_iniciado' : (concluidas >= total ? 'concluido' : 'em_andamento');
-  const status = bruto ? statusReal : (pctFallback >= 100 ? 'concluido' : (pctFallback > 0 ? 'em_andamento' : 'nao_iniciado'));
+  const certificadoEm = bruto && bruto.certificadoEm || null;
+  const statusBase = bruto ? statusReal : (pctFallback >= 100 ? 'concluido' : (pctFallback > 0 ? 'em_andamento' : 'nao_iniciado'));
+  const status = certificadoEm && concluidas >= total ? 'aprovado' : statusBase;
   const proxima = licoes.find(l => !aulasFeitas.includes(l.idx)) || null;
 
   return {
@@ -179,8 +283,20 @@ function getTreinProgresso(t){
     iniciadaEm: bruto && bruto.iniciadaEm || null,
     concluidaEm: bruto && bruto.concluidaEm || null,
     atualizadaEm: bruto && bruto.atualizadaEm || null,
-    proxima
+    certificadoEm,
+    proxima,
+    temProgressoBruto: !!bruto
   };
+}
+
+function isTreinAprovado(t){
+  const status = getTreinProgresso(t).status;
+  return status === 'aprovado' || status === 'concluido';
+}
+
+function isTreinBloqueado(t){
+  const prereq = getTreinPrerequisito(t);
+  return !!(prereq && !isTreinAprovado(prereq));
 }
 
 function setTreinProgresso(t, parcial){
@@ -251,10 +367,11 @@ async function garantirTreinVideosCarregados(t){
   if(TREIN_VIDEOS[chave] || TREIN_VIDEO_LOADING[chave]) return;
   TREIN_VIDEO_LOADING[chave] = true;
   try{
-    setTreinVideosCache(chave, await listarTreinVideosDB(chave));
+    const videosLocais = await listarTreinVideosDB(chave);
+    setTreinVideosCache(chave, videosLocais.length ? videosLocais : (Array.isArray(t && t.videos) ? t.videos.map(v => ({ ...v })) : []));
   }catch(e){
     console.warn('Erro ao carregar vídeos do treinamento:', e.message);
-    setTreinVideosCache(chave, []);
+    setTreinVideosCache(chave, Array.isArray(t && t.videos) ? t.videos.map(v => ({ ...v })) : []);
   }finally{
     delete TREIN_VIDEO_LOADING[chave];
     if(treinSelKey === chave) renderTrein();
@@ -262,14 +379,58 @@ async function garantirTreinVideosCarregados(t){
 }
 
 function getTreinVideos(t){
-  return TREIN_VIDEOS[treinKey(t)] || [];
+  return TREIN_VIDEOS[treinKey(t)] || (Array.isArray(t && t.videos) ? t.videos : []);
 }
 
 function getTreinVideoSrc(video){
   if(!video) return '';
+  if(video.dataUrl) return video.dataUrl;
   if(video.objectUrl) return video.objectUrl;
   if(video.blob) video.objectUrl = URL.createObjectURL(video.blob);
   return video.objectUrl || '';
+}
+
+function gerarTreinVideoId(chave, idx){
+  return `${chave}::${Date.now()}::${idx}::${Math.random().toString(16).slice(2,8)}`;
+}
+
+function blobToDataUrl(blob){
+  return new Promise((resolve, reject) => {
+    if(!blob) return resolve('');
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error('Falha ao converter o video para compartilhamento.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function dataUrlToBlob(dataUrl, mimeFallback='video/mp4'){
+  if(!dataUrl || typeof dataUrl !== 'string') return null;
+  const partes = dataUrl.split(',');
+  if(partes.length < 2) return null;
+  const meta = partes[0] || '';
+  const mimeMatch = meta.match(/data:([^;]+);base64/i);
+  const mime = mimeMatch ? mimeMatch[1] : mimeFallback;
+  const bin = atob(partes[1]);
+  const bytes = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+async function normalizarTreinVideoCompartilhado(video, idx, chave){
+  const id = video.id || gerarTreinVideoId(chave, idx);
+  const blob = video.blob || dataUrlToBlob(video.dataUrl, video.mime || 'video/mp4');
+  const dataUrl = video.dataUrl || await blobToDataUrl(blob);
+  return {
+    id,
+    trainingKey: chave,
+    nome: video.nome,
+    mime: video.mime || (blob && blob.type) || 'video/mp4',
+    size: video.size || (blob && blob.size) || 0,
+    ordem: idx,
+    dataUrl,
+    blob: blob || null
+  };
 }
 
 function getTreinVideoAtivoId(t, videos){
@@ -288,7 +449,7 @@ function selecionarTreinVideo(token, videoId){
   renderTrein();
 }
 
-async function sincronizarTreinVideos(t, videosModal){
+async function sincronizarTreinVideosLocal(t, videosModal){
   const chave = treinKey(t);
   const db = await abrirTreinVideoDB();
   const atuais = await listarTreinVideosDB(chave);
@@ -466,15 +627,12 @@ function selecionarTrein(token){
 function iniciarTreinamento(token){
   const t = getTreinPorToken(token);
   if(!t) return;
-  const bruto = getTreinProgressoBruto(t);
-  if(!bruto){
-    setTreinProgresso(t, {
-      aulas: [],
-      iniciadaEm: new Date().toISOString(),
-      atualizadaEm: new Date().toISOString(),
-      concluidaEm: null
-    });
+  if(isTreinBloqueado(t)){
+    showToast(zUiText('ðŸ”’'), zUiText('Conclua o prÃ©-requisito antes de iniciar esta trilha.'));
+    return;
   }
+  const bruto = getTreinProgressoBruto(t);
+  if(!bruto) setTreinProgresso(t, criarTreinProgressoInicial(t));
   treinSelKey = treinKey(t);
   zSetState('state.ui.treinSelecionado', treinSelKey);
   renderTrein();
@@ -484,11 +642,11 @@ function iniciarTreinamento(token){
 function toggleAulaTrein(token, idx){
   const t = getTreinPorToken(token);
   if(!t) return;
-  const bruto = getTreinProgressoBruto(t) || {
-    aulas: [],
-    iniciadaEm: new Date().toISOString(),
-    concluidaEm: null
-  };
+  if(isTreinBloqueado(t)){
+    showToast(zUiText('ðŸ”’'), zUiText('Conclua o prÃ©-requisito antes de marcar aulas nesta trilha.'));
+    return;
+  }
+  const bruto = getTreinProgressoBruto(t) || criarTreinProgressoInicial(t);
   const aulas = Array.isArray(bruto.aulas) ? [...bruto.aulas] : [];
   const pos = aulas.indexOf(idx);
   if(pos >= 0) aulas.splice(pos, 1);
@@ -501,7 +659,8 @@ function toggleAulaTrein(token, idx){
     aulas,
     iniciadaEm: bruto.iniciadaEm || new Date().toISOString(),
     concluidaEm: concluido ? new Date().toISOString() : null,
-    atualizadaEm: new Date().toISOString()
+    atualizadaEm: new Date().toISOString(),
+    certificadoEm: concluido ? (bruto.certificadoEm || null) : null
   });
 
   treinSelKey = treinKey(t);
@@ -516,6 +675,10 @@ function toggleAulaTrein(token, idx){
 function marcarProximaAulaTrein(token){
   const t = getTreinPorToken(token);
   if(!t) return;
+  if(isTreinBloqueado(t)){
+    showToast(zUiText('ðŸ”’'), zUiText('Conclua o prÃ©-requisito antes de continuar esta trilha.'));
+    return;
+  }
   const progresso = getTreinProgresso(t);
   if(!progresso.proxima){
     showToast(zUiText('✅'), zUiText('Este treinamento já está concluído.'));
@@ -535,6 +698,35 @@ function reiniciarTreinamento(token){
   showToast(zUiText('↺'), zUiText('Progresso reiniciado.'));
 }
 
+function emitirCertificadoTrein(token){
+  const t = getTreinPorToken(token);
+  if(!t) return;
+  const progresso = getTreinProgresso(t);
+  if(progresso.certificadoEm){
+    showToast(zUiText('OK'), zUiText('Este certificado ja foi registrado.'));
+    return;
+  }
+  if(progresso.concluidas < progresso.total){
+    showToast(zUiText('âš ï¸'), zUiText('Conclua todas as aulas antes de emitir o certificado.'));
+    return;
+  }
+  setTreinProgresso(t, {
+    certificadoEm: new Date().toISOString(),
+    atualizadaEm: new Date().toISOString()
+  });
+  treinSelKey = treinKey(t);
+  zSetState('state.ui.treinSelecionado', treinSelKey);
+  renderTrein();
+  showToast(zUiText('ðŸŽ“'), zUiText('Certificado registrado com sucesso.'));
+}
+
+function irParaTreinamento(chave){
+  if(!chave) return;
+  treinSelKey = chave;
+  zSetState('state.ui.treinSelecionado', treinSelKey);
+  renderTrein();
+}
+
 function getListaTreinBase(){
   return TREIN.filter(t => normalizarCatTrein(t.cat) === tcatAtivo);
 }
@@ -544,14 +736,14 @@ function getListaTreinFiltrada(lista){
     .filter(t => !tBusca || `${t.titulo} ${normalizarCatTrein(t.cat)} ${t.dur}`.toLowerCase().includes(tBusca.toLowerCase()))
     .filter(t => tStatus === 'todos' || getTreinProgresso(t).status === tStatus)
     .sort((a,b) => {
-      const ordem = { em_andamento: 0, nao_iniciado: 1, concluido: 2 };
+      const ordem = { em_andamento: 0, nao_iniciado: 1, concluido: 2, aprovado: 3 };
       const pa = getTreinProgresso(a);
       const pb = getTreinProgresso(b);
-      return (ordem[pa.status] - ordem[pb.status]) || a.titulo.localeCompare(b.titulo);
+      return ((ordem[pa.status] ?? 99) - (ordem[pb.status] ?? 99)) || a.titulo.localeCompare(b.titulo);
     });
 }
 
-function renderTreinPainel(t, progresso, isDiretor, canDelete){
+function renderTreinPainelLegacy(t, progresso, isDiretor, canDelete){
   const statusMeta = TREIN_STATUS_META[progresso.status] || TREIN_STATUS_META.nao_iniciado;
   const licoes = getTreinLicoes(t);
   const token = treinToken(t);
@@ -566,11 +758,12 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
 
   return `<div class="trein-detail-panel">
     <div class="trein-detail-hero">
-      <div class="trein-detail-thumb" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">${zUiText(t.thumb || '📚')}</div>
+      <div class="trein-detail-thumb" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">${zUiText(t.thumb || 'TR')}</div>
       <div class="trein-detail-main">
         <div class="trein-detail-tags">
           <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
           <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
+          ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatório')}</span>` : ''}
         </div>
         <div class="trein-detail-title">${zUiText(t.titulo)}</div>
         <div class="trein-detail-copy">${zUiText('Trilha prática para acelerar a execução da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
@@ -588,24 +781,25 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
 
     <div class="trein-detail-progressbar">
       <div class="trein-detail-progress-top">
-        <strong>${progresso.pctReal}%</strong>
+        <strong>${progresso.pct}%</strong>
         <span>${zUiText(progresso.status==='concluido' ? 'Treinamento concluído' : `Próxima aula: ${proxima}`)}</span>
       </div>
-      <div class="pb trein-progress-large"><div class="pf ${progresso.status==='concluido' ? 'done' : ''}" style="width:${progresso.pctReal}%"></div></div>
+      <div class="pb trein-progress-large"><div class="pf ${progresso.status==='concluido' ? 'done' : ''}" style="width:${progresso.pct}%"></div></div>
       <div class="trein-detail-progress-meta">
         <div><strong>${zUiText('Iniciado em')}</strong><span>${zUiText(iniciou)}</span></div>
         <div><strong>${zUiText('Atualizado em')}</strong><span>${zUiText(atualizado)}</span></div>
         <div><strong>${zUiText('Concluído em')}</strong><span>${zUiText(concluiu)}</span></div>
+        ${aprovado ? `<div><strong>${zUiText('Certificado')}</strong><span>${zUiText(certificado)}</span></div>` : ''}
       </div>
     </div>
 
     <div class="trein-detail-actions">
-      ${progresso.status === 'nao_iniciado'
-        ? `<button class="btn-s" onclick="iniciarTreinamento('${token}')">${zUiText('▶️ Iniciar treinamento')}</button>`
-        : `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${zUiText(progresso.status === 'concluido' ? '🎓 Revisar conteúdo' : '✓ Marcar próxima aula')}</button>`}
-      <button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('↺ Reiniciar')}</button>
+      ${acaoPrincipal}
+      ${acaoSecundaria}
     </div>
 
+    ${notaBloqueio}
+    ${notaCertificado}
     <div class="trein-detail-note">${zUiText('Seu progresso fica salvo neste navegador para o usuário logado.')}</div>
 
     <div class="trein-lessons">
@@ -616,13 +810,13 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
       <div class="trein-lessons-list">
         ${licoes.map(licao => {
           const done = progresso.aulas.includes(licao.idx);
-          return `<button class="trein-lesson ${done ? 'done' : ''}" onclick="toggleAulaTrein('${token}', ${licao.idx})">
+          return `<button class="trein-lesson ${done ? 'done' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
             <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
             <span class="trein-lesson-main">
               <strong>${zUiText(licao.titulo)}</strong>
               <small>${zUiText(licao.resumo)}</small>
             </span>
-            <span class="trein-lesson-state">${done ? zUiText('Concluída') : zUiText('Marcar')}</span>
+            <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluída') : zUiText('Marcar'))}</span>
           </button>`;
         }).join('')}
       </div>
@@ -630,7 +824,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
   </div>`;
 }
 
-function renderTrein(){
+function renderTreinLegacy(){
   if(!TREIN_PROGRESSO || typeof TREIN_PROGRESSO !== 'object' || Array.isArray(TREIN_PROGRESSO)){
     carregarTreinProgressoLS();
   }
@@ -654,8 +848,9 @@ function renderTrein(){
   const base = getListaTreinBase();
   const filtrada = getListaTreinFiltrada(base);
   const concluidos = base.filter(t => getTreinProgresso(t).status === 'concluido').length;
+  const aprovados = base.filter(t => getTreinProgresso(t).status === 'aprovado').length;
   const emAndamento = base.filter(t => getTreinProgresso(t).status === 'em_andamento').length;
-  const naoIniciados = base.filter(t => getTreinProgresso(t).status === 'nao_iniciado').length;
+  const obrigatoriosPendentes = base.filter(t => getTreinMeta(t).obrigatorio && !isTreinAprovado(t)).length;
 
   document.getElementById('trein-stats').innerHTML = `
     <div class="mc a">
@@ -663,30 +858,28 @@ function renderTrein(){
       <div class="mc-v" style="color:var(--gold);">${base.length}</div>
       <div class="mc-s">${zUiText(filtrada.length === base.length ? 'Catálogo disponível' : `${filtrada.length} exibido(s) no filtro`)}</div>
     </div>
-    <div class="mc" style="border-top-color:#2E9E6E;">
-      <div class="mc-l">${zUiText('Concluídos')}</div>
-      <div class="mc-v" style="color:#2E9E6E;">${concluidos}</div>
-      <div class="mc-s">${base.length ? `${Math.round((concluidos/base.length)*100)}% ${zUiText('do catálogo')}` : zUiText('Sem cursos')}</div>
+    <div class="mc" style="border-top-color:#3060B8;">
+      <div class="mc-l">${zUiText('Certificados')}</div>
+      <div class="mc-v" style="color:#3060B8;">${aprovados}</div>
+      <div class="mc-s">${base.length ? `${Math.round((aprovados/base.length)*100)}% ${zUiText('do catálogo')}` : zUiText('Sem cursos')}</div>
     </div>
     <div class="mc" style="border-top-color:var(--gold);">
       <div class="mc-l">${zUiText('Em andamento')}</div>
       <div class="mc-v">${emAndamento}</div>
       <div class="mc-s">${zUiText('Cursos iniciados por você')}</div>
     </div>
-    <div class="mc">
-      <div class="mc-l">${zUiText('Não iniciados')}</div>
-      <div class="mc-v">${naoIniciados}</div>
-      <div class="mc-s">${zUiText('Ainda não começados')}</div>
+    <div class="mc" style="border-top-color:#C08020;">
+      <div class="mc-l">${zUiText('Obrigatórios pendentes')}</div>
+      <div class="mc-v">${obrigatoriosPendentes}</div>
+      <div class="mc-s">${zUiText(obrigatoriosPendentes ? 'Pedem atenção imediata' : 'Tudo em dia')}</div>
     </div>`;
 
-  if(!treinSelKey || !base.some(t => treinKey(t) === treinSelKey)){
-    treinSelKey = (filtrada[0] && treinKey(filtrada[0])) || (base[0] && treinKey(base[0])) || '';
+  if(!treinSelKey || !filtrada.some(t => treinKey(t) === treinSelKey)){
+    treinSelKey = (filtrada[0] && treinKey(filtrada[0])) || '';
     zSetState('state.ui.treinSelecionado', treinSelKey);
   }
 
-  const selecionado = filtrada.find(t => treinKey(t) === treinSelKey)
-    || base.find(t => treinKey(t) === treinSelKey)
-    || null;
+  const selecionado = filtrada.find(t => treinKey(t) === treinSelKey) || null;
 
   const cards = filtrada.length
     ? filtrada.map(t => {
@@ -694,10 +887,15 @@ function renderTrein(){
         const progresso = getTreinProgresso(t);
         const token = treinToken(t);
         const statusMeta = TREIN_STATUS_META[progresso.status] || TREIN_STATUS_META.nao_iniciado;
+        const meta = getTreinMeta(t);
+        const prerequisito = getTreinPrerequisito(t);
+        const bloqueado = isTreinBloqueado(t);
+        const aprovado = progresso.status === 'aprovado';
+        const concluidoVisual = progresso.status === 'concluido' || aprovado;
         const editBtn = isDiretor
           ? `<button class="trein-card-edit" onclick="event.stopPropagation();editarTrein(${idx})" title="${zUiText('Editar treinamento')}">${zUiText('✏️')}</button>`
           : '';
-        return `<button class="trein-card ${treinKey(t)===treinSelKey?'active':''}" onclick="selecionarTrein('${token}')">
+        return `<button class="trein-card ${treinKey(t)===treinSelKey?'active':''} ${bloqueado ? 'locked' : ''}" onclick="selecionarTrein('${token}')">
           <div class="trein-card-icon" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">
             ${editBtn}
             <span>${zUiText(t.thumb || '📚')}</span>
@@ -706,12 +904,14 @@ function renderTrein(){
             <div class="trein-card-tags">
               <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
               <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
+              ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
+              ${bloqueado ? `<span class="zbg bg-r">${zUiText('Bloqueado')}</span>` : ''}
             </div>
             <div class="trein-card-title">${zUiText(t.titulo)}</div>
             <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div>
             <div class="trein-card-progress">
-              <div class="pb"><div class="pf ${progresso.status==='concluido'?'done':''}" style="width:${progresso.pctReal}%"></div></div>
-              <div class="pl">${progresso.status==='concluido' ? zUiText('Concluído') : `${progresso.pctReal}% ${zUiText('concluído')}`}</div>
+              <div class="pb"><div class="pf ${progresso.status==='concluido'?'done':''}" style="width:${progresso.pct}%"></div></div>
+              <div class="pl">${progresso.status==='concluido' ? zUiText('Concluído') : `${progresso.pct}% ${zUiText('concluído')}`}</div>
             </div>
           </div>
           <div class="trein-card-side">
@@ -761,7 +961,32 @@ function setTcat(c){
   renderTrein();
 }
 
-function abrirModalTrein(){
+function atualizarMtRegras(tAtual = null){
+  const cat = tAtual ? normalizarCatTrein(tAtual.cat) : tcatAtivo;
+  const meta = tAtual ? getTreinMeta(tAtual) : { obrigatorio: false, prerequisito: '' };
+  const select = document.getElementById('mt-prereq');
+  const checkbox = document.getElementById('mt-required');
+  if(checkbox) checkbox.checked = !!meta.obrigatorio;
+  if(!select) return;
+
+  const atualKey = tAtual ? treinKey(tAtual) : '';
+  const opcoes = TREIN
+    .filter(t => normalizarCatTrein(t.cat) === cat && treinKey(t) !== atualKey)
+    .sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || '')));
+
+  select.innerHTML = `<option value="">Nenhum</option>${opcoes.map(t => `<option value="${treinKey(t)}">${zUiText(t.titulo)}</option>`).join('')}`;
+  select.disabled = !opcoes.length;
+  select.value = meta.prerequisito || '';
+}
+
+function lerMtRegras(){
+  return {
+    obrigatorio: !!document.getElementById('mt-required')?.checked,
+    prerequisito: document.getElementById('mt-prereq')?.value || ''
+  };
+}
+
+function abrirModalTreinLegacy(){
   if(role!=='dir'){ showToast(zUiText('🔒'), zUiText('Apenas o Diretor pode adicionar treinamentos.')); return; }
   editIdx = -1;
   document.getElementById('mt-titulo').value = '';
@@ -778,7 +1003,7 @@ function abrirModalTrein(){
   setTimeout(() => document.getElementById('mt-titulo').focus(), 100);
 }
 
-function editarTrein(idx){
+function editarTreinLegacy(idx){
   if(role!=='dir'){ showToast(zUiText('🔒'), zUiText('Apenas o Diretor pode editar treinamentos.')); return; }
   const t = TREIN[idx];
   editIdx = idx;
@@ -796,7 +1021,7 @@ function editarTrein(idx){
   setTimeout(() => document.getElementById('mt-titulo').focus(), 100);
 }
 
-function fecharMT(){
+function fecharMTLegacy(){
   document.getElementById('mtrein').classList.remove('show');
   editIdx = -1;
   zSetState('state.ui.editTreinIdx', editIdx);
@@ -821,7 +1046,7 @@ function atualizarProgT(){
   document.getElementById('rlbl').style.color = v===100 ? '#2E9E6E' : 'var(--gold)';
 }
 
-function salvarTrein(){
+function salvarTreinLegacy(){
   const titulo = document.getElementById('mt-titulo').value.trim();
   const aulas = parseInt(document.getElementById('mt-aulas').value, 10);
   const dur = document.getElementById('mt-dur').value.trim();
@@ -923,7 +1148,7 @@ function showProc(s, i){
   det.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
-function renderTreinPainel(t, progresso, isDiretor, canDelete){
+function renderTreinPainelIntermediario(t, progresso, isDiretor, canDelete){
   const statusMeta = TREIN_STATUS_META[progresso.status] || TREIN_STATUS_META.nao_iniciado;
   const licoes = getTreinLicoes(t);
   const token = treinToken(t);
@@ -935,14 +1160,48 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
   const concluiu = progresso.concluidaEm ? new Date(progresso.concluidaEm).toLocaleDateString('pt-BR') : '—';
   const atualizado = progresso.atualizadaEm ? new Date(progresso.atualizadaEm).toLocaleDateString('pt-BR') : '—';
   const proxima = progresso.proxima ? `${zUiText(progresso.proxima.titulo)} ${zUiText('·')} ${zUiText(progresso.proxima.resumo)}` : zUiText('Todas as aulas concluídas');
+  const certificado = progresso.certificadoEm ? new Date(progresso.certificadoEm).toLocaleDateString('pt-BR') : '—';
+  const meta = getTreinMeta(t);
+  const prerequisito = getTreinPrerequisito(t);
+  const bloqueado = isTreinBloqueado(t);
+  const aprovado = progresso.status === 'aprovado';
+  const concluidoVisual = progresso.status === 'concluido' || aprovado;
+  const resumoStatus = bloqueado
+    ? zUiText(`Conclua o pre-requisito "${prerequisito?.titulo || ''}" para liberar esta trilha.`)
+    : aprovado
+      ? zUiText(`Certificado registrado em ${certificado}.`)
+      : progresso.status === 'concluido'
+        ? zUiText('Todas as aulas foram concluidas. Emita o certificado para finalizar a trilha.')
+        : zUiText(`PrÃ³xima aula: ${proxima}`);
+  const acaoPrincipal = bloqueado
+    ? `<button class="btn-s" onclick="irParaTreinamento('${prerequisito ? treinKey(prerequisito) : ''}')">${zUiText('Abrir pre-requisito')}</button>`
+    : progresso.status === 'nao_iniciado'
+      ? `<button class="btn-s" onclick="iniciarTreinamento('${token}')">${zUiText('â–¶ï¸ Iniciar treinamento')}</button>`
+      : progresso.status === 'em_andamento'
+        ? `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${zUiText('âœ“ Marcar prÃ³xima aula')}</button>`
+        : progresso.status === 'concluido'
+          ? `<button class="btn-s" onclick="emitirCertificadoTrein('${token}')">${zUiText('Emitir certificado')}</button>`
+          : `<button class="btn-s" onclick="reiniciarTreinamento('${token}')">${zUiText('Refazer trilha')}</button>`;
+  const acaoSecundaria = (!bloqueado && !aprovado)
+    ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('â†º Reiniciar')}</button>`
+    : '';
+  const notaBloqueio = bloqueado
+    ? `<div class="trein-lock-note"><strong>${zUiText('Trilha bloqueada')}</strong>${zUiText(`Este treinamento depende da conclusao de "${prerequisito?.titulo || ''}".`)}</div>`
+    : '';
+  const notaCertificado = aprovado
+    ? `<div class="trein-cert-note"><strong>${zUiText('Certificacao registrada')}</strong>${zUiText(`Voce concluiu esta trilha e o certificado foi emitido em ${certificado}.`)}</div>`
+    : (progresso.status === 'concluido'
+      ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora emita o certificado para marcar a trilha como finalizada.')}</div>`
+      : '');
 
   return `<div class="trein-detail-panel">
     <div class="trein-detail-hero">
-      <div class="trein-detail-thumb" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">${zUiText(t.thumb || '📚')}</div>
+      <div class="trein-detail-thumb" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">${zUiText(t.thumb || 'TR')}</div>
       <div class="trein-detail-main">
         <div class="trein-detail-tags">
           <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
           <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
+          ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
         </div>
         <div class="trein-detail-title">${zUiText(t.titulo)}</div>
         <div class="trein-detail-copy">${zUiText('Trilha prática para acelerar a execução da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
@@ -951,6 +1210,10 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
           <span>${zUiText(t.dur)}</span>
           <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluídas')}</span>
           <span>${videos.length} ${zUiText(videos.length === 1 ? 'vídeo' : 'vídeos')}</span>
+        </div>
+        <div class="trein-rule-chips">
+          ${meta.obrigatorio ? `<span class="trein-rule-chip">${zUiText('⭐ Obrigatório')}</span>` : ''}
+          ${prerequisito ? `<span class="trein-rule-chip">${zUiText('🔓 Pré-requisito')}: ${zUiText(prerequisito.titulo)}</span>` : ''}
         </div>
       </div>
       <div class="trein-detail-admin">
@@ -961,24 +1224,25 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
 
     <div class="trein-detail-progressbar">
       <div class="trein-detail-progress-top">
-        <strong>${progresso.pctReal}%</strong>
-        <span>${zUiText(progresso.status === 'concluido' ? 'Treinamento concluído' : `Próxima aula: ${proxima}`)}</span>
+        <strong>${progresso.pct}%</strong>
+        <span>${resumoStatus}</span>
       </div>
-      <div class="pb trein-progress-large"><div class="pf ${progresso.status === 'concluido' ? 'done' : ''}" style="width:${progresso.pctReal}%"></div></div>
+      <div class="pb trein-progress-large"><div class="pf ${concluidoVisual ? 'done' : ''}" style="width:${progresso.pct}%"></div></div>
       <div class="trein-detail-progress-meta">
         <div><strong>${zUiText('Iniciado em')}</strong><span>${zUiText(iniciou)}</span></div>
         <div><strong>${zUiText('Atualizado em')}</strong><span>${zUiText(atualizado)}</span></div>
         <div><strong>${zUiText('Concluído em')}</strong><span>${zUiText(concluiu)}</span></div>
+        ${aprovado ? `<div><strong>${zUiText('Certificado')}</strong><span>${zUiText(certificado)}</span></div>` : ''}
       </div>
     </div>
 
     <div class="trein-detail-actions">
-      ${progresso.status === 'nao_iniciado'
-        ? `<button class="btn-s" onclick="iniciarTreinamento('${token}')">${zUiText('▶️ Iniciar treinamento')}</button>`
-        : `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${zUiText(progresso.status === 'concluido' ? '🎓 Revisar conteúdo' : '✓ Marcar próxima aula')}</button>`}
-      <button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('↺ Reiniciar')}</button>
+      ${acaoPrincipal}
+      ${acaoSecundaria}
     </div>
 
+    ${notaBloqueio}
+    ${notaCertificado}
     <div class="trein-detail-note">${zUiText('Seu progresso fica salvo neste navegador para o usuário logado.')}</div>
 
     <div class="trein-videos-panel">
@@ -1018,13 +1282,13 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
       <div class="trein-lessons-list">
         ${licoes.map(licao => {
           const done = progresso.aulas.includes(licao.idx);
-          return `<button class="trein-lesson ${done ? 'done' : ''}" onclick="toggleAulaTrein('${token}', ${licao.idx})">
+          return `<button class="trein-lesson ${done ? 'done' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
             <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
             <span class="trein-lesson-main">
               <strong>${zUiText(licao.titulo)}</strong>
               <small>${zUiText(licao.resumo)}</small>
             </span>
-            <span class="trein-lesson-state">${done ? zUiText('Concluída') : zUiText('Marcar')}</span>
+            <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluída') : zUiText('Marcar'))}</span>
           </button>`;
         }).join('')}
       </div>
@@ -1032,7 +1296,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
   </div>`;
 }
 
-function renderTrein(){
+function renderTreinIntermediario(){
   if(!TREIN_PROGRESSO || typeof TREIN_PROGRESSO !== 'object' || Array.isArray(TREIN_PROGRESSO)){
     carregarTreinProgressoLS();
   }
@@ -1081,14 +1345,12 @@ function renderTrein(){
       <div class="mc-s">${zUiText('Ainda não começados')}</div>
     </div>`;
 
-  if(!treinSelKey || !base.some(t => treinKey(t) === treinSelKey)){
-    treinSelKey = (filtrada[0] && treinKey(filtrada[0])) || (base[0] && treinKey(base[0])) || '';
+  if(!treinSelKey || !filtrada.some(t => treinKey(t) === treinSelKey)){
+    treinSelKey = (filtrada[0] && treinKey(filtrada[0])) || '';
     zSetState('state.ui.treinSelecionado', treinSelKey);
   }
 
-  const selecionado = filtrada.find(t => treinKey(t) === treinSelKey)
-    || base.find(t => treinKey(t) === treinSelKey)
-    || null;
+  const selecionado = filtrada.find(t => treinKey(t) === treinSelKey) || null;
 
   if(selecionado) garantirTreinVideosCarregados(selecionado);
 
@@ -1114,8 +1376,8 @@ function renderTrein(){
             <div class="trein-card-title">${zUiText(t.titulo)}</div>
             <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div>
             <div class="trein-card-progress">
-              <div class="pb"><div class="pf ${progresso.status==='concluido'?'done':''}" style="width:${progresso.pctReal}%"></div></div>
-              <div class="pl">${progresso.status==='concluido' ? zUiText('Concluído') : `${progresso.pctReal}% ${zUiText('concluído')}`}</div>
+              <div class="pb"><div class="pf ${progresso.status==='concluido'?'done':''}" style="width:${progresso.pct}%"></div></div>
+              <div class="pl">${progresso.status==='concluido' ? zUiText('Concluído') : `${progresso.pct}% ${zUiText('concluído')}`}</div>
             </div>
           </div>
           <div class="trein-card-side">
@@ -1169,9 +1431,11 @@ async function abrirModalTrein(){
   document.getElementById('mt-modal-title').textContent = zUiText('Novo Treinamento');
   document.getElementById('mt-save-btn').textContent = zUiText('✓ Adicionar treinamento');
   document.getElementById('mt-videos-input').value = '';
+  document.getElementById('mt-required').checked = false;
   emojiSel = '🏠';
   atualizarProgT();
   document.getElementById('emoji-grid').innerHTML = EMOJIS_T.map(e => `<div class="em ${e===emojiSel?'sel':''}" onclick="selEmoji('${e}',this)">${zUiText(e)}</div>`).join('');
+  atualizarMtRegras();
   renderMtVideos();
   document.getElementById('mtrein').classList.add('show');
   setTimeout(() => document.getElementById('mt-titulo').focus(), 100);
@@ -1193,6 +1457,7 @@ async function editarTrein(idx){
   emojiSel = t.thumb || '🏠';
   atualizarProgT();
   document.getElementById('emoji-grid').innerHTML = EMOJIS_T.map(e => `<div class="em ${e===emojiSel?'sel':''}" onclick="selEmoji('${e}',this)">${zUiText(e)}</div>`).join('');
+  atualizarMtRegras(t);
   document.getElementById('mtrein').classList.add('show');
   renderMtVideos();
   carregarMtVideosTrein(t);
@@ -1236,6 +1501,7 @@ async function salvarTrein(){
   btn.textContent = zUiText('Salvando treinamento...');
 
   const prevEdit = editIdx >= 0 ? { ...TREIN[editIdx] } : null;
+  const metaPayload = lerMtRegras();
   let novoRef = null;
 
   try{
@@ -1272,8 +1538,15 @@ async function salvarTrein(){
       showToast(zUiText('✅'), zUiText(`"${titulo}" adicionado com sucesso!`));
     }
 
+    const chaveAnterior = prevEdit ? getTreinMetaKey(prevEdit) : '';
+    const chaveAtual = getTreinMetaKey(novoRef);
+    if(chaveAnterior && chaveAnterior !== chaveAtual) limparTreinMeta(prevEdit);
+    setTreinMeta(novoRef, metaPayload);
+    await dbSalvarTrein(novoRef, editIdx >= 0 ? editIdx : TREIN.indexOf(novoRef));
+
     try{
       await sincronizarTreinVideos(novoRef, mtVideos);
+      await dbSalvarTrein(novoRef, editIdx >= 0 ? editIdx : TREIN.indexOf(novoRef));
     }catch(e){
       console.error('Erro ao salvar vídeos do treinamento:', e);
       showToast(zUiText('⚠️'), zUiText('Treinamento salvo, mas os vídeos não puderam ser gravados neste navegador.'));
@@ -1311,6 +1584,8 @@ async function excluirTrein(idx){
     limparTreinProgressoGlobal(t);
 
     const chaveRemovida = treinKey(t);
+    limparTreinMeta(t);
+    limparDependenciasTrein(chaveRemovida);
     TREIN.splice(idx, 1);
     zSetState('state.data.treinamentos', TREIN);
     salvarLS();
@@ -1328,7 +1603,608 @@ async function excluirTrein(idx){
   }
 }
 
+// Override the active training rendering with the consolidated rules flow.
+function renderTreinPainel(t, progresso, isDiretor, canDelete){
+  const statusMeta = TREIN_STATUS_META[progresso.status] || TREIN_STATUS_META.nao_iniciado;
+  const licoes = getTreinLicoes(t);
+  const token = treinToken(t);
+  const videos = getTreinVideos(t);
+  const videosLoading = !!TREIN_VIDEO_LOADING[treinKey(t)];
+  const videoAtivoId = getTreinVideoAtivoId(t, videos);
+  const videoAtivo = videos.find(v => v.id === videoAtivoId) || videos[0] || null;
+  const iniciou = progresso.iniciadaEm ? new Date(progresso.iniciadaEm).toLocaleDateString('pt-BR') : '-';
+  const concluiu = progresso.concluidaEm ? new Date(progresso.concluidaEm).toLocaleDateString('pt-BR') : '-';
+  const atualizado = progresso.atualizadaEm ? new Date(progresso.atualizadaEm).toLocaleDateString('pt-BR') : '-';
+  const certificado = progresso.certificadoEm ? new Date(progresso.certificadoEm).toLocaleDateString('pt-BR') : '-';
+  const proxima = progresso.proxima ? `${zUiText(progresso.proxima.titulo)} - ${zUiText(progresso.proxima.resumo)}` : zUiText('Todas as aulas concluidas');
+  const meta = getTreinMeta(t);
+  const prerequisito = getTreinPrerequisito(t);
+  const bloqueado = isTreinBloqueado(t);
+  const aprovado = progresso.status === 'aprovado';
+  const concluidoVisual = progresso.status === 'concluido' || aprovado;
+  const resumoStatus = bloqueado
+    ? zUiText(`Conclua o pre-requisito "${prerequisito?.titulo || ''}" para liberar esta trilha.`)
+    : aprovado
+      ? zUiText(`Certificado registrado em ${certificado}.`)
+      : progresso.status === 'concluido'
+        ? zUiText('Todas as aulas foram concluidas. Emita o certificado para finalizar a trilha.')
+        : zUiText(`Proxima aula: ${proxima}`);
+  const acaoPrincipal = bloqueado
+    ? `<button class="btn-s" onclick="irParaTreinamento('${prerequisito ? treinKey(prerequisito) : ''}')">${zUiText('Abrir pre-requisito')}</button>`
+    : progresso.status === 'nao_iniciado'
+      ? `<button class="btn-s" onclick="iniciarTreinamento('${token}')">${zUiText('Iniciar treinamento')}</button>`
+      : progresso.status === 'em_andamento'
+        ? `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${zUiText('Marcar proxima aula')}</button>`
+        : progresso.status === 'concluido'
+          ? `<button class="btn-s" onclick="emitirCertificadoTrein('${token}')">${zUiText('Emitir certificado')}</button>`
+          : `<button class="btn-s" onclick="reiniciarTreinamento('${token}')">${zUiText('Refazer trilha')}</button>`;
+  const acaoSecundaria = (!bloqueado && !aprovado)
+    ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('Reiniciar')}</button>`
+    : '';
+  const notaBloqueio = bloqueado
+    ? `<div class="trein-lock-note"><strong>${zUiText('Trilha bloqueada')}</strong>${zUiText(`Este treinamento depende da conclusao de "${prerequisito?.titulo || ''}".`)}</div>`
+    : '';
+  const notaCertificado = aprovado
+    ? `<div class="trein-cert-note"><strong>${zUiText('Certificacao registrada')}</strong>${zUiText(`Voce concluiu esta trilha e o certificado foi emitido em ${certificado}.`)}</div>`
+    : (progresso.status === 'concluido'
+      ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora emita o certificado para marcar a trilha como finalizada.')}</div>`
+      : '');
+
+  return `<div class="trein-detail-panel">
+    <div class="trein-detail-hero">
+      <div class="trein-detail-thumb" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">${zUiText(t.thumb || 'TR')}</div>
+      <div class="trein-detail-main">
+        <div class="trein-detail-tags">
+          <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
+          <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
+          ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
+        </div>
+        <div class="trein-detail-title">${zUiText(t.titulo)}</div>
+        <div class="trein-detail-copy">${zUiText('Trilha pratica para acelerar a execucao da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
+        <div class="trein-detail-meta">
+          <span>${t.aulas} ${zUiText('aulas')}</span>
+          <span>${zUiText(t.dur)}</span>
+          <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluidas')}</span>
+          <span>${videos.length} ${zUiText(videos.length === 1 ? 'video' : 'videos')}</span>
+        </div>
+        <div class="trein-rule-chips">
+          ${meta.obrigatorio ? `<span class="trein-rule-chip">${zUiText('Obrigatorio')}</span>` : ''}
+          ${prerequisito ? `<span class="trein-rule-chip">${zUiText('Pre-requisito')}: ${zUiText(prerequisito.titulo)}</span>` : ''}
+        </div>
+      </div>
+      <div class="trein-detail-admin">
+        ${isDiretor ? `<button class="btn-c trein-detail-edit" onclick="editarTrein(${TREIN.indexOf(t)})">${zUiText('Editar')}</button>` : ''}
+        ${canDelete ? `<button class="btn-c trein-detail-delete" onclick="excluirTrein(${TREIN.indexOf(t)})">${zUiText('Excluir')}</button>` : ''}
+      </div>
+    </div>
+
+    <div class="trein-detail-progressbar">
+      <div class="trein-detail-progress-top">
+        <strong>${progresso.pct}%</strong>
+        <span>${resumoStatus}</span>
+      </div>
+      <div class="pb trein-progress-large"><div class="pf ${concluidoVisual ? 'done' : ''}" style="width:${progresso.pct}%"></div></div>
+      <div class="trein-detail-progress-meta">
+        <div><strong>${zUiText('Iniciado em')}</strong><span>${zUiText(iniciou)}</span></div>
+        <div><strong>${zUiText('Atualizado em')}</strong><span>${zUiText(atualizado)}</span></div>
+        <div><strong>${zUiText('Concluido em')}</strong><span>${zUiText(concluiu)}</span></div>
+        ${aprovado ? `<div><strong>${zUiText('Certificado')}</strong><span>${zUiText(certificado)}</span></div>` : ''}
+      </div>
+    </div>
+
+    <div class="trein-detail-actions">
+      ${acaoPrincipal}
+      ${acaoSecundaria}
+    </div>
+
+    ${notaBloqueio}
+    ${notaCertificado}
+    <div class="trein-detail-note">${zUiText('Seu progresso fica salvo neste navegador para o usuario logado.')}</div>
+
+    <div class="trein-videos-panel">
+      <div class="trein-videos-head">
+        <div>
+          <div class="trein-lessons-title">${zUiText('Videos do treinamento')}</div>
+          <div class="trein-lessons-sub">${zUiText('Assista aos materiais gravados para acompanhar o conteudo da trilha.')}</div>
+        </div>
+        ${isDiretor ? `<button class="btn-c trein-videos-edit" onclick="editarTrein(${TREIN.indexOf(t)})">${zUiText('Gerenciar videos')}</button>` : ''}
+      </div>
+      ${videosLoading ? `<div class="trein-video-empty">${zUiText('Carregando videos...')}</div>` : videos.length ? `
+        <div class="trein-video-player-wrap">
+          <video class="trein-video-player" controls preload="metadata" src="${getTreinVideoSrc(videoAtivo)}"></video>
+          <div class="trein-video-player-meta">
+            <strong>${zUiText(videoAtivo.nome)}</strong>
+            <span>${zUiText(videoAtivo.mime || 'Video')} ${zUiText('·')} ${fmtTamanho(videoAtivo.size || 0)}</span>
+          </div>
+        </div>
+        <div class="trein-video-playlist">
+          ${videos.map(video => `<button class="trein-video-row ${video.id === videoAtivoId ? 'active' : ''}" onclick="selecionarTreinVideo('${token}', '${video.id}')">
+            <span class="trein-video-row-icon">${zUiText('▶')}</span>
+            <span class="trein-video-row-main">
+              <strong>${zUiText(video.nome)}</strong>
+              <small>${fmtTamanho(video.size || 0)}</small>
+            </span>
+          </button>`).join('')}
+        </div>` : `
+        <div class="trein-video-empty">${zUiText('Nenhum video foi enviado para este treinamento ainda.')}</div>
+      `}
+    </div>
+
+    <div class="trein-lessons">
+      <div class="trein-lessons-head">
+        <div class="trein-lessons-title">${zUiText('Roteiro de aulas')}</div>
+        <div class="trein-lessons-sub">${zUiText('Marque cada etapa concluida para continuar evoluindo na trilha.')}</div>
+      </div>
+      <div class="trein-lessons-list">
+        ${licoes.map(licao => {
+          const done = progresso.aulas.includes(licao.idx);
+          return `<button class="trein-lesson ${done ? 'done' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
+            <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
+            <span class="trein-lesson-main">
+              <strong>${zUiText(licao.titulo)}</strong>
+              <small>${zUiText(licao.resumo)}</small>
+            </span>
+            <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluida') : zUiText('Marcar'))}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTrein(){
+  if(!TREIN_PROGRESSO || typeof TREIN_PROGRESSO !== 'object' || Array.isArray(TREIN_PROGRESSO)){
+    carregarTreinProgressoLS();
+  }
+
+  const cats = getCategoriasTreinVisiveis();
+  if(!cats.includes(normalizarCatTrein(tcatAtivo))){
+    tcatAtivo = cats[0];
+    zSetState('state.ui.tcatAtivo', tcatAtivo);
+  }
+
+  document.getElementById('tcats').innerHTML = cats
+    .map(c => `<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}')">${zUiText(CAT_ICON[c]||'⭐')} ${zUiText(c)}</button>`)
+    .join('');
+
+  const isDiretor = role === 'dir';
+  const canDelete = role === 'dir' || role === 'dono';
+  document.getElementById('btn-add-wrap').innerHTML = isDiretor
+    ? `<button class="btn-add-trein" onclick="abrirModalTrein()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>${zUiText('Novo treinamento')}</button>`
+    : `<div class="btn-add-lock"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="8" height="7" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>${zUiText('Catalogo disponivel para consumo')}</div>`;
+
+  const base = getListaTreinBase();
+  const filtrada = getListaTreinFiltrada(base);
+  const aprovados = base.filter(t => getTreinProgresso(t).status === 'aprovado').length;
+  const emAndamento = base.filter(t => getTreinProgresso(t).status === 'em_andamento').length;
+  const obrigatoriosPendentes = base.filter(t => getTreinMeta(t).obrigatorio && !isTreinAprovado(t)).length;
+
+  document.getElementById('trein-stats').innerHTML = `
+    <div class="mc a">
+      <div class="mc-l">${zUiText(`Cursos ${tcatAtivo}`)}</div>
+      <div class="mc-v" style="color:var(--gold);">${base.length}</div>
+      <div class="mc-s">${zUiText(filtrada.length === base.length ? 'Catalogo disponivel' : `${filtrada.length} exibido(s) no filtro`)}</div>
+    </div>
+    <div class="mc" style="border-top-color:#3060B8;">
+      <div class="mc-l">${zUiText('Certificados')}</div>
+      <div class="mc-v" style="color:#3060B8;">${aprovados}</div>
+      <div class="mc-s">${base.length ? `${Math.round((aprovados/base.length)*100)}% ${zUiText('do catalogo')}` : zUiText('Sem cursos')}</div>
+    </div>
+    <div class="mc" style="border-top-color:var(--gold);">
+      <div class="mc-l">${zUiText('Em andamento')}</div>
+      <div class="mc-v">${emAndamento}</div>
+      <div class="mc-s">${zUiText('Cursos iniciados por voce')}</div>
+    </div>
+    <div class="mc" style="border-top-color:#C08020;">
+      <div class="mc-l">${zUiText('Obrigatorios pendentes')}</div>
+      <div class="mc-v">${obrigatoriosPendentes}</div>
+      <div class="mc-s">${zUiText(obrigatoriosPendentes ? 'Pedem atencao imediata' : 'Tudo em dia')}</div>
+    </div>`;
+
+  if(!treinSelKey || !filtrada.some(t => treinKey(t) === treinSelKey)){
+    treinSelKey = (filtrada[0] && treinKey(filtrada[0])) || '';
+    zSetState('state.ui.treinSelecionado', treinSelKey);
+  }
+
+  const selecionado = filtrada.find(t => treinKey(t) === treinSelKey) || null;
+  if(selecionado) garantirTreinVideosCarregados(selecionado);
+
+  const cards = filtrada.length
+    ? filtrada.map(t => {
+        const idx = TREIN.indexOf(t);
+        const progresso = getTreinProgresso(t);
+        const token = treinToken(t);
+        const statusMeta = TREIN_STATUS_META[progresso.status] || TREIN_STATUS_META.nao_iniciado;
+        const meta = getTreinMeta(t);
+        const prerequisito = getTreinPrerequisito(t);
+        const bloqueado = isTreinBloqueado(t);
+        const aprovado = progresso.status === 'aprovado';
+        const concluidoVisual = progresso.status === 'concluido' || aprovado;
+        const editBtn = isDiretor
+          ? `<button class="trein-card-edit" onclick="event.stopPropagation();editarTrein(${idx})" title="${zUiText('Editar treinamento')}">${zUiText('✏️')}</button>`
+          : '';
+        const sideLabel = bloqueado
+          ? zUiText('Bloqueado')
+          : progresso.status === 'nao_iniciado'
+            ? zUiText('Iniciar')
+            : progresso.status === 'concluido'
+              ? zUiText('Certificar')
+              : aprovado
+                ? zUiText('Refazer')
+                : zUiText('Continuar');
+        return `<button class="trein-card ${treinKey(t)===treinSelKey?'active':''} ${bloqueado ? 'locked' : ''}" onclick="selecionarTrein('${token}')">
+          <div class="trein-card-icon" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">
+            ${editBtn}
+            <span>${zUiText(t.thumb || '📚')}</span>
+          </div>
+          <div class="trein-card-main">
+            <div class="trein-card-tags">
+              <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
+              <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
+              ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
+              ${bloqueado ? `<span class="zbg bg-r">${zUiText('Bloqueado')}</span>` : ''}
+            </div>
+            <div class="trein-card-title">${zUiText(t.titulo)}</div>
+            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div>
+            <div class="trein-card-progress">
+              <div class="pb"><div class="pf ${concluidoVisual ? 'done' : ''}" style="width:${progresso.pct}%"></div></div>
+              <div class="pl">${concluidoVisual ? zUiText(aprovado ? 'Certificado' : 'Concluido') : `${progresso.pct}% ${zUiText('concluido')}`}</div>
+            </div>
+            ${bloqueado ? `<div class="trein-lock-note"><strong>${zUiText('Dependencia')}</strong>${zUiText(`Conclua "${prerequisito?.titulo || ''}" para liberar.`)}</div>` : ''}
+          </div>
+          <div class="trein-card-side">
+            <strong>${progresso.concluidas}/${progresso.total}</strong>
+            <span>${sideLabel}</span>
+          </div>
+        </button>`;
+      }).join('')
+    : `<div class="trein-empty-state">
+        <div class="trein-empty-icon">${zUiText('📭')}</div>
+        <div class="trein-empty-title">${zUiText('Nenhum treinamento encontrado')}</div>
+        <div class="trein-empty-copy">${zUiText(tBusca || tStatus !== 'todos' ? 'Ajuste sua busca ou mude o status selecionado.' : `Nenhum treinamento cadastrado para ${tcatAtivo} ainda.`)}</div>
+      </div>`;
+
+  document.getElementById('trein-grid').innerHTML = `
+    <div class="trein-shell">
+      <div class="trein-list-col">
+        <div class="trein-toolbar">
+          <div class="trein-search">
+            <span>${zUiText('🔎')}</span>
+            <input type="text" value="${String(tBusca).replace(/"/g,'&quot;')}" placeholder="${zUiText('Buscar treinamento...')}" oninput="setTBusca(this.value)">
+          </div>
+          <div class="trein-statuses">
+            ${Object.entries(TREIN_STATUS_META).map(([status, meta]) => `<button class="trein-status-btn ${tStatus===status?'active':''}" onclick="setTStatus('${status}')">${zUiText(meta.label)}</button>`).join('')}
+          </div>
+        </div>
+        <div class="trein-list-count">${zUiText(`${filtrada.length} treinamento(s) exibido(s)`)}</div>
+        <div class="trein-list-grid">${cards}</div>
+      </div>
+      <div class="trein-detail-col">
+        ${selecionado
+          ? renderTreinPainel(selecionado, getTreinProgresso(selecionado), isDiretor, canDelete)
+          : `<div class="trein-detail-empty">
+              <div class="trein-empty-icon">${zUiText('🎓')}</div>
+              <div class="trein-empty-title">${zUiText('Selecione um treinamento')}</div>
+              <div class="trein-empty-copy">${zUiText('Ao escolher um curso, voce vera as aulas, os videos, o progresso e as acoes para iniciar ou continuar a trilha.')}</div>
+            </div>`}
+      </div>
+    </div>`;
+}
+
+async function sincronizarTreinVideos(t, videosModal){
+  const chave = treinKey(t);
+  const finais = await Promise.all((videosModal || []).map((video, idx) => normalizarTreinVideoCompartilhado(video, idx, chave)));
+  const compartilhados = finais.map(video => ({
+    id: video.id,
+    nome: video.nome,
+    mime: video.mime,
+    size: video.size,
+    ordem: video.ordem || 0,
+    dataUrl: video.dataUrl || ''
+  }));
+
+  t.videos = compartilhados;
+
+  try{
+    const db = await abrirTreinVideoDB();
+    const atuais = await listarTreinVideosDB(chave);
+    const manterIds = new Set(finais.map(v => v.id));
+    const removerIds = atuais.filter(v => !manterIds.has(v.id)).map(v => v.id);
+
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(TREIN_VIDEO_STORE, 'readwrite');
+      const store = tx.objectStore(TREIN_VIDEO_STORE);
+      removerIds.forEach(id => store.delete(id));
+      finais.forEach(video => store.put({
+        id: video.id,
+        trainingKey: chave,
+        nome: video.nome,
+        mime: video.mime,
+        size: video.size,
+        ordem: video.ordem || 0,
+        blob: video.blob
+      }));
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error || new Error('Falha ao salvar os videos do treinamento.'));
+    });
+  }catch(e){
+    console.warn('Falha ao sincronizar os videos localmente:', e.message);
+  }
+
+  setTreinVideosCache(chave, compartilhados.map(v => ({ ...v })));
+  return compartilhados;
+}
+
+function renderMtVideos(){
+  const el = document.getElementById('mt-videos-list');
+  if(!el) return;
+  if(mtVideosLoading){
+    el.innerHTML = `<div class="trein-video-empty">${zUiText('Carregando videos do treinamento...')}</div>`;
+    return;
+  }
+  if(!mtVideos.length){
+    el.innerHTML = `<div class="trein-video-empty">${zUiText('Nenhum video anexado ainda.')}</div>`;
+    return;
+  }
+  el.innerHTML = mtVideos.map((video, idx) => {
+    const detalhe = [zUiText(video.mime || 'video'), fmtTamanho(video.size || 0)].filter(Boolean).join(' - ');
+    return `<div class="trein-video-item">
+      <div class="trein-video-item-icon">${zUiText('TV')}</div>
+      <div class="trein-video-item-main">
+        <strong>${zUiText(video.nome)}</strong>
+        <small>${detalhe}</small>
+      </div>
+      <span class="trein-video-item-badge ${video.id ? 'saved' : 'new'}">${zUiText(video.id ? 'Salvo' : 'Novo')}</span>
+      <button type="button" class="btn-c trein-video-remove" onclick="removerMtVideo(${idx}, event)">${zUiText('Remover')}</button>
+    </div>`;
+  }).join('');
+}
+
+function handleTreinVideoUpload(input){
+  const arquivos = Array.from(input.files || []);
+  if(!arquivos.length) return;
+  const validos = [];
+  arquivos.forEach(file => {
+    if(!(file.type || '').startsWith('video/')){
+      showToast(zUiText('!'), zUiText(`"${file.name}" nao e um arquivo de video valido.`));
+      return;
+    }
+    if(file.size > TREIN_VIDEO_MAX_MB * 1024 * 1024){
+      showToast(zUiText('!'), zUiText(`"${file.name}" ultrapassa ${TREIN_VIDEO_MAX_MB}MB.`));
+      return;
+    }
+    validos.push({
+      nome: file.name,
+      mime: file.type,
+      size: file.size,
+      blob: file
+    });
+  });
+  if(validos.length){
+    mtVideos = [...mtVideos, ...validos];
+    renderMtVideos();
+    showToast(zUiText('OK'), zUiText(`${validos.length} video${validos.length>1?'s':''} adicionado${validos.length>1?'s':''} ao treinamento.`));
+  }
+  input.value = '';
+}
+
+function iniciarTreinamento(token){
+  const t = getTreinPorToken(token);
+  if(!t) return;
+  if(isTreinBloqueado(t)){
+    showToast(zUiText('!'), zUiText('Conclua o pre-requisito antes de iniciar esta trilha.'));
+    return;
+  }
+  const bruto = getTreinProgressoBruto(t);
+  if(!bruto) setTreinProgresso(t, criarTreinProgressoInicial(t));
+  treinSelKey = treinKey(t);
+  zSetState('state.ui.treinSelecionado', treinSelKey);
+  renderTrein();
+  showToast(zUiText('OK'), zUiText('Treinamento iniciado. Voce ja pode avancar pelas aulas.'));
+}
+
+function toggleAulaTrein(token, idx){
+  const t = getTreinPorToken(token);
+  if(!t) return;
+  if(isTreinBloqueado(t)){
+    showToast(zUiText('!'), zUiText('Conclua o pre-requisito antes de marcar aulas nesta trilha.'));
+    return;
+  }
+  const bruto = getTreinProgressoBruto(t) || criarTreinProgressoInicial(t);
+  const aulas = Array.isArray(bruto.aulas) ? [...bruto.aulas] : [];
+  const pos = aulas.indexOf(idx);
+  if(pos >= 0) aulas.splice(pos, 1);
+  else aulas.push(idx);
+  aulas.sort((a,b) => a - b);
+  const total = getTreinLicoes(t).length;
+  const concluido = aulas.length >= total;
+
+  setTreinProgresso(t, {
+    aulas,
+    iniciadaEm: bruto.iniciadaEm || new Date().toISOString(),
+    concluidaEm: concluido ? new Date().toISOString() : null,
+    atualizadaEm: new Date().toISOString(),
+    certificadoEm: concluido ? (bruto.certificadoEm || null) : null
+  });
+
+  treinSelKey = treinKey(t);
+  zSetState('state.ui.treinSelecionado', treinSelKey);
+  renderTrein();
+
+  if(concluido){
+    showToast(zUiText('OK'), zUiText('Treinamento concluido com sucesso!'));
+  }
+}
+
+function marcarProximaAulaTrein(token){
+  const t = getTreinPorToken(token);
+  if(!t) return;
+  if(isTreinBloqueado(t)){
+    showToast(zUiText('!'), zUiText('Conclua o pre-requisito antes de continuar esta trilha.'));
+    return;
+  }
+  const progresso = getTreinProgresso(t);
+  if(!progresso.proxima){
+    showToast(zUiText('OK'), zUiText('Este treinamento ja esta concluido.'));
+    return;
+  }
+  toggleAulaTrein(token, progresso.proxima.idx);
+}
+
+function emitirCertificadoTrein(token){
+  const t = getTreinPorToken(token);
+  if(!t) return;
+  const progresso = getTreinProgresso(t);
+  if(progresso.certificadoEm){
+    showToast(zUiText('OK'), zUiText('Este certificado ja foi registrado.'));
+    return;
+  }
+  if(progresso.concluidas < progresso.total){
+    showToast(zUiText('!'), zUiText('Conclua todas as aulas antes de emitir o certificado.'));
+    return;
+  }
+  setTreinProgresso(t, {
+    certificadoEm: new Date().toISOString(),
+    atualizadaEm: new Date().toISOString()
+  });
+  treinSelKey = treinKey(t);
+  zSetState('state.ui.treinSelecionado', treinSelKey);
+  renderTrein();
+  showToast(zUiText('OK'), zUiText('Certificado registrado com sucesso.'));
+}
+
+async function salvarTrein(){
+  const titulo = document.getElementById('mt-titulo').value.trim();
+  const aulas = parseInt(document.getElementById('mt-aulas').value, 10);
+  const dur = document.getElementById('mt-dur').value.trim();
+  const prog = parseInt(document.getElementById('mt-prog').value, 10) || 0;
+  const btn = document.getElementById('mt-save-btn');
+  const textoOriginal = btn.textContent;
+
+  if(!titulo){
+    document.getElementById('mt-titulo').focus();
+    showToast(zUiText('!'), zUiText('Informe o titulo do treinamento.'));
+    return;
+  }
+  if(!aulas || aulas < 1){
+    document.getElementById('mt-aulas').focus();
+    showToast(zUiText('!'), zUiText('Informe o numero de aulas.'));
+    return;
+  }
+  if(!dur){
+    document.getElementById('mt-dur').focus();
+    showToast(zUiText('!'), zUiText('Informe a duracao.'));
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = zUiText('Salvando treinamento...');
+
+  const prevEdit = editIdx >= 0 ? { ...TREIN[editIdx] } : null;
+  const metaPayload = lerMtRegras();
+  let novoRef = null;
+
+  try{
+    if(editIdx >= 0){
+      TREIN[editIdx] = {
+        ...TREIN[editIdx],
+        titulo,
+        aulas,
+        dur,
+        thumb: emojiSel,
+        bg: TREIN[editIdx].bg || CAT_BG_T[normalizarCatTrein(TREIN[editIdx].cat)],
+        prog
+      };
+      await dbSalvarTrein(TREIN[editIdx], editIdx);
+      novoRef = TREIN[editIdx];
+      showToast(zUiText('OK'), zUiText(`"${titulo}" atualizado com sucesso!`));
+    }else{
+      novoRef = {
+        titulo,
+        cat: tcatAtivo,
+        aulas,
+        dur,
+        thumb: emojiSel,
+        bg: CAT_BG_T[tcatAtivo],
+        prog
+      };
+      TREIN.push(novoRef);
+      try{
+        await dbSalvarTrein(novoRef, -1);
+      }catch(e){
+        TREIN = TREIN.filter(t => t !== novoRef);
+        throw e;
+      }
+      showToast(zUiText('OK'), zUiText(`"${titulo}" adicionado com sucesso!`));
+    }
+
+    const chaveAnterior = prevEdit ? getTreinMetaKey(prevEdit) : '';
+    const chaveAtual = getTreinMetaKey(novoRef);
+    if(chaveAnterior && chaveAnterior !== chaveAtual) limparTreinMeta(prevEdit);
+    setTreinMeta(novoRef, metaPayload);
+    await dbSalvarTrein(novoRef, editIdx >= 0 ? editIdx : TREIN.indexOf(novoRef));
+
+    try{
+      await sincronizarTreinVideos(novoRef, mtVideos);
+      await dbSalvarTrein(novoRef, editIdx >= 0 ? editIdx : TREIN.indexOf(novoRef));
+    }catch(e){
+      console.error('Erro ao salvar videos do treinamento:', e);
+      showToast(zUiText('!'), zUiText('Treinamento salvo, mas os videos nao puderam ser gravados neste navegador.'));
+    }
+
+    zSetState('state.data.treinamentos', TREIN);
+    salvarLS();
+    treinSelKey = treinKey(novoRef);
+    zSetState('state.ui.treinSelecionado', treinSelKey);
+    fecharMT();
+    renderTrein();
+  }catch(e){
+    console.error('Erro ao salvar treinamento:', e);
+    if(editIdx >= 0 && prevEdit) TREIN[editIdx] = prevEdit;
+    showToast(zUiText('ERRO'), zUiText('Nao foi possivel salvar o treinamento.'));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = textoOriginal;
+  }
+}
+
+async function excluirTrein(idx){
+  if(role!=='dir' && role!=='dono'){
+    showToast(zUiText('!'), zUiText('Apenas Dono ou Diretor podem excluir treinamentos.'));
+    return;
+  }
+  const t = TREIN[idx];
+  if(!t) return;
+  const confirmar = window.confirm(zUiText(`Excluir o treinamento "${t.titulo}"? Essa acao nao pode ser desfeita.`));
+  if(!confirmar) return;
+
+  try{
+    await dbExcluirTrein(t);
+    await limparTreinVideosTreinamento(t);
+    limparTreinProgressoGlobal(t);
+
+    const chaveRemovida = treinKey(t);
+    limparTreinMeta(t);
+    limparDependenciasTrein(chaveRemovida);
+    TREIN.splice(idx, 1);
+    zSetState('state.data.treinamentos', TREIN);
+    salvarLS();
+
+    if(treinSelKey === chaveRemovida){
+      treinSelKey = TREIN[0] ? treinKey(TREIN[0]) : '';
+      zSetState('state.ui.treinSelecionado', treinSelKey);
+    }
+
+    renderTrein();
+    showToast(zUiText('OK'), zUiText('Treinamento excluido com sucesso.'));
+  }catch(e){
+    console.error('Erro ao excluir treinamento:', e);
+    showToast(zUiText('ERRO'), zUiText('Nao foi possivel excluir o treinamento.'));
+  }
+}
+
 carregarTreinProgressoLS();
+carregarTreinMetaLS();
 
 zRegisterModule('treinamentos', {
   renderTrein,
@@ -1341,6 +2217,8 @@ zRegisterModule('treinamentos', {
   marcarProximaAulaTrein,
   toggleAulaTrein,
   reiniciarTreinamento,
+  emitirCertificadoTrein,
+  irParaTreinamento,
   abrirModalTrein,
   editarTrein,
   excluirTrein,

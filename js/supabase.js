@@ -174,7 +174,7 @@ function mapVendaOut(v){
 }
 
 function mapTreinIn(t){
-  return{
+  const trein = {
     id:t.id,
     titulo:t.titulo,
     cat:t.cat,
@@ -184,6 +184,10 @@ function mapTreinIn(t){
     bg:t.bg,
     prog:t.prog
   };
+  if(typeof t?.obrigatorio !== 'undefined') trein.obrigatorio = !!t.obrigatorio;
+  if(typeof t?.prerequisito === 'string') trein.prerequisito = t.prerequisito;
+  if(Array.isArray(t && t.videos)) trein.videos = t.videos;
+  return trein;
 }
 function mapTreinOut(t){
   return{
@@ -193,7 +197,17 @@ function mapTreinOut(t){
     dur:t.dur,
     thumb:t.thumb,
     bg:t.bg,
-    prog:t.prog
+    prog:t.prog,
+    obrigatorio:!!t.obrigatorio,
+    prerequisito:t.prerequisito||'',
+    videos:Array.isArray(t.videos) ? t.videos.map(v => ({
+      id:v.id,
+      nome:v.nome,
+      mime:v.mime,
+      size:v.size,
+      ordem:v.ordem||0,
+      dataUrl:v.dataUrl||''
+    })) : []
   };
 }
 
@@ -317,14 +331,35 @@ async function dbSalvarSenha(email, senha){
 // ── CRUD TREINAMENTOS ─────────────────────────────────────────────────────────
 async function dbSalvarTrein(t, idx){
   const dados=mapTreinOut(t);
-  if(t && t.id){
-    const {data,error}=await sb.from('treinamentos').update(dados).eq('id',t.id).select().single();
+  const dadosBase={
+    titulo:t.titulo,
+    cat:t.cat,
+    aulas:t.aulas,
+    dur:t.dur,
+    thumb:t.thumb,
+    bg:t.bg,
+    prog:t.prog
+  };
+  const salvar=async payload=>{
+    if(t && t.id){
+      const {data,error}=await sb.from('treinamentos').update(payload).eq('id',t.id).select().single();
+      if(error) throw error;
+      if(data && data.id) t.id = data.id;
+      return data;
+    }
+    const {data,error}=await sb.from('treinamentos').insert(payload).select().single();
     if(error) throw error;
     if(data && data.id) t.id = data.id;
-  } else {
-    const {data,error}=await sb.from('treinamentos').insert(dados).select().single();
-    if(error) throw error;
-    if(data && data.id) t.id = data.id;
+    return data;
+  };
+  try{
+    await salvar(dados);
+  }catch(e){
+    const msg=String(e && (e.message||e.details||e.hint||e.code) || '').toLowerCase();
+    const colunaInvalida=msg.includes('column') || msg.includes('schema cache') || msg.includes('videos') || msg.includes('obrigatorio') || msg.includes('prerequisito');
+    if(!colunaInvalida) throw e;
+    console.warn('Tabela de treinamentos sem suporte completo para sincronizacao compartilhada. Salvando payload basico.', e);
+    await salvar(dadosBase);
   }
 }
 

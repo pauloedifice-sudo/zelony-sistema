@@ -424,6 +424,14 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .trein-status-chip.idle{background:var(--bg3);border-color:var(--bd);color:var(--ts);}
 .trein-status-chip.progress{background:#FFF8E8;border-color:#E8C060;color:#C08020;}
 .trein-status-chip.done{background:#E8F5EE;border-color:#80C8A0;color:#2E8E5E;}
+.trein-status-chip.approved{background:#EEF4FE;border-color:#90B8E8;color:#3060B8;}
+.trein-card.locked{opacity:.88;}
+.trein-lock-note{margin-top:10px;padding:12px;border-radius:12px;background:#FFF8E8;border:1px solid #E8C060;color:#8A6518;font-size:11px;line-height:1.6;}
+.trein-lock-note strong{display:block;font-size:12px;color:#7A5710;margin-bottom:4px;}
+.trein-rule-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.trein-rule-chip{display:inline-flex;align-items:center;gap:6px;background:#FFF8E8;border:1px solid #E8C060;border-radius:999px;padding:4px 10px;font-size:10px;color:#8A6518;font-weight:600;}
+.trein-cert-note{margin-top:12px;padding:12px;border-radius:12px;background:#EEF4FE;border:1px solid #90B8E8;color:#2D5FA6;font-size:11px;line-height:1.6;}
+.trein-cert-note strong{display:block;font-size:12px;color:#234F92;margin-bottom:4px;}
 .trein-detail-panel,.trein-detail-empty{background:var(--bg);border:1px solid var(--bd);border-radius:14px;padding:16px;box-shadow:0 10px 24px rgba(184,144,42,0.05);position:sticky;top:0;}
 .trein-detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:360px;text-align:center;}
 .trein-empty-state{background:var(--bg);border:1px dashed var(--bd);border-radius:14px;padding:32px 24px;text-align:center;color:var(--tm);}
@@ -495,6 +503,8 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .trein-lessons-list{display:flex;flex-direction:column;gap:8px;}
 .trein-lesson{width:100%;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:center;cursor:pointer;text-align:left;transition:all .12s;}
 .trein-lesson:hover{border-color:var(--gold-bd);background:var(--gold-bg);}
+.trein-lesson[disabled]{cursor:not-allowed;opacity:.72;background:var(--bg3);}
+.trein-lesson[disabled]:hover{border-color:var(--bd);background:var(--bg3);}
 .trein-lesson.done{background:#EEF8F2;border-color:#A6D4B7;}
 .trein-lesson-check{width:32px;height:32px;border-radius:50%;background:var(--gold-bg);border:1px solid var(--gold-bd);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold);}
 .trein-lesson.done .trein-lesson-check{background:#2E9E6E;border-color:#2E9E6E;color:#fff;}
@@ -625,6 +635,8 @@ textarea::placeholder{color:#B8A880;}
 .em:hover{border-color:var(--gold-bd);background:var(--gold-bg);}
 .em.sel{border-color:var(--gold);background:var(--gold-bg);box-shadow:0 0 0 3px rgba(184,144,42,0.15);}
 .mt-range-card{padding:12px;border-radius:14px;background:linear-gradient(180deg,#FFF9EE 0%,#FFF 100%);border:1px solid rgba(184,144,42,0.14);}
+.mt-rule-card{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:linear-gradient(180deg,#FFF9EE 0%,#FFF 100%);border:1px solid rgba(184,144,42,0.14);}
+.mt-toggle-wrap{background:#fff;}
 .mt-modal input[type=range]{width:100%;accent-color:var(--gold);}
 .range-preview{display:flex;align-items:center;gap:12px;margin-top:8px;}
 .rbar{flex:1;height:8px;background:var(--bg4);border-radius:999px;overflow:hidden;}
