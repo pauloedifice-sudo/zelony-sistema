@@ -92,27 +92,90 @@ function normalizarVendaNumeros(v){
 function pctSeguro(valor,casas=2){
   return `${(numSeguro(valor,0)*100).toFixed(casas)}%`;
 }
+function normalizarTextoBusca(valor){
+  return String(valor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+}
 function chavesNomePessoa(nome){
-  const base=String(nome||'').trim().toLowerCase();
+  const base=normalizarTextoBusca(nome);
   if(!base) return [];
   const chaves=[base];
-  const primeiroNome=base.split(' ')[0];
+  const partes=base.split(' ').filter(Boolean);
+  const primeiroNome=partes[0]||'';
   if(primeiroNome.length>=3&&!chaves.includes(primeiroNome)) chaves.push(primeiroNome);
+  if(partes.length>=2){
+    const nomeCurto=partes.slice(0,2).join(' ');
+    if(!chaves.includes(nomeCurto)) chaves.push(nomeCurto);
+  }
   return chaves;
 }
 function campoVendaBatePessoa(campo,nomeOuUsuario){
-  const alvo=String(campo||'').trim().toLowerCase();
+  const alvo=normalizarTextoBusca(campo);
   if(!alvo) return false;
   const nomeBase=typeof nomeOuUsuario==='string'?nomeOuUsuario:(nomeOuUsuario&&nomeOuUsuario.nome);
-  return chavesNomePessoa(nomeBase).includes(alvo);
+  const chaves=chavesNomePessoa(nomeBase);
+  if(chaves.includes(alvo)) return true;
+  return chaves.some(chave=>chave.includes(' ')&&(alvo.startsWith(chave+' ')||chave.startsWith(alvo+' ')));
 }
 function getUsuarioCorretorVenda(corretor){
   return USUARIOS.find(u=>campoVendaBatePessoa(corretor,u))||null;
 }
-function pctRhCorretor(corretor,padrao=0){
+function usuarioElegivelRhNovaVenda(usuario){
+  if(!usuario) return false;
+  const perfilAtual=typeof getPerfil==='function'?getPerfil(usuario.perfil):String(usuario.perfil||'').toLowerCase();
+  return !!usuario.rhContratacao&&perfilAtual==='cor';
+}
+function pctRhCorretor(corretor,padrao=0,opcoes={}){
   const corretorUser=getUsuarioCorretorVenda(corretor);
   if(!corretorUser) return padrao;
-  return corretorUser.rhContratacao?0.001:0;
+  if(opcoes.respeitarPerfilAtual===false) return corretorUser.rhContratacao?0.001:0;
+  return usuarioElegivelRhNovaVenda(corretorUser)?0.001:0;
+}
+const AJUSTES_MANUAIS_RH=[  
+  {cliente:'joao carlos',produto:'campo sales',construtora:'suica flats',corretor:'aline gabriele soek'},
+  {cliente:'adenilson de souza',produto:'kentucky',construtora:'lyx',corretor:'aline gabriele soek'},
+  {cliente:'hiann joao da conceicao beleza',produto:'kentucky',construtora:'lyx',corretor:'aline gabriele soek'}
+];
+const OBS_AJUSTE_MANUAL_RH='Ajuste manual: comissão do RH preservada em venda anterior à promoção da colaboradora.';
+function vendaBateAjusteManualRh(v,alvo){
+  if(!v||!alvo) return false;
+  const cliente=normalizarTextoBusca(String(v.cliente||'').split('/')[0]);
+  const produto=normalizarTextoBusca(v.produto);
+  const construtora=normalizarTextoBusca(v.construtora);
+  const corretor=normalizarTextoBusca(v.corretor);
+  return cliente.startsWith(alvo.cliente)
+    && produto===alvo.produto
+    && construtora===alvo.construtora
+    && corretor===alvo.corretor;
+}
+async function aplicarAjustesManuaisRhPendentes(opcoes={}){
+  const alteradas=[];
+  AJUSTES_MANUAIS_RH.forEach(alvo=>{
+    VENDAS.filter(v=>vendaBateAjusteManualRh(v,alvo)).forEach(venda=>{
+      normalizarVendaNumeros(venda);
+      let mudou=false;
+      if(numSeguro(venda.pct_rh,0)!==0.001){
+        venda.pct_rh=0.001;
+        mudou=true;
+      }
+      if(!Array.isArray(venda.hist)) venda.hist=[];
+      const jaTemObs=venda.hist.some(h=>normalizarTextoBusca(h&&h.o).includes(normalizarTextoBusca(OBS_AJUSTE_MANUAL_RH)));
+      if(!jaTemObs){
+        venda.hist.push(criarRegistroHistorico({e:numSeguro(venda.etapa,0),u:'Sistema',o:OBS_AJUSTE_MANUAL_RH,tipo:'obs'}));
+        mudou=true;
+      }
+      if(mudou&&!alteradas.includes(venda)) alteradas.push(venda);
+    });
+  });
+  if(!alteradas.length) return {alteradas:0,persistidas:0,falhas:0};
+  salvarLS();
+  let falhas=0;
+  if(opcoes.persistir!==false&&typeof dbAtualizarVenda==='function'){
+    const resultados=await Promise.allSettled(alteradas.map(v=>dbAtualizarVenda(v)));
+    falhas=resultados.filter(r=>r.status==='rejected').length;
+    if(falhas) console.warn('Falha ao aplicar ajustes manuais de RH.', resultados);
+  }
+  if(opcoes.renderizar!==false) atualizarViewsPosSyncRh();
+  return {alteradas:alteradas.length,persistidas:alteradas.length-falhas,falhas};
 }
 function atualizarViewsPosSyncRh(){
   if(typeof renderFiltros==='function') renderFiltros();
@@ -282,12 +345,9 @@ function vendasU(l, somenteMinhas=false){
   if(role==='fin') return base;
   if(role==='rh') return base.filter(v=>v.pct_rh&&v.pct_rh>0);
   const matchNome=(campo,usuario)=>{
-    if(!usuario||!campo) return false;
-    const c=campo.toLowerCase().trim();
-    const nomeCompleto=usuario.nome.toLowerCase().trim();
-    const primeiroNome=nomeCompleto.split(' ')[0];
-    return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
+    return campoVendaBatePessoa(campo,usuario);
   };
+  if(role==='cor') return usuarioLogado?l.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
   if(role==='dir'&&(unid==='Ambas'||!unid)){
     if(somenteMinhas&&usuarioLogado){
       return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado));
@@ -300,7 +360,6 @@ function vendasU(l, somenteMinhas=false){
     }
     return base;
   }
-  if(role==='cor') return usuarioLogado?base.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
   if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)||matchNome(v.corretor,usuarioLogado)):[];
   if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado)||matchNome(v.capitao,usuarioLogado)):[];
   return base;
@@ -312,11 +371,10 @@ function calcAtraso(v){
   if(prazo===null||v.etapa===ETAPAS.length-1||v.distratada) return null;
   const histEtapa=[...v.hist].reverse().find(h=>h.e===v.etapa&&histAfetaFluxo(h));
   const ref=histEtapa||(v.hist&&v.hist.length?v.hist[0]:null);
-  if(!ref||!ref.d) return 0;
-  const partes=ref.d.split('/');
-  if(partes.length<2) return 0;
-  const ano=new Date().getFullYear();
-  const dataInicio=new Date(ano,parseInt(partes[1])-1,parseInt(partes[0]));
+  const refInfo=obterMomentoHistorico(ref,{preferTs:false});
+  if(!refInfo||!refInfo.date) return 0;
+  const dataInicio=new Date(refInfo.date.getTime());
+  dataInicio.setHours(0,0,0,0);
   const hoje2=new Date(); hoje2.setHours(0,0,0,0);
   const diasPassados=Math.floor((hoje2-dataInicio)/(1000*60*60*24));
   return diasPassados-prazo;
@@ -334,22 +392,23 @@ function calcPrevisao(v){
   if(v.etapa===0||v.distratada||v.etapa>=ETAPAS.length-1) return null;
   const histEtapa1=[...v.hist].find(h=>h.e===1&&histAfetaFluxo(h));
   const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
-  if(!refInicio||!refInicio.d) return null;
-  const partes=refInicio.d.split('/');
-  if(partes.length<2) return null;
-  const ano=new Date().getFullYear();
-  let dataBase=new Date(ano,parseInt(partes[1])-1,parseInt(partes[0]));
+  const refInicioInfo=obterMomentoHistorico(refInicio,{preferTs:false});
+  if(!refInicioInfo||!refInicioInfo.date) return null;
+  let dataBase=new Date(refInicioInfo.date.getTime());
+  dataBase.setHours(0,0,0,0);
   let prazosRestantes=0;
   for(let i=1;i<ETAPAS.length-1;i++){ if(PRAZOS_ETAPA[i]) prazosRestantes+=PRAZOS_ETAPA[i]; }
   let ajusteAcumulado=0, atrasosAcumulados=0, antecipacoes=0;
   for(let i=1;i<v.etapa;i++){
     const hEntrada=[...v.hist].find(h=>h.e===i&&histAfetaFluxo(h));
     const hSaida=[...v.hist].find(h=>h.e===i+1&&histAfetaFluxo(h));
-    if(!hEntrada||!hSaida||!hEntrada.d||!hSaida.d) continue;
-    const pE=hEntrada.d.split('/'), pS=hSaida.d.split('/');
-    if(pE.length<2||pS.length<2) continue;
-    const dEntrada=new Date(ano,parseInt(pE[1])-1,parseInt(pE[0]));
-    const dSaida=new Date(ano,parseInt(pS[1])-1,parseInt(pS[0]));
+    const infoEntrada=obterMomentoHistorico(hEntrada,{preferTs:false});
+    const infoSaida=obterMomentoHistorico(hSaida,{preferTs:false});
+    if(!infoEntrada||!infoSaida||!infoEntrada.date||!infoSaida.date) continue;
+    const dEntrada=new Date(infoEntrada.date.getTime());
+    const dSaida=new Date(infoSaida.date.getTime());
+    dEntrada.setHours(0,0,0,0);
+    dSaida.setHours(0,0,0,0);
     const diasNaEtapa=Math.floor((dSaida-dEntrada)/(1000*60*60*24));
     const prazoEtapa=PRAZOS_ETAPA[i]||0;
     const diff=diasNaEtapa-prazoEtapa;
@@ -590,7 +649,17 @@ function renderVList(){
   }
   atualizarTagsFiltros();
   document.getElementById('vc').textContent=l.length;
-  if(!l.length){document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';return;}
+  if(!l.length){
+    curVId=null;
+    zSetState('state.ui.curVId', curVId);
+    document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';
+    if(typeof limparDetalheVenda==='function') limparDetalheVenda('Nenhuma venda encontrada com os filtros atuais.');
+    return;
+  }
+  if(!l.some(v=>v.id===curVId)){
+    curVId=l[0].id;
+    zSetState('state.ui.curVId', curVId);
+  }
   document.getElementById('vlista').innerHTML=l.map(v=>{
     const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">${zUiText(`📍 ${v.unidade}`)}</span>`:'';
     const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('⚠️ Distrato')}</span>`:'';
@@ -599,6 +668,7 @@ function renderVList(){
     const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('❗')} ${zUiText(atraso.label)}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚠️')} ${zUiText(atraso.label)}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('✓')} ${zUiText(atraso.label)}</span>`:'';
     return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${zUiText(v.cliente.split('/')[0].trim())}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${dbadge}${pbadge}${abadge}</div></div></div>`;
   }).join('');
+  if(typeof showVDetail==='function'&&curVId) showVDetail(curVId);
 }
 function abrirM(id){
   if(!['fin','dir','dono'].includes(role)){showToast('❗','Sem permissão para avançar etapas.');return;}
@@ -626,12 +696,9 @@ function confirmAv(){
   const obs=document.getElementById('mobs').value.trim();
   const quemAvancou=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   v.etapa++;
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quemAvancou,o:obs});
-  notifs.unshift({venda:v.cliente.split('/')[0].trim(),etapa:ETAPAS[v.etapa],obs,hora:'agora'});
-  const b=document.getElementById('nbadge');
-  b.textContent=notifs.length;
-  b.classList.remove('hidden');
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quemAvancou,o:obs}));
   fecharM();
+  atualizarBadgeNotificacoes();
   renderFiltros(); renderVList(); showVDetail(v.id); renderNots();
   dbAtualizarVenda(v).catch(e=>console.error(e));
   salvarLS();
@@ -645,8 +712,9 @@ function voltarEtapa(id){
   const etapaAnterior=ETAPAS[v.etapa-1];
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   v.etapa--;
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:`Etapa revertida para: ${etapaAnterior}`,tipo:'reversao'});
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:`Etapa revertida para: ${etapaAnterior}`,tipo:'reversao'}));
   renderFiltros(); renderVList(); showVDetail(v.id);
+  atualizarBadgeNotificacoes();
   dbAtualizarVenda(v).catch(e=>console.error(e));
   salvarLS();
   showToast('ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â©','Etapa revertida com sucesso.');
@@ -706,13 +774,14 @@ function confirmarDistrato(){
   const dataFmt=dataDistrato?dataDistrato.split('-').reverse().join('/').slice(0,5):hoje().slice(0,5);
   v.distratada=true;
   v.dataDistrato=dataFmt;
-  v.hist.push({e:v.etapa,d:dataFmt,u:quem,o:zUiText(`⚠️ DISTRATO: ${motivo}`),tipo:'distrato'});
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:zUiText(`⚠️ DISTRATO: ${motivo}`),tipo:'distrato'},{data:dataDistrato||undefined}));
   setDistratoLoading(true);
   dbAtualizarVenda(v).then(()=>{
     salvarLS();
     setDistratoLoading(false);
     fecharDistrato();
     renderFiltros(); renderVList(); showVDetail(v.id);
+    atualizarBadgeNotificacoes();
     showToast(zUiText('⚠️'),zUiText('Distrato registrado no histórico.'));
   }).catch(e=>{
     Object.assign(v, original);
@@ -858,7 +927,7 @@ function salvarEditVenda(){
   normalizarVendaNumeros(v);
   v.cca=document.getElementById('ev-cca').value.trim();
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:motivo,tipo:'edicao'});
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:motivo,tipo:'edicao'}));
   setEditVendaLoading(true);
   dbAtualizarVenda(v).then(()=>{
     setEditVendaLoading(false);
@@ -987,14 +1056,14 @@ function salvarVenda(){
   const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
   const mes=meses[mesNum];
-  const pct_rh=pctRhCorretor(corretor);
+  const pct_rh=pctRhCorretor(corretor,0,{respeitarPerfilAtual:true});
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,
     bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
-    hist:[{e:0,d:data,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'}],
+    hist:[criarRegistroHistorico({e:0,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'},{data:d})],
     anexos:[
       {nome:mvDocs.comp.nome,tipo:'comprovante',tamanho:mvDocs.comp.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.comp.dataUrl,mime:mvDocs.comp.mime},
       {nome:mvDocs.cont.nome,tipo:'contrato',tamanho:mvDocs.cont.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.cont.dataUrl,mime:mvDocs.cont.mime}

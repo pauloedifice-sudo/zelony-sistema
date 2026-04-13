@@ -27,6 +27,7 @@ function zRegisterModule(name, api){
 
 const SB_URL='https://szaxwkfaferrfqcmzfab.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6YXh3a2ZhZmVycmZxY216ZmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMTk4NjksImV4cCI6MjA4OTU5NTg2OX0.JhD9PraW5tIcR6gTP_K4olC0eka8KXITu0ajcFDsnOY';
+const SB_DOCS_BUCKET='documentos';
 const sb=supabase.createClient(SB_URL, SB_KEY);
 zSetState('config.supabase', { url: SB_URL, key: SB_KEY });
 zSetState('modules.supabase', { client: sb });
@@ -34,6 +35,7 @@ zSetState('modules.supabase', { client: sb });
 // ── DADOS EM MEMÓRIA ──────────────────────────────────────────────────────────
 const VENDAS=[];
 let TREIN=[];
+const DOCUMENTOS=[];
 const USUARIOS_PADRAO=[
   {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
   {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
@@ -41,6 +43,7 @@ const USUARIOS_PADRAO=[
 const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyimoveis.com':'Mudar@123'};
 zSetState('state.data.vendas', VENDAS);
 zSetState('state.data.treinamentos', TREIN);
+zSetState('state.data.documentos', DOCUMENTOS);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
 zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 
@@ -61,7 +64,7 @@ async function carregarDB(){
 
   const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
 
-  const [us,ss,vs,ts]=await Promise.all([
+  const [us,ss,vs,ts,ds]=await Promise.all([
     carregar('usuarios','id'),
     carregar('senhas',null),
     (async()=>{
@@ -77,6 +80,7 @@ async function carregarDB(){
       return todas;
     })().catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
     carregar('treinamentos','id'),
+    carregar('documentos','id')
   ]);
 
   if(us&&us.length){
@@ -96,8 +100,20 @@ async function carregarDB(){
     TREIN.splice(0,TREIN.length,...ts.map(mapTreinIn));
     zSetState('state.data.treinamentos', TREIN);
   }
-  if(typeof reconciliarPctRhVendas==='function'&&USUARIOS.length&&VENDAS.length){
-    await reconciliarPctRhVendas({persistir:true,renderizar:false});
+  {
+    const docsBanco=Array.isArray(ds)?ds.map(mapDocumentoIn):[];
+    const docsLocal=carregarDocumentosLS();
+    const docsMap=new Map();
+    [...docsLocal,...docsBanco].forEach(doc=>{
+      const chave=getDocumentoMergeKey(doc);
+      const atual=docsMap.get(chave);
+      docsMap.set(chave,preferirDocumentoMaisRecente(atual,doc));
+    });
+    DOCUMENTOS.splice(0,DOCUMENTOS.length,...Array.from(docsMap.values()).sort(ordenarDocumentos));
+    zSetState('state.data.documentos', DOCUMENTOS);
+  }
+  if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
+    await aplicarAjustesManuaisRhPendentes({persistir:true,renderizar:false});
   }
   zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
 
@@ -215,6 +231,164 @@ function mapTreinOut(t){
 }
 
 // ── CRUD VENDAS ───────────────────────────────────────────────────────────────
+function mapDocumentoIn(d){
+  const brutoArquivo=d.data_url||d.dataUrl||'';
+  const storageInfo=parseDocumentoStorageRef(d.storage_ref||d.storageRef||brutoArquivo);
+  return{
+    id:d.id,
+    titulo:d.titulo||'',
+    categoria:d.categoria||'Geral',
+    descricao:d.descricao||'',
+    arquivoNome:d.arquivo_nome||d.arquivoNome||'',
+    mime:d.mime||'application/pdf',
+    size:parseInt(d.size,10)||0,
+    dataUrl:storageInfo? '' : brutoArquivo,
+    storageBucket:d.storage_bucket||d.storageBucket||(storageInfo&&storageInfo.bucket)||'',
+    storagePath:d.storage_path||d.storagePath||(storageInfo&&storageInfo.path)||'',
+    criadoPor:d.criado_por||d.criadoPor||'',
+    atualizadoEm:d.atualizado_em||d.atualizadoEm||'',
+    publicado:typeof d.publicado==='boolean'?d.publicado:true
+  };
+}
+
+function mapDocumentoOut(d){
+  const storageRef=d.storageBucket&&d.storagePath?buildDocumentoStorageRef(d.storageBucket,d.storagePath):(d.dataUrl||'');
+  return{
+    titulo:d.titulo||'',
+    categoria:d.categoria||'Geral',
+    descricao:d.descricao||'',
+    arquivo_nome:d.arquivoNome||'',
+    mime:d.mime||'application/pdf',
+    size:d.size||0,
+    data_url:storageRef,
+    criado_por:d.criadoPor||'',
+    atualizado_em:d.atualizadoEm||new Date().toISOString(),
+    publicado:typeof d.publicado==='boolean'?d.publicado:true
+  };
+}
+
+function buildDocumentoStorageRef(bucket,path){
+  if(!bucket||!path) return '';
+  return `storage://${bucket}/${path}`;
+}
+
+function parseDocumentoStorageRef(ref){
+  const bruto=String(ref||'').trim();
+  const match=bruto.match(/^storage:\/\/([^/]+)\/(.+)$/i);
+  if(!match) return null;
+  return { bucket: match[1], path: match[2] };
+}
+
+function getDocumentoMergeKey(d){
+  if(!d) return '';
+  if(d.id!=null&&String(d.id)!=='') return `id:${d.id}`;
+  const titulo=String(d.titulo||'').trim().toLowerCase();
+  const categoria=String(d.categoria||'').trim().toLowerCase();
+  const arquivo=String(d.arquivoNome||d.arquivo_nome||'').trim().toLowerCase();
+  return `local:${titulo}::${categoria}::${arquivo}`;
+}
+
+function ordenarDocumentos(a,b){
+  const dataA=Date.parse(a&&a.atualizadoEm||'')||0;
+  const dataB=Date.parse(b&&b.atualizadoEm||'')||0;
+  if(dataA!==dataB) return dataB-dataA;
+  return String(a&&a.titulo||'').localeCompare(String(b&&b.titulo||''),'pt-BR');
+}
+
+function preferirDocumentoMaisRecente(atual, proximo){
+  if(!atual) return proximo;
+  const dataAtual=Date.parse(atual&&atual.atualizadoEm||'')||0;
+  const dataProxima=Date.parse(proximo&&proximo.atualizadoEm||'')||0;
+  return dataProxima>=dataAtual?proximo:atual;
+}
+
+function carregarDocumentosLS(){
+  try{
+    const raw=localStorage.getItem('zel_docs');
+    const lista=raw?JSON.parse(raw):[];
+    return Array.isArray(lista)?lista.map(mapDocumentoIn):[];
+  }catch(e){
+    return [];
+  }
+}
+
+function slugDocumentoArquivo(nome){
+  const bruto=String(nome||'documento.pdf').trim();
+  const partes=bruto.split('.');
+  const ext=partes.length>1?partes.pop().toLowerCase():'pdf';
+  const base=partes.join('.')||'documento';
+  const limpo=(typeof zUiText==='function'?zUiText(base):base)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g,'-')
+    .replace(/^-+|-+$/g,'')
+    .slice(0,80)||'documento';
+  return `${limpo}.${ext||'pdf'}`;
+}
+
+async function dbUploadDocumentoArquivo(file, opts={}){
+  if(!file) throw new Error('Arquivo PDF nao informado.');
+  const bucket=opts.bucket||SB_DOCS_BUCKET;
+  const pasta=opts.folder||'biblioteca';
+  const nome=slugDocumentoArquivo(file.name||'documento.pdf');
+  const stamp=Date.now();
+  const rand=Math.random().toString(36).slice(2,8);
+  const path=`${pasta}/${stamp}-${rand}-${nome}`;
+  const {error}=await sb.storage.from(bucket).upload(path,file,{
+    upsert:false,
+    contentType:file.type||'application/pdf',
+    cacheControl:'3600'
+  });
+  if(error) throw error;
+  return { bucket, path, ref:buildDocumentoStorageRef(bucket,path) };
+}
+
+async function dbBaixarDocumentoArquivo(doc){
+  if(doc&&doc.storageBucket&&doc.storagePath){
+    const {data,error}=await sb.storage.from(doc.storageBucket).download(doc.storagePath);
+    if(error) throw error;
+    return data||null;
+  }
+  if(doc&&doc.dataUrl){
+    const res=await fetch(doc.dataUrl);
+    return await res.blob();
+  }
+  return null;
+}
+
+async function dbExcluirDocumentoArquivo(docOrBucket,pathMaybe){
+  const bucket=typeof docOrBucket==='object'&&docOrBucket?(docOrBucket.storageBucket||''):String(docOrBucket||'');
+  const path=typeof docOrBucket==='object'&&docOrBucket?(docOrBucket.storagePath||''):String(pathMaybe||'');
+  if(!bucket||!path) return true;
+  const {error}=await sb.storage.from(bucket).remove([path]);
+  if(error) throw error;
+  return true;
+}
+
+async function dbSalvarDocumento(doc, id){
+  const dados=mapDocumentoOut(doc);
+  const alvoId=id||doc.id;
+  if(alvoId){
+    const {data,error}=await sb.from('documentos').update(dados).eq('id',alvoId).select().single();
+    if(error) throw error;
+    if(data&&data.id!=null) doc.id=data.id;
+    return doc;
+  }
+  const {data,error}=await sb.from('documentos').insert(dados).select().single();
+  if(error) throw error;
+  if(data&&data.id!=null) doc.id=data.id;
+  return doc;
+}
+
+async function dbExcluirDocumento(docOuId){
+  const alvoId=typeof docOuId==='object'&&docOuId?docOuId.id:docOuId;
+  if(!alvoId) return true;
+  const {error}=await sb.from('documentos').delete().eq('id',alvoId);
+  if(error) throw error;
+  return true;
+}
+
 async function dbSalvarVenda(v, tentativa=1){
   try{
     const {data,error}=await sb.from('vendas').insert(mapVendaOut(v)).select().single();
@@ -380,16 +554,74 @@ function salvarLS(){
     localStorage.setItem('zel_usuarios',JSON.stringify(USUARIOS));
     localStorage.setItem('zel_vendas',JSON.stringify(vendasSem));
     localStorage.setItem('zel_trein',JSON.stringify(TREIN));
+    localStorage.setItem('zel_docs',JSON.stringify(DOCUMENTOS));
     localStorage.setItem('zel_senhas',JSON.stringify(SENHAS_INDIVIDUAIS));
     zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
     zSetState('state.data.vendas', VENDAS);
     zSetState('state.data.treinamentos', TREIN);
+    zSetState('state.data.documentos', DOCUMENTOS);
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
   }catch(e){}
 }
 function carregarLS(){/* substituído pelo Supabase — mantido como fallback */}
 
 // ── INICIALIZAÇÃO COM RETRY ───────────────────────────────────────────────────
+function carregarLS(){
+  try{
+    const usuariosRaw=localStorage.getItem('zel_usuarios');
+    const vendasRaw=localStorage.getItem('zel_vendas');
+    const treinRaw=localStorage.getItem('zel_trein');
+    const senhasRaw=localStorage.getItem('zel_senhas');
+    const docsLocal=carregarDocumentosLS();
+
+    if(usuariosRaw&&typeof USUARIOS!=='undefined'){
+      const usuarios=JSON.parse(usuariosRaw);
+      if(Array.isArray(usuarios)){
+        USUARIOS.splice(0,USUARIOS.length,...usuarios.map(mapUsuarioIn));
+        if(typeof nextUserId!=='undefined'){
+          nextUserId=USUARIOS.length?Math.max(...USUARIOS.map(u=>parseInt(u.id,10)||0))+1:1;
+          zSetState('state.ui.nextUserId', nextUserId);
+        }
+        zSetState('state.data.usuarios', USUARIOS);
+      }
+    }
+
+    if(vendasRaw){
+      const vendas=JSON.parse(vendasRaw);
+      if(Array.isArray(vendas)){
+        VENDAS.splice(0,VENDAS.length,...vendas.map(mapVendaIn));
+        if(typeof nextVendaId!=='undefined'){
+          nextVendaId=VENDAS.length?Math.max(...VENDAS.map(v=>parseInt(v.id,10)||0))+1:1;
+          zSetState('state.ui.nextVendaId', nextVendaId);
+        }
+        zSetState('state.data.vendas', VENDAS);
+      }
+    }
+
+    if(treinRaw){
+      const treinamentos=JSON.parse(treinRaw);
+      if(Array.isArray(treinamentos)){
+        TREIN.splice(0,TREIN.length,...treinamentos.map(mapTreinIn));
+        zSetState('state.data.treinamentos', TREIN);
+      }
+    }
+
+    DOCUMENTOS.splice(0,DOCUMENTOS.length,...docsLocal.sort(ordenarDocumentos));
+    zSetState('state.data.documentos', DOCUMENTOS);
+
+    if(senhasRaw){
+      const senhas=JSON.parse(senhasRaw);
+      if(senhas&&typeof senhas==='object'){
+        Object.keys(SENHAS_INDIVIDUAIS).forEach(email=>delete SENHAS_INDIVIDUAIS[email]);
+        Object.assign(SENHAS_INDIVIDUAIS, senhas);
+        zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
+      }
+    }
+  }catch(e){
+    console.warn('Falha ao carregar cache local:',e.message);
+  }
+}
+
 function iniciarApp(){
   renderFiltros(); renderVList(); renderTrein(); renderProc();
   verificarConviteURL();
@@ -446,5 +678,11 @@ zRegisterModule('supabase', {
   dbExcluirUsuario,
   dbSalvarSenha,
   dbSalvarTrein,
-  dbExcluirTrein
+  dbExcluirTrein,
+  dbSalvarDocumento,
+  dbExcluirDocumento,
+  dbUploadDocumentoArquivo,
+  dbBaixarDocumentoArquivo,
+  dbExcluirDocumentoArquivo,
+  docsBucket: SB_DOCS_BUCKET
 });

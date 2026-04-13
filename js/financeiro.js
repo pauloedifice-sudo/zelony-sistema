@@ -63,12 +63,11 @@ function finColetarMes(mes, ano) {
     const concluida = v.etapa === ETAPAS.length - 1;
     if (concluida) {
       const ultHist = v.hist && v.hist.length ? v.hist[v.hist.length - 1] : null;
-      if (!ultHist || !ultHist.d) return;
-      const p = ultHist.d.split('/');
-      if (p.length < 3) return;
-      const dia = parseInt(p[0], 10);
-      const mesHist = parseInt(p[1], 10) - 1;
-      const anoHist = parseInt(p[2], 10);
+      const ultHistInfo = obterMomentoHistorico(ultHist, { preferTs: false });
+      if (!ultHistInfo || !ultHistInfo.date || ultHistInfo.precision === 'daymonth') return;
+      const dia = ultHistInfo.date.getDate();
+      const mesHist = ultHistInfo.date.getMonth();
+      const anoHist = ultHistInfo.date.getFullYear();
       if (mesHist !== mes || anoHist !== ano) return;
       if (finFiltroSituacao && finFiltroSituacao !== 'recebida') return;
       const item = {

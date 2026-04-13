@@ -187,8 +187,15 @@ function filtrarUsuarios() {
 function toggleRHField() {
   const perfil = document.getElementById('mu-perfil').value;
   const field  = document.getElementById('rh-field');
-  field.style.display = perfil === 'Corretor' ? 'block' : 'none';
-  if (perfil !== 'Corretor') document.getElementById('mu-rh').checked = false;
+  const help   = document.getElementById('mu-rh-help');
+  if (field) field.style.display = 'block';
+  if (help) {
+    help.textContent = zUiText(
+      perfil === 'Corretor'
+        ? 'Se marcado, 0,1% de comissão será destinado ao RH nas vendas desse corretor'
+        : 'Essa origem continua valendo nas vendas antigas mesmo se o colaborador mudar de perfil'
+    );
+  }
 }
 
 function abrirModalUser() {
@@ -204,10 +211,10 @@ function abrirModalUser() {
   document.getElementById('mu-status').value    = 'Ativo';
   document.getElementById('mu-tipo-conta').value = '';
   document.getElementById('mu-rh').checked      = false;
-  document.getElementById('rh-field').style.display = 'none';
   document.getElementById('mu-unidade').value   = '';
   document.getElementById('mu-equipe').value    = '';
   document.querySelectorAll('.pix-type').forEach(b => b.classList.remove('sel'));
+  toggleRHField();
   document.getElementById('muser').classList.add('show');
   setTimeout(() => document.getElementById('mu-nome').focus(), 100);
 }
@@ -227,7 +234,6 @@ function editarUsuario(idx) {
   document.getElementById('mu-conta').value      = u.conta||'';
   document.getElementById('mu-tipo-conta').value = u.tipoConta||'';
   document.getElementById('mu-rh').checked       = u.rhContratacao||false;
-  document.getElementById('rh-field').style.display = u.perfil === 'Corretor' ? 'block' : 'none';
   document.getElementById('mu-unidade').value    = u.unidade||'';
   document.getElementById('mu-equipe').value     = u.equipe||'';
   pixSel = u.pixTipo||'';
@@ -235,6 +241,7 @@ function editarUsuario(idx) {
   document.querySelectorAll('.pix-type').forEach(b => {
     b.classList.toggle('sel', zUiText(b.textContent.trim()) === zUiText(pixSel));
   });
+  toggleRHField();
   document.getElementById('muser').classList.add('show');
 }
 
@@ -331,7 +338,13 @@ async function salvarUsuario() {
       await dbSalvarUsuario(usuarioSalvo, null);
     }
 
-    const syncResumo = await sincronizarRhContratacaoUsuario(usuarioSalvo, usuarioAnterior, { renderizar:false });
+    const perfilAnterior = usuarioAnterior ? perfilRoleUsuario(usuarioAnterior) : '';
+    const perfilAtual = perfilRoleUsuario(usuarioSalvo);
+    const rhMudou = !!(usuarioAnterior && usuarioAnterior.rhContratacao) !== !!usuarioSalvo.rhContratacao;
+    const podeSincronizarHistoricoRh = !!usuarioAnterior && rhMudou && perfilAnterior === 'cor' && perfilAtual === 'cor';
+    const syncResumo = podeSincronizarHistoricoRh
+      ? await sincronizarRhContratacaoUsuario(usuarioSalvo, usuarioAnterior, { renderizar:false })
+      : {alteradas:0,persistidas:0,falhas:0};
     zSetState('state.data.usuarios', USUARIOS);
     salvarLS();
     fecharMU();
@@ -472,17 +485,17 @@ function toggleInvRH() {
   const fld = document.getElementById('inv-rh-field');
   const chk = document.getElementById('inv-rh');
   const help = document.getElementById('inv-rh-help');
-  const ativo = p === 'Corretor';
-  if (chk) {
-    chk.disabled = !ativo;
-    if (!ativo) chk.checked = false;
-  }
+  if (chk) chk.disabled = false;
   if (fld) {
-    fld.style.opacity = ativo ? '1' : '0.58';
-    fld.style.pointerEvents = ativo ? 'auto' : 'none';
+    fld.style.opacity = '1';
+    fld.style.pointerEvents = 'auto';
   }
   if (help) {
-    help.textContent = zUiText(ativo ? 'Se sim, 0,1% de comissão será destinado ao RH em cada venda deste corretor' : 'Disponível para convites com perfil de Corretor');
+    help.textContent = zUiText(
+      p === 'Corretor'
+        ? 'Se marcado, 0,1% de comissão será destinado ao RH nas vendas desse corretor'
+        : 'Essa origem fica registrada mesmo se o colaborador mudar de perfil depois'
+    );
   }
 }
 

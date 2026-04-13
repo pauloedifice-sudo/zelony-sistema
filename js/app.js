@@ -34,7 +34,7 @@ async function salvarObsHistorico(){
   }
   const original=JSON.parse(JSON.stringify(v));
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:obs,tipo:'obs'});
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:obs,tipo:'obs'}));
   setHistObsLoading(true);
   try{
     await dbAtualizarVenda(v);
@@ -113,7 +113,7 @@ async function salvarPendenciaComercial(){
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   const jaExiste=typeof temPendenciaComercial==='function'&&temPendenciaComercial(v);
   v.hist=v.hist||[];
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:obs,tipo:jaExiste?'pend_comercial_editada':'pend_comercial'});
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:obs,tipo:jaExiste?'pend_comercial_editada':'pend_comercial'}));
   setPendenciaComercialLoading(true);
   try{
     await dbAtualizarVenda(v);
@@ -144,7 +144,7 @@ async function resolverPendenciaComercial(){
   const original=JSON.parse(JSON.stringify(v));
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   v.hist=v.hist||[];
-  v.hist.push({e:v.etapa,d:hoje().slice(0,5),u:quem,o:'Pendência comercial resolvida.',tipo:'pend_comercial_resolvida'});
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:'Pendência comercial resolvida.',tipo:'pend_comercial_resolvida'}));
   setPendenciaComercialLoading(true);
   try{
     await dbAtualizarVenda(v);
@@ -178,11 +178,27 @@ function getHistVisual(h){
   return {label:ETAPAS[h.e],color:'var(--gold)'};
 }
 
+function limparDetalheVenda(mensagem='Selecione uma venda'){
+  curVId=null;
+  zSetState('state.ui.curVId', curVId);
+  document.querySelectorAll('.vrow').forEach(r=>r.classList.remove('active'));
+  const vazio=document.getElementById('vd-empty');
+  const corpo=document.getElementById('vd-body');
+  if(vazio) vazio.innerHTML=`<div style="font-size:28px;opacity:0.25;color:var(--gold);">◈</div><div style="font-size:13px;color:var(--tm);">${zUiText(mensagem)}</div>`;
+  if(corpo){
+    corpo.innerHTML='';
+    corpo.classList.add('hidden');
+  }
+  if(vazio) vazio.classList.remove('hidden');
+}
+
 function showVDetail(id){
+  const vendasVisiveis=typeof vendasU==='function'?vendasU(VENDAS):VENDAS;
+  const v=vendasVisiveis.find(x=>x.id===id);
+  if(!v){ limparDetalheVenda(); return; }
   if(curVId!==id) pendComercialModo='fechado';
   curVId=id;
   zSetState('state.ui.curVId', curVId);
-  const v=VENDAS.find(x=>x.id===id);
   normalizarVendaNumeros(v);
   const pendencia=typeof getPendenciaComercial==='function'?getPendenciaComercial(v):null;
   if(!pendencia&&pendComercialModo==='editar') pendComercialModo='fechado';
@@ -227,19 +243,26 @@ function showVDetail(id){
   const impostoRow=podeVerImposto?`<div style="margin-top:8px;border-top:1px dashed rgba(184,144,42,0.25);padding-top:8px;"><div class="eq-row" style="background:#FEF6EC;border-radius:6px;padding:6px 8px;margin:0 -2px;border:1px solid #F0D2A8;"><div style="width:25px;height:25px;border-radius:50%;background:#FEF0DC;border:1px solid #E8A040;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">${zUiText('📋')}</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#A05010;">${zUiText('Imposto geral da venda')}</div><div style="font-size:9px;color:#B07030;">${pctSeguro(v.imp,0)} ${zUiText('sobre comissão bruta')} (${fmt(comBruta(v))})</div></div><span style="font-size:13px;font-weight:700;color:#C06020;">- ${fmt(valorImposto)}</span></div></div>`:'';
 
   const distH=`<div class="sec"><div class="sec-h">${zUiText('DistribuiÃ§Ã£o da comissÃ£o')}</div><div class="sec-b">${mbs.map(m=>{
-    const usuario=USUARIOS.find(u=>u.nome.split(' ')[0].toLowerCase()===m.n.toLowerCase()||u.nome.toLowerCase().includes(m.n.toLowerCase()));
+    const usuario=USUARIOS.find(u=>campoVendaBatePessoa(m.n,u));
     const pixCopyArg=encodeURIComponent(String((usuario&&usuario.pix)||''));
     const bancoPix=usuario&&usuario.banco?`<div style="display:flex;align-items:center;gap:10px;margin-top:3px;flex-wrap:wrap;"><span style="font-size:9px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd);border-radius:4px;padding:1px 7px;font-weight:500;">${zUiText('🏦')} ${zUiText(usuario.banco)}</span><span style="font-size:9px;background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;border-radius:4px;padding:1px 7px;font-weight:500;">${zUiText('🔑')} ${zUiText(usuario.pixTipo)}: ${zUiText(usuario.pix)}</span>${usuario.pix?`<button class="copy-chip-btn" type="button" onmousedown="event.preventDefault()" onclick="event.preventDefault();event.stopPropagation();copiarTexto(decodeURIComponent('${pixCopyArg}'),'Chave Pix');return false;">${zUiText('📋')} ${zUiText('Copiar')}</button>`:''}</div>`:`<div style="font-size:9px;color:var(--tm);margin-top:2px;">${zUiText('⚠️ Sem dados bancários cadastrados')}</div>`;
     return`<div class="eq-row" style="flex-wrap:wrap;"><div class="eav">${ini(m.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${zUiText(m.n)}</div><div style="font-size:9px;color:var(--tm);">${zUiText(m.c)} ${zUiText('·')} ${pctSeguro(m.pct,2)}</div>${bancoPix}</div><span style="font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:8px;">${fmt(m.val)}</span></div>`;
   }).join('')}${rhRow}${impostoRow}</div></div>`;
 
-  const bonusH=v.bonus>0&&['dir','fin','dono','ger','cor'].includes(role)?`<div class="sec"><div class="sec-h" style="color:#2E7E5E;">${zUiText('🎁 Bônus da construtora')}</div><div class="sec-b"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;font-size:12px;font-weight:600;">${fmt(v.bonus)} ${zUiText('total')}</span></div>${[{n:v.diretor,c:'Diretor',val:bonusDir(v),pct:v.bonus_pct_dir},{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}].filter(b=>b.pct>0).map(b=>`<div class="eq-row"><div class="eav">${ini(b.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${zUiText(b.n)}</div><div style="font-size:9px;color:var(--tm);">${zUiText(b.c)} ${zUiText('·')} ${b.pct}% ${zUiText('do bônus')}</div></div><span style="font-size:13px;font-weight:600;color:#2E7E5E;">${fmt(b.val)}</span></div>`).join('')}</div></div>`:'';
+  const bonusDist=(()=>{
+    if(!v.bonus||v.bonus<=0) return [];
+    if(role==='cor') return [{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
+    if(role==='ger') return [{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
+    if(['dir','fin','dono'].includes(role)) return [{n:v.diretor,c:'Diretor',val:bonusDir(v),pct:v.bonus_pct_dir},{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
+    return [];
+  })().filter(b=>b.pct>0);
+  const bonusH=bonusDist.length?`<div class="sec"><div class="sec-h" style="color:#2E7E5E;">${zUiText('🎁 Bônus da construtora')}</div><div class="sec-b"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;font-size:12px;font-weight:600;">${fmt(v.bonus)} ${zUiText('total')}</span></div>${bonusDist.map(b=>`<div class="eq-row"><div class="eav">${ini(b.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${zUiText(b.n)}</div><div style="font-size:9px;color:var(--tm);">${zUiText(b.c)} ${zUiText('·')} ${b.pct}% ${zUiText('do bônus')}</div></div><span style="font-size:13px;font-weight:600;color:#2E7E5E;">${fmt(b.val)}</span></div>`).join('')}</div></div>`:'';
 
   if(!v.anexos) v.anexos=[];
   const anexosH=renderAnexosSec(v);
   const hH=[...v.hist].reverse().map(h=>{
     const hv=getHistVisual(h);
-    return`<div class="hist-item"><div class="hlw"><div class="hd" style="background:${hv.color};"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;color:${hv.color};">${zUiText(hv.label)}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${zUiText(h.d)} ${zUiText('·')} ${zUiText('por')} ${zUiText(h.u)}</div>${h.o?`<div class="hobs">"${zUiText(h.o)}"</div>`:''}</div></div>`;
+    return`<div class="hist-item"><div class="hlw"><div class="hd" style="background:${hv.color};"></div><div class="hl"></div></div><div style="flex:1;padding-bottom:3px;"><div style="font-size:12px;font-weight:600;color:${hv.color};">${zUiText(hv.label)}</div><div style="font-size:9px;color:var(--tm);margin-top:1px;">${zUiText(formatarMomentoHistorico(h))} ${zUiText('·')} ${zUiText('por')} ${zUiText(h.u)}</div>${h.o?`<div class="hobs">"${zUiText(h.o)}"</div>`:''}</div></div>`;
   }).join('');
   const obsComposer=`<div style="display:flex;flex-direction:column;gap:8px;background:var(--bg2);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:12px;"><div style="font-size:10px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">${zUiText('Registrar observação')}</div><textarea id="vh-obs-input" placeholder="${zUiText('Escreva uma observação para ficar registrada no histórico desta venda...')}" onkeydown="if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){salvarObsHistorico();}" style="background:#fff;border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:72px;"></textarea><div id="vh-obs-status" style="display:none;font-size:11px;color:var(--tm);align-items:center;gap:8px;"><span style="font-size:13px;">⏳</span><span>${zUiText('Registrando observação no banco de dados...')}</span></div><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;"><div style="font-size:10px;color:var(--tm);">${zUiText('Dica')}: ${zUiText('use Ctrl+Enter para registrar mais rápido.')}</div><button id="vh-obs-btn" type="button" onclick="salvarObsHistorico()" style="background:var(--gold);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">${zUiText('📝 Registrar observação')}</button></div></div>`;
 
@@ -471,6 +494,7 @@ function exportPDF(){
 }
 
 zRegisterModule('app', {
+  limparDetalheVenda,
   showVDetail,
   salvarObsHistorico,
   togglePendenciaComercialForm,
