@@ -503,7 +503,7 @@
           <div class="mt-section">
             <div class="mt-section-head">
               <div class="mt-section-kicker">Conteudo em video</div>
-              <div class="mt-section-sub">Anexe os videos que ficarao disponiveis dentro do treinamento.</div>
+              <div class="mt-section-sub">Use upload local ou cole o link do YouTube para liberar o video dentro do treinamento.</div>
             </div>
             <div class="f-field">
               <label>Videos do treinamento</label>
@@ -516,8 +516,24 @@
                 <button type="button" class="btn-c trein-video-upload-btn">Selecionar</button>
               </div>
               <input type="file" id="mt-videos-input" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,video/*" multiple style="display:none;" onchange="handleTreinVideoUpload(this)">
+              <div class="trein-video-link-card">
+                <div class="f-row">
+                  <div class="f-field">
+                    <label>Nome do video</label>
+                    <input type="text" id="mt-video-nome" placeholder="Ex: Aula 1 - Apresentacao">
+                  </div>
+                  <div class="f-field">
+                    <label>Link do YouTube</label>
+                    <input type="url" id="mt-video-youtube-url" placeholder="https://youtu.be/...">
+                  </div>
+                </div>
+                <div class="mt-video-link-actions">
+                  <span class="mt-label-hint">Ao adicionar o link, o video fica disponivel para todos os usuarios desse treinamento.</span>
+                  <button type="button" class="btn-c" onclick="adicionarMtVideoYoutube()">Adicionar link</button>
+                </div>
+              </div>
               <div class="trein-video-list" id="mt-videos-list"></div>
-              <div class="trein-video-help">Os videos ficam disponiveis neste navegador para o treinamento selecionado.</div>
+              <div class="trein-video-help">Links do YouTube ficam compartilhados para toda a equipe. Uploads locais continuam vinculados a este navegador.</div>
             </div>
           </div>
         </div>

@@ -467,9 +467,11 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .trein-videos-edit{white-space:nowrap;}
 .trein-video-player-wrap{background:linear-gradient(180deg,#FFFDF8 0%,#FEF8EC 100%);border:1px solid var(--bd);border-radius:12px;padding:12px;}
 .trein-video-player{display:block;width:100%;border-radius:10px;background:#111;max-height:320px;}
+.trein-video-player.is-embed{height:320px;max-height:none;border:0;}
 .trein-video-player-meta{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;}
 .trein-video-player-meta strong{font-size:12px;color:var(--tx);}
 .trein-video-player-meta span{font-size:10px;color:var(--tm);}
+.trein-video-watch-link{white-space:nowrap;}
 .trein-video-playlist{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
 .trein-video-row{width:100%;display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;cursor:pointer;text-align:left;transition:all .12s;}
 .trein-video-row:hover{border-color:var(--gold-bd);background:var(--gold-bg);}
@@ -485,6 +487,8 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
 .trein-video-upload-main strong{display:block;font-size:12px;color:var(--tx);}
 .trein-video-upload-main span{display:block;font-size:10px;color:var(--tm);margin-top:2px;}
 .trein-video-upload-btn{pointer-events:none;}
+.trein-video-link-card{margin-top:10px;background:var(--bg2);border:1px solid var(--bd);border-radius:12px;padding:12px;}
+.mt-video-link-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:4px;}
 .trein-video-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
 .trein-video-item{display:grid;grid-template-columns:32px minmax(0,1fr) auto auto;gap:8px;align-items:center;background:var(--bg2);border:1px solid var(--bd);border-radius:10px;padding:9px 10px;}
 .trein-video-item-icon{width:32px;height:32px;border-radius:10px;background:var(--gold-bg);border:1px solid var(--gold-bd);display:flex;align-items:center;justify-content:center;font-size:14px;}
@@ -532,6 +536,7 @@ tr:hover td{background:var(--gold-bg);color:var(--tx);}
   .trein-detail-title{font-size:22px;}
   .trein-lesson{grid-template-columns:30px minmax(0,1fr);}
   .trein-lesson-state{grid-column:2;}
+  .trein-video-player.is-embed{height:220px;}
   .trein-video-item{grid-template-columns:32px minmax(0,1fr);}
   .trein-video-item-badge,.trein-video-remove{grid-column:2;}
 }

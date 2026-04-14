@@ -368,10 +368,20 @@ async function garantirTreinVideosCarregados(t){
   TREIN_VIDEO_LOADING[chave] = true;
   try{
     const videosLocais = await listarTreinVideosDB(chave);
-    setTreinVideosCache(chave, videosLocais.length ? videosLocais : (Array.isArray(t && t.videos) ? t.videos.map(v => ({ ...v })) : []));
+    const videosPersistidos = Array.isArray(t && t.videos) ? t.videos.map(v => ({ ...v, provider: getTreinVideoProvider(v) })) : [];
+    const locaisPorId = new Map(videosLocais.map(video => [video.id, { ...video, provider: 'local' }]));
+    const combinados = videosPersistidos.map(video => locaisPorId.get(video.id) ? { ...video, ...locaisPorId.get(video.id) } : { ...video });
+
+    videosLocais.forEach(video => {
+      if(!combinados.some(item => item.id === video.id)){
+        combinados.push({ ...video, provider: 'local' });
+      }
+    });
+
+    setTreinVideosCache(chave, combinados.sort((a,b) => (a.ordem || 0) - (b.ordem || 0)));
   }catch(e){
     console.warn('Erro ao carregar vídeos do treinamento:', e.message);
-    setTreinVideosCache(chave, Array.isArray(t && t.videos) ? t.videos.map(v => ({ ...v })) : []);
+    setTreinVideosCache(chave, Array.isArray(t && t.videos) ? t.videos.map(v => ({ ...v, provider: getTreinVideoProvider(v) })) : []);
   }finally{
     delete TREIN_VIDEO_LOADING[chave];
     if(treinSelKey === chave) renderTrein();
@@ -382,8 +392,68 @@ function getTreinVideos(t){
   return TREIN_VIDEOS[treinKey(t)] || (Array.isArray(t && t.videos) ? t.videos : []);
 }
 
+function getTreinVideoProvider(video){
+  if(!video) return 'local';
+  if(video.provider) return video.provider;
+  if(video.youtubeVideoId || video.youtubeUrl || video.embedUrl) return 'youtube';
+  return 'local';
+}
+
+function isTreinVideoYoutube(video){
+  return getTreinVideoProvider(video) === 'youtube';
+}
+
+function extrairTreinYoutubeVideoId(url){
+  const bruto = String(url || '').trim();
+  if(!bruto) return '';
+
+  try{
+    const parsed = new URL(bruto);
+    const host = parsed.hostname.replace(/^www\./i, '').toLowerCase();
+
+    if(host === 'youtu.be'){
+      return (parsed.pathname.split('/').filter(Boolean)[0] || '').trim();
+    }
+
+    if(host.endsWith('youtube.com')){
+      if(parsed.pathname === '/watch') return String(parsed.searchParams.get('v') || '').trim();
+      const partes = parsed.pathname.split('/').filter(Boolean);
+      const marcador = partes.findIndex(parte => ['embed', 'shorts', 'live'].includes(parte));
+      if(marcador >= 0 && partes[marcador + 1]) return String(partes[marcador + 1]).trim();
+    }
+  }catch(e){}
+
+  const fallback = bruto.match(/(?:v=|\/embed\/|\/shorts\/|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+  return fallback ? String(fallback[1] || '').trim() : '';
+}
+
+function getTreinVideoYoutubeId(video){
+  if(!video) return '';
+  return String(
+    video.youtubeVideoId ||
+    extrairTreinYoutubeVideoId(video.youtubeUrl) ||
+    extrairTreinYoutubeVideoId(video.embedUrl)
+  ).trim();
+}
+
+function getTreinVideoYoutubeUrl(video){
+  const id = getTreinVideoYoutubeId(video);
+  return id ? `https://youtu.be/${id}` : '';
+}
+
+function getTreinVideoEmbedUrl(video){
+  const id = getTreinVideoYoutubeId(video);
+  return id ? `https://www.youtube-nocookie.com/embed/${id}` : '';
+}
+
+function getTreinVideoThumb(video){
+  const id = getTreinVideoYoutubeId(video);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+}
+
 function getTreinVideoSrc(video){
   if(!video) return '';
+  if(isTreinVideoYoutube(video)) return getTreinVideoEmbedUrl(video);
   if(video.dataUrl) return video.dataUrl;
   if(video.objectUrl) return video.objectUrl;
   if(video.blob) video.objectUrl = URL.createObjectURL(video.blob);
@@ -419,11 +489,31 @@ function dataUrlToBlob(dataUrl, mimeFallback='video/mp4'){
 
 async function normalizarTreinVideoCompartilhado(video, idx, chave){
   const id = video.id || gerarTreinVideoId(chave, idx);
+  if(isTreinVideoYoutube(video)){
+    const youtubeVideoId = getTreinVideoYoutubeId(video);
+    if(!youtubeVideoId) throw new Error('Link do YouTube invalido.');
+    return {
+      id,
+      trainingKey: chave,
+      provider: 'youtube',
+      nome: String(video.nome || `Video ${idx + 1}`).trim() || `Video ${idx + 1}`,
+      mime: 'video/youtube',
+      size: 0,
+      ordem: idx,
+      youtubeUrl: getTreinVideoYoutubeUrl({ youtubeVideoId }),
+      youtubeVideoId,
+      embedUrl: getTreinVideoEmbedUrl({ youtubeVideoId }),
+      thumbnail: getTreinVideoThumb({ youtubeVideoId }),
+      dataUrl: '',
+      blob: null
+    };
+  }
   const blob = video.blob || dataUrlToBlob(video.dataUrl, video.mime || 'video/mp4');
   const dataUrl = video.dataUrl || await blobToDataUrl(blob);
   return {
     id,
     trainingKey: chave,
+    provider: 'local',
     nome: video.nome,
     mime: video.mime || (blob && blob.type) || 'video/mp4',
     size: video.size || (blob && blob.size) || 0,
@@ -491,6 +581,13 @@ async function sincronizarTreinVideosLocal(t, videosModal){
 function resetMtVideos(){
   mtVideos = [];
   mtVideosLoading = false;
+}
+
+function limparCamposMtVideoYoutube(){
+  const nomeInput = document.getElementById('mt-video-nome');
+  const urlInput = document.getElementById('mt-video-youtube-url');
+  if(nomeInput) nomeInput.value = '';
+  if(urlInput) urlInput.value = '';
 }
 
 function limparTreinProgressoGlobal(t){
@@ -1193,6 +1290,16 @@ function renderTreinPainelIntermediario(t, progresso, isDiretor, canDelete){
     : (progresso.status === 'concluido'
       ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora emita o certificado para marcar a trilha como finalizada.')}</div>`
       : '');
+  const videoAtivoEmbed = videoAtivo && isTreinVideoYoutube(videoAtivo) ? getTreinVideoEmbedUrl(videoAtivo) : '';
+  const playerPrincipal = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? `<iframe class="trein-video-player is-embed" src="${videoAtivoEmbed}" title="${String(videoAtivo.nome || 'Video do treinamento').replace(/"/g,'&quot;')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
+    : `<video class="trein-video-player" controls preload="metadata" src="${getTreinVideoSrc(videoAtivo)}"></video>`;
+  const metaVideoAtivo = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? zUiText('YouTube - video incorporado')
+    : `${zUiText(videoAtivo?.mime || 'Video')} ${zUiText('·')} ${fmtTamanho(videoAtivo?.size || 0)}`;
+  const acaoVideoAtivo = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? `<a class="btn-c trein-video-watch-link" href="${getTreinVideoYoutubeUrl(videoAtivo)}" target="_blank" rel="noopener noreferrer">${zUiText('Abrir no YouTube')}</a>`
+    : '';
 
   return `<div class="trein-detail-panel">
     <div class="trein-detail-hero">
@@ -1431,6 +1538,7 @@ async function abrirModalTrein(){
   document.getElementById('mt-modal-title').textContent = zUiText('Novo Treinamento');
   document.getElementById('mt-save-btn').textContent = zUiText('✓ Adicionar treinamento');
   document.getElementById('mt-videos-input').value = '';
+  limparCamposMtVideoYoutube();
   document.getElementById('mt-required').checked = false;
   emojiSel = '🏠';
   atualizarProgT();
@@ -1454,6 +1562,7 @@ async function editarTrein(idx){
   document.getElementById('mt-modal-title').textContent = zUiText('Editar Treinamento');
   document.getElementById('mt-save-btn').textContent = zUiText('✓ Salvar alterações');
   document.getElementById('mt-videos-input').value = '';
+  limparCamposMtVideoYoutube();
   emojiSel = t.thumb || '🏠';
   atualizarProgT();
   document.getElementById('emoji-grid').innerHTML = EMOJIS_T.map(e => `<div class="em ${e===emojiSel?'sel':''}" onclick="selEmoji('${e}',this)">${zUiText(e)}</div>`).join('');
@@ -1468,6 +1577,7 @@ function fecharMT(){
   document.getElementById('mtrein').classList.remove('show');
   editIdx = -1;
   document.getElementById('mt-videos-input').value = '';
+  limparCamposMtVideoYoutube();
   resetMtVideos();
   renderMtVideos();
   zSetState('state.ui.editTreinIdx', editIdx);
@@ -1649,6 +1759,16 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
     : (progresso.status === 'concluido'
       ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora emita o certificado para marcar a trilha como finalizada.')}</div>`
       : '');
+  const videoAtivoEmbed = videoAtivo && isTreinVideoYoutube(videoAtivo) ? getTreinVideoEmbedUrl(videoAtivo) : '';
+  const playerPrincipal = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? `<iframe class="trein-video-player is-embed" src="${videoAtivoEmbed}" title="${String(videoAtivo.nome || 'Video do treinamento').replace(/"/g,'&quot;')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
+    : `<video class="trein-video-player" controls preload="metadata" src="${getTreinVideoSrc(videoAtivo)}"></video>`;
+  const metaVideoAtivo = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? zUiText('YouTube - video incorporado')
+    : `${zUiText(videoAtivo?.mime || 'Video')} ${zUiText('·')} ${fmtTamanho(videoAtivo?.size || 0)}`;
+  const acaoVideoAtivo = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? `<a class="btn-c trein-video-watch-link" href="${getTreinVideoYoutubeUrl(videoAtivo)}" target="_blank" rel="noopener noreferrer">${zUiText('Abrir no YouTube')}</a>`
+    : '';
 
   return `<div class="trein-detail-panel">
     <div class="trein-detail-hero">
@@ -1711,10 +1831,11 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
       </div>
       ${videosLoading ? `<div class="trein-video-empty">${zUiText('Carregando videos...')}</div>` : videos.length ? `
         <div class="trein-video-player-wrap">
-          <video class="trein-video-player" controls preload="metadata" src="${getTreinVideoSrc(videoAtivo)}"></video>
+          ${playerPrincipal}
           <div class="trein-video-player-meta">
             <strong>${zUiText(videoAtivo.nome)}</strong>
-            <span>${zUiText(videoAtivo.mime || 'Video')} ${zUiText('·')} ${fmtTamanho(videoAtivo.size || 0)}</span>
+            <span>${metaVideoAtivo}</span>
+            ${acaoVideoAtivo}
           </div>
         </div>
         <div class="trein-video-playlist">
@@ -1722,7 +1843,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
             <span class="trein-video-row-icon">${zUiText('▶')}</span>
             <span class="trein-video-row-main">
               <strong>${zUiText(video.nome)}</strong>
-              <small>${fmtTamanho(video.size || 0)}</small>
+              <small>${isTreinVideoYoutube(video) ? zUiText('YouTube') : fmtTamanho(video.size || 0)}</small>
             </span>
           </button>`).join('')}
         </div>` : `
@@ -1896,11 +2017,16 @@ async function sincronizarTreinVideos(t, videosModal){
   const finais = await Promise.all((videosModal || []).map((video, idx) => normalizarTreinVideoCompartilhado(video, idx, chave)));
   const compartilhados = finais.map(video => ({
     id: video.id,
+    provider: video.provider || 'local',
     nome: video.nome,
     mime: video.mime,
     size: video.size,
     ordem: video.ordem || 0,
-    dataUrl: video.dataUrl || ''
+    dataUrl: video.dataUrl || '',
+    youtubeUrl: video.youtubeUrl || '',
+    youtubeVideoId: video.youtubeVideoId || '',
+    embedUrl: video.embedUrl || '',
+    thumbnail: video.thumbnail || ''
   }));
 
   t.videos = compartilhados;
@@ -1908,14 +2034,15 @@ async function sincronizarTreinVideos(t, videosModal){
   try{
     const db = await abrirTreinVideoDB();
     const atuais = await listarTreinVideosDB(chave);
-    const manterIds = new Set(finais.map(v => v.id));
+    const finaisLocais = finais.filter(video => !isTreinVideoYoutube(video));
+    const manterIds = new Set(finaisLocais.map(v => v.id));
     const removerIds = atuais.filter(v => !manterIds.has(v.id)).map(v => v.id);
 
     await new Promise((resolve, reject) => {
       const tx = db.transaction(TREIN_VIDEO_STORE, 'readwrite');
       const store = tx.objectStore(TREIN_VIDEO_STORE);
       removerIds.forEach(id => store.delete(id));
-      finais.forEach(video => store.put({
+      finaisLocais.forEach(video => store.put({
         id: video.id,
         trainingKey: chave,
         nome: video.nome,
@@ -1947,9 +2074,11 @@ function renderMtVideos(){
     return;
   }
   el.innerHTML = mtVideos.map((video, idx) => {
-    const detalhe = [zUiText(video.mime || 'video'), fmtTamanho(video.size || 0)].filter(Boolean).join(' - ');
+    const detalhe = isTreinVideoYoutube(video)
+      ? zUiText('YouTube - link incorporado')
+      : [zUiText(video.mime || 'video'), fmtTamanho(video.size || 0)].filter(Boolean).join(' - ');
     return `<div class="trein-video-item">
-      <div class="trein-video-item-icon">${zUiText('TV')}</div>
+      <div class="trein-video-item-icon">${zUiText(isTreinVideoYoutube(video) ? 'YT' : 'TV')}</div>
       <div class="trein-video-item-main">
         <strong>${zUiText(video.nome)}</strong>
         <small>${detalhe}</small>
@@ -1986,6 +2115,47 @@ function handleTreinVideoUpload(input){
     showToast(zUiText('OK'), zUiText(`${validos.length} video${validos.length>1?'s':''} adicionado${validos.length>1?'s':''} ao treinamento.`));
   }
   input.value = '';
+}
+
+function adicionarMtVideoYoutube(){
+  const nomeInput = document.getElementById('mt-video-nome');
+  const urlInput = document.getElementById('mt-video-youtube-url');
+  const nome = String(nomeInput && nomeInput.value || '').trim();
+  const url = String(urlInput && urlInput.value || '').trim();
+
+  if(!url){
+    if(urlInput) urlInput.focus();
+    showToast(zUiText('!'), zUiText('Cole o link do video no YouTube.'));
+    return;
+  }
+
+  const youtubeVideoId = extrairTreinYoutubeVideoId(url);
+  if(!youtubeVideoId){
+    if(urlInput) urlInput.focus();
+    showToast(zUiText('!'), zUiText('Informe um link valido do YouTube.'));
+    return;
+  }
+
+  const jaExiste = mtVideos.some(video => getTreinVideoYoutubeId(video) === youtubeVideoId);
+  if(jaExiste){
+    showToast(zUiText('!'), zUiText('Esse video do YouTube ja foi adicionado ao treinamento.'));
+    return;
+  }
+
+  mtVideos = [...mtVideos, {
+    nome: nome || `Video ${mtVideos.length + 1}`,
+    provider: 'youtube',
+    mime: 'video/youtube',
+    size: 0,
+    youtubeUrl: `https://youtu.be/${youtubeVideoId}`,
+    youtubeVideoId,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${youtubeVideoId}`,
+    thumbnail: `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`
+  }];
+
+  limparCamposMtVideoYoutube();
+  renderMtVideos();
+  showToast(zUiText('OK'), zUiText('Video do YouTube adicionado ao treinamento.'));
 }
 
 function iniciarTreinamento(token){
@@ -2224,6 +2394,7 @@ zRegisterModule('treinamentos', {
   excluirTrein,
   fecharMT,
   handleTreinVideoUpload,
+  adicionarMtVideoYoutube,
   removerMtVideo,
   salvarTrein,
   renderProc,

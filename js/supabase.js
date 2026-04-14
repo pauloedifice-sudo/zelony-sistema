@@ -205,7 +205,11 @@ function mapTreinIn(t){
   };
   if(typeof t?.obrigatorio !== 'undefined') trein.obrigatorio = !!t.obrigatorio;
   if(typeof t?.prerequisito === 'string') trein.prerequisito = t.prerequisito;
-  if(Array.isArray(t && t.videos)) trein.videos = t.videos;
+  if(Array.isArray(t && t.videos)) trein.videos = t.videos.map((v, idx) => ({
+    ...v,
+    provider:v.provider || (v.youtubeVideoId || v.youtubeUrl || v.embedUrl ? 'youtube' : 'local'),
+    ordem:typeof v.ordem === 'number' ? v.ordem : idx
+  }));
   return trein;
 }
 function mapTreinOut(t){
@@ -221,11 +225,16 @@ function mapTreinOut(t){
     prerequisito:t.prerequisito||'',
     videos:Array.isArray(t.videos) ? t.videos.map(v => ({
       id:v.id,
+      provider:v.provider || (v.youtubeVideoId || v.youtubeUrl || v.embedUrl ? 'youtube' : 'local'),
       nome:v.nome,
       mime:v.mime,
       size:v.size,
       ordem:v.ordem||0,
-      dataUrl:v.dataUrl||''
+      dataUrl:v.dataUrl||'',
+      youtubeUrl:v.youtubeUrl||'',
+      youtubeVideoId:v.youtubeVideoId||'',
+      embedUrl:v.embedUrl||'',
+      thumbnail:v.thumbnail||''
     })) : []
   };
 }
