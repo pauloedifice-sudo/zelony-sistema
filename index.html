@@ -376,6 +376,10 @@
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg>
       Vendas / Comissão
     </button>
+    <button class="sb-item" onclick="setMod('agendamentos',this)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1.5v3M11 1.5v3M2 6.5h12"/><path d="M5 9h2v2H5z" fill="currentColor" stroke="none"/></svg>
+      Agendamentos
+    </button>
     <button class="sb-item" onclick="setMod('trein',this)">
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="9" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
       Treinamentos
@@ -944,6 +948,10 @@
       </div>
     </div>
 
+    <div class="page hidden" id="mod-agendamentos">
+      <div id="agendamentos-content" style="flex:1;display:flex;overflow:hidden;"></div>
+    </div>
+
     <div class="page hidden" id="mod-documentos">
       <div class="docs-wrap" id="documentos-content"></div>
     </div>
@@ -1128,6 +1136,88 @@
       </div>
     </div>
 
+    <div class="modal-backdrop" id="m-agendamento" onclick="handleBackdropAgendamento(event)">
+      <div class="modal ag-modal">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="ma-title">Novo agendamento</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Registre visitas, primeiros atendimentos e fechamentos da equipe</div>
+          </div>
+          <button class="mclose" onclick="fecharAgendamentoModal()">✕</button>
+        </div>
+        <div class="modal-body ag-modal-body">
+          <div class="f-row">
+            <div class="f-field">
+              <label>Data do preenchimento *</label>
+              <input type="date" id="ma-preenchimento">
+            </div>
+            <div class="f-field">
+              <label>Unidade *</label>
+              <select id="ma-unidade" onchange="atualizarCamposAgendamentoModal()"></select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-field">
+              <label>Equipe *</label>
+              <select id="ma-equipe" onchange="atualizarCorretoresAgendamentoModal()"></select>
+            </div>
+            <div class="f-field">
+              <label>Corretor *</label>
+              <select id="ma-corretor"></select>
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-field">
+              <label>Nome do cliente *</label>
+              <input type="text" id="ma-cliente" placeholder="NOME COMPLETO DO CLIENTE" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+            </div>
+            <div class="f-field">
+              <label>Telefone do cliente *</label>
+              <input type="tel" id="ma-telefone" placeholder="(41) 99999-9999">
+            </div>
+          </div>
+          <div class="f-row">
+            <div class="f-field">
+              <label>Data do agendamento *</label>
+              <input type="date" id="ma-data">
+            </div>
+            <div class="f-field">
+              <label>Horário do agendamento *</label>
+              <input type="time" id="ma-horario">
+            </div>
+          </div>
+          <div class="f-field">
+            <label>Tipo de visita *</label>
+            <select id="ma-tipo">
+              <option value="Primeiro atendimento">Primeiro atendimento</option>
+              <option value="Fechamento">Fechamento</option>
+            </select>
+          </div>
+          <div class="ag-modal-note">Os campos de unidade, equipe e corretor respeitam o perfil logado para evitar agendamentos fora da sua operação.</div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" onclick="fecharAgendamentoModal()">Cancelar</button>
+          <button class="btn-s" id="ma-save-btn" onclick="salvarAgendamento()">✓ Salvar agendamento</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="m-agendamento-tratativa" onclick="handleBackdropAgendamentoTratativa(event)" style="z-index:10040;">
+      <div class="modal agt-modal">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="mat-title">Tratativa obrigatória do agendamento</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="mat-sub">Pendência de tratativa</div>
+          </div>
+        </div>
+        <div class="modal-body agt-body" id="mat-body"></div>
+        <div class="modal-foot">
+          <button class="btn-c" id="mat-cancel-btn" onclick="fecharTratativaAgendamentoModal()">Fechar</button>
+          <button class="btn-s" id="mat-save-btn" onclick="confirmarTratativaAgendamento()">Confirmar tratativa</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MÓDULO USUÁRIOS -->
     <div class="page hidden" id="mod-usuarios">
       <div id="usuarios-content" style="flex:1;display:flex;overflow:hidden;"></div>
@@ -1171,7 +1261,9 @@
 <script src="js/documentos.js"></script>
 <!-- 9. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
 <script src="js/usuarios.js"></script>
-<!-- 10. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
+<!-- 10. Agendamentos: agenda comercial por perfil -->
+<script src="js/agendamentos.js"></script>
+<!-- 11. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
 <script src="js/app.js"></script>
 
 <!-- â”€â”€â”€ INICIALIZAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->

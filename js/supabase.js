@@ -36,6 +36,7 @@ zSetState('modules.supabase', { client: sb });
 const VENDAS=[];
 let TREIN=[];
 const DOCUMENTOS=[];
+let AGENDAMENTOS=[];
 const USUARIOS_PADRAO=[
   {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
   {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
@@ -44,6 +45,7 @@ const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyim
 zSetState('state.data.vendas', VENDAS);
 zSetState('state.data.treinamentos', TREIN);
 zSetState('state.data.documentos', DOCUMENTOS);
+zSetState('state.data.agendamentos', AGENDAMENTOS);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
 zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 
@@ -64,7 +66,7 @@ async function carregarDB(){
 
   const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
 
-  const [us,ss,vs,ts,ds]=await Promise.all([
+  const [us,ss,vs,ts,ds,ags]=await Promise.all([
     carregar('usuarios','id'),
     carregar('senhas',null),
     (async()=>{
@@ -80,7 +82,8 @@ async function carregarDB(){
       return todas;
     })().catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
     carregar('treinamentos','id'),
-    carregar('documentos','id')
+    carregar('documentos','id'),
+    carregar('agendamentos','data_agendamento')
   ]);
 
   if(us&&us.length){
@@ -96,9 +99,25 @@ async function carregarDB(){
     zSetState('state.data.vendas', VENDAS);
     zSetState('state.ui.nextVendaId', nextVendaId);
   }
-  if(ts&&ts.length){
-    TREIN.splice(0,TREIN.length,...ts.map(mapTreinIn));
-    zSetState('state.data.treinamentos', TREIN);
+  {
+    const treinBanco=Array.isArray(ts)?ts.map(mapTreinIn):[];
+    const treinLocal=carregarTreinamentosLS();
+    const treinMap=new Map();
+
+    treinBanco.forEach(trein=>{
+      treinMap.set(getTreinMergeKeyItem(trein),trein);
+    });
+
+    treinLocal.forEach(treinLocalItem=>{
+      const chave=getTreinMergeKeyItem(treinLocalItem);
+      const atual=treinMap.get(chave);
+      treinMap.set(chave,mesclarTreinBancoComLocal(atual,treinLocalItem));
+    });
+
+    if(treinMap.size){
+      TREIN.splice(0,TREIN.length,...Array.from(treinMap.values()).sort(ordenarTreinamentosMesclados));
+      zSetState('state.data.treinamentos', TREIN);
+    }
   }
   {
     const docsBanco=Array.isArray(ds)?ds.map(mapDocumentoIn):[];
@@ -111,6 +130,23 @@ async function carregarDB(){
     });
     DOCUMENTOS.splice(0,DOCUMENTOS.length,...Array.from(docsMap.values()).sort(ordenarDocumentos));
     zSetState('state.data.documentos', DOCUMENTOS);
+  }
+  {
+    const agBanco=Array.isArray(ags)?ags.map(mapAgendamentoIn):[];
+    const agLocal=carregarAgendamentosLS();
+    const agMap=new Map();
+    [...agLocal,...agBanco].forEach(agendamento=>{
+      const chave=getAgendamentoMergeKey(agendamento);
+      const atual=agMap.get(chave);
+      agMap.set(chave,preferirAgendamentoMaisRecente(atual,agendamento));
+    });
+    AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...Array.from(agMap.values()).sort(ordenarAgendamentos));
+    if(typeof nextAgendamentoId!=='undefined'){
+      const maiorId=AGENDAMENTOS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
+      nextAgendamentoId=maiorId+1;
+      zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
+    }
+    zSetState('state.data.agendamentos', AGENDAMENTOS);
   }
   if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
     await aplicarAjustesManuaisRhPendentes({persistir:true,renderizar:false});
@@ -237,6 +273,154 @@ function mapTreinOut(t){
       thumbnail:v.thumbnail||''
     })) : []
   };
+}
+
+function carregarTreinamentosLS(){
+  try{
+    const raw=localStorage.getItem('zel_trein');
+    const lista=raw?JSON.parse(raw):[];
+    return Array.isArray(lista)?lista.map(mapTreinIn):[];
+  }catch(e){
+    return [];
+  }
+}
+
+function getTreinMergeKeyItem(t){
+  if(!t) return '';
+  if(t.id!=null&&String(t.id)!=='') return `id:${t.id}`;
+  const cat=String(t.cat||'').trim().toLowerCase();
+  const titulo=String(t.titulo||'').trim().toLowerCase();
+  return `local:${cat}::${titulo}`;
+}
+
+function escolherListaTreinPreferencial(bancoLista, localLista){
+  const banco=Array.isArray(bancoLista)?bancoLista:[];
+  const local=Array.isArray(localLista)?localLista:[];
+  if(banco.length) return banco;
+  return local;
+}
+
+function mesclarTreinBancoComLocal(banco, local){
+  if(!banco) return local;
+  if(!local) return banco;
+  const videosBanco=Array.isArray(banco.videos)?banco.videos:[];
+  const videosLocal=Array.isArray(local.videos)?local.videos:[];
+  return{
+    ...local,
+    ...banco,
+    videos:escolherListaTreinPreferencial(videosBanco,videosLocal),
+    obrigatorio:typeof banco.obrigatorio!=='undefined'?!!banco.obrigatorio:!!local.obrigatorio,
+    prerequisito:banco.prerequisito||local.prerequisito||''
+  };
+}
+
+function ordenarTreinamentosMesclados(a,b){
+  const idA=parseInt(a&&a.id,10);
+  const idB=parseInt(b&&b.id,10);
+  const temIdA=Number.isFinite(idA);
+  const temIdB=Number.isFinite(idB);
+  if(temIdA&&temIdB&&idA!==idB) return idA-idB;
+  if(temIdA!==temIdB) return temIdA?-1:1;
+  return String(a&&a.titulo||'').localeCompare(String(b&&b.titulo||''),'pt-BR');
+}
+
+function mapAgendamentoIn(a){
+  return{
+    id:parseInt(a&&a.id,10)||0,
+    preenchidoEm:a&&(
+      a.preenchido_em||
+      a.preenchidoEm||
+      a.data_preenchimento||
+      a.dataPreenchimento||
+      ''
+    )||'',
+    unidade:a&&a.unidade||'',
+    equipe:a&&a.equipe||'',
+    corretorId:parseInt(a&&(a.corretor_id||a.corretorId),10)||0,
+    corretor:a&&(a.corretor||a.corretor_nome||a.corretorNome)||'',
+    corretorEmail:a&&(a.corretor_email||a.corretorEmail)||'',
+    cliente:a&&a.cliente||'',
+    telefone:a&&a.telefone||'',
+    dataAgendamento:a&&(a.data_agendamento||a.dataAgendamento)||'',
+    horarioAgendamento:String(a&&(a.horario_agendamento||a.horarioAgendamento)||'').slice(0,5),
+    tipoVisita:a&&(a.tipo_visita||a.tipoVisita)||'Primeiro atendimento',
+    criadoPor:a&&(a.criado_por||a.criadoPor)||'',
+    criadoPorId:parseInt(a&&(a.criado_por_id||a.criadoPorId),10)||0,
+    criadoPorEmail:a&&(a.criado_por_email||a.criadoPorEmail)||'',
+    situacao:a&&(a.situacao||a.status)||'Agendado',
+    tratativaEm:a&&(a.tratativa_em||a.tratativaEm)||'',
+    tratativaPor:a&&(a.tratativa_por||a.tratativaPor)||'',
+    tratativaPorId:parseInt(a&&(a.tratativa_por_id||a.tratativaPorId),10)||0,
+    tratativaPorEmail:a&&(a.tratativa_por_email||a.tratativaPorEmail)||'',
+    reagendadoParaData:a&&(a.reagendado_para_data||a.reagendadoParaData)||'',
+    reagendadoParaHorario:String(a&&(a.reagendado_para_horario||a.reagendadoParaHorario)||'').slice(0,5),
+    origemAgendamentoId:parseInt(a&&(a.origem_agendamento_id||a.origemAgendamentoId),10)||0,
+    novoAgendamentoId:parseInt(a&&(a.novo_agendamento_id||a.novoAgendamentoId),10)||0,
+    atualizadoEm:a&&(a.atualizado_em||a.atualizadoEm)||''
+  };
+}
+
+function mapAgendamentoOut(a){
+  return{
+    preenchido_em:a.preenchidoEm||'',
+    unidade:a.unidade||'',
+    equipe:a.equipe||'',
+    corretor_id:a.corretorId||null,
+    corretor:a.corretor||'',
+    corretor_email:a.corretorEmail||'',
+    cliente:a.cliente||'',
+    telefone:a.telefone||'',
+    data_agendamento:a.dataAgendamento||'',
+    horario_agendamento:a.horarioAgendamento||'',
+    tipo_visita:a.tipoVisita||'Primeiro atendimento',
+    criado_por:a.criadoPor||'',
+    criado_por_id:a.criadoPorId||null,
+    criado_por_email:a.criadoPorEmail||'',
+    situacao:a.situacao||'Agendado',
+    tratativa_em:a.tratativaEm||null,
+    tratativa_por:a.tratativaPor||'',
+    tratativa_por_id:a.tratativaPorId||null,
+    tratativa_por_email:a.tratativaPorEmail||'',
+    reagendado_para_data:a.reagendadoParaData||null,
+    reagendado_para_horario:a.reagendadoParaHorario||null,
+    origem_agendamento_id:a.origemAgendamentoId||null,
+    novo_agendamento_id:a.novoAgendamentoId||null,
+    atualizado_em:a.atualizadoEm||new Date().toISOString()
+  };
+}
+
+function carregarAgendamentosLS(){
+  try{
+    const raw=localStorage.getItem('zel_agendamentos');
+    const lista=raw?JSON.parse(raw):[];
+    return Array.isArray(lista)?lista.map(mapAgendamentoIn):[];
+  }catch(e){
+    return [];
+  }
+}
+
+function getAgendamentoMergeKey(a){
+  if(!a) return '';
+  if(a.id!=null&&String(a.id)!=='') return `id:${a.id}`;
+  const corretor=String(a.corretor||'').trim().toLowerCase();
+  const cliente=String(a.cliente||'').trim().toLowerCase();
+  const data=String(a.dataAgendamento||'').trim();
+  const hora=String(a.horarioAgendamento||'').trim();
+  return `local:${corretor}::${cliente}::${data}::${hora}`;
+}
+
+function ordenarAgendamentos(a,b){
+  const refA=Date.parse(`${a&&a.dataAgendamento||''}T${a&&a.horarioAgendamento||'00:00'}:00`)||0;
+  const refB=Date.parse(`${b&&b.dataAgendamento||''}T${b&&b.horarioAgendamento||'00:00'}:00`)||0;
+  if(refA!==refB) return refA-refB;
+  return String(a&&a.cliente||'').localeCompare(String(b&&b.cliente||''),'pt-BR');
+}
+
+function preferirAgendamentoMaisRecente(atual, proximo){
+  if(!atual) return proximo;
+  const dataAtual=Date.parse(atual&&atual.atualizadoEm||'')||0;
+  const dataProxima=Date.parse(proximo&&proximo.atualizadoEm||'')||0;
+  return dataProxima>=dataAtual?proximo:atual;
 }
 
 // ── CRUD VENDAS ───────────────────────────────────────────────────────────────
@@ -544,14 +728,53 @@ async function dbSalvarTrein(t, idx){
     const msg=String(e && (e.message||e.details||e.hint||e.code) || '').toLowerCase();
     const colunaInvalida=msg.includes('column') || msg.includes('schema cache') || msg.includes('videos') || msg.includes('obrigatorio') || msg.includes('prerequisito');
     if(!colunaInvalida) throw e;
-    console.warn('Tabela de treinamentos sem suporte completo para sincronizacao compartilhada. Salvando payload basico.', e);
-    await salvar(dadosBase);
+    const tentativasFallback=[
+      { label:'payload sem regras', payload:{ ...dadosBase, videos:dados.videos } },
+      { label:'payload sem videos', payload:{ ...dadosBase, obrigatorio:!!t.obrigatorio, prerequisito:t.prerequisito||'' } },
+      { label:'payload basico', payload:dadosBase }
+    ];
+    let ultimoErro=e;
+    for(const tentativa of tentativasFallback){
+      try{
+        console.warn(`Tabela de treinamentos sem suporte completo. Tentando ${tentativa.label}.`, ultimoErro);
+        await salvar(tentativa.payload);
+        return;
+      }catch(fallbackError){
+        ultimoErro=fallbackError;
+      }
+    }
+    throw ultimoErro;
   }
 }
 
 async function dbExcluirTrein(t){
   if(!t || !t.id) return true;
   const {error}=await sb.from('treinamentos').delete().eq('id', t.id);
+  if(error) throw error;
+  return true;
+}
+
+async function dbSalvarAgendamento(a, id){
+  const payload=mapAgendamentoOut(a);
+  const alvoId=id||0;
+  if(alvoId){
+    const {data,error}=await sb.from('agendamentos').update(payload).eq('id',alvoId).select().maybeSingle();
+    if(error) throw error;
+    if(data){
+      Object.assign(a,mapAgendamentoIn(data));
+      return a;
+    }
+  }
+  const {data,error}=await sb.from('agendamentos').insert(payload).select().single();
+  if(error) throw error;
+  if(data) Object.assign(a,mapAgendamentoIn(data));
+  return a;
+}
+
+async function dbExcluirAgendamento(agOuId){
+  const alvoId=typeof agOuId==='object'&&agOuId?agOuId.id:agOuId;
+  if(!alvoId) return true;
+  const {error}=await sb.from('agendamentos').delete().eq('id',alvoId);
   if(error) throw error;
   return true;
 }
@@ -564,11 +787,13 @@ function salvarLS(){
     localStorage.setItem('zel_vendas',JSON.stringify(vendasSem));
     localStorage.setItem('zel_trein',JSON.stringify(TREIN));
     localStorage.setItem('zel_docs',JSON.stringify(DOCUMENTOS));
+    localStorage.setItem('zel_agendamentos',JSON.stringify(AGENDAMENTOS));
     localStorage.setItem('zel_senhas',JSON.stringify(SENHAS_INDIVIDUAIS));
     zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
     zSetState('state.data.vendas', VENDAS);
     zSetState('state.data.treinamentos', TREIN);
     zSetState('state.data.documentos', DOCUMENTOS);
+    zSetState('state.data.agendamentos', AGENDAMENTOS);
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
   }catch(e){}
 }
@@ -582,6 +807,7 @@ function carregarLS(){
     const treinRaw=localStorage.getItem('zel_trein');
     const senhasRaw=localStorage.getItem('zel_senhas');
     const docsLocal=carregarDocumentosLS();
+    const agendamentosLocal=carregarAgendamentosLS();
 
     if(usuariosRaw&&typeof USUARIOS!=='undefined'){
       const usuarios=JSON.parse(usuariosRaw);
@@ -617,6 +843,14 @@ function carregarLS(){
 
     DOCUMENTOS.splice(0,DOCUMENTOS.length,...docsLocal.sort(ordenarDocumentos));
     zSetState('state.data.documentos', DOCUMENTOS);
+
+    AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...agendamentosLocal.sort(ordenarAgendamentos));
+    if(typeof nextAgendamentoId!=='undefined'){
+      const maiorId=AGENDAMENTOS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
+      nextAgendamentoId=maiorId+1;
+      zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
+    }
+    zSetState('state.data.agendamentos', AGENDAMENTOS);
 
     if(senhasRaw){
       const senhas=JSON.parse(senhasRaw);
@@ -688,6 +922,8 @@ zRegisterModule('supabase', {
   dbSalvarSenha,
   dbSalvarTrein,
   dbExcluirTrein,
+  dbSalvarAgendamento,
+  dbExcluirAgendamento,
   dbSalvarDocumento,
   dbExcluirDocumento,
   dbUploadDocumentoArquivo,

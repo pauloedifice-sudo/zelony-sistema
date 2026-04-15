@@ -86,6 +86,7 @@ function fazerLogin() {
     atualizarTopbar(usuario, rv);
     document.getElementById('login-screen').classList.add('hidden');
     renderFiltros(); renderVList(); renderTrein(); renderProc(); atualizarBadgeNotificacoes();
+    if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
     resetBtn();
     showToast(zUiText('👋'), zUiText(`Bem-vindo(a), ${usuario.nome.split(' ')[0]}!`));
   }, 800);
@@ -100,6 +101,7 @@ function fazerLogout() {
   zSetState('state.auth.usuarioLogado', usuarioLogado);
   localStorage.removeItem('zel_sessao');
   atualizarBadgeNotificacoes();
+  if (typeof encerrarMonitorTratativaAgendamento === 'function') encerrarMonitorTratativaAgendamento();
   if (typeof limparDetalheVenda === 'function') limparDetalheVenda();
   const ls = document.getElementById('login-screen');
   ls.style.display = 'flex'; ls.classList.remove('hidden');
@@ -127,6 +129,7 @@ function restaurarSessao() {
   atualizarTopbar(usuario, rv);
   document.getElementById('login-screen').classList.add('hidden');
   atualizarBadgeNotificacoes();
+  if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
   return true;
 }
 
@@ -167,6 +170,7 @@ function trocaRole() {
   if (vtab === 'rel') renderRel();
   if (!document.getElementById('mod-trein').classList.contains('hidden')) renderTrein();
   if (!document.getElementById('mod-documentos').classList.contains('hidden')) renderDocumentos();
+  if (!document.getElementById('mod-agendamentos').classList.contains('hidden')) renderAgendamentos();
   if (!document.getElementById('mod-usuarios').classList.contains('hidden')) renderUsuarios();
   atualizarBadgeNotificacoes();
   if (!document.getElementById('npanel').classList.contains('hidden')) renderNots();
@@ -176,12 +180,12 @@ function trocaRole() {
 // NAVEGACAO
 const modTitles = {
   carteira:'Minha Carteira', vendas:'Vendas e Comissão',
-  trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
+  agendamentos:'Agendamentos', trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
   usuarios:'Usuários', financeiro:'Financeiro'
 };
 
 function setMod(m, el) {
-  ['carteira','vendas','trein','documentos','proc','usuarios','financeiro']
+  ['carteira','vendas','agendamentos','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
   document.getElementById('mod-' + m).classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -189,6 +193,7 @@ function setMod(m, el) {
   document.getElementById('pg-title').textContent = zUiText(modTitles[m]);
   if (m === 'carteira')   renderCarteira();
   if (m === 'trein')      renderTrein();
+  if (m === 'agendamentos') renderAgendamentos();
   if (m === 'documentos') renderDocumentos();
   if (m === 'proc')       renderProc();
   if (m === 'vendas' && vtab === 'rel') renderRel();

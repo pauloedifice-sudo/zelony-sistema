@@ -1732,33 +1732,44 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
   const bloqueado = isTreinBloqueado(t);
   const aprovado = progresso.status === 'aprovado';
   const concluidoVisual = progresso.status === 'concluido' || aprovado;
+  const rotuloConcluirAula = progresso.proxima
+    ? zUiText(progresso.total > 1 ? `Concluir aula ${progresso.proxima.idx + 1}` : 'Concluir aula')
+    : zUiText('Concluir aula');
   const resumoStatus = bloqueado
     ? zUiText(`Conclua o pre-requisito "${prerequisito?.titulo || ''}" para liberar esta trilha.`)
     : aprovado
       ? zUiText(`Certificado registrado em ${certificado}.`)
       : progresso.status === 'concluido'
-        ? zUiText('Todas as aulas foram concluidas. Emita o certificado para finalizar a trilha.')
-        : zUiText(`Proxima aula: ${proxima}`);
+        ? zUiText('Todas as aulas foram marcadas. Clique em "Concluir treinamento" para finalizar a trilha.')
+        : zUiText(`Proxima aula para concluir: ${proxima}`);
   const acaoPrincipal = bloqueado
     ? `<button class="btn-s" onclick="irParaTreinamento('${prerequisito ? treinKey(prerequisito) : ''}')">${zUiText('Abrir pre-requisito')}</button>`
-    : progresso.status === 'nao_iniciado'
-      ? `<button class="btn-s" onclick="iniciarTreinamento('${token}')">${zUiText('Iniciar treinamento')}</button>`
-      : progresso.status === 'em_andamento'
-        ? `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${zUiText('Marcar proxima aula')}</button>`
-        : progresso.status === 'concluido'
-          ? `<button class="btn-s" onclick="emitirCertificadoTrein('${token}')">${zUiText('Emitir certificado')}</button>`
-          : `<button class="btn-s" onclick="reiniciarTreinamento('${token}')">${zUiText('Refazer trilha')}</button>`;
-  const acaoSecundaria = (!bloqueado && !aprovado)
-    ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('Reiniciar')}</button>`
-    : '';
+    : aprovado
+      ? ''
+      : progresso.status === 'concluido'
+        ? `<button class="btn-s" onclick="emitirCertificadoTrein('${token}')">${zUiText('Concluir treinamento')}</button>`
+        : `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${rotuloConcluirAula}</button>`;
+  const acaoSecundaria = bloqueado
+    ? ''
+    : aprovado
+      ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('Refazer trilha')}</button>`
+      : progresso.concluidas > 0
+        ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('Reiniciar')}</button>`
+        : '';
   const notaBloqueio = bloqueado
-    ? `<div class="trein-lock-note"><strong>${zUiText('Trilha bloqueada')}</strong>${zUiText(`Este treinamento depende da conclusao de "${prerequisito?.titulo || ''}".`)}</div>`
+    ? `<div class="trein-lock-note"><strong>${zUiText('Trilha bloqueada')}</strong>${zUiText(`Conclua primeiro "${prerequisito?.titulo || ''}" para liberar este treinamento e os proximos passos da trilha.`)}</div>`
     : '';
   const notaCertificado = aprovado
     ? `<div class="trein-cert-note"><strong>${zUiText('Certificacao registrada')}</strong>${zUiText(`Voce concluiu esta trilha e o certificado foi emitido em ${certificado}.`)}</div>`
     : (progresso.status === 'concluido'
-      ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora emita o certificado para marcar a trilha como finalizada.')}</div>`
+      ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora clique em "Concluir treinamento" para finalizar a trilha.')}</div>`
       : '');
+  const destaquePrerequisito = prerequisito
+    ? `<div class="trein-prereq-banner ${bloqueado ? 'locked' : 'done'}">
+        <strong>${zUiText(bloqueado ? 'Liberacao por pre-requisito' : 'Pre-requisito concluido')}</strong>
+        <span>${zUiText(bloqueado ? `Finalize "${prerequisito.titulo}" para liberar este treinamento.` : `Este treinamento foi liberado apos a conclusao de "${prerequisito.titulo}".`)}</span>
+      </div>`
+    : '';
   const videoAtivoEmbed = videoAtivo && isTreinVideoYoutube(videoAtivo) ? getTreinVideoEmbedUrl(videoAtivo) : '';
   const playerPrincipal = videoAtivo && isTreinVideoYoutube(videoAtivo)
     ? `<iframe class="trein-video-player is-embed" src="${videoAtivoEmbed}" title="${String(videoAtivo.nome || 'Video do treinamento').replace(/"/g,'&quot;')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
@@ -1789,8 +1800,9 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
         </div>
         <div class="trein-rule-chips">
           ${meta.obrigatorio ? `<span class="trein-rule-chip">${zUiText('Obrigatorio')}</span>` : ''}
-          ${prerequisito ? `<span class="trein-rule-chip">${zUiText('Pre-requisito')}: ${zUiText(prerequisito.titulo)}</span>` : ''}
+          ${prerequisito ? `<span class="trein-rule-chip ${bloqueado ? 'locked' : 'done'}">${zUiText('Pre-requisito')}: ${zUiText(prerequisito.titulo)}</span>` : ''}
         </div>
+        ${destaquePrerequisito}
       </div>
       <div class="trein-detail-admin">
         ${isDiretor ? `<button class="btn-c trein-detail-edit" onclick="editarTrein(${TREIN.indexOf(t)})">${zUiText('Editar')}</button>` : ''}
@@ -1819,7 +1831,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
 
     ${notaBloqueio}
     ${notaCertificado}
-    <div class="trein-detail-note">${zUiText('Seu progresso fica salvo neste navegador para o usuario logado.')}</div>
+    <div class="trein-detail-note">${zUiText('O video fica livre para assistir. Quando terminar, use "Concluir aula" para avancar na trilha deste usuario.')}</div>
 
     <div class="trein-videos-panel">
       <div class="trein-videos-head">
@@ -1865,7 +1877,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
               <strong>${zUiText(licao.titulo)}</strong>
               <small>${zUiText(licao.resumo)}</small>
             </span>
-            <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluida') : zUiText('Marcar'))}</span>
+            <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluida') : zUiText('Concluir'))}</span>
           </button>`;
         }).join('')}
       </div>
@@ -1945,14 +1957,20 @@ function renderTrein(){
           ? `<button class="trein-card-edit" onclick="event.stopPropagation();editarTrein(${idx})" title="${zUiText('Editar treinamento')}">${zUiText('✏️')}</button>`
           : '';
         const sideLabel = bloqueado
-          ? zUiText('Bloqueado')
+          ? zUiText('Pre-requisito')
           : progresso.status === 'nao_iniciado'
-            ? zUiText('Iniciar')
+            ? zUiText('Concluir aula')
             : progresso.status === 'concluido'
-              ? zUiText('Certificar')
+              ? zUiText('Concluir treino')
               : aprovado
-                ? zUiText('Refazer')
-                : zUiText('Continuar');
+                ? zUiText('Concluido')
+                : zUiText('Concluir aula');
+        const notaDependenciaCard = prerequisito
+          ? `<div class="trein-prereq-card ${bloqueado ? 'locked' : 'done'}">
+              <strong>${zUiText(bloqueado ? 'Liberado apos' : 'Pre-requisito')}</strong>
+              <span>${zUiText(prerequisito.titulo)}</span>
+            </div>`
+          : '';
         return `<button class="trein-card ${treinKey(t)===treinSelKey?'active':''} ${bloqueado ? 'locked' : ''}" onclick="selecionarTrein('${token}')">
           <div class="trein-card-icon" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">
             ${editBtn}
@@ -1972,6 +1990,7 @@ function renderTrein(){
               <div class="pl">${concluidoVisual ? zUiText(aprovado ? 'Certificado' : 'Concluido') : `${progresso.pct}% ${zUiText('concluido')}`}</div>
             </div>
             ${bloqueado ? `<div class="trein-lock-note"><strong>${zUiText('Dependencia')}</strong>${zUiText(`Conclua "${prerequisito?.titulo || ''}" para liberar.`)}</div>` : ''}
+            ${notaDependenciaCard}
           </div>
           <div class="trein-card-side">
             <strong>${progresso.concluidas}/${progresso.total}</strong>

@@ -526,8 +526,12 @@ window.atualizarBadgeNotificacoes = atualizarBadgeNotificacoes;
 
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
+  if (typeof temTratativaAgendamentoObrigatoriaAberta === 'function' && temTratativaAgendamentoObrigatoriaAberta()) {
+    showToast('⚠️', 'Esse agendamento precisa de tratativa antes de continuar.');
+    return;
+  }
   ['mbackdrop','mtrein','muser','mvenda','m-trocar-senha',
-   'convite-screen','m-edit-venda','m-distrato','m-convite','anexo-viewer']
+   'convite-screen','m-edit-venda','m-distrato','m-convite','anexo-viewer','m-agendamento','m-agendamento-tratativa']
     .forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -543,4 +547,6 @@ document.addEventListener('keydown', e => {
   if (typeof fecharConvite === 'function') fecharConvite();
   if (typeof fecharEditVenda === 'function') fecharEditVenda();
   if (typeof fecharDistrato === 'function') fecharDistrato();
+  if (typeof fecharAgendamentoModal === 'function') fecharAgendamentoModal();
+  if (typeof fecharTratativaAgendamentoModal === 'function') fecharTratativaAgendamentoModal();
 });
