@@ -31,6 +31,15 @@ const SB_DOCS_BUCKET='documentos';
 const sb=supabase.createClient(SB_URL, SB_KEY);
 zSetState('config.supabase', { url: SB_URL, key: SB_KEY });
 zSetState('modules.supabase', { client: sb });
+const VENDAS=[];
+let TREIN=[];
+const DOCUMENTOS=[];
+let AGENDAMENTOS=[];
+const USUARIOS_PADRAO=[
+  {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
+  {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
+];
+const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyimoveis.com':'Mudar@123'};
 const AGENDAMENTOS_SYNC_STATUS={
   tabela:'desconhecida',
   erro:'',
@@ -118,15 +127,6 @@ function getStatusAgendamentosSync(){
 atualizarEstadoSyncAgendamentos();
 
 // ── DADOS EM MEMÓRIA ──────────────────────────────────────────────────────────
-const VENDAS=[];
-let TREIN=[];
-const DOCUMENTOS=[];
-let AGENDAMENTOS=[];
-const USUARIOS_PADRAO=[
-  {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
-  {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
-];
-const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyimoveis.com':'Mudar@123'};
 zSetState('state.data.vendas', VENDAS);
 zSetState('state.data.treinamentos', TREIN);
 zSetState('state.data.documentos', DOCUMENTOS);
