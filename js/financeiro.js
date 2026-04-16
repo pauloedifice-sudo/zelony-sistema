@@ -153,17 +153,36 @@ function finFmtDeltaPct(info) {
 }
 
 function finStatusItem(item) {
+  const notaEmitida = !!(item && item.prev && item.prev.manual);
   return item.status === 'recebida'
     ? zUiText('Recebida')
     : item.status === 'atrasada'
-      ? zUiText(`${item.atraso}d atraso`)
-      : zUiText('No prazo');
+      ? zUiText(`${item.atraso}d atraso${notaEmitida ? ' · nota emitida' : ''}`)
+      : notaEmitida
+        ? zUiText('Nota emitida')
+        : zUiText('No prazo');
 }
 
 function finClasseItem(item) {
   if (item.status === 'recebida') return 'ok';
   if (item.status === 'atrasada') return 'delay';
+  if (item && item.prev && item.prev.manual) return 'invoice';
   return 'soon';
+}
+
+function finStatusCalendario(item) {
+  if (item.status === 'recebida') return zUiText('Recebida');
+  if (item.status === 'atrasada') return zUiText(`${item.atraso}d atraso`);
+  if (item && item.prev && item.prev.manual) return zUiText('Nota emitida');
+  return zUiText('Prevista');
+}
+
+function finPrioridadeItem(item) {
+  const classe = finClasseItem(item);
+  if (classe === 'delay') return 0;
+  if (classe === 'invoice') return 1;
+  if (classe === 'ok') return 2;
+  return 3;
 }
 
 function finPeriodoComparado() {
@@ -276,8 +295,7 @@ function renderFinanceiro() {
     const prevs = atual.previsoesPorDia[d] || [];
     const receb = atual.recebidas.filter(item => item.dia === d);
     const diaEventos = [...receb, ...prevs].sort((a, b) => {
-      const prioridade = status => status === 'atrasada' ? 0 : status === 'recebida' ? 1 : 2;
-      return prioridade(a.status) - prioridade(b.status) || b.bruto - a.bruto;
+      return finPrioridadeItem(a) - finPrioridadeItem(b) || b.bruto - a.bruto;
     });
     const visiveis = diaEventos.slice(0, 2);
     const extra = diaEventos.length - visiveis.length;
@@ -289,9 +307,9 @@ function renderFinanceiro() {
         ${totalDiaBrut > 0 ? `<div class="fcal-day-total">${fmtK(totalDiaBrut)}</div>` : ''}
       </div>
       <div class="fcal-events">
-        ${visiveis.map(item => `<button class="fcal-ev ${item.status === 'recebida' ? 'fcal-ev-ok' : item.status === 'atrasada' ? 'fcal-ev-delay' : 'fcal-ev-soon'}" onclick="irParaVenda(${item.v.id})" title="${zUiText(item.v.cliente.split('/')[0].trim())}">
+        ${visiveis.map(item => `<button class="fcal-ev fcal-ev-${finClasseItem(item)}" onclick="irParaVenda(${item.v.id})" title="${zUiText(item.v.cliente.split('/')[0].trim())}">
           <div class="fcal-ev-top">
-            <span class="fcal-ev-status">${item.status === 'recebida' ? zUiText('Recebida') : item.status === 'atrasada' ? zUiText(`${item.atraso}d atraso`) : zUiText('Prevista')}</span>
+            <span class="fcal-ev-status">${finStatusCalendario(item)}</span>
             <strong>${fmtK(item.bruto)}</strong>
           </div>
           <div class="fcal-ev-name">${zUiText(nomeCalendario(item.v.cliente))}</div>
@@ -358,6 +376,7 @@ function renderFinanceiro() {
     .fcal-ev:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(184,144,42,0.08);}
     .fcal-ev-ok{background:#F1FAF4;border-left-color:#2E9E6E;}
     .fcal-ev-soon{background:#F1F6FE;border-left-color:#3060B8;}
+    .fcal-ev-invoice{background:#FFF7E8;border-left-color:#C8921F;}
     .fcal-ev-delay{background:#FEF3EE;border-left-color:#C05030;}
     .fcal-ev-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
     .fcal-ev-top strong{font-size:11px;color:var(--gold);}
@@ -373,6 +392,7 @@ function renderFinanceiro() {
     .fcal-side-item{background:var(--bg2);border:1px solid rgba(184,144,42,0.14);border-left:3px solid transparent;border-radius:9px;padding:9px 10px;text-align:left;cursor:pointer;}
     .fcal-side-item.ok{border-left-color:#2E9E6E;background:#F1FAF4;}
     .fcal-side-item.soon{border-left-color:#3060B8;background:#F1F6FE;}
+    .fcal-side-item.invoice{border-left-color:#C8921F;background:#FFF7E8;}
     .fcal-side-item.delay{border-left-color:#C05030;background:#FEF3EE;}
     .fcal-side-item-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
     .fcal-side-item-top strong{font-size:11px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}

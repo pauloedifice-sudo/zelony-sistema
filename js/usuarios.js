@@ -33,10 +33,12 @@ const EJS_TEMPLATE = 'template_ylfp3ad';
 const EJS_PUBKEY   = 'GEXIho24PuM7N3RTZ';
 const CONVITES_PENDENTES = {};
 const EXCLUSOES_PENDENTES = {};
+const STATUS_PENDENTES_USUARIOS = {};
 let conviteAtivo = null;
 let pixSelCV = '';
 zSetState('state.ui.convitesPendentes', CONVITES_PENDENTES);
 zSetState('state.ui.exclusoesPendentesUsuarios', EXCLUSOES_PENDENTES);
+zSetState('state.ui.statusPendentesUsuarios', STATUS_PENDENTES_USUARIOS);
 zSetState('state.ui.conviteAtivo', conviteAtivo);
 zSetState('state.ui.pixSelCV', pixSelCV);
 
@@ -62,6 +64,18 @@ function lerConviteURL() {
 function _buildUserCard(u, idx) {
   const perfilMeta = PERFIL_META[perfilRoleUsuario(u)] || PERFIL_META.cor;
   const avatarColor = perfilMeta.color;
+  const statusAtual = typeof usuarioStatusNormalizado === 'function'
+    ? usuarioStatusNormalizado(u)
+    : zUiText(u.status || 'Ativo');
+  const emailKey = zUiText(u.email).toLowerCase();
+  const statusPendente = STATUS_PENDENTES_USUARIOS[emailKey] || '';
+  const podeAlternarStatus = statusAtual === 'Ativo' || statusAtual === 'Inativo';
+  const rotuloStatus = statusAtual === 'Ativo' ? 'Inativar' : 'Reativar';
+  const rotuloStatusLoading = statusPendente === 'Inativo'
+    ? 'Inativando...'
+    : statusPendente === 'Ativo'
+      ? 'Reativando...'
+      : rotuloStatus;
   const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}" style="margin-top:4px;display:inline-flex;">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
   const equipeBadge = u.equipe ? `<span style="font-size:9px;background:var(--bg3);color:var(--ts);border:1px solid var(--bd);border-radius:3px;padding:1px 6px;margin-top:3px;display:inline-block;">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
   const pixCopyArg = encodeURIComponent(String(u.pix || ''));
@@ -84,10 +98,11 @@ function _buildUserCard(u, idx) {
     </div>
     <div class="user-card-foot">
       <div class="user-status">
-        <div class="user-status-dot ${u.status==='Ativo'?'':'inativo'}"></div>
-        <span style="color:${u.status==='Ativo'?'#2E9E6E':u.status==='Pendente'?'#C08020':'#C05030'}">${zUiText(u.status)}</span>
+        <div class="user-status-dot ${statusAtual==='Ativo'?'':statusAtual==='Pendente'?'pendente':'inativo'}"></div>
+        <span style="color:${statusAtual==='Ativo'?'#2E9E6E':statusAtual==='Pendente'?'#C08020':'#C05030'}">${zUiText(statusAtual)}</span>
       </div>
       <div class="user-actions">
+        ${podeAlternarStatus ? `<button class="btn-user-status ${statusAtual === 'Inativo' ? 'reactivate' : ''}" onclick="alternarStatusUsuario(${idx})" ${statusPendente ? 'disabled' : ''}>${zUiText(rotuloStatusLoading)}</button>` : ''}
         <button class="btn-user-edit" onclick="editarUsuario(${idx})">${zUiText('✏️ Editar')}</button>
         <button class="btn-user-del"  onclick="excluirUsuario(${idx})">${zUiText('🗑 Excluir')}</button>
       </div>
@@ -105,7 +120,7 @@ function renderUsuarios() {
   const equipes = [...new Set(USUARIOS.map(u => u.equipe||'').filter(Boolean))].sort();
   const lista   = _filtrarUsuarios();
   const total   = USUARIOS.length;
-  const ativos  = USUARIOS.filter(u => u.status === 'Ativo').length;
+  const ativos  = USUARIOS.filter(u => typeof usuarioEstaAtivo === 'function' ? usuarioEstaAtivo(u) : u.status === 'Ativo').length;
   const cards   = lista.map(u => _buildUserCard(u, USUARIOS.indexOf(u))).join('');
 
   cont.innerHTML = `<div class="usuarios-wrap">
@@ -245,6 +260,68 @@ function editarUsuario(idx) {
   document.getElementById('muser').classList.add('show');
 }
 
+async function alternarStatusUsuario(idx) {
+  const u = USUARIOS[idx];
+  if (!u) return;
+  const statusAtual = typeof usuarioStatusNormalizado === 'function'
+    ? usuarioStatusNormalizado(u)
+    : zUiText(u.status || 'Ativo');
+  if (!['Ativo', 'Inativo'].includes(statusAtual)) {
+    showToast(zUiText('ℹ️'), zUiText('Este cadastro não pode ter o status alterado por esta ação rápida.'));
+    return;
+  }
+
+  const proximoStatus = statusAtual === 'Ativo' ? 'Inativo' : 'Ativo';
+  const emailKey = zUiText(u.email).toLowerCase();
+  const mensagemConfirmacao = proximoStatus === 'Inativo'
+    ? `Inativar o usuário "${u.nome}"? Ele continuará no histórico, mas sairá dos novos lançamentos e terá o acesso bloqueado.`
+    : `Reativar o usuário "${u.nome}"? Ele voltará a aparecer nos novos lançamentos e poderá acessar o sistema novamente.`;
+
+  if (!confirm(zUiText(mensagemConfirmacao))) return;
+  if (STATUS_PENDENTES_USUARIOS[emailKey]) {
+    showToast(zUiText('⚠️'), zUiText('Já existe uma alteração de status em processamento para este usuário.'));
+    return;
+  }
+
+  const original = { ...u };
+  STATUS_PENDENTES_USUARIOS[emailKey] = proximoStatus;
+  zSetState('state.ui.statusPendentesUsuarios', STATUS_PENDENTES_USUARIOS);
+  renderUsuarios();
+
+  try {
+    u.status = proximoStatus;
+    await dbSalvarUsuario(u, u.id);
+    zSetState('state.data.usuarios', USUARIOS);
+    salvarLS();
+    delete STATUS_PENDENTES_USUARIOS[emailKey];
+    zSetState('state.ui.statusPendentesUsuarios', STATUS_PENDENTES_USUARIOS);
+    renderUsuarios();
+
+    const usuarioAtualInativado = !!(usuarioLogado && zUiText(usuarioLogado.email).toLowerCase() === emailKey && proximoStatus === 'Inativo');
+    if (usuarioAtualInativado) {
+      if (typeof fazerLogout === 'function') fazerLogout();
+      showToast(zUiText('🔒'), zUiText('Usuário inativado. A sessão atual foi encerrada.'));
+      return;
+    }
+
+    showToast(
+      zUiText('✅'),
+      zUiText(proximoStatus === 'Inativo'
+        ? `Usuário "${u.nome}" inativado com sucesso.`
+        : `Usuário "${u.nome}" reativado com sucesso.`)
+    );
+  } catch (e) {
+    console.error(e);
+    Object.assign(u, original);
+    zSetState('state.data.usuarios', USUARIOS);
+    salvarLS();
+    delete STATUS_PENDENTES_USUARIOS[emailKey];
+    zSetState('state.ui.statusPendentesUsuarios', STATUS_PENDENTES_USUARIOS);
+    renderUsuarios();
+    showToast(zUiText('❌'), zUiText('Não foi possível alterar o status do usuário no banco. Tente novamente.'));
+  }
+}
+
 async function excluirUsuario(idx) {
   const u = USUARIOS[idx];
   const emailKey = (u.email || '').toLowerCase();
@@ -340,6 +417,12 @@ async function salvarUsuario() {
 
     const perfilAnterior = usuarioAnterior ? perfilRoleUsuario(usuarioAnterior) : '';
     const perfilAtual = perfilRoleUsuario(usuarioSalvo);
+    const statusAnterior = usuarioAnterior && typeof usuarioStatusNormalizado === 'function'
+      ? usuarioStatusNormalizado(usuarioAnterior)
+      : zUiText(usuarioAnterior && usuarioAnterior.status || '');
+    const statusAtual = typeof usuarioStatusNormalizado === 'function'
+      ? usuarioStatusNormalizado(usuarioSalvo)
+      : zUiText(usuarioSalvo.status || 'Ativo');
     const rhMudou = !!(usuarioAnterior && usuarioAnterior.rhContratacao) !== !!usuarioSalvo.rhContratacao;
     const podeSincronizarHistoricoRh = !!usuarioAnterior && rhMudou && perfilAnterior === 'cor' && perfilAtual === 'cor';
     const syncResumo = podeSincronizarHistoricoRh
@@ -353,8 +436,19 @@ async function salvarUsuario() {
 
     const acao = emEdicao ? 'atualizado' : 'cadastrado';
     let mensagem = `Usuário "${nome}" ${acao}!`;
+    if (emEdicao && statusAnterior && statusAnterior !== statusAtual) {
+      mensagem = statusAtual === 'Inativo'
+        ? `Usuário "${nome}" inativado com sucesso!`
+        : `Usuário "${nome}" reativado com sucesso!`;
+    }
     if (syncResumo.alteradas === 1) mensagem += ' 1 venda foi recalculada por causa da participação do RH.';
     if (syncResumo.alteradas > 1) mensagem += ` ${syncResumo.alteradas} vendas foram recalculadas por causa da participação do RH.`;
+    const usuarioAtualInativado = !!(usuarioLogado && zUiText(usuarioLogado.email).toLowerCase() === zUiText(usuarioSalvo.email).toLowerCase() && statusAtual === 'Inativo');
+    if (usuarioAtualInativado) {
+      if (typeof fazerLogout === 'function') fazerLogout();
+      showToast(zUiText('🔒'), zUiText('Seu usuário foi inativado e a sessão atual foi encerrada.'));
+      return;
+    }
     showToast(zUiText('✅'), zUiText(mensagem));
     if (syncResumo.falhas > 0) {
       showToast(zUiText('⚠️'), zUiText('Parte das vendas foi ajustada na tela, mas não conseguiu sincronizar no banco. Recarregue e tente salvar novamente se notar divergência.'));
@@ -665,6 +759,7 @@ zRegisterModule('usuarios', {
   filtrarUsuarios,
   abrirModalUser,
   editarUsuario,
+  alternarStatusUsuario,
   excluirUsuario,
   salvarUsuario,
   abrirTS,

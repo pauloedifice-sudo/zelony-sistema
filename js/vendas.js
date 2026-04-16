@@ -126,7 +126,7 @@ function registrarPrevisaoRecebimentoHistorico(v, config={}){
 }
 
 function calcPrevisaoAutomatica(v){
-  if(v.distratada||v.etapa>=ETAPAS.length-1) return null;
+  if(v.distratada||v.etapa>=ETAPAS.length-1||PRAZOS_ETAPA[v.etapa]===null) return null;
   const histEtapa1=[...v.hist].find(h=>h.e===1&&histAfetaFluxo(h));
   const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
   const refInicioInfo=obterMomentoHistorico(refInicio,{preferTs:false});
@@ -597,6 +597,7 @@ function calcPrevisao(v){
       historico:previsaoManual.historico
     };
   }
+  if(PRAZOS_ETAPA[v.etapa]===null) return null;
   return calcPrevisaoAutomatica(v);
 }
 
@@ -1192,13 +1193,14 @@ function preencherDiretor2Edit(valorAtual){
   const diretores=USUARIOS
     .filter(u=>{
       if(perfilRole(u)!=='dir') return false;
+      if(typeof usuarioEstaAtivo==='function'&&!usuarioEstaAtivo(u)) return false;
       return u.nome!==diretorPrincipal;
     })
     .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
   const atual=(valorAtual!==undefined?valorAtual:sel.value)||'';
   let options=`<option value="">Nenhum</option>`;
   if(atual && !diretores.some(u=>u.nome===atual)){
-    options+=`<option value="${atual}">${zUiText(atual)}</option>`;
+    options+=`<option value="${atual}">${zUiText(`${atual} (histórico)`)}</option>`;
   }
   options+=diretores.map(u=>`<option value="${u.nome}">${zUiText(u.nome)}</option>`).join('');
   sel.innerHTML=options;
@@ -1339,11 +1341,11 @@ function salvarEditVenda(){
 function abrirModalVenda(){
   const filtrarUnid=(u)=>['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas')||!u.unidade||u.unidade===usuarioLogado.unidade;
   const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
-  const todos=USUARIOS.filter(u=>filtrarUnid(u));
-  const capitaes=USUARIOS.filter(u=>perfilRole(u)==='cap'&&filtrarUnid(u));
-  const gerentes=USUARIOS.filter(u=>['ger','dir','cap'].includes(perfilRole(u))&&filtrarUnid(u));
-  const diretores=USUARIOS.filter(u=>perfilRole(u)==='dir'&&filtrarUnid(u));
-  const optLabel=(u)=>zUiText(`${u.status==='Inativo'?'📍 ':''}${u.nome}${u.status==='Inativo'?' (inativo)':''}`);
+  const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
+  const todos=USUARIOS.filter(u=>filtrarUnid(u)&&usuarioAtivo(u));
+  const capitaes=todos.filter(u=>perfilRole(u)==='cap');
+  const gerentes=todos.filter(u=>['ger','dir','cap'].includes(perfilRole(u)));
+  const diretores=todos.filter(u=>perfilRole(u)==='dir');
   const perfilOrdem=[
     {label:'Dono', role:'dono'},
     {label:'Diretor', role:'dir'},
@@ -1354,16 +1356,14 @@ function abrirModalVenda(){
     {label:'RH', role:'rh'}
   ];
   const optCor=perfilOrdem.flatMap(({label,role:perfilKey})=>{
-    const ativos=todos.filter(u=>perfilRole(u)===perfilKey&&u.status==='Ativo');
-    const inativos=todos.filter(u=>perfilRole(u)===perfilKey&&u.status==='Inativo');
-    const lista=[...ativos,...inativos];
+    const lista=todos.filter(u=>perfilRole(u)===perfilKey);
     if(!lista.length) return [];
-    return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`),'</optgroup>'];
+    return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`),'</optgroup>'];
   }).join('');
   const optExterno=`<optgroup label="${zUiText('— Externo —')}"><option value="__externo__">${zUiText('✏️ Digitar nome externo...')}</option></optgroup>`;
-  const optCap=[...capitaes.filter(u=>u.status==='Ativo'),...capitaes.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');
-  const optGer=[...gerentes.filter(u=>u.status==='Ativo'),...gerentes.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');
-  const optDir=[...diretores.filter(u=>u.status==='Ativo'),...diretores.filter(u=>u.status==='Inativo')].map(u=>`<option value="${u.nome}">${optLabel(u)}</option>`).join('');
+  const optCap=capitaes.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`).join('');
+  const optGer=gerentes.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`).join('');
+  const optDir=diretores.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`).join('');
   document.getElementById('mv-corretor').innerHTML=`<option value="">Selecione...</option>${optCor}${optExterno}`;
   document.getElementById('mv-capitao').innerHTML=`<option value="">Nenhum</option>${optCap}`;
   document.getElementById('mv-gerente').innerHTML=`<option value="">Selecione...</option>${optGer}`;
@@ -1409,16 +1409,21 @@ function salvarVenda(){
   const unidade=document.getElementById('mv-unidade').value;
   const corretorSelecionado=document.getElementById('mv-corretor').value;
   const corretorExterno=corretorSelecionado==='__externo__';
-  let corretor=corretorSelecionado;
+  const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
+  const corretorUsuario=!corretorExterno?USUARIOS.find(u=>String(u.id)===String(corretorSelecionado))||null:null;
+  let corretor=corretorUsuario?corretorUsuario.nome:'';
   if(corretorExterno){
     corretor=document.getElementById('mv-corretor-ext').value.trim().toUpperCase();
     if(!corretor){document.getElementById('mv-corretor-ext').focus();showToast('⚠️','Informe o nome do corretor externo.');return;}
   }
-  const corretorUsuario=!corretorExterno?(USUARIOS.find(u=>u.nome===corretor)||getUsuarioCorretorVenda(corretor,{permitirAproximado:false})):null;
-  const capitao=document.getElementById('mv-capitao').value;
-  const gerente=document.getElementById('mv-gerente').value;
-  const diretor=document.getElementById('mv-diretor').value;
-  const diretor2=document.getElementById('mv-diretor2').value;
+  const capitaoUsuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-capitao').value))||null;
+  const gerenteUsuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-gerente').value))||null;
+  const diretorUsuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-diretor').value))||null;
+  const diretor2Usuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-diretor2').value))||null;
+  const capitao=capitaoUsuario?capitaoUsuario.nome:'';
+  const gerente=gerenteUsuario?gerenteUsuario.nome:'';
+  const diretor=diretorUsuario?diretorUsuario.nome:'';
+  const diretor2=diretor2Usuario?diretor2Usuario.nome:'';
   const cca=document.getElementById('mv-cca').value.trim();
   const valor=lerNumeroInput('mv-valor',0);
   const pct=lerPercentualInput('mv-pct',0);
@@ -1437,6 +1442,11 @@ function salvarVenda(){
   if(!produto){document.getElementById('mv-produto').focus();showToast(zUiText('⚠️'),zUiText('Informe o produto.'));return;}
   if(!construtora){document.getElementById('mv-construtora').focus();showToast(zUiText('⚠️'),zUiText('Informe a construtora.'));return;}
   if(!unidade){showToast(zUiText('⚠️'),zUiText('Selecione a unidade.'));return;}
+  if(!corretorExterno&&(!corretorUsuario||!usuarioAtivo(corretorUsuario))){showToast(zUiText('⚠️'),zUiText('Selecione um corretor ativo.'));return;}
+  if(capitaoUsuario&&!usuarioAtivo(capitaoUsuario)){showToast(zUiText('⚠️'),zUiText('Selecione um capitão ativo.'));return;}
+  if(!gerenteUsuario||!usuarioAtivo(gerenteUsuario)){showToast(zUiText('⚠️'),zUiText('Selecione um gerente ativo.'));return;}
+  if(!diretorUsuario||!usuarioAtivo(diretorUsuario)){showToast(zUiText('⚠️'),zUiText('Selecione um diretor ativo.'));return;}
+  if(diretor2Usuario&&!usuarioAtivo(diretor2Usuario)){showToast(zUiText('⚠️'),zUiText('Selecione um diretor 2 ativo.'));return;}
   if(!corretor){showToast(zUiText('⚠️'),zUiText('Selecione o corretor.'));return;}
   if(!gerente){showToast(zUiText('⚠️'),zUiText('Selecione o gerente.'));return;}
   if(!diretor){showToast(zUiText('⚠️'),zUiText('Selecione o diretor.'));return;}
@@ -1450,7 +1460,7 @@ function salvarVenda(){
   const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
   const mes=meses[mesNum];
-  const pct_rh=pctRhCorretor(corretor,0,{respeitarPerfilAtual:true,externo:corretorExterno});
+  const pct_rh=corretorExterno?0:(usuarioElegivelRhNovaVenda(corretorUsuario)?0.001:0);
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,

@@ -11,6 +11,7 @@ let agFiltroEquipe = '';
 let agFiltroCorretor = '';
 let agFiltroDataDe = '';
 let agFiltroDataAte = '';
+let agMostrarTodosProximos = false;
 const AG_TIPOS_VISITA = ['Primeiro atendimento', 'Fechamento'];
 const AG_SITUACOES = ['Agendado', 'Concluída', 'Reagendado', 'Cliente cancelou'];
 let agTratativaFila = [];
@@ -29,6 +30,7 @@ zSetState('state.ui.agFiltroEquipe', agFiltroEquipe);
 zSetState('state.ui.agFiltroCorretor', agFiltroCorretor);
 zSetState('state.ui.agFiltroDataDe', agFiltroDataDe);
 zSetState('state.ui.agFiltroDataAte', agFiltroDataAte);
+zSetState('state.ui.agMostrarTodosProximos', agMostrarTodosProximos);
 zSetState('state.ui.agTratativaFila', agTratativaFila);
 zSetState('state.ui.agTratativaAtualId', agTratativaAtualId);
 zSetState('state.ui.agTratativaSelecao', agTratativaSelecao);
@@ -52,6 +54,33 @@ function agAttr(valor) {
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;');
+}
+
+function agTelefoneDigitos(valor) {
+  let digitos = agTexto(valor).replace(/\D/g, '');
+  if ((digitos.length === 12 || digitos.length === 13) && digitos.startsWith('55')) {
+    digitos = digitos.slice(2);
+  }
+  return digitos.slice(0, 11);
+}
+
+function agTelefoneValido(valor) {
+  const digitos = agTelefoneDigitos(valor);
+  return digitos.length === 10 || digitos.length === 11;
+}
+
+function agFormatarTelefone(valor) {
+  const digitos = agTelefoneDigitos(valor);
+  if (!digitos) return '';
+  if (digitos.length <= 2) return `(${digitos}`;
+  if (digitos.length <= 6) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  if (digitos.length <= 10) return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}
+
+function formatarTelefoneAgendamento(input) {
+  if (!input) return;
+  input.value = agFormatarTelefone(input.value);
 }
 
 function agSituacao(item) {
@@ -439,6 +468,12 @@ function agContarProximosDias(lista, dias) {
   }).length;
 }
 
+function alternarListaProximosAgendamentos() {
+  agMostrarTodosProximos = !agMostrarTodosProximos;
+  zSetState('state.ui.agMostrarTodosProximos', agMostrarTodosProximos);
+  renderAgendamentos();
+}
+
 function agRenderCalendario(listaMes) {
   const eventosPorDia = {};
   agOrdenarLista(listaMes).forEach(item => {
@@ -471,10 +506,15 @@ function agRenderCalendario(listaMes) {
     const previews = eventos.slice(0, 2).map(item =>
       `<div class="ag-day-event"><strong>${agTexto(item.horarioAgendamento || '—')}</strong>${agTexto(item.cliente)}</div>`
     ).join('');
-    const mais = eventos.length > 2 ? `<div class="ag-day-more">+${eventos.length - 2} compromissos</div>` : '';
+    const mais = eventos.length > 2
+      ? `<div class="ag-day-more">+${eventos.length - 2} compromisso${eventos.length - 2 !== 1 ? 's' : ''} • clique no dia para ver todos</div>`
+      : '';
+    const rotuloDia = eventos.length
+      ? `Ver agenda completa de ${agFormatoDataCurta(iso)} com ${eventos.length} compromisso${eventos.length !== 1 ? 's' : ''}`
+      : `Selecionar ${agFormatoDataCurta(iso)}`;
 
     if (dentroDoMes) {
-      corpo += `<button type="button" class="${classes.join(' ')}" onclick="selecionarAgendamentoData('${iso}')">${topo}<div class="ag-day-list">${previews}${mais}</div></button>`;
+      corpo += `<button type="button" class="${classes.join(' ')}" title="${agAttr(rotuloDia)}" aria-label="${agAttr(rotuloDia)}" onclick="selecionarAgendamentoData('${iso}')">${topo}<div class="ag-day-list">${previews}${mais}</div></button>`;
     } else {
       corpo += `<div class="${classes.join(' ')}">${topo}</div>`;
     }
@@ -485,7 +525,8 @@ function agRenderCalendario(listaMes) {
 
 function agRenderItem(item, opcoes = {}) {
   const mostrarData = !!opcoes.mostrarData;
-  const telefoneEncoded = encodeURIComponent(String(item.telefone || ''));
+  const telefoneExibicao = agFormatarTelefone(item.telefone || '') || agTexto(item.telefone || 'Telefone nÃ£o informado');
+  const telefoneEncoded = encodeURIComponent(String(telefoneExibicao || ''));
   const tipoClass = agTexto(item.tipoVisita) === 'Fechamento' ? 'close' : 'first';
   const situacao = agSituacao(item);
   const situacaoClasse = agSituacaoClasse(situacao);
@@ -931,7 +972,11 @@ function renderAgendamentos() {
 
   const listaMes = listaAgenda.filter(item => agDataNoMes(item.dataAgendamento, agMesRef));
   const listaDia = agOrdenarLista(listaAgenda.filter(item => item.dataAgendamento === agDataSelecionada));
-  const proximos = agOrdenarLista(listaAtivos).slice(0, 5);
+  const limiteProximos = 5;
+  const proximosTodos = agOrdenarLista(listaAtivos);
+  const mostrarTodosProximos = agMostrarTodosProximos || proximosTodos.length <= limiteProximos;
+  const proximos = mostrarTodosProximos ? proximosTodos : proximosTodos.slice(0, limiteProximos);
+  const proximosRestantes = Math.max(proximosTodos.length - proximos.length, 0);
 
   const totalFeitos = lista.length;
   const totalAtivos = listaAtivos.length;
@@ -1061,7 +1106,7 @@ function renderAgendamentos() {
         <div class="ag-card-head">
           <div>
             <div class="ag-card-title">${agTexto(agFormatarMesAno(agMesRef))}</div>
-            <div class="ag-card-sub">Calendário da agenda ativa dentro do período analisado.</div>
+            <div class="ag-card-sub">Cada dia mostra uma prévia de até 2 compromissos. Clique na data para ver a lista completa ao lado.</div>
           </div>
           <div class="ag-month-nav">
             <button class="ag-month-btn" type="button" onclick="mudarMesAgendamento(-1)">‹</button>
@@ -1081,13 +1126,14 @@ function renderAgendamentos() {
                 <div class="ag-card-title">${agTexto(agFormatarDiaPainel(agDataSelecionada))}</div>
                 <span class="ag-count-chip">${listaDia.length}</span>
               </div>
-              <div class="ag-card-sub">${listaDia.length} compromisso${listaDia.length !== 1 ? 's' : ''} ativo${listaDia.length !== 1 ? 's' : ''} para esta data</div>
+              <div class="ag-card-sub">Lista completa do dia selecionado com ${listaDia.length} compromisso${listaDia.length !== 1 ? 's' : ''} ativo${listaDia.length !== 1 ? 's' : ''}.</div>
             </div>
             <button class="ag-clear-btn" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">Agendar neste dia</button>
           </div>
           <div class="ag-side-body">
             <div class="ag-side-section">
               <div class="ag-side-label">Compromissos do dia</div>
+              <div class="ag-inline-note">O calendário mostra apenas um resumo visual. Todos os compromissos ativos da data selecionada aparecem nesta lista.</div>
               <div class="ag-panel-stats">
                 <div class="ag-panel-stat">
                   <span>Primeiro atendimento</span>
@@ -1110,14 +1156,16 @@ function renderAgendamentos() {
             <div>
               <div class="ag-card-title-row">
                 <div class="ag-card-title">Próximos compromissos</div>
-                <span class="ag-count-chip">${proximos.length}</span>
+                <span class="ag-count-chip">${mostrarTodosProximos ? proximosTodos.length : `${proximos.length}/${proximosTodos.length}`}</span>
               </div>
-              <div class="ag-card-sub">Visão rápida dos próximos agendamentos ativos dentro do período.</div>
+              <div class="ag-card-sub">${mostrarTodosProximos ? 'Lista completa dos compromissos ativos futuros dentro do período filtrado.' : `Mostrando os próximos ${limiteProximos} de ${proximosTodos.length} compromissos ativos futuros.`}</div>
             </div>
+            ${proximosTodos.length > limiteProximos ? `<button class="ag-clear-btn" type="button" onclick="alternarListaProximosAgendamentos()">${mostrarTodosProximos ? `Mostrar só ${limiteProximos}` : `Ver todos (${proximosTodos.length})`}</button>` : ''}
           </div>
           <div class="ag-side-body">
             <div class="ag-side-section">
-              <div class="ag-side-label">Próximos 5 registros</div>
+              <div class="ag-side-label">${mostrarTodosProximos ? 'Lista completa do período' : `Prévia dos próximos ${limiteProximos} registros`}</div>
+              ${proximosTodos.length ? `<div class="ag-inline-note compact">${mostrarTodosProximos ? 'Você está vendo todos os compromissos ativos futuros deste período.' : `Ainda existem mais ${proximosRestantes} compromisso${proximosRestantes !== 1 ? 's' : ''} fora desta prévia. Use "Ver todos" para abrir a lista completa.`}</div>` : ''}
               <div class="ag-panel-stats">
                 <div class="ag-panel-stat">
                   <span>Primeiro atendimento</span>
@@ -1310,7 +1358,8 @@ async function salvarAgendamento() {
   const equipe = document.getElementById('ma-equipe').value;
   const corretorId = document.getElementById('ma-corretor').value;
   const cliente = agTexto(document.getElementById('ma-cliente').value).toUpperCase();
-  const telefone = agTexto(document.getElementById('ma-telefone').value);
+  const telefoneInput = document.getElementById('ma-telefone');
+  const telefone = agFormatarTelefone(telefoneInput ? telefoneInput.value : '');
   const dataAgendamento = document.getElementById('ma-data').value;
   const horarioAgendamento = agHoraNormalizada(document.getElementById('ma-horario').value);
   const tipoVisita = document.getElementById('ma-tipo').value;
@@ -1400,6 +1449,20 @@ async function salvarAgendamento() {
     }
   }
 }
+
+const salvarAgendamentoOriginal = salvarAgendamento;
+salvarAgendamento = async function salvarAgendamentoComTelefoneObrigatorio() {
+  const telefoneInput = document.getElementById('ma-telefone');
+  if (telefoneInput) {
+    telefoneInput.value = agFormatarTelefone(telefoneInput.value);
+    if (telefoneInput.value && !agTelefoneValido(telefoneInput.value)) {
+      telefoneInput.focus();
+      showToast('!', 'Informe o telefone com DDD. Ex.: (41) 99999-9999.');
+      return;
+    }
+  }
+  return salvarAgendamentoOriginal();
+};
 
 zRegisterModule('agendamentos', {
   renderAgendamentos,

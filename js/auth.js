@@ -39,6 +39,21 @@ function getPerfil(p) {
   return MAP[normalizado] || 'cor';
 }
 
+function usuarioStatusNormalizado(usuario) {
+  const bruto = zUiText(String((usuario && usuario.status) || 'Ativo')).trim().toLowerCase();
+  if (bruto === 'pendente') return 'Pendente';
+  if (bruto === 'inativo') return 'Inativo';
+  return 'Ativo';
+}
+
+function usuarioEstaAtivo(usuario) {
+  return usuarioStatusNormalizado(usuario) === 'Ativo';
+}
+
+function usuarioPodeEntrarNoSistema(usuario) {
+  return usuarioEstaAtivo(usuario);
+}
+
 // LOGIN
 function fazerLogin() {
   const email = document.getElementById('lg-email').value.trim().toLowerCase();
@@ -61,9 +76,9 @@ function fazerLogin() {
 
     if (!usuario) return showErr('E-mail nao cadastrado no sistema.');
 
-    const st = (usuario.status || '').toUpperCase();
-    if (st === 'PENDENTE') return showErr('Cadastro pendente. Verifique o e-mail de convite para completar.');
-    if (st === 'INATIVO')  return showErr('Conta inativa. Entre em contato com o administrador.');
+    const st = usuarioStatusNormalizado(usuario);
+    if (st === 'Pendente') return showErr('Cadastro pendente. Verifique o e-mail de convite para completar.');
+    if (st === 'Inativo')  return showErr('Conta inativa. Entre em contato com o administrador.');
 
     const senhaEsperada = SENHAS_INDIVIDUAIS[email] || SENHA_PADRAO;
     if (senha !== senhaEsperada) {
@@ -115,7 +130,10 @@ function restaurarSessao() {
   const emailSalvo = localStorage.getItem('zel_sessao');
   if (!emailSalvo) return false;
   const usuario = USUARIOS.find(u => u.email.toLowerCase() === emailSalvo.toLowerCase());
-  if (!usuario || (usuario.status || '').toUpperCase() === 'PENDENTE') return false;
+  if (!usuario || !usuarioPodeEntrarNoSistema(usuario)) {
+    localStorage.removeItem('zel_sessao');
+    return false;
+  }
   usuarioLogado = usuario;
   const rv = getPerfil(usuario.perfil);
   RD[rv] = {
@@ -229,6 +247,9 @@ zRegisterModule('auth', {
   atualizarTopbar,
   trocaRole,
   getPerfil,
+  usuarioStatusNormalizado,
+  usuarioEstaAtivo,
+  usuarioPodeEntrarNoSistema,
   RD
 });
 
