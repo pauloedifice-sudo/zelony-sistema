@@ -4,6 +4,7 @@
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ CONSTANTES ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
 const PRAZOS_ETAPA=[null,5,5,6,3,3,4,15,null];
+const ETAPA_NOTA_EMITIDA=ETAPAS.indexOf('Nota emitida');
 
 const PROC_DATA={
   'Comercial':[
@@ -31,6 +32,8 @@ let distratoVendaId=null;
 let editVendaId=null;
 let distratoSalvando=false;
 let editVendaSalvando=false;
+let previsaoRecebVendaId=null;
+let previsaoRecebSalvando=false;
 zSetState('config.etapas', ETAPAS);
 zSetState('config.prazosEtapa', PRAZOS_ETAPA);
 zSetState('config.procData', PROC_DATA);
@@ -42,7 +45,16 @@ zSetState('state.ui.fPrazo', fPrazo);
 zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
 
 function histAfetaFluxo(h){
-  return h.tipo!=='edicao'&&h.tipo!=='distrato'&&h.tipo!=='reversao'&&h.tipo!=='obs'&&h.tipo!=='pend_comercial'&&h.tipo!=='pend_comercial_editada'&&h.tipo!=='pend_comercial_resolvida';
+  return h.tipo!=='edicao'
+    && h.tipo!=='distrato'
+    && h.tipo!=='reversao'
+    && h.tipo!=='obs'
+    && h.tipo!=='pend_comercial'
+    && h.tipo!=='pend_comercial_editada'
+    && h.tipo!=='pend_comercial_resolvida'
+    && h.tipo!=='corretor_vinculo'
+    && h.tipo!=='prev_receb_manual'
+    && h.tipo!=='prev_receb_editada';
 }
 function getPendenciaComercial(v){
   if(!v||!Array.isArray(v.hist)) return null;
@@ -57,6 +69,107 @@ function getPendenciaComercial(v){
   return aberta;
 }
 function temPendenciaComercial(v){ return !!getPendenciaComercial(v); }
+
+function podeGerirPrevisaoRecebimento(){
+  return ['fin','dir','dono'].includes(role);
+}
+
+function dataIsoParaBr(dataIso){
+  if(!dataIso||!/^\d{4}-\d{2}-\d{2}$/.test(String(dataIso).trim())) return '';
+  const [ano,mes,dia]=String(dataIso).trim().split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function dataBrParaIso(dataBr){
+  const info=obterMomentoHistorico({d:dataBr},{preferTs:false});
+  if(!info||!info.date) return '';
+  const data=new Date(info.date.getTime());
+  return `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+}
+
+function obterPrevisaoRecebimentoManual(v){
+  if(!v||!Array.isArray(v.hist)) return null;
+  const hist=[...v.hist].reverse().find(h=>h&&(h.tipo==='prev_receb_manual'||h.tipo==='prev_receb_editada')&&String(h.prevData||'').trim());
+  if(!hist) return null;
+  const info=obterMomentoHistorico({d:hist.prevData},{preferTs:false});
+  if(!info||!info.date) return null;
+  const dataRef=new Date(info.date.getTime());
+  dataRef.setHours(0,0,0,0);
+  return {
+    data:formatarDataLocal(dataRef,{comAno:true}),
+    date:dataRef,
+    por:hist.u||'',
+    obs:hist.o||'',
+    tipo:hist.tipo,
+    anterior:hist.prevAnterior||'',
+    historico:hist,
+    registradaEm:formatarMomentoHistorico(hist)
+  };
+}
+
+function registrarPrevisaoRecebimentoHistorico(v, config={}){
+  if(!v) return null;
+  const dataBr=String(config.data||'').trim();
+  if(!dataBr) return null;
+  const tipo=config.tipo||'prev_receb_manual';
+  const registro=criarRegistroHistorico({
+    e:v.etapa,
+    u:config.quem||'Sistema',
+    o:config.obs||'',
+    tipo,
+    prevData:dataBr,
+    prevAnterior:config.anterior||''
+  });
+  v.hist=v.hist||[];
+  v.hist.push(registro);
+  return registro;
+}
+
+function calcPrevisaoAutomatica(v){
+  if(v.distratada||v.etapa>=ETAPAS.length-1) return null;
+  const histEtapa1=[...v.hist].find(h=>h.e===1&&histAfetaFluxo(h));
+  const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
+  const refInicioInfo=obterMomentoHistorico(refInicio,{preferTs:false});
+  if(!refInicioInfo||!refInicioInfo.date) return null;
+  let dataBase=new Date(refInicioInfo.date.getTime());
+  dataBase.setHours(0,0,0,0);
+  let prazosRestantes=0;
+  for(let i=1;i<ETAPAS.length-1;i++){ if(PRAZOS_ETAPA[i]) prazosRestantes+=PRAZOS_ETAPA[i]; }
+  let ajusteAcumulado=0, atrasosAcumulados=0, antecipacoes=0;
+  for(let i=1;i<v.etapa;i++){
+    const hEntrada=[...v.hist].find(h=>h.e===i&&histAfetaFluxo(h));
+    const hSaida=[...v.hist].find(h=>h.e===i+1&&histAfetaFluxo(h));
+    const infoEntrada=obterMomentoHistorico(hEntrada,{preferTs:false});
+    const infoSaida=obterMomentoHistorico(hSaida,{preferTs:false});
+    if(!infoEntrada||!infoSaida||!infoEntrada.date||!infoSaida.date) continue;
+    const dEntrada=new Date(infoEntrada.date.getTime());
+    const dSaida=new Date(infoSaida.date.getTime());
+    dEntrada.setHours(0,0,0,0);
+    dSaida.setHours(0,0,0,0);
+    const diasNaEtapa=Math.floor((dSaida-dEntrada)/(1000*60*60*24));
+    const prazoEtapa=PRAZOS_ETAPA[i]||0;
+    const diff=diasNaEtapa-prazoEtapa;
+    ajusteAcumulado+=diff;
+    if(diff>0) atrasosAcumulados+=diff;
+    else if(diff<0) antecipacoes+=Math.abs(diff);
+  }
+  const atrasoAtual=calcAtraso(v);
+  const atrasoCorrente=atrasoAtual!==null&&atrasoAtual>0?atrasoAtual:0;
+  const totalDias=prazosRestantes+ajusteAcumulado+atrasoCorrente;
+  const dataFinal=new Date(dataBase.getTime());
+  dataFinal.setDate(dataFinal.getDate()+totalDias);
+  return{
+    data:formatarDataLocal(dataFinal,{comAno:true}),
+    atrasosAcumulados,
+    antecipacoes,
+    atrasoCorrente,
+    ajusteAcumulado,
+    totalAtraso:atrasosAcumulados+atrasoCorrente,
+    prazosRestantes,
+    manual:false,
+    origem:'automatica'
+  };
+}
 zSetState('state.ui.vtab', vtab);
 zSetState('state.ui.filtroUnidade', filtroUnidade);
 zSetState('state.ui.fPrazo', fPrazo);
@@ -67,6 +180,8 @@ zSetState('state.ui.distratoVendaId', distratoVendaId);
 zSetState('state.ui.editVendaId', editVendaId);
 zSetState('state.ui.distratoSalvando', distratoSalvando);
 zSetState('state.ui.editVendaSalvando', editVendaSalvando);
+zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
+zSetState('state.ui.previsaoRecebSalvando', previsaoRecebSalvando);
 
 function numSeguro(valor,padrao=0){
   const n=Number(valor);
@@ -108,16 +223,80 @@ function chavesNomePessoa(nome){
   }
   return chaves;
 }
-function campoVendaBatePessoa(campo,nomeOuUsuario){
+function campoVendaBatePessoa(campo,nomeOuUsuario,opcoes={}){
   const alvo=normalizarTextoBusca(campo);
   if(!alvo) return false;
   const nomeBase=typeof nomeOuUsuario==='string'?nomeOuUsuario:(nomeOuUsuario&&nomeOuUsuario.nome);
+  const nomeCompleto=normalizarTextoBusca(nomeBase);
+  if(!nomeCompleto) return false;
+  if(alvo===nomeCompleto) return true;
+  if(opcoes.exato) return false;
   const chaves=chavesNomePessoa(nomeBase);
-  if(chaves.includes(alvo)) return true;
+  if(chaves.some(chave=>chave!==nomeCompleto&&chave===alvo)) return true;
   return chaves.some(chave=>chave.includes(' ')&&(alvo.startsWith(chave+' ')||chave.startsWith(alvo+' ')));
 }
-function getUsuarioCorretorVenda(corretor){
-  return USUARIOS.find(u=>campoVendaBatePessoa(corretor,u))||null;
+function obterMetaCorretorVenda(v){
+  if(!v||!Array.isArray(v.hist)) return {origem:'',refId:'',historico:null};
+  const meta=[...v.hist].reverse().find(h=>h&&(typeof h.corretorOrigem==='string'||h.corretorRefId!=null));
+  return{
+    origem:meta&&typeof meta.corretorOrigem==='string'?String(meta.corretorOrigem):'',
+    refId:meta&&meta.corretorRefId!=null?String(meta.corretorRefId):'',
+    historico:meta||null
+  };
+}
+function corretorVendaEhExterno(v){
+  return obterMetaCorretorVenda(v).origem==='externo';
+}
+function getUsuarioCorretorVenda(corretor,opcoes={}){
+  if(opcoes.externo) return null;
+  const nome=String(corretor||'').trim();
+  if(!nome) return null;
+  const exato=USUARIOS.find(u=>campoVendaBatePessoa(nome,u,{exato:true}))||null;
+  if(exato||opcoes.permitirAproximado===false) return exato;
+  return USUARIOS.find(u=>campoVendaBatePessoa(nome,u))||null;
+}
+function getUsuarioCorretorDaVenda(v,opcoes={}){
+  if(!v||typeof v!=='object') return null;
+  const meta=obterMetaCorretorVenda(v);
+  if(meta.origem==='externo') return null;
+  if(meta.refId){
+    const usuarioRef=USUARIOS.find(u=>String(u.id)===meta.refId)||null;
+    if(usuarioRef) return usuarioRef;
+  }
+  return getUsuarioCorretorVenda(v.corretor,opcoes);
+}
+function corretorVendaPertenceAoUsuario(v,usuario){
+  if(!v||!usuario) return false;
+  const meta=obterMetaCorretorVenda(v);
+  if(meta.origem==='externo') return false;
+  if(meta.refId) return String(usuario.id)===meta.refId;
+  const nomeCorretor=String(v.corretor||'').trim();
+  if(!nomeCorretor) return false;
+  if(campoVendaBatePessoa(nomeCorretor,usuario,{exato:true})) return true;
+  return nomeCorretor.split(/\s+/).length>=2&&campoVendaBatePessoa(nomeCorretor,usuario);
+}
+function getUsuarioVendaPorCampo(v,campo,opcoes={}){
+  if(!v||!campo) return null;
+  if(campo==='corretor') return getUsuarioCorretorDaVenda(v,opcoes);
+  const nome=String(v[campo]||'').trim();
+  if(!nome) return null;
+  return USUARIOS.find(u=>campoVendaBatePessoa(nome,u,{exato:true}))
+    || USUARIOS.find(u=>campoVendaBatePessoa(nome,u))
+    || null;
+}
+function registrarVinculoCorretorVenda(v,config={}){
+  if(!v) return null;
+  const registro=criarRegistroHistorico({
+    e:numSeguro(v.etapa,0),
+    u:config.quem||'Sistema',
+    o:config.obs||'',
+    tipo:config.tipo||'corretor_vinculo',
+    corretorOrigem:config.origem||'externo',
+    corretorRefId:config.refId!=null?config.refId:null
+  });
+  v.hist=v.hist||[];
+  v.hist.push(registro);
+  return registro;
 }
 function usuarioElegivelRhNovaVenda(usuario){
   if(!usuario) return false;
@@ -125,7 +304,7 @@ function usuarioElegivelRhNovaVenda(usuario){
   return !!usuario.rhContratacao&&perfilAtual==='cor';
 }
 function pctRhCorretor(corretor,padrao=0,opcoes={}){
-  const corretorUser=getUsuarioCorretorVenda(corretor);
+  const corretorUser=getUsuarioCorretorVenda(corretor,{externo:!!opcoes.externo});
   if(!corretorUser) return padrao;
   if(opcoes.respeitarPerfilAtual===false) return corretorUser.rhContratacao?0.001:0;
   return usuarioElegivelRhNovaVenda(corretorUser)?0.001:0;
@@ -192,7 +371,7 @@ async function sincronizarPctRhVendas(vendasAlvo,opcoes={}){
   lista.forEach(v=>{
     if(!v||typeof v!=='object') return;
     normalizarVendaNumeros(v);
-    const novoPct=typeof opcoes.forcarPctRh==='number'?opcoes.forcarPctRh:pctRhCorretor(v.corretor,null);
+    const novoPct=typeof opcoes.forcarPctRh==='number'?opcoes.forcarPctRh:pctRhCorretor(v.corretor,null,{externo:corretorVendaEhExterno(v)});
     if(novoPct===null) return;
     if(numSeguro(v.pct_rh,0)===novoPct) return;
     v.pct_rh=novoPct;
@@ -215,7 +394,11 @@ async function sincronizarRhContratacaoUsuario(usuarioAtual,usuarioAnterior=null
     ...chavesNomePessoa(usuarioAnterior&&usuarioAnterior.nome)
   ])];
   if(!chaves.length) return {alteradas:0,persistidas:0,falhas:0};
+  const idsRelacionados=[usuarioAtual&&usuarioAtual.id!=null?String(usuarioAtual.id):'',usuarioAnterior&&usuarioAnterior.id!=null?String(usuarioAnterior.id):''].filter(Boolean);
   const vendasRelacionadas=VENDAS.filter(v=>{
+    const meta=obterMetaCorretorVenda(v);
+    if(meta.origem==='externo') return false;
+    if(meta.refId) return idsRelacionados.includes(meta.refId);
     const corretor=String(v&&v.corretor||'').trim().toLowerCase();
     return !!corretor&&chaves.includes(corretor);
   });
@@ -344,24 +527,25 @@ function vendasU(l, somenteMinhas=false){
   if(role==='dono') return base;
   if(role==='fin') return base;
   if(role==='rh') return base.filter(v=>v.pct_rh&&v.pct_rh>0);
-  const matchNome=(campo,usuario)=>{
-    return campoVendaBatePessoa(campo,usuario);
+  const matchCampo=(v,campo,usuario)=>{
+    if(campo==='corretor') return corretorVendaPertenceAoUsuario(v,usuario);
+    return campoVendaBatePessoa(v&&v[campo],usuario);
   };
-  if(role==='cor') return usuarioLogado?l.filter(v=>matchNome(v.corretor,usuarioLogado)):[];
+  if(role==='cor') return usuarioLogado?base.filter(v=>matchCampo(v,'corretor',usuarioLogado)):[];
   if(role==='dir'&&(unid==='Ambas'||!unid)){
     if(somenteMinhas&&usuarioLogado){
-      return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado));
+      return base.filter(v=>matchCampo(v,'diretor',usuarioLogado)||matchCampo(v,'diretor2',usuarioLogado)||matchCampo(v,'gerente',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado));
     }
     return base;
   }
   if(role==='dir'){
     if(somenteMinhas&&usuarioLogado){
-      return base.filter(v=>matchNome(v.diretor,usuarioLogado)||matchNome(v.diretor2,usuarioLogado)||matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado));
+      return base.filter(v=>matchCampo(v,'diretor',usuarioLogado)||matchCampo(v,'diretor2',usuarioLogado)||matchCampo(v,'gerente',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado));
     }
     return base;
   }
-  if(role==='cap') return usuarioLogado?base.filter(v=>matchNome(v.capitao,usuarioLogado)||matchNome(v.corretor,usuarioLogado)):[];
-  if(role==='ger') return usuarioLogado?base.filter(v=>matchNome(v.gerente,usuarioLogado)||matchNome(v.corretor,usuarioLogado)||matchNome(v.capitao,usuarioLogado)):[];
+  if(role==='cap') return usuarioLogado?base.filter(v=>matchCampo(v,'capitao',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado)):[];
+  if(role==='ger') return usuarioLogado?base.filter(v=>matchCampo(v,'gerente',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado)||matchCampo(v,'capitao',usuarioLogado)):[];
   return base;
 }
 
@@ -389,42 +573,31 @@ function labelAtraso(v){
 }
 
 function calcPrevisao(v){
-  if(v.etapa===0||v.distratada||v.etapa>=ETAPAS.length-1) return null;
-  const histEtapa1=[...v.hist].find(h=>h.e===1&&histAfetaFluxo(h));
-  const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
-  const refInicioInfo=obterMomentoHistorico(refInicio,{preferTs:false});
-  if(!refInicioInfo||!refInicioInfo.date) return null;
-  let dataBase=new Date(refInicioInfo.date.getTime());
-  dataBase.setHours(0,0,0,0);
-  let prazosRestantes=0;
-  for(let i=1;i<ETAPAS.length-1;i++){ if(PRAZOS_ETAPA[i]) prazosRestantes+=PRAZOS_ETAPA[i]; }
-  let ajusteAcumulado=0, atrasosAcumulados=0, antecipacoes=0;
-  for(let i=1;i<v.etapa;i++){
-    const hEntrada=[...v.hist].find(h=>h.e===i&&histAfetaFluxo(h));
-    const hSaida=[...v.hist].find(h=>h.e===i+1&&histAfetaFluxo(h));
-    const infoEntrada=obterMomentoHistorico(hEntrada,{preferTs:false});
-    const infoSaida=obterMomentoHistorico(hSaida,{preferTs:false});
-    if(!infoEntrada||!infoSaida||!infoEntrada.date||!infoSaida.date) continue;
-    const dEntrada=new Date(infoEntrada.date.getTime());
-    const dSaida=new Date(infoSaida.date.getTime());
-    dEntrada.setHours(0,0,0,0);
-    dSaida.setHours(0,0,0,0);
-    const diasNaEtapa=Math.floor((dSaida-dEntrada)/(1000*60*60*24));
-    const prazoEtapa=PRAZOS_ETAPA[i]||0;
-    const diff=diasNaEtapa-prazoEtapa;
-    ajusteAcumulado+=diff;
-    if(diff>0) atrasosAcumulados+=diff;
-    else if(diff<0) antecipacoes+=Math.abs(diff);
+  if(v.distratada||v.etapa>=ETAPAS.length-1) return null;
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  if(v.etapa>=ETAPA_NOTA_EMITIDA&&previsaoManual&&previsaoManual.date){
+    const hoje2=new Date();
+    hoje2.setHours(0,0,0,0);
+    const diffDias=Math.floor((hoje2-previsaoManual.date)/(1000*60*60*24));
+    const atrasoCorrente=diffDias>0?diffDias:0;
+    return{
+      data:previsaoManual.data,
+      atrasosAcumulados:0,
+      antecipacoes:0,
+      atrasoCorrente,
+      ajusteAcumulado:0,
+      totalAtraso:atrasoCorrente,
+      prazosRestantes:0,
+      manual:true,
+      origem:'manual',
+      definidaPor:previsaoManual.por,
+      observacao:previsaoManual.obs,
+      registradaEm:previsaoManual.registradaEm,
+      anterior:previsaoManual.anterior,
+      historico:previsaoManual.historico
+    };
   }
-  const atrasoAtual=calcAtraso(v);
-  const atrasoCorrente=atrasoAtual!==null&&atrasoAtual>0?atrasoAtual:0;
-  const totalDias=prazosRestantes+ajusteAcumulado+atrasoCorrente;
-  const dataFinal=new Date(dataBase.getTime());
-  dataFinal.setDate(dataFinal.getDate()+totalDias);
-  const d=String(dataFinal.getDate()).padStart(2,'0');
-  const m=String(dataFinal.getMonth()+1).padStart(2,'0');
-  const y=dataFinal.getFullYear();
-  return{data:`${d}/${m}/${y}`,atrasosAcumulados,antecipacoes,atrasoCorrente,ajusteAcumulado,totalAtraso:atrasosAcumulados+atrasoCorrente,prazosRestantes};
+  return calcPrevisaoAutomatica(v);
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ RENDERIZAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O DA LISTA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
@@ -547,7 +720,12 @@ function renderFiltros(){
   const corretores=[...new Set(todasVendas.map(v=>v.corretor).filter(Boolean))].sort();
   const ccas=[...new Set(todasVendas.map(v=>v.cca).filter(Boolean))].sort();
   const equipesSet=new Set();
-  todasVendas.forEach(v=>{[v.corretor,v.gerente,v.diretor].forEach(nome=>{if(!nome)return;const u=USUARIOS.find(u=>u.nome===nome);if(u&&u.equipe)equipesSet.add(u.equipe);});});
+  todasVendas.forEach(v=>{
+    ['corretor','gerente','diretor'].forEach(campo=>{
+      const u=getUsuarioVendaPorCampo(v,campo,{permitirAproximado:campo!=='corretor'});
+      if(u&&u.equipe) equipesSet.add(u.equipe);
+    });
+  });
   const equipes=[...equipesSet].sort();
   selMes.innerHTML=`<option value="">${zUiText('📅 Todos os meses')}</option>`+meses.map(m=>`<option value="${m}" ${curMes===m?'selected':''}>${zUiText(m)}</option>`).join('');
   selConst.innerHTML=`<option value="">${zUiText('🏗️ Todas construtoras')}</option>`+construtoras.map(c=>`<option value="${c}" ${curConst===c?'selected':''}>${zUiText(c)}</option>`).join('');
@@ -635,7 +813,7 @@ function renderVList(){
   if(vfCorretor) l=l.filter(v=>v.corretor===vfCorretor);
   if(vfCca) l=l.filter(v=>v.cca===vfCca);
   if(vfOrigem) l=l.filter(v=>v.origem===vfOrigem);
-  if(vfEq) l=l.filter(v=>[v.corretor,v.gerente,v.diretor].some(nome=>{if(!nome)return false;const u=USUARIOS.find(u=>u.nome===nome);return u&&u.equipe===vfEq;}));
+  if(vfEq) l=l.filter(v=>['corretor','gerente','diretor'].some(campo=>{const u=getUsuarioVendaPorCampo(v,campo,{permitirAproximado:campo!=='corretor'});return !!(u&&u.equipe===vfEq);}));
   if(fPrazo!=='all'){
     l=l.filter(v=>{
       if(v.distratada) return false;
@@ -676,33 +854,245 @@ function abrirM(id){
   if(!v)return;
   pendId=id;
   zSetState('state.ui.pendId', pendId);
-  document.getElementById('m-titulo').textContent=zUiText(`Avançar: ${ETAPAS[v.etapa+1]}`);
+  const proxEtapa=v.etapa+1;
+  const exigePrevisaoManual=proxEtapa===ETAPA_NOTA_EMITIDA;
+  const previsaoAtual=calcPrevisao(v);
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  document.getElementById('m-titulo').textContent=zUiText(`Avançar: ${ETAPAS[proxEtapa]}`);
   document.getElementById('mobs').value='';
   document.getElementById('mchars').textContent='0/400';
-  document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>${zUiText('Etapa atual')}</span><strong>${zUiText(ETAPAS[v.etapa])}</strong></div><div style="font-size:16px;color:var(--gold);">${zUiText('→')}</div><div class="sf to"><span>${zUiText('Próxima etapa')}</span><strong>${zUiText(ETAPAS[v.etapa+1])}</strong></div></div>`;
+  document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>${zUiText('Etapa atual')}</span><strong>${zUiText(ETAPAS[v.etapa])}</strong></div><div style="font-size:16px;color:var(--gold);">${zUiText('→')}</div><div class="sf to"><span>${zUiText('Próxima etapa')}</span><strong>${zUiText(ETAPAS[proxEtapa])}</strong></div></div>`;
+  const wrapPrevisao=document.getElementById('m-prev-manual-wrap');
+  const inputPrevisao=document.getElementById('m-prev-data');
+  const helpPrevisao=document.getElementById('m-prev-manual-help');
+  const copyPrevisao=document.getElementById('m-prev-manual-copy');
+  if(wrapPrevisao&&inputPrevisao&&helpPrevisao){
+    if(exigePrevisaoManual){
+      const sugestao=previsaoManual?.data||previsaoAtual?.data||'';
+      wrapPrevisao.style.display='flex';
+      inputPrevisao.value=dataBrParaIso(sugestao);
+      if(copyPrevisao) copyPrevisao.textContent=zUiText('Ao entrar em Nota emitida, confirme a previsão mais assertiva de recebimento para o financeiro.');
+      helpPrevisao.textContent=sugestao?zUiText(`Referência atual do sistema: ${sugestao}. Você pode confirmar ou ajustar essa data antes de avançar.`):zUiText('Defina a data prevista para o financeiro acompanhar o recebimento.');
+    }else{
+      wrapPrevisao.style.display='none';
+      inputPrevisao.value='';
+      if(copyPrevisao) copyPrevisao.textContent=zUiText('Ao entrar em Nota emitida, informe a previsão mais assertiva de recebimento para o financeiro.');
+      helpPrevisao.textContent='';
+    }
+  }
   const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
   if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
   document.getElementById('mbackdrop').classList.add('show');
-  setTimeout(()=>document.getElementById('mobs').focus(),100);
+  setTimeout(()=>{(exigePrevisaoManual&&inputPrevisao?inputPrevisao:document.getElementById('mobs'))?.focus();},100);
 }
-function fecharM(){ document.getElementById('mbackdrop').classList.remove('show'); pendId=null; zSetState('state.ui.pendId', pendId); document.getElementById('mobs').value=''; document.getElementById('mchars').textContent='0/400'; document.getElementById('m-titulo').textContent=zUiText('Avançar etapa'); document.getElementById('marrow').innerHTML=''; const btnConfirmar=document.querySelector('#mbackdrop .btn-s'); if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';} }
+function fecharM(){
+  document.getElementById('mbackdrop').classList.remove('show');
+  pendId=null;
+  zSetState('state.ui.pendId', pendId);
+  document.getElementById('mobs').value='';
+  document.getElementById('mchars').textContent='0/400';
+  document.getElementById('m-titulo').textContent=zUiText('Avançar etapa');
+  document.getElementById('marrow').innerHTML='';
+  const wrapPrevisao=document.getElementById('m-prev-manual-wrap');
+  const inputPrevisao=document.getElementById('m-prev-data');
+  const helpPrevisao=document.getElementById('m-prev-manual-help');
+  const copyPrevisao=document.getElementById('m-prev-manual-copy');
+  if(wrapPrevisao) wrapPrevisao.style.display='none';
+  if(inputPrevisao) inputPrevisao.value='';
+  if(helpPrevisao) helpPrevisao.textContent='';
+  if(copyPrevisao) copyPrevisao.textContent=zUiText('Ao entrar em Nota emitida, informe a previsão mais assertiva de recebimento para o financeiro.');
+  const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
+  if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
+}
 function handleBackdropAv(e){ if(e.target===document.getElementById('mbackdrop'))fecharM(); }
-function confirmAv(){
+async function confirmAv(){
   const v=VENDAS.find(x=>x.id===pendId);
   if(!v)return;
   const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
   if(btnConfirmar&&btnConfirmar.disabled)return;
+  const proxEtapa=v.etapa+1;
+  const exigePrevisaoManual=proxEtapa===ETAPA_NOTA_EMITIDA;
+  const inputPrevisao=document.getElementById('m-prev-data');
+  const dataPrevisaoIso=exigePrevisaoManual&&inputPrevisao?inputPrevisao.value:'';
+  if(exigePrevisaoManual&&!dataPrevisaoIso){
+    if(inputPrevisao) inputPrevisao.focus();
+    showToast(zUiText('⚠️'),zUiText('Informe a previsão manual de recebimento antes de avançar para Nota emitida.'));
+    return;
+  }
   if(btnConfirmar){btnConfirmar.disabled=true;btnConfirmar.textContent='Confirmando...';}
   const obs=document.getElementById('mobs').value.trim();
   const quemAvancou=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  const original=JSON.parse(JSON.stringify(v));
+  const previsaoManualAtual=obterPrevisaoRecebimentoManual(v);
   v.etapa++;
   v.hist.push(criarRegistroHistorico({e:v.etapa,u:quemAvancou,o:obs}));
-  fecharM();
-  atualizarBadgeNotificacoes();
-  renderFiltros(); renderVList(); showVDetail(v.id); renderNots();
-  dbAtualizarVenda(v).catch(e=>console.error(e));
-  salvarLS();
-  if(!document.getElementById('mod-carteira').classList.contains('hidden')) renderCarteira();
+  if(exigePrevisaoManual&&dataPrevisaoIso){
+    const dataPrevisaoBr=dataIsoParaBr(dataPrevisaoIso);
+    if(!previsaoManualAtual){
+      registrarPrevisaoRecebimentoHistorico(v,{data:dataPrevisaoBr,quem:quemAvancou,tipo:'prev_receb_manual'});
+    }else if(previsaoManualAtual.data!==dataPrevisaoBr){
+      registrarPrevisaoRecebimentoHistorico(v,{data:dataPrevisaoBr,anterior:previsaoManualAtual.data,quem:quemAvancou,tipo:'prev_receb_editada'});
+    }
+  }
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    fecharM();
+    atualizarBadgeNotificacoes();
+    renderFiltros(); renderVList(); showVDetail(v.id); renderNots();
+    if(!document.getElementById('mod-carteira').classList.contains('hidden')) renderCarteira();
+    if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+    showToast(zUiText('✅'),zUiText(`Etapa atualizada para ${ETAPAS[v.etapa]}.`));
+  }catch(e){
+    Object.assign(v,original);
+    if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
+    console.error(e);
+    showToast(zUiText('❌'),zUiText('Falha ao avançar a etapa no banco. Tente novamente.'));
+  }
+}
+
+function setPrevisaoRecebLoading(loading){
+  previsaoRecebSalvando=loading;
+  zSetState('state.ui.previsaoRecebSalvando', previsaoRecebSalvando);
+  const campoData=document.getElementById('mpr-data');
+  const campoObs=document.getElementById('mpr-obs');
+  const salvar=document.getElementById('mpr-save-btn');
+  const cancelar=document.getElementById('mpr-cancel-btn');
+  const fechar=document.getElementById('mpr-close-btn');
+  const status=document.getElementById('mpr-status');
+  if(campoData) campoData.disabled=loading;
+  if(campoObs) campoObs.disabled=loading;
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(salvar){
+    salvar.disabled=loading;
+    salvar.textContent=loading?zUiText('⏳ Salvando...'):zUiText('Salvar previsão');
+    salvar.style.opacity=loading?'0.8':'1';
+    salvar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+
+function abrirModalPrevisaoRecebimento(id){
+  if(!podeGerirPrevisaoRecebimento()){showToast(zUiText('⚠️'),zUiText('Sem permissão para editar a previsão de recebimento.'));return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v||v.distratada||v.etapa<ETAPA_NOTA_EMITIDA||v.etapa>=ETAPAS.length-1) return;
+  previsaoRecebVendaId=id;
+  zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  const previsaoAutomatica=calcPrevisaoAutomatica(v);
+  const editando=!!previsaoManual;
+  document.getElementById('mpr-title').textContent=zUiText(editando?'Editar previsão de recebimento':'Definir previsão de recebimento');
+  document.getElementById('mpr-sub').textContent=zUiText(`${v.cliente.split('/')[0].trim()} · ${v.produto}`);
+  document.getElementById('mpr-data').value=dataBrParaIso(previsaoManual?.data||previsaoAutomatica?.data||'');
+  document.getElementById('mpr-obs').value='';
+  document.getElementById('mpr-obs-wrap').style.display=editando?'block':'none';
+  const autoBox=document.getElementById('mpr-auto-box');
+  const autoCopy=document.getElementById('mpr-auto-copy');
+  if(autoBox&&autoCopy){
+    if(previsaoAutomatica&&previsaoAutomatica.data){
+      autoBox.style.display='block';
+      autoCopy.textContent=zUiText(editando?`Estimativa automática original do fluxo: ${previsaoAutomatica.data}. Se alterar a previsão manual, o motivo ficará registrado no histórico.`:`Estimativa automática atual do sistema: ${previsaoAutomatica.data}. Confirme ou ajuste para transformar em previsão manual.`);
+    }else{
+      autoBox.style.display='none';
+      autoCopy.textContent='';
+    }
+  }
+  setPrevisaoRecebLoading(false);
+  document.getElementById('m-prev-receb').classList.add('show');
+  setTimeout(()=>document.getElementById('mpr-data').focus(),80);
+}
+
+function fecharModalPrevisaoRecebimento(){
+  if(previsaoRecebSalvando) return;
+  document.getElementById('m-prev-receb').classList.remove('show');
+  previsaoRecebVendaId=null;
+  zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
+  document.getElementById('mpr-title').textContent=zUiText('Previsão de recebimento');
+  document.getElementById('mpr-sub').textContent=zUiText('Defina a data prevista para acompanhamento do financeiro.');
+  document.getElementById('mpr-data').value='';
+  document.getElementById('mpr-obs').value='';
+  document.getElementById('mpr-obs-wrap').style.display='none';
+  document.getElementById('mpr-auto-box').style.display='none';
+  document.getElementById('mpr-auto-copy').textContent='';
+  setPrevisaoRecebLoading(false);
+}
+
+async function salvarPrevisaoRecebimento(){
+  if(previsaoRecebSalvando) return;
+  if(!podeGerirPrevisaoRecebimento()) return;
+  const v=VENDAS.find(x=>x.id===previsaoRecebVendaId);
+  if(!v||v.distratada||v.etapa<ETAPA_NOTA_EMITIDA||v.etapa>=ETAPAS.length-1) return;
+  const dataIso=document.getElementById('mpr-data').value;
+  const campoObs=document.getElementById('mpr-obs');
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  const editando=!!previsaoManual;
+  if(!dataIso){
+    document.getElementById('mpr-data').focus();
+    showToast(zUiText('⚠️'),zUiText('Informe a data prevista de recebimento.'));
+    return;
+  }
+  const novaData=dataIsoParaBr(dataIso);
+  if(editando&&previsaoManual.data===novaData){
+    document.getElementById('mpr-data').focus();
+    showToast(zUiText('⚠️'),zUiText('Escolha uma nova data para registrar a alteração da previsão.'));
+    return;
+  }
+  const obs=campoObs?campoObs.value.trim():'';
+  if(editando&&!obs){
+    if(campoObs) campoObs.focus();
+    showToast(zUiText('⚠️'),zUiText('Informe o motivo da alteração da previsão de recebimento.'));
+    return;
+  }
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  registrarPrevisaoRecebimentoHistorico(v,{
+    data:novaData,
+    anterior:previsaoManual?previsaoManual.data:'',
+    quem,
+    obs:editando?obs:'',
+    tipo:editando?'prev_receb_editada':'prev_receb_manual'
+  });
+  setPrevisaoRecebLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    setPrevisaoRecebLoading(false);
+    fecharModalPrevisaoRecebimento();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+    showToast(zUiText('✅'),zUiText(editando?'Previsão de recebimento atualizada com sucesso.':'Previsão de recebimento definida com sucesso.'));
+  }catch(e){
+    Object.assign(v,original);
+    setPrevisaoRecebLoading(false);
+    console.error(e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar a previsão de recebimento no banco. Tente novamente.'));
+  }
+}
+
+async function marcarCorretorVendaComoExterno(vendaId){
+  if(!['dir','fin','dono'].includes(role)){showToast(zUiText('⚠️'),zUiText('Sem permissão para ajustar o vínculo do corretor.'));return;}
+  const v=VENDAS.find(x=>x.id===vendaId);
+  if(!v) return;
+  if(corretorVendaEhExterno(v)){showToast(zUiText('ℹ️'),zUiText('Esta venda já está marcada com corretor externo.'));return;}
+  const nomeCorretor=String(v.corretor||'').trim()||'Corretor';
+  if(!confirm(zUiText(`Marcar "${nomeCorretor}" como corretor externo nesta venda? Isso impede que o sistema vincule esta venda a um usuário ativo com o mesmo nome.`))) return;
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  registrarVinculoCorretorVenda(v,{origem:'externo',quem,obs:'Corretor marcado como externo para evitar vínculo automático com usuário do sistema.'});
+  normalizarVendaNumeros(v);
+  v.pct_rh=0;
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    if(!document.getElementById('mod-carteira').classList.contains('hidden')&&typeof renderCarteira==='function') renderCarteira();
+    showToast(zUiText('✅'),zUiText('Corretor marcado como externo com sucesso.'));
+  }catch(e){
+    Object.assign(v,original);
+    console.error(e);
+    showToast(zUiText('❌'),zUiText('Falha ao atualizar o vínculo do corretor no banco. Tente novamente.'));
+  }
 }
 
 function voltarEtapa(id){
@@ -717,6 +1107,7 @@ function voltarEtapa(id){
   atualizarBadgeNotificacoes();
   dbAtualizarVenda(v).catch(e=>console.error(e));
   salvarLS();
+  if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
   showToast('ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â©','Etapa revertida com sucesso.');
 }
 
@@ -1016,11 +1407,14 @@ function salvarVenda(){
   const construtora=document.getElementById('mv-construtora').value.trim();
   const origem=document.getElementById('mv-origem').value;
   const unidade=document.getElementById('mv-unidade').value;
-  let corretor=document.getElementById('mv-corretor').value;
-  if(corretor==='__externo__'){
+  const corretorSelecionado=document.getElementById('mv-corretor').value;
+  const corretorExterno=corretorSelecionado==='__externo__';
+  let corretor=corretorSelecionado;
+  if(corretorExterno){
     corretor=document.getElementById('mv-corretor-ext').value.trim().toUpperCase();
     if(!corretor){document.getElementById('mv-corretor-ext').focus();showToast('⚠️','Informe o nome do corretor externo.');return;}
   }
+  const corretorUsuario=!corretorExterno?(USUARIOS.find(u=>u.nome===corretor)||getUsuarioCorretorVenda(corretor,{permitirAproximado:false})):null;
   const capitao=document.getElementById('mv-capitao').value;
   const gerente=document.getElementById('mv-gerente').value;
   const diretor=document.getElementById('mv-diretor').value;
@@ -1056,14 +1450,14 @@ function salvarVenda(){
   const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
   const mes=meses[mesNum];
-  const pct_rh=pctRhCorretor(corretor,0,{respeitarPerfilAtual:true});
+  const pct_rh=pctRhCorretor(corretor,0,{respeitarPerfilAtual:true,externo:corretorExterno});
   const novaVenda={
     id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,
     bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
-    hist:[criarRegistroHistorico({e:0,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.'},{data:d})],
+    hist:[criarRegistroHistorico({e:0,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.',corretorOrigem:corretorExterno?'externo':'usuario',corretorRefId:corretorExterno?null:(corretorUsuario&&corretorUsuario.id!=null?corretorUsuario.id:null)},{data:d})],
     anexos:[
       {nome:mvDocs.comp.nome,tipo:'comprovante',tamanho:mvDocs.comp.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.comp.dataUrl,mime:mvDocs.comp.mime},
       {nome:mvDocs.cont.nome,tipo:'contrato',tamanho:mvDocs.cont.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.cont.dataUrl,mime:mvDocs.cont.mime}
@@ -1082,8 +1476,6 @@ function salvarVenda(){
       fecharMV();
       renderFiltros(); renderVList(); showVDetail(novaVenda.id);
       showToast(zUiText('✅'),zUiText(`Venda de ${cliente.split(' ')[0]} salva com sucesso!`));
-      const anexosValidos=novaVenda.anexos.filter(a=>a.dataUrl);
-      if(anexosValidos.length) dbSalvarAnexos(novaVenda.id,novaVenda.anexos);
     } else {
       if(btnSalvar){btnSalvar.disabled=false;btnSalvar.textContent='Salvar venda';}
       showToast(zUiText('❌'),zUiText('Falha ao salvar. Verifique sua conexão e tente novamente.'));
@@ -1115,6 +1507,7 @@ zRegisterModule('vendas', {
   calcAtraso,
   labelAtraso,
   calcPrevisao,
+  obterPrevisaoRecebimentoManual,
   getPendenciaComercial,
   temPendenciaComercial,
   renderFiltros,
@@ -1122,6 +1515,9 @@ zRegisterModule('vendas', {
   renderBtnNovaVenda,
   abrirM,
   fecharM,
+  abrirModalPrevisaoRecebimento,
+  fecharModalPrevisaoRecebimento,
+  salvarPrevisaoRecebimento,
   abrirDistrato,
   fecharDistrato,
   abrirEditVenda,

@@ -417,11 +417,52 @@
         <div class="modal-top"><div class="modal-title" id="m-titulo">Avançar etapa</div><button class="mclose" onclick="fecharM()">✕</button></div>
         <div class="modal-body">
           <div id="marrow"></div>
+          <div id="m-prev-manual-wrap" style="display:none;flex-direction:column;gap:8px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:10px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">📅 Previsão manual de recebimento</div>
+            <div style="font-size:11px;color:var(--ts);line-height:1.5;" id="m-prev-manual-copy">Ao entrar em Nota emitida, informe a previsão mais assertiva de recebimento para o financeiro.</div>
+            <label for="m-prev-data" style="margin:0;">Data prevista de recebimento <span style="color:#C05030;">*</span></label>
+            <input type="date" id="m-prev-data">
+            <div style="font-size:9px;color:var(--tm);" id="m-prev-manual-help"></div>
+          </div>
           <label>Observação <span style="color:#B8A880;font-size:9px;">(opcional)</span></label>
           <textarea id="mobs" placeholder="Descreva o que foi feito..." maxlength="400" oninput="document.getElementById('mchars').textContent=this.value.length+'/400'"></textarea>
           <div style="font-size:9px;color:var(--tm);text-align:right;margin-top:2px;" id="mchars">0/400</div>
         </div>
         <div class="modal-foot"><button class="btn-c" onclick="fecharM()">Cancelar</button><button class="btn-s" onclick="confirmAv()">Confirmar</button></div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="m-prev-receb" onclick="if(event.target===this)fecharModalPrevisaoRecebimento()">
+      <div class="modal" style="max-width:460px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" id="mpr-title">Previsão de recebimento</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="mpr-sub">Defina a data prevista para acompanhamento do financeiro.</div>
+          </div>
+          <button class="mclose" id="mpr-close-btn" onclick="fecharModalPrevisaoRecebimento()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+          <div id="mpr-auto-box" style="display:none;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:12px;">
+            <div style="font-size:10px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Referência automática</div>
+            <div style="font-size:11px;color:var(--ts);margin-top:4px;line-height:1.5;" id="mpr-auto-copy"></div>
+          </div>
+          <div class="f-field">
+            <label>Data prevista de recebimento <span style="color:#C05030;">*</span></label>
+            <input type="date" id="mpr-data">
+          </div>
+          <div class="f-field" id="mpr-obs-wrap" style="display:none;">
+            <label>Motivo da alteração <span style="color:#C05030;">*</span></label>
+            <textarea id="mpr-obs" placeholder="Explique o motivo da mudança da previsão..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:84px;"></textarea>
+          </div>
+        </div>
+        <div id="mpr-status" style="display:none;padding:0 18px 12px;font-size:11px;color:var(--tm);align-items:center;gap:8px;">
+          <span style="font-size:13px;">⏳</span>
+          <span>Salvando previsão de recebimento...</span>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" id="mpr-cancel-btn" onclick="fecharModalPrevisaoRecebimento()">Cancelar</button>
+          <button class="btn-s" id="mpr-save-btn" onclick="salvarPrevisaoRecebimento()">Salvar previsão</button>
+        </div>
       </div>
     </div>
 

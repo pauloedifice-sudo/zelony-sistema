@@ -360,6 +360,64 @@ function agResumoPermissao() {
   return 'Você tem visão ampliada da agenda comercial.';
 }
 
+function agStatusSyncInfo() {
+  if (typeof getStatusAgendamentosSync === 'function') return getStatusAgendamentosSync();
+  const pendentes = (Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).filter(item => !!(item && item.syncPendente)).length;
+  return {
+    tabela: 'desconhecida',
+    erro: '',
+    sincronizando: false,
+    pendentes,
+    tabelaDisponivel: false,
+    tabelaAusente: false
+  };
+}
+
+function agCompartilhamentoDisponivel() {
+  return !!agStatusSyncInfo().tabelaDisponivel;
+}
+
+function agMutacaoBloqueada() {
+  return !agCompartilhamentoDisponivel();
+}
+
+function agPendentesSyncLista() {
+  return agOrdenarLista((Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).filter(item => !!(item && item.syncPendente)));
+}
+
+async function agTentarSincronizarPendentes() {
+  if (typeof sincronizarAgendamentosPendentes !== 'function') {
+    showToast('⚠️', 'Sincronização de agendamentos indisponível neste momento.');
+    return;
+  }
+  const resultado = await sincronizarAgendamentosPendentes({ silencioso: false, renderizar: true });
+  if (resultado && resultado.bloqueado) {
+    const info = agStatusSyncInfo();
+    showToast('⚠️', info.tabelaAusente
+      ? 'A sincronização continua bloqueada porque a tabela de agendamentos ainda não existe no Supabase.'
+      : 'A sincronização compartilhada ainda não está disponível.');
+  }
+}
+
+function exportarAgendamentosPendentes() {
+  const pendentes = agPendentesSyncLista();
+  if (!pendentes.length) {
+    showToast('ℹ️', 'Não há agendamentos pendentes neste navegador.');
+    return;
+  }
+  const payload = JSON.stringify(pendentes, null, 2);
+  const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `agendamentos-pendentes-${agHojeIso()}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  showToast('✅', 'Arquivo com agendamentos pendentes exportado.');
+}
+
 function agGarantirDataSelecionada() {
   const fallback = agDataNoMes(agHojeIso(), agMesRef)
     ? agHojeIso()
@@ -594,6 +652,13 @@ function abrirTratativaAgendamentoModal(item, opcoes = {}) {
 function abrirTratativaAgendamentoManual(id) {
   const item = (Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).find(agendamento => agendamento.id === id);
   if (!item) return;
+  if (agMutacaoBloqueada()) {
+    const info = agStatusSyncInfo();
+    showToast('⚠️', info.tabelaAusente
+      ? 'Tratativas bloqueadas até aplicar a tabela de agendamentos no Supabase.'
+      : 'Tratativas temporariamente bloqueadas enquanto a sincronização compartilhada estiver indisponível.');
+    return;
+  }
   if (agPendenciasTratativa().length) {
     verificarPendenciasAgendamento({ forcar: true });
     return;
@@ -705,6 +770,13 @@ async function confirmarTratativaAgendamento() {
     fecharTratativaAgendamentoModal(true);
     return;
   }
+  if (agMutacaoBloqueada()) {
+    const info = agStatusSyncInfo();
+    showToast('⚠️', info.tabelaAusente
+      ? 'Tratativas bloqueadas até aplicar a tabela de agendamentos no Supabase.'
+      : 'Tratativas temporariamente bloqueadas enquanto a sincronização compartilhada estiver indisponível.');
+    return;
+  }
   if (!AG_SITUACOES.includes(agTratativaSelecao) || agTratativaSelecao === 'Agendado') {
     showToast('⚠️', 'Escolha a tratativa deste agendamento.');
     return;
@@ -754,7 +826,10 @@ async function confirmarTratativaAgendamento() {
       reagendadoParaHorario: '',
       origemAgendamentoId: atual.id || 0,
       novoAgendamentoId: 0,
-      atualizadoEm: agoraIso
+      atualizadoEm: agoraIso,
+      refLocal: typeof gerarRefLocalAgendamento === 'function' ? gerarRefLocalAgendamento() : '',
+      syncPendente: true,
+      syncErro: ''
     };
     novosAgendamentos.push(novoAgendamento);
     atual.reagendadoParaData = novaData;
@@ -767,6 +842,10 @@ async function confirmarTratativaAgendamento() {
   atual.tratativaPorId = parseInt(usuarioAtual.id, 10) || 0;
   atual.tratativaPorEmail = agTexto(usuarioAtual.email).toLowerCase();
   atual.atualizadoEm = agoraIso;
+  if (typeof marcarAgendamentoSyncPendente === 'function') marcarAgendamentoSyncPendente(atual);
+  novosAgendamentos.forEach(item => {
+    if (typeof marcarAgendamentoSyncPendente === 'function') marcarAgendamentoSyncPendente(item);
+  });
 
   if (novosAgendamentos.length) {
     atual.novoAgendamentoId = novosAgendamentos[0].id;
@@ -802,7 +881,8 @@ async function confirmarTratativaAgendamento() {
     showToast('✅', modoTratativa === 'obrigatoria' ? 'Tratativa registrada com sucesso.' : 'Atualização registrada com sucesso.');
   } catch (erro) {
     console.warn('Falha ao sincronizar tratativa do agendamento:', erro && erro.message ? erro.message : erro);
-    showToast('⚠️', 'Tratativa salva localmente. Para compartilhar com todos, atualize a tabela de agendamentos no Supabase.');
+    salvarLS();
+    showToast('⚠️', 'A tratativa não foi sincronizada com o Supabase. Este ajuste ficou pendente apenas neste navegador.');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -819,6 +899,10 @@ function renderAgendamentos() {
   const cont = document.getElementById('agendamentos-content');
   if (!cont) return;
 
+  const syncInfo = agStatusSyncInfo();
+  const pendentesSync = agPendentesSyncLista();
+  const pendentesQtd = pendentesSync.length;
+  const mutacaoBloqueada = agMutacaoBloqueada();
   const periodo = agPeriodoNormalizado();
   const base = agOrdenarLista((Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).filter(agendamentoVisivel));
   const basePeriodo = agFiltrarPeriodo(base, periodo);
@@ -861,6 +945,44 @@ function renderAgendamentos() {
   const resumoDiaFechamento = listaDia.filter(item => agTexto(item.tipoVisita) === 'Fechamento').length;
   const resumoProximosPrimeiro = proximos.filter(item => agTexto(item.tipoVisita) !== 'Fechamento').length;
   const resumoProximosFechamento = proximos.filter(item => agTexto(item.tipoVisita) === 'Fechamento').length;
+  const orientacaoSync = encodeURIComponent('Aplicar o arquivo supabase-agendamentos.sql no SQL Editor do Supabase antes de liberar novamente o módulo de agendamentos.');
+  const avisoSync = syncInfo.tabelaAusente
+    ? `<div class="ag-sync-banner danger">
+        <div class="ag-sync-banner-main">
+          <strong>Sincronização compartilhada indisponível</strong>
+          <span>A tabela de agendamentos ainda não existe no Supabase. Novos lançamentos e tratativas foram bloqueados para evitar perda operacional.</span>
+          <small>${agTexto(syncInfo.erro || 'A aplicação não encontrou a tabela public.agendamentos no banco compartilhado.')}</small>
+        </div>
+        <div class="ag-sync-banner-actions">
+          <button class="ag-sync-btn" type="button" onclick="copiarTexto(decodeURIComponent('${orientacaoSync}'),'Orientação do Supabase')">Copiar orientação</button>
+          ${pendentesQtd ? `<button class="ag-sync-btn" type="button" onclick="exportarAgendamentosPendentes()">Exportar pendentes (${pendentesQtd})</button>` : ''}
+        </div>
+      </div>`
+    : !syncInfo.tabelaDisponivel
+      ? `<div class="ag-sync-banner warn">
+          <div class="ag-sync-banner-main">
+            <strong>Sincronização temporariamente indisponível</strong>
+            <span>Enquanto o Supabase não responder com segurança, o módulo fica em modo protegido e bloqueia novos lançamentos e tratativas.</span>
+            <small>${agTexto(syncInfo.erro || 'Tente novamente em alguns instantes.')}</small>
+          </div>
+          <div class="ag-sync-banner-actions">
+            <button class="ag-sync-btn" type="button" onclick="agTentarSincronizarPendentes()">Tentar novamente</button>
+            ${pendentesQtd ? `<button class="ag-sync-btn" type="button" onclick="exportarAgendamentosPendentes()">Exportar pendentes (${pendentesQtd})</button>` : ''}
+          </div>
+        </div>`
+      : pendentesQtd
+        ? `<div class="ag-sync-banner info">
+            <div class="ag-sync-banner-main">
+              <strong>${syncInfo.sincronizando ? 'Sincronizando agendamentos pendentes' : 'Agendamentos pendentes de sincronização'}</strong>
+              <span>${pendentesQtd} registro${pendentesQtd !== 1 ? 's' : ''} deste navegador ainda precisa${pendentesQtd !== 1 ? 'm' : ''} subir para o Supabase.</span>
+              <small>${syncInfo.ultimaSync ? `Última sincronização: ${formatarDataLocal(new Date(syncInfo.ultimaSync), { comAno: true, comHora: true })}` : 'Assim que a sincronização concluir, eles passam a ficar visíveis para toda a equipe.'}</small>
+            </div>
+            <div class="ag-sync-banner-actions">
+              <button class="ag-sync-btn" type="button" onclick="agTentarSincronizarPendentes()" ${syncInfo.sincronizando ? 'disabled' : ''}>${syncInfo.sincronizando ? 'Sincronizando...' : 'Sincronizar agora'}</button>
+              <button class="ag-sync-btn" type="button" onclick="exportarAgendamentosPendentes()">Exportar pendentes</button>
+            </div>
+          </div>`
+        : '';
 
   cont.innerHTML = `<div class="ag-wrap">
     <div class="ag-top">
@@ -868,11 +990,13 @@ function renderAgendamentos() {
         <div class="ag-title">Agenda comercial</div>
         <div class="ag-sub">${agTexto(agResumoPermissao())}</div>
       </div>
-      <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')">
+      <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
         Novo agendamento
       </button>
     </div>
+
+    ${avisoSync}
 
     <div class="ag-stat-grid">
       <div class="ag-stat">
@@ -959,7 +1083,7 @@ function renderAgendamentos() {
               </div>
               <div class="ag-card-sub">${listaDia.length} compromisso${listaDia.length !== 1 ? 's' : ''} ativo${listaDia.length !== 1 ? 's' : ''} para esta data</div>
             </div>
-            <button class="ag-clear-btn" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada}')">Agendar neste dia</button>
+            <button class="ag-clear-btn" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">Agendar neste dia</button>
           </div>
           <div class="ag-side-body">
             <div class="ag-side-section">
@@ -1079,6 +1203,13 @@ function mudarMesAgendamento(delta) {
 function abrirAgendamentoModal(dataIso) {
   const corretorSelect = document.getElementById('ma-corretor');
   if (!corretorSelect) return;
+  if (agMutacaoBloqueada()) {
+    const info = agStatusSyncInfo();
+    showToast('⚠️', info.tabelaAusente
+      ? 'Novos agendamentos estão bloqueados até aplicar a tabela no Supabase.'
+      : 'Novos agendamentos estão temporariamente bloqueados enquanto a sincronização compartilhada estiver indisponível.');
+    return;
+  }
 
   const usuariosPermitidos = agUsuariosPermitidosCadastro();
   if (!usuariosPermitidos.length) {
@@ -1166,6 +1297,13 @@ function atualizarCorretoresAgendamentoModal() {
 }
 
 async function salvarAgendamento() {
+  if (agMutacaoBloqueada()) {
+    const info = agStatusSyncInfo();
+    showToast('⚠️', info.tabelaAusente
+      ? 'Novos agendamentos estão bloqueados até aplicar a tabela no Supabase.'
+      : 'Novos agendamentos estão temporariamente bloqueados enquanto a sincronização compartilhada estiver indisponível.');
+    return;
+  }
   const btn = document.getElementById('ma-save-btn');
   const preenchidoEm = document.getElementById('ma-preenchimento').value;
   const unidade = document.getElementById('ma-unidade').value;
@@ -1213,8 +1351,12 @@ async function salvarAgendamento() {
     reagendadoParaHorario: '',
     origemAgendamentoId: 0,
     novoAgendamentoId: 0,
-    atualizadoEm: new Date().toISOString()
+    atualizadoEm: new Date().toISOString(),
+    refLocal: typeof gerarRefLocalAgendamento === 'function' ? gerarRefLocalAgendamento() : '',
+    syncPendente: true,
+    syncErro: ''
   };
+  if (typeof marcarAgendamentoSyncPendente === 'function') marcarAgendamentoSyncPendente(novo);
 
   AGENDAMENTOS.push(novo);
   const ordenados = agOrdenarLista(AGENDAMENTOS);
@@ -1248,7 +1390,9 @@ async function salvarAgendamento() {
     showToast('✅', 'Agendamento salvo com sucesso.');
   } catch (erro) {
     console.warn('Falha ao sincronizar agendamento no banco:', erro && erro.message ? erro.message : erro);
-    showToast('⚠️', 'Agendamento salvo localmente. Para sincronizar com toda a equipe, aplique a tabela de agendamentos no Supabase.');
+    salvarLS();
+    renderAgendamentos();
+    showToast('⚠️', 'O agendamento não foi sincronizado com o Supabase. Este registro ficou pendente apenas neste navegador.');
   } finally {
     if (btn) {
       btn.disabled = false;

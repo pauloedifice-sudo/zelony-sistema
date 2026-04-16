@@ -85,7 +85,7 @@ function finColetarMes(mes, ano) {
       return;
     }
 
-    if (v.etapa === 0 || v.etapa >= ETAPAS.length - 1) return;
+    if (v.etapa >= ETAPAS.length - 1) return;
     const prev = calcPrevisao(v);
     if (!prev || !prev.data) return;
     const partes = prev.data.split('/');

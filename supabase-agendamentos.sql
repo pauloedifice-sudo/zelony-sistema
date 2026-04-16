@@ -26,6 +26,7 @@ create table if not exists public.agendamentos (
   reagendado_para_horario time without time zone,
   origem_agendamento_id bigint,
   novo_agendamento_id bigint,
+  ref_local text,
   atualizado_em timestamptz not null default now()
 );
 
@@ -40,6 +41,7 @@ alter table public.agendamentos add column if not exists reagendado_para_data da
 alter table public.agendamentos add column if not exists reagendado_para_horario time without time zone;
 alter table public.agendamentos add column if not exists origem_agendamento_id bigint;
 alter table public.agendamentos add column if not exists novo_agendamento_id bigint;
+alter table public.agendamentos add column if not exists ref_local text;
 
 create index if not exists idx_agendamentos_data
   on public.agendamentos (data_agendamento, horario_agendamento);
@@ -49,6 +51,10 @@ create index if not exists idx_agendamentos_unidade
 
 create index if not exists idx_agendamentos_corretor
   on public.agendamentos (corretor_id, corretor_email);
+
+create unique index if not exists idx_agendamentos_ref_local
+  on public.agendamentos (ref_local)
+  where ref_local is not null;
 
 alter table public.agendamentos enable row level security;
 

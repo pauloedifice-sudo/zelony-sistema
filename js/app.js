@@ -175,6 +175,9 @@ function getHistVisual(h){
   if(h.tipo==='pend_comercial') return {label:'🟠 Pendência comercial aberta',color:'#C08020'};
   if(h.tipo==='pend_comercial_editada') return {label:'🟠 Pendência comercial atualizada',color:'#C08020'};
   if(h.tipo==='pend_comercial_resolvida') return {label:'✅ Pendência comercial resolvida',color:'#2E7E5E'};
+  if(h.tipo==='corretor_vinculo') return {label:'🧑‍💼 Corretor marcado como externo',color:'#2E7E5E'};
+  if(h.tipo==='prev_receb_manual') return {label:`📅 Previsão manual: ${zUiText(h.prevData||'—')}`,color:'#2E7E5E'};
+  if(h.tipo==='prev_receb_editada') return {label:`📅 Previsão atualizada: ${zUiText(h.prevAnterior?`${h.prevAnterior} → ${h.prevData||'—'}`:(h.prevData||'—'))}`,color:'#3060B8'};
   return {label:ETAPAS[h.e],color:'var(--gold)'};
 }
 
@@ -243,10 +246,17 @@ function showVDetail(id){
   const impostoRow=podeVerImposto?`<div style="margin-top:8px;border-top:1px dashed rgba(184,144,42,0.25);padding-top:8px;"><div class="eq-row" style="background:#FEF6EC;border-radius:6px;padding:6px 8px;margin:0 -2px;border:1px solid #F0D2A8;"><div style="width:25px;height:25px;border-radius:50%;background:#FEF0DC;border:1px solid #E8A040;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">${zUiText('📋')}</div><div style="flex:1"><div style="font-size:12px;font-weight:600;color:#A05010;">${zUiText('Imposto geral da venda')}</div><div style="font-size:9px;color:#B07030;">${pctSeguro(v.imp,0)} ${zUiText('sobre comissão bruta')} (${fmt(comBruta(v))})</div></div><span style="font-size:13px;font-weight:700;color:#C06020;">- ${fmt(valorImposto)}</span></div></div>`:'';
 
   const distH=`<div class="sec"><div class="sec-h">${zUiText('DistribuiÃ§Ã£o da comissÃ£o')}</div><div class="sec-b">${mbs.map(m=>{
-    const usuario=USUARIOS.find(u=>campoVendaBatePessoa(m.n,u));
+    const corretorExterno=typeof corretorVendaEhExterno==='function'&&corretorVendaEhExterno(v);
+    const usuario=m.c==='Corretor'
+      ? (typeof getUsuarioCorretorDaVenda==='function'?getUsuarioCorretorDaVenda(v,{permitirAproximado:false}):USUARIOS.find(u=>campoVendaBatePessoa(m.n,u,{exato:true})))
+      : (USUARIOS.find(u=>campoVendaBatePessoa(m.n,u,{exato:true}))||USUARIOS.find(u=>campoVendaBatePessoa(m.n,u)));
     const pixCopyArg=encodeURIComponent(String((usuario&&usuario.pix)||''));
-    const bancoPix=usuario&&usuario.banco?`<div style="display:flex;align-items:center;gap:10px;margin-top:3px;flex-wrap:wrap;"><span style="font-size:9px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd);border-radius:4px;padding:1px 7px;font-weight:500;">${zUiText('🏦')} ${zUiText(usuario.banco)}</span><span style="font-size:9px;background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;border-radius:4px;padding:1px 7px;font-weight:500;">${zUiText('🔑')} ${zUiText(usuario.pixTipo)}: ${zUiText(usuario.pix)}</span>${usuario.pix?`<button class="copy-chip-btn" type="button" onmousedown="event.preventDefault()" onclick="event.preventDefault();event.stopPropagation();copiarTexto(decodeURIComponent('${pixCopyArg}'),'Chave Pix');return false;">${zUiText('📋')} ${zUiText('Copiar')}</button>`:''}</div>`:`<div style="font-size:9px;color:var(--tm);margin-top:2px;">${zUiText('⚠️ Sem dados bancários cadastrados')}</div>`;
-    return`<div class="eq-row" style="flex-wrap:wrap;"><div class="eav">${ini(m.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${zUiText(m.n)}</div><div style="font-size:9px;color:var(--tm);">${zUiText(m.c)} ${zUiText('·')} ${pctSeguro(m.pct,2)}</div>${bancoPix}</div><span style="font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:8px;">${fmt(m.val)}</span></div>`;
+    const bancoPix=corretorExterno&&m.c==='Corretor'
+      ? `<div style="font-size:9px;color:var(--tm);margin-top:2px;">${zUiText('🌐 Corretor externo — sem vínculo bancário no sistema')}</div>`
+      : usuario&&usuario.banco?`<div style="display:flex;align-items:center;gap:10px;margin-top:3px;flex-wrap:wrap;"><span style="font-size:9px;background:var(--gold-bg);color:var(--gold);border:1px solid var(--gold-bd);border-radius:4px;padding:1px 7px;font-weight:500;">${zUiText('🏦')} ${zUiText(usuario.banco)}</span><span style="font-size:9px;background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;border-radius:4px;padding:1px 7px;font-weight:500;">${zUiText('🔑')} ${zUiText(usuario.pixTipo)}: ${zUiText(usuario.pix)}</span>${usuario.pix?`<button class="copy-chip-btn" type="button" onmousedown="event.preventDefault()" onclick="event.preventDefault();event.stopPropagation();copiarTexto(decodeURIComponent('${pixCopyArg}'),'Chave Pix');return false;">${zUiText('📋')} ${zUiText('Copiar')}</button>`:''}</div>`:`<div style="font-size:9px;color:var(--tm);margin-top:2px;">${zUiText('⚠️ Sem dados bancários cadastrados')}</div>`;
+    const badgeExterno=corretorExterno&&m.c==='Corretor'?` <span style="font-size:9px;background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;border-radius:999px;padding:2px 7px;font-weight:600;">${zUiText('Externo')}</span>`:'';
+    const acaoExterno=['dir','fin','dono'].includes(role)&&m.c==='Corretor'&&!corretorExterno?`<button type="button" style="margin-top:6px;background:#fff;border:1px dashed #90B8E8;color:#3060B8;border-radius:999px;padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;" onclick="event.stopPropagation();marcarCorretorVendaComoExterno(${v.id})">${zUiText('Marcar como externo')}</button>`:'';
+    return`<div class="eq-row" style="flex-wrap:wrap;"><div class="eav">${ini(m.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${zUiText(m.n)}${badgeExterno}</div><div style="font-size:9px;color:var(--tm);">${zUiText(m.c)} ${zUiText('·')} ${pctSeguro(m.pct,2)}</div>${bancoPix}${acaoExterno}</div><span style="font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap;margin-left:8px;">${fmt(m.val)}</span></div>`;
   }).join('')}${rhRow}${impostoRow}</div></div>`;
 
   const bonusDist=(()=>{
@@ -269,14 +279,22 @@ function showVDetail(id){
   const prevCard=(()=>{
     const prev=calcPrevisao(v);
     if(!prev) return '';
+    const podeEditarPrevReceb=['fin','dir','dono'].includes(role)&&v.etapa>=ETAPAS.indexOf('Nota emitida')&&v.etapa<ETAPAS.length-1&&!v.distratada;
     const temAtraso=prev.totalAtraso>0;
     const cor=temAtraso?'#C05030':'#2E7E5E';
     const bg=temAtraso?'#FEF0EC':'#E8F5EE';
     const bd=temAtraso?'#E0A090':'#80C8A0';
+    const origemCopy=prev.manual
+      ? `<div style="font-size:9px;color:${cor};margin-top:4px;">${zUiText('Previsão manual')} ${prev.definidaPor?zUiText(`· definida por ${prev.definidaPor}`):''}${prev.registradaEm?zUiText(` em ${prev.registradaEm}`):''}</div>`
+      : `<div style="font-size:9px;color:${cor};margin-top:4px;">${zUiText('Estimativa automática usada até a etapa Nota emitida.')}</div>`;
+    const acaoPrev=podeEditarPrevReceb?`<button type="button" onclick="abrirModalPrevisaoRecebimento(${v.id})" style="background:${prev.manual?'#fff':'var(--gold)'};color:${prev.manual?'var(--gold)':'#fff'};border:1px solid var(--gold-bd);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">${zUiText(prev.manual?'✏️ Editar previsão':'📅 Definir previsão')}</button>`:'';
     return`<div style="background:${bg};border:1px solid ${bd};border-radius:7px;padding:10px 14px;margin-top:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-        <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:${cor};font-weight:700;margin-bottom:2px;">${zUiText('📅 Previsão de recebimento')}</div><div style="font-size:18px;font-weight:700;color:${cor};font-family:'Playfair Display',serif;">${zUiText(prev.data)}</div></div>
-        ${temAtraso?`<div style="text-align:right;"><div style="font-size:9px;color:#C05030;font-weight:600;">${zUiText('⚠️')} ${prev.totalAtraso} ${zUiText(`dia${prev.totalAtraso!==1?'s':''} de atraso acumulado`)}</div>${prev.atrasosAcumulados>0?`<div style="font-size:8px;color:#C07060;">${prev.atrasosAcumulados}d ${zUiText('em etapas anteriores')}</div>`:''}${prev.atrasoCorrente>0?`<div style="font-size:8px;color:#C07060;">${prev.atrasoCorrente}d ${zUiText('na etapa atual')}</div>`:''}${prev.antecipacoes>0?`<div style="font-size:8px;color:#2E9E6E;">${zUiText('✅')} ${zUiText('−')}${prev.antecipacoes}d ${zUiText('antecipados')}</div>`:''}</div>`:`<div style="text-align:right;">${prev.antecipacoes>0?`<div style="font-size:9px;color:#2E9E6E;font-weight:600;">${zUiText('🚀')} ${prev.antecipacoes} ${zUiText(`dia${prev.antecipacoes!==1?'s':''} antecipados!`)}</div>`:`<div style="font-size:9px;color:#2E7E5E;">${zUiText('✅ No prazo estimado')}</div>`}</div>`}
+        <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:${cor};font-weight:700;margin-bottom:2px;">${zUiText('📅 Previsão de recebimento')}</div><div style="font-size:18px;font-weight:700;color:${cor};font-family:'Playfair Display',serif;">${zUiText(prev.data)}</div>${origemCopy}</div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          ${temAtraso?`<div style="text-align:right;"><div style="font-size:9px;color:#C05030;font-weight:600;">${zUiText('⚠️')} ${prev.totalAtraso} ${zUiText(prev.manual?`dia${prev.totalAtraso!==1?'s':''} de atraso na previsão manual`:`dia${prev.totalAtraso!==1?'s':''} de atraso acumulado`)}</div>${prev.atrasosAcumulados>0?`<div style="font-size:8px;color:#C07060;">${prev.atrasosAcumulados}d ${zUiText('em etapas anteriores')}</div>`:''}${prev.atrasoCorrente>0?`<div style="font-size:8px;color:#C07060;">${prev.atrasoCorrente}d ${zUiText(prev.manual?'desde a previsão manual':'na etapa atual')}</div>`:''}${prev.antecipacoes>0?`<div style="font-size:8px;color:#2E9E6E;">${zUiText('✅')} ${zUiText('−')}${prev.antecipacoes}d ${zUiText('antecipados')}</div>`:''}</div>`:`<div style="text-align:right;">${prev.manual?`<div style="font-size:9px;color:#2E7E5E;">${zUiText('✅ Dentro da previsão manual')}</div>`:prev.antecipacoes>0?`<div style="font-size:9px;color:#2E9E6E;font-weight:600;">${zUiText('🚀')} ${prev.antecipacoes} ${zUiText(`dia${prev.antecipacoes!==1?'s':''} antecipados!`)}</div>`:`<div style="font-size:9px;color:#2E7E5E;">${zUiText('✅ No prazo estimado')}</div>`}</div>`}
+          ${acaoPrev}
+        </div>
       </div>
     </div>`;
   })();
@@ -355,13 +373,14 @@ function renderAnexosSec(v){
   const podeEditar=['dir','fin','dono'].includes(role);
   const podeVer=['dir','fin','dono'].includes(role);
   if(!podeVer) return '';
+  const carregandoAnexos=!v.anexosCarregados&&(!v.anexos||!v.anexos.length);
   const tipos={comprovante:{label:'Comprovante',badge:'badge-comp',icon:'🧾'},contrato:{label:'Contrato',badge:'badge-cont',icon:'📄'},outro:{label:'Outro',badge:'badge-outro',icon:'📎'}};
   const lista=v.anexos&&v.anexos.length?v.anexos.map((a,i)=>{
     const t=tipos[a.tipo]||tipos.outro;
     const ext=a.nome.split('.').pop().toLowerCase();
     const icon=['jpg','jpeg','png','gif','webp'].includes(ext)?'🖼️':ext==='pdf'?'📕':'📎';
     return`<div class="anexo-item"><span class="anexo-icon">${zUiText(icon)}</span><div class="anexo-info"><div class="anexo-nome" title="${zUiText(a.nome)}">${zUiText(a.nome)}</div><div class="anexo-meta">${zUiText(a.tamanho)} ${zUiText('·')} ${zUiText(a.data)} ${zUiText('·')} ${zUiText('por')} ${zUiText(a.por)}</div></div><span class="anexo-badge ${t.badge}">${zUiText(t.label)}</span><div class="anexo-btns"><button class="btn-anexo-view" onclick="verAnexo(${v.id},${i})">${zUiText('👁 Ver')}</button>${podeEditar?`<button class="btn-anexo-del" onclick="delAnexo(${v.id},${i})">${zUiText('🗑')}</button>`:''}</div></div>`;
-  }).join(''):`<div style="text-align:center;padding:14px;font-size:11px;color:var(--tm);">${zUiText('Nenhum anexo ainda.')}</div>`;
+  }).join(''):`<div style="text-align:center;padding:14px;font-size:11px;color:var(--tm);">${zUiText(carregandoAnexos?'Carregando anexos...':'Nenhum anexo ainda.')}</div>`;
   const uploadSection=podeEditar?`<div class="anexo-drop" id="anexo-drop-${v.id}" onclick="document.getElementById('anexo-input-${v.id}').click()"><div class="anexo-drop-icon">${zUiText('📤')}</div><div class="anexo-drop-txt"><strong>${zUiText('Clique para adicionar')}</strong> ${zUiText('ou arraste o arquivo aqui')}<br>${zUiText('PDF, JPG, PNG — máx. 10MB')}</div></div><input type="file" class="anexo-input" id="anexo-input-${v.id}" accept=".pdf,.jpg,.jpeg,.png,.webp" multiple><div style="display:flex;gap:6px;flex-wrap:wrap;margin:-4px 0 2px;"><span style="font-size:10px;color:var(--tm);">${zUiText('Classificar como')}:</span><label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="comprovante" checked style="accent-color:var(--gold);"> ${zUiText('Comprovante')}</label><label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="contrato" style="accent-color:var(--gold);"> ${zUiText('Contrato')}</label><label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--ts);cursor:pointer;"><input type="radio" name="tipo-anexo-${v.id}" value="outro" style="accent-color:var(--gold);"> ${zUiText('Outro')}</label></div>`:'';
   return`<div class="anexos-sec"><div class="anexos-h"><span>${zUiText('📎 Anexos')} <span style="font-weight:400;color:var(--tm);text-transform:none;letter-spacing:0;">(${v.anexos?v.anexos.length:0} ${zUiText(`arquivo${v.anexos&&v.anexos.length!==1?'s':''}`)})</span></span></div><div class="anexos-body">${uploadSection}<div class="anexo-list">${lista}</div></div></div>`;
 }

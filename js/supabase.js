@@ -31,6 +31,91 @@ const SB_DOCS_BUCKET='documentos';
 const sb=supabase.createClient(SB_URL, SB_KEY);
 zSetState('config.supabase', { url: SB_URL, key: SB_KEY });
 zSetState('modules.supabase', { client: sb });
+const AGENDAMENTOS_SYNC_STATUS={
+  tabela:'desconhecida',
+  erro:'',
+  sincronizando:false,
+  pendentes:0,
+  ultimaTentativa:'',
+  ultimaSync:''
+};
+function atualizarEstadoSyncAgendamentos(){
+  AGENDAMENTOS_SYNC_STATUS.pendentes=(typeof AGENDAMENTOS!=='undefined'&&Array.isArray(AGENDAMENTOS))
+    ? AGENDAMENTOS.filter(item=>!!(item&&item.syncPendente)).length
+    : 0;
+  zSetState('state.sync.agendamentos', {...AGENDAMENTOS_SYNC_STATUS});
+  return {...AGENDAMENTOS_SYNC_STATUS};
+}
+function setStatusSyncAgendamentos(parcial={}){
+  Object.assign(AGENDAMENTOS_SYNC_STATUS,parcial||{});
+  return atualizarEstadoSyncAgendamentos();
+}
+function mensagemErroSyncAgendamentos(erro){
+  return String(
+    (erro&&(
+      erro.message||
+      erro.details||
+      erro.hint||
+      erro.error_description||
+      erro.code
+    ))||erro||''
+  ).trim();
+}
+function erroTabelaAgendamentosAusente(erro){
+  const msg=mensagemErroSyncAgendamentos(erro);
+  return /PGRST205/i.test(msg)||/Could not find the table ['"]?public\.agendamentos/i.test(msg);
+}
+function gerarRefLocalAgendamento(){
+  if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function'){
+    return `ag-${crypto.randomUUID()}`;
+  }
+  return `ag-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+}
+function garantirRefLocalAgendamento(item,origem='local'){
+  if(!item||typeof item!=='object') return '';
+  const atual=String(item.refLocal||item.ref_local||'').trim();
+  if(atual){
+    item.refLocal=atual;
+    return atual;
+  }
+  if(origem==='banco'&&item.id){
+    item.refLocal=`db:${item.id}`;
+    return item.refLocal;
+  }
+  item.refLocal=gerarRefLocalAgendamento();
+  if(!item.atualizadoEm) item.atualizadoEm=new Date().toISOString();
+  return item.refLocal;
+}
+function marcarAgendamentoSyncPendente(item,erro=''){
+  if(!item||typeof item!=='object') return item;
+  garantirRefLocalAgendamento(item);
+  item.syncPendente=true;
+  if(erro){
+    item.syncErro=mensagemErroSyncAgendamentos(erro);
+  }else{
+    item.syncErro='';
+  }
+  return item;
+}
+function limparAgendamentoSyncPendente(item){
+  if(!item||typeof item!=='object') return item;
+  garantirRefLocalAgendamento(item, item.id?'banco':'local');
+  item.syncPendente=false;
+  item.syncErro='';
+  return item;
+}
+function agendamentoTemSyncPendente(item){
+  return !!(item&&item.syncPendente);
+}
+function getStatusAgendamentosSync(){
+  const estado=atualizarEstadoSyncAgendamentos();
+  return {
+    ...estado,
+    tabelaDisponivel:estado.tabela==='disponivel',
+    tabelaAusente:estado.tabela==='ausente'
+  };
+}
+atualizarEstadoSyncAgendamentos();
 
 // ── DADOS EM MEMÓRIA ──────────────────────────────────────────────────────────
 const VENDAS=[];
@@ -51,6 +136,12 @@ zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 
 // ── CARREGAR DO BANCO ─────────────────────────────────────────────────────────
 async function carregarDB(){
+  setStatusSyncAgendamentos({
+    tabela:'carregando',
+    erro:'',
+    sincronizando:false,
+    ultimaTentativa:new Date().toISOString()
+  });
   const carregar=async(tabela,order='id')=>{
     try{
       const q=sb.from(tabela).select('*');
@@ -83,7 +174,22 @@ async function carregarDB(){
     })().catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
     carregar('treinamentos','id'),
     carregar('documentos','id'),
-    carregar('agendamentos','data_agendamento')
+    (async()=>{
+      try{
+        const {data,error}=await sb.from('agendamentos').select('*').order('data_agendamento').order('horario_agendamento');
+        if(error) throw error;
+        setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
+        return data||[];
+      }catch(e){
+        const msg=mensagemErroSyncAgendamentos(e);
+        setStatusSyncAgendamentos({
+          tabela:erroTabelaAgendamentosAusente(e)?'ausente':'erro',
+          erro:msg
+        });
+        console.warn('Falha ao carregar "agendamentos":',msg||e.message||e);
+        return null;
+      }
+    })()
   ]);
 
   if(us&&us.length){
@@ -132,21 +238,51 @@ async function carregarDB(){
     zSetState('state.data.documentos', DOCUMENTOS);
   }
   {
-    const agBanco=Array.isArray(ags)?ags.map(mapAgendamentoIn):[];
-    const agLocal=carregarAgendamentosLS();
+    const agBanco=Array.isArray(ags)?ags.map(item=>{
+      const ag=mapAgendamentoIn(item);
+      garantirRefLocalAgendamento(ag,'banco');
+      limparAgendamentoSyncPendente(ag);
+      return ag;
+    }):[];
+    const agLocal=carregarAgendamentosLS().map(item=>{
+      const ag=mapAgendamentoIn(item);
+      garantirRefLocalAgendamento(ag,'local');
+      return ag;
+    });
     const agMap=new Map();
+    const agBancoMap=new Map();
+    const agLocalMap=new Map();
+    agBanco.forEach(agendamento=>agBancoMap.set(getAgendamentoMergeKey(agendamento),agendamento));
+    agLocal.forEach(agendamento=>agLocalMap.set(getAgendamentoMergeKey(agendamento),agendamento));
     [...agLocal,...agBanco].forEach(agendamento=>{
       const chave=getAgendamentoMergeKey(agendamento);
       const atual=agMap.get(chave);
       agMap.set(chave,preferirAgendamentoMaisRecente(atual,agendamento));
     });
-    AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...Array.from(agMap.values()).sort(ordenarAgendamentos));
+    const agMesclados=Array.from(agMap.values()).sort(ordenarAgendamentos);
+    agMesclados.forEach(agendamento=>{
+      const chave=getAgendamentoMergeKey(agendamento);
+      const local=agLocalMap.get(chave);
+      const banco=agBancoMap.get(chave);
+      const localMaisRecente=!!local&&(!banco||preferirAgendamentoMaisRecente(banco,local)===local);
+      if(localMaisRecente){
+        marcarAgendamentoSyncPendente(agendamento,local&&local.syncErro||'');
+      }else{
+        limparAgendamentoSyncPendente(agendamento);
+      }
+    });
+    AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...agMesclados);
     if(typeof nextAgendamentoId!=='undefined'){
       const maiorId=AGENDAMENTOS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
       nextAgendamentoId=maiorId+1;
       zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
     }
     zSetState('state.data.agendamentos', AGENDAMENTOS);
+    atualizarEstadoSyncAgendamentos();
+    salvarLS();
+    if(getStatusAgendamentosSync().tabelaDisponivel&&AGENDAMENTOS.some(agendamentoTemSyncPendente)){
+      await sincronizarAgendamentosPendentes({silencioso:true,renderizar:false});
+    }
   }
   if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
     await aplicarAjustesManuaisRhPendentes({persistir:true,renderizar:false});
@@ -226,6 +362,18 @@ function mapVendaOut(v){
     etapa:v.etapa,hist:v.hist
     // anexos: omitido — salvo separadamente via dbSalvarAnexos
   };
+}
+
+function mapVendaAnexos(anexos){
+  return (anexos||[]).map(a=>({
+    nome:a.nome,
+    tipo:a.tipo,
+    tamanho:a.tamanho,
+    data:a.data,
+    por:a.por,
+    mime:a.mime,
+    dataUrl:a.dataUrl||''
+  }));
 }
 
 function mapTreinIn(t){
@@ -325,7 +473,7 @@ function ordenarTreinamentosMesclados(a,b){
 }
 
 function mapAgendamentoIn(a){
-  return{
+  const item={
     id:parseInt(a&&a.id,10)||0,
     preenchidoEm:a&&(
       a.preenchido_em||
@@ -356,8 +504,13 @@ function mapAgendamentoIn(a){
     reagendadoParaHorario:String(a&&(a.reagendado_para_horario||a.reagendadoParaHorario)||'').slice(0,5),
     origemAgendamentoId:parseInt(a&&(a.origem_agendamento_id||a.origemAgendamentoId),10)||0,
     novoAgendamentoId:parseInt(a&&(a.novo_agendamento_id||a.novoAgendamentoId),10)||0,
-    atualizadoEm:a&&(a.atualizado_em||a.atualizadoEm)||''
+    atualizadoEm:a&&(a.atualizado_em||a.atualizadoEm)||'',
+    refLocal:a&&(a.ref_local||a.refLocal)||'',
+    syncPendente:!!(a&&(a.sync_pendente||a.syncPendente)),
+    syncErro:a&&(a.sync_erro||a.syncErro)||''
   };
+  garantirRefLocalAgendamento(item, item.id?'banco':'local');
+  return item;
 }
 
 function mapAgendamentoOut(a){
@@ -385,7 +538,8 @@ function mapAgendamentoOut(a){
     reagendado_para_horario:a.reagendadoParaHorario||null,
     origem_agendamento_id:a.origemAgendamentoId||null,
     novo_agendamento_id:a.novoAgendamentoId||null,
-    atualizado_em:a.atualizadoEm||new Date().toISOString()
+    atualizado_em:a.atualizadoEm||new Date().toISOString(),
+    ref_local:garantirRefLocalAgendamento(a,a&&a.id?'banco':'local')||null
   };
 }
 
@@ -401,6 +555,8 @@ function carregarAgendamentosLS(){
 
 function getAgendamentoMergeKey(a){
   if(!a) return '';
+  const refLocal=String(a.refLocal||a.ref_local||'').trim();
+  if(refLocal) return `ref:${refLocal}`;
   if(a.id!=null&&String(a.id)!=='') return `id:${a.id}`;
   const corretor=String(a.corretor||'').trim().toLowerCase();
   const cliente=String(a.cliente||'').trim().toLowerCase();
@@ -584,7 +740,11 @@ async function dbExcluirDocumento(docOuId){
 
 async function dbSalvarVenda(v, tentativa=1){
   try{
-    const {data,error}=await sb.from('vendas').insert(mapVendaOut(v)).select().single();
+    const payload={
+      ...mapVendaOut(v),
+      anexos:mapVendaAnexos(v.anexos)
+    };
+    const {data,error}=await sb.from('vendas').insert(payload).select().single();
     if(error) throw error;
     if(data) v.id=data.id;
     return true;
@@ -621,14 +781,14 @@ async function dbAtualizarVenda(v){
 
 async function dbSalvarAnexos(vendaId, anexos){
   if(!anexos||!anexos.length) return;
-  try{ await sb.from('vendas').update({anexos:anexos}).eq('id',vendaId); }
+  try{ await sb.from('vendas').update({anexos:mapVendaAnexos(anexos)}).eq('id',vendaId); }
   catch(e){ console.warn('Erro ao salvar anexos:',e.message); }
 }
 
 async function dbAtualizarVenda(v){
   const payload={
     ...mapVendaOut(v),
-    anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''}))
+    anexos:mapVendaAnexos(v.anexos)
   };
   const {error}=await sb.from('vendas').update(payload).eq('id',v.id);
   if(error) throw error;
@@ -755,28 +915,104 @@ async function dbExcluirTrein(t){
 }
 
 async function dbSalvarAgendamento(a, id){
+  garantirRefLocalAgendamento(a,a&&a.id?'banco':'local');
+  if(!a.atualizadoEm) a.atualizadoEm=new Date().toISOString();
   const payload=mapAgendamentoOut(a);
-  const alvoId=id||0;
-  if(alvoId){
-    const {data,error}=await sb.from('agendamentos').update(payload).eq('id',alvoId).select().maybeSingle();
-    if(error) throw error;
-    if(data){
-      Object.assign(a,mapAgendamentoIn(data));
-      return a;
+  const alvoId=parseInt(id||a.id,10)||0;
+  const podeAtualizarPorId=!!(alvoId&&!agendamentoTemSyncPendente(a));
+  try{
+    let data=null;
+    if(payload.ref_local){
+      const respostaRef=await sb.from('agendamentos').update(payload).eq('ref_local',payload.ref_local).select().maybeSingle();
+      if(respostaRef.error) throw respostaRef.error;
+      data=respostaRef.data||null;
     }
+    if(!data&&podeAtualizarPorId){
+      const respostaId=await sb.from('agendamentos').update(payload).eq('id',alvoId).select().maybeSingle();
+      if(respostaId.error) throw respostaId.error;
+      data=respostaId.data||null;
+    }
+    if(!data){
+      const respostaInsert=await sb.from('agendamentos').insert(payload).select().single();
+      if(respostaInsert.error) throw respostaInsert.error;
+      data=respostaInsert.data||null;
+    }
+    if(data) Object.assign(a,mapAgendamentoIn(data));
+    limparAgendamentoSyncPendente(a);
+    setStatusSyncAgendamentos({
+      tabela:'disponivel',
+      erro:'',
+      ultimaSync:new Date().toISOString()
+    });
+    return a;
+  }catch(error){
+    marcarAgendamentoSyncPendente(a,error);
+    setStatusSyncAgendamentos({
+      tabela:erroTabelaAgendamentosAusente(error)?'ausente':'erro',
+      erro:mensagemErroSyncAgendamentos(error)
+    });
+    throw error;
   }
-  const {data,error}=await sb.from('agendamentos').insert(payload).select().single();
-  if(error) throw error;
-  if(data) Object.assign(a,mapAgendamentoIn(data));
-  return a;
 }
 
 async function dbExcluirAgendamento(agOuId){
   const alvoId=typeof agOuId==='object'&&agOuId?agOuId.id:agOuId;
   if(!alvoId) return true;
-  const {error}=await sb.from('agendamentos').delete().eq('id',alvoId);
-  if(error) throw error;
-  return true;
+  try{
+    const {error}=await sb.from('agendamentos').delete().eq('id',alvoId);
+    if(error) throw error;
+    setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
+    return true;
+  }catch(error){
+    setStatusSyncAgendamentos({
+      tabela:erroTabelaAgendamentosAusente(error)?'ausente':'erro',
+      erro:mensagemErroSyncAgendamentos(error)
+    });
+    throw error;
+  }
+}
+
+async function sincronizarAgendamentosPendentes(opcoes={}){
+  const pendentes=(Array.isArray(AGENDAMENTOS)?AGENDAMENTOS:[]).filter(agendamentoTemSyncPendente);
+  const statusAtual=getStatusAgendamentosSync();
+  if(statusAtual.sincronizando) return {pendentes:pendentes.length,sincronizados:0,falhas:0,ignorado:true};
+  if(!statusAtual.tabelaDisponivel) return {pendentes:pendentes.length,sincronizados:0,falhas:pendentes.length,bloqueado:true};
+  if(!pendentes.length){
+    setStatusSyncAgendamentos({sincronizando:false});
+    return {pendentes:0,sincronizados:0,falhas:0};
+  }
+  setStatusSyncAgendamentos({
+    sincronizando:true,
+    erro:'',
+    ultimaTentativa:new Date().toISOString()
+  });
+  let sincronizados=0;
+  let falhas=0;
+  for(const item of pendentes){
+    try{
+      await dbSalvarAgendamento(item,0);
+      sincronizados++;
+    }catch(e){
+      falhas++;
+    }
+  }
+  const ordenados=[...(Array.isArray(AGENDAMENTOS)?AGENDAMENTOS:[])].sort(ordenarAgendamentos);
+  AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...ordenados);
+  zSetState('state.data.agendamentos', AGENDAMENTOS);
+  salvarLS();
+  setStatusSyncAgendamentos({
+    sincronizando:false,
+    ultimaSync:sincronizados?new Date().toISOString():AGENDAMENTOS_SYNC_STATUS.ultimaSync
+  });
+  if(opcoes.renderizar!==false&&typeof renderAgendamentos==='function'&&!document.getElementById('mod-agendamentos')?.classList.contains('hidden')){
+    renderAgendamentos();
+  }
+  if(opcoes.silencioso!==true&&typeof showToast==='function'){
+    if(sincronizados&&!falhas) showToast('✅',`${sincronizados} agendamento${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''} com o Supabase.`);
+    else if(sincronizados&&falhas) showToast('⚠️',`${sincronizados} agendamento${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''}, mas ${falhas} ainda pendente${falhas>1?'s':''}.`);
+    else if(falhas) showToast('⚠️','Não foi possível sincronizar os agendamentos pendentes agora.');
+  }
+  return {pendentes:pendentes.length,sincronizados,falhas};
 }
 
 // ── LOCAL STORAGE (fallback offline) ─────────────────────────────────────────
@@ -794,6 +1030,7 @@ function salvarLS(){
     zSetState('state.data.treinamentos', TREIN);
     zSetState('state.data.documentos', DOCUMENTOS);
     zSetState('state.data.agendamentos', AGENDAMENTOS);
+    atualizarEstadoSyncAgendamentos();
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
   }catch(e){}
 }
@@ -851,6 +1088,7 @@ function carregarLS(){
       zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
     }
     zSetState('state.data.agendamentos', AGENDAMENTOS);
+    atualizarEstadoSyncAgendamentos();
 
     if(senhasRaw){
       const senhas=JSON.parse(senhasRaw);
@@ -899,6 +1137,11 @@ async function carregarComRetry(tentativa=1){
     }
     console.error('Supabase indisponível após',MAX,'tentativas. Usando cache local.');
     carregarLS();
+    setStatusSyncAgendamentos({
+      tabela:'offline',
+      erro:'Modo offline — sem conexão com o Supabase.',
+      sincronizando:false
+    });
     const temSessao=restaurarSessao();
     if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
     iniciarApp();
@@ -924,6 +1167,8 @@ zRegisterModule('supabase', {
   dbExcluirTrein,
   dbSalvarAgendamento,
   dbExcluirAgendamento,
+  sincronizarAgendamentosPendentes,
+  getStatusAgendamentosSync,
   dbSalvarDocumento,
   dbExcluirDocumento,
   dbUploadDocumentoArquivo,
