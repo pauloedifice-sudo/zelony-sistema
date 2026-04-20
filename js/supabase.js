@@ -48,6 +48,27 @@ const AGENDAMENTOS_SYNC_STATUS={
   ultimaTentativa:'',
   ultimaSync:''
 };
+const SUPABASE_BOOT_STATUS={
+  etapa:'inicializando',
+  ultimaAtualizacao:''
+};
+let supabasePosCargaPromise=null;
+function setBootStage(etapa){
+  const texto=String(etapa||'').trim()||'inicializando';
+  SUPABASE_BOOT_STATUS.etapa=texto;
+  SUPABASE_BOOT_STATUS.ultimaAtualizacao=new Date().toISOString();
+  zSetState('state.sync.supabaseBoot',{...SUPABASE_BOOT_STATUS});
+  return texto;
+}
+function getBootStage(){
+  return SUPABASE_BOOT_STATUS.etapa||'inicializando';
+}
+function promiseComTimeout(promise,ms,contexto='operacao'){
+  return Promise.race([
+    promise,
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error(`${contexto}: timeout apos ${ms}ms`)),ms))
+  ]);
+}
 function atualizarEstadoSyncAgendamentos(){
   AGENDAMENTOS_SYNC_STATUS.pendentes=(typeof AGENDAMENTOS!=='undefined'&&Array.isArray(AGENDAMENTOS))
     ? AGENDAMENTOS.filter(item=>!!(item&&item.syncPendente)).length
@@ -136,6 +157,7 @@ zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 
 // ── CARREGAR DO BANCO ─────────────────────────────────────────────────────────
 async function carregarDB(){
+  setBootStage('preparando carga inicial');
   setStatusSyncAgendamentos({
     tabela:'carregando',
     erro:'',
@@ -157,6 +179,7 @@ async function carregarDB(){
 
   const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
 
+  setBootStage('buscando tabelas principais');
   const [us,ss,vs,ts,ds,ags]=await Promise.all([
     carregar('usuarios','id'),
     carregar('senhas',null),
@@ -192,6 +215,7 @@ async function carregarDB(){
     })()
   ]);
 
+  setBootStage('mesclando dados locais');
   if(us&&us.length){
     USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
     nextUserId=Math.max(...USUARIOS.map(u=>u.id))+1;
@@ -280,19 +304,74 @@ async function carregarDB(){
     zSetState('state.data.agendamentos', AGENDAMENTOS);
     atualizarEstadoSyncAgendamentos();
     salvarLS();
-    if(getStatusAgendamentosSync().tabelaDisponivel&&AGENDAMENTOS.some(agendamentoTemSyncPendente)){
-      await sincronizarAgendamentosPendentes({silencioso:true,renderizar:false});
-    }
-  }
-  if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
-    await aplicarAjustesManuaisRhPendentes({persistir:true,renderizar:false});
   }
   zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
 
   if(us===null&&vs===null) throw new Error('Falha total no carregamento');
+  setBootStage('dados carregados');
 }
 
 // ── MAPPERS banco → app ───────────────────────────────────────────────────────
+// POS-CARGA DO SUPABASE
+async function executarPosCargaSupabase(opcoes={}){
+  if(supabasePosCargaPromise) return supabasePosCargaPromise;
+  const config={
+    timeoutMs:Math.max(5000,parseInt(opcoes.timeoutMs,10)||12000),
+    silenciosoAgendamentos:opcoes.silenciosoAgendamentos!==false,
+    renderizarAgendamentos:opcoes.renderizarAgendamentos!==false,
+    persistirRh:opcoes.persistirRh!==false,
+    renderizarRh:opcoes.renderizarRh!==false
+  };
+  supabasePosCargaPromise=(async()=>{
+    try{
+      if(getStatusAgendamentosSync().tabelaDisponivel&&AGENDAMENTOS.some(agendamentoTemSyncPendente)){
+        setBootStage('sincronizando agendamentos pendentes');
+        await promiseComTimeout(
+          sincronizarAgendamentosPendentes({
+            silencioso:config.silenciosoAgendamentos,
+            renderizar:config.renderizarAgendamentos
+          }),
+          config.timeoutMs,
+          'Sincronizacao de agendamentos'
+        );
+      }
+    }catch(e){
+      console.warn('Pos-carga do Supabase: falha ao sincronizar agendamentos pendentes:',e.message||e);
+    }
+    try{
+      if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
+        setBootStage('aplicando ajustes de RH');
+        await promiseComTimeout(
+          aplicarAjustesManuaisRhPendentes({
+            persistir:config.persistirRh,
+            renderizar:config.renderizarRh
+          }),
+          config.timeoutMs,
+          'Ajustes manuais de RH'
+        );
+      }
+    }catch(e){
+      console.warn('Pos-carga do Supabase: falha ao aplicar ajustes de RH:',e.message||e);
+    }
+    setBootStage('pronto');
+    return true;
+  })();
+  try{
+    return await supabasePosCargaPromise;
+  }finally{
+    supabasePosCargaPromise=null;
+  }
+}
+
+function agendarPosCargaSupabase(opcoes={}){
+  setTimeout(()=>{
+    executarPosCargaSupabase(opcoes).catch(e=>{
+      console.warn('Pos-carga do Supabase interrompida:',e.message||e);
+    });
+  },0);
+}
+
+// MAPPERS banco -> app
 function mapUsuarioIn(u){
   const statusRaw=(u.status||'Ativo');
   const status=statusRaw.charAt(0).toUpperCase()+statusRaw.slice(1).toLowerCase();
@@ -1120,16 +1199,20 @@ async function carregarComRetry(tentativa=1){
   const st=document.getElementById('sp-status-txt');
   if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Carregando dados';
   try{
-    const comTimeout=(promise,ms)=>Promise.race([
-      promise,
-      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))
-    ]);
-    await comTimeout(carregarDB(), TIMEOUT);
+    await promiseComTimeout(carregarDB(), TIMEOUT, 'Carga inicial do Supabase');
     const temSessao=restaurarSessao();
     if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
     iniciarApp();
+    agendarPosCargaSupabase({
+      timeoutMs:12000,
+      silenciosoAgendamentos:true,
+      renderizarAgendamentos:true,
+      persistirRh:true,
+      renderizarRh:true
+    });
   }catch(e){
-    console.warn(`Tentativa ${tentativa} falhou:`,e.message);
+    const etapa=getBootStage();
+    console.warn(`Tentativa ${tentativa} falhou na etapa "${etapa}":`,e.message);
     if(tentativa<MAX){
       if(st) st.textContent=`Reconectando... (${tentativa}/${MAX})`;
       await new Promise(r=>setTimeout(r,1500));
