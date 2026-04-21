@@ -447,6 +447,413 @@ function exportarAgendamentosPendentes() {
   showToast('✅', 'Arquivo com agendamentos pendentes exportado.');
 }
 
+function agFormatarDataRelatorio(valor, opcoes = {}) {
+  if (!valor) return '—';
+  if (agDataValidaIso(valor)) return agFormatoDataCurta(valor);
+  const data = new Date(valor);
+  if (!Number.isNaN(data.getTime())) {
+    return formatarDataLocal(data, {
+      comAno: opcoes.comAno !== false,
+      comHora: !!opcoes.comHora
+    });
+  }
+  return agTexto(valor);
+}
+
+function agFormatarDataHoraRelatorio(dataIso, hora) {
+  const dataTxt = dataIso ? agFormatarDataRelatorio(dataIso) : '';
+  const horaTxt = agTexto(hora || '');
+  if (dataTxt && horaTxt) return `${dataTxt} ${horaTxt}`;
+  return dataTxt || horaTxt || '—';
+}
+
+function agSituacaoNormalizada(item) {
+  return agNormalizarTexto(agSituacao(item));
+}
+
+function agTipoFechamento(item) {
+  return agNormalizarTexto(item && item.tipoVisita) === 'fechamento';
+}
+
+function agAtivoRelatorio(item) {
+  return agSituacaoNormalizada(item) === 'agendado' && agAgendamentoAtivoFuturo(item);
+}
+
+function agResumoTratativaRelatorio(item) {
+  const partes = [];
+  const por = agTexto(item && item.tratativaPor);
+  if (por) partes.push(por);
+  const em = agFormatarDataRelatorio(item && item.tratativaEm, { comHora: true });
+  if (em && em !== '—') partes.push(em);
+  if (partes.length) return partes.join(' | ');
+  return agSituacaoNormalizada(item) === 'agendado' ? 'Sem tratativa' : agTexto(agSituacao(item));
+}
+
+function agResumoReagendamentoRelatorio(item) {
+  const resumo = agFormatarDataHoraRelatorio(item && item.reagendadoParaData, item && item.reagendadoParaHorario);
+  if (resumo === '—') return '—';
+  const novoId = parseInt(item && item.novoAgendamentoId, 10) || 0;
+  return novoId ? `${resumo} | novo #${novoId}` : resumo;
+}
+
+function agFiltrosResumoRelatorio() {
+  const filtros = [];
+  const periodo = agPeriodoNormalizado();
+  filtros.push(`Periodo: ${agPeriodoResumo(periodo)}`);
+  if (agBusca.trim()) filtros.push(`Busca: ${agTexto(agBusca)}`);
+  if (agFiltroUnidade) filtros.push(`Unidade: ${agTexto(agFiltroUnidade)}`);
+  if (agFiltroEquipe) filtros.push(`Equipe: ${agTexto(agFiltroEquipe)}`);
+  if (agFiltroCorretor) {
+    const corretorAtual = (Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : [])
+      .find(item => agCorretorFiltroValor(item) === agFiltroCorretor);
+    filtros.push(`Corretor: ${agTexto(corretorAtual && corretorAtual.corretor || agFiltroCorretor)}`);
+  }
+  return filtros;
+}
+
+function agColetarDadosRelatorio() {
+  const periodo = agPeriodoNormalizado();
+  const base = agOrdenarLista((Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).filter(agendamentoVisivel));
+  const basePeriodo = agFiltrarPeriodo(base, periodo);
+  const lista = agFiltrarLista(basePeriodo, true);
+  return {
+    periodo,
+    lista,
+    periodoResumo: agPeriodoResumo(periodo),
+    filtrosResumo: agFiltrosResumoRelatorio(),
+    total: lista.length,
+    ativos: lista.filter(agAgendamentoAtivoFuturo).length,
+    concluidos: lista.filter(item => agSituacaoNormalizada(item) === 'concluida').length,
+    reagendados: lista.filter(item => agSituacaoNormalizada(item) === 'reagendado').length,
+    cancelados: lista.filter(item => agSituacaoNormalizada(item) === 'cliente cancelou').length,
+    primeiros: lista.filter(item => !agTipoFechamento(item)).length,
+    fechamentos: lista.filter(agTipoFechamento).length,
+    proximos7Dias: agContarProximosDias(lista.filter(agAgendamentoAtivoFuturo), 7),
+    tratativasPendentes: lista.filter(agTratativaPendente).length,
+    pendentesSync: lista.filter(item => !!(item && item.syncPendente)).length
+  };
+}
+
+function agNovoResumoTipoRelatorio(nome) {
+  return {
+    nome,
+    primeiraAtivos: 0,
+    primeiraConcluida: 0,
+    primeiraCancelada: 0,
+    primeiraTotal: 0,
+    fechamentoAtivos: 0,
+    fechamentoConcluida: 0,
+    fechamentoCancelada: 0,
+    fechamentoTotal: 0,
+    totalGeral: 0
+  };
+}
+
+function agAtualizarResumoTipoRelatorio(registro, item) {
+  const fechamento = agTipoFechamento(item);
+  const situacao = agSituacaoNormalizada(item);
+  const prefixo = fechamento ? 'fechamento' : 'primeira';
+  registro[`${prefixo}Total`] += 1;
+  registro.totalGeral += 1;
+  if (agAtivoRelatorio(item)) registro[`${prefixo}Ativos`] += 1;
+  if (situacao === 'concluida') registro[`${prefixo}Concluida`] += 1;
+  if (situacao === 'cliente cancelou') registro[`${prefixo}Cancelada`] += 1;
+}
+
+function agResumoRelatorioPorCampo(lista, obterNome) {
+  const mapa = new Map();
+  (Array.isArray(lista) ? lista : []).forEach(item => {
+    const nome = agTexto(obterNome(item)) || 'Nao informado';
+    const chave = agNormalizarTexto(nome) || nome;
+    if (!mapa.has(chave)) {
+      mapa.set(chave, agNovoResumoTipoRelatorio(nome));
+    }
+    agAtualizarResumoTipoRelatorio(mapa.get(chave), item);
+  });
+  return Array.from(mapa.values())
+    .sort((a, b) => b.totalGeral - a.totalGeral || a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+function agResumoPorCorretor(lista) {
+  return agResumoRelatorioPorCampo(lista, item => item && item.corretor);
+}
+
+function agResumoPorEquipe(lista) {
+  return agResumoRelatorioPorCampo(lista, item => agEquipeValor(item));
+}
+
+function agLinhaResumoTipoRelatorio(item) {
+  return [
+    item.nome,
+    item.primeiraAtivos,
+    item.primeiraConcluida,
+    item.primeiraCancelada,
+    item.primeiraTotal,
+    item.fechamentoAtivos,
+    item.fechamentoConcluida,
+    item.fechamentoCancelada,
+    item.fechamentoTotal
+  ];
+}
+
+function agDesenharTabelaResumoTipo(doc, config) {
+  const head = [
+    [
+      { content: config.titulo, rowSpan: 2 },
+      { content: 'Primeira Visita', colSpan: 4 },
+      { content: 'Fechamento', colSpan: 4 }
+    ],
+    ['Ativos', 'Concluida', 'Cancelada', 'Total', 'Ativos', 'Concluida', 'Cancelada', 'Total']
+  ];
+  const numeroWidth = config.numeroWidth || 21;
+  doc.autoTable({
+    startY: config.startY,
+    tableWidth: config.tableWidth,
+    margin: { left: config.left, right: config.right || 10 },
+    head,
+    body: (config.lista || []).map(agLinhaResumoTipoRelatorio),
+    theme: 'plain',
+    headStyles: { fillColor: [253, 248, 238], textColor: [184, 144, 42], fontSize: 6.6, fontStyle: 'bold', halign: 'center' },
+    bodyStyles: { fontSize: 6.4, textColor: [60, 48, 30], valign: 'middle' },
+    alternateRowStyles: { fillColor: [250, 245, 236] },
+    styles: { cellPadding: 1.5, overflow: 'linebreak', lineColor: [232, 220, 192], lineWidth: 0.15 },
+    columnStyles: {
+      0: { cellWidth: config.nomeWidth || 56, halign: 'left', fontStyle: 'bold' },
+      1: { cellWidth: numeroWidth, halign: 'center' },
+      2: { cellWidth: numeroWidth, halign: 'center' },
+      3: { cellWidth: numeroWidth, halign: 'center' },
+      4: { cellWidth: numeroWidth, halign: 'center', fontStyle: 'bold' },
+      5: { cellWidth: numeroWidth, halign: 'center' },
+      6: { cellWidth: numeroWidth, halign: 'center' },
+      7: { cellWidth: numeroWidth, halign: 'center' },
+      8: { cellWidth: numeroWidth, halign: 'center', fontStyle: 'bold' }
+    }
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+function exportarRelatorioAgendamentos() {
+  const btn = document.getElementById('ag-report-btn');
+  const textoOriginal = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Gerando relatorio...';
+  }
+
+  setTimeout(() => {
+    try {
+      const dados = agColetarDadosRelatorio();
+      if (!dados.lista.length) {
+        showToast('PDF', 'Nao ha agendamentos visiveis com os filtros atuais para gerar o relatorio.');
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Biblioteca PDF indisponivel.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      if (typeof doc.autoTable !== 'function') throw new Error('Plugin de tabelas do PDF indisponivel.');
+
+      const W = doc.internal.pageSize.getWidth();
+      const H = doc.internal.pageSize.getHeight();
+      const filtrosLinha = dados.filtrosResumo.join(' | ');
+      const resumoCorretor = agResumoPorCorretor(dados.lista);
+      const resumoEquipe = agResumoPorEquipe(dados.lista);
+
+      doc.setFillColor(184, 144, 42);
+      doc.rect(0, 0, W, 24, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ZELONY IMOVEIS', 12, 10);
+      doc.setFontSize(11);
+      doc.text('RELATORIO DE AGENDAMENTOS', 12, 17);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text(`Gerado em ${hoje()} | ${dados.total} registro(s)`, W - 12, 16, { align: 'right' });
+
+      doc.setFillColor(253, 248, 238);
+      doc.roundedRect(10, 29, W - 20, 22, 3, 3, 'F');
+      doc.setDrawColor(220, 185, 100);
+      doc.roundedRect(10, 29, W - 20, 22, 3, 3);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 92, 46);
+      doc.text('Escopo visivel', 14, 35);
+      doc.text('Filtros aplicados', 14, 43);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.4);
+      doc.setTextColor(70, 56, 32);
+      doc.text(doc.splitTextToSize(agResumoPermissao(), W - 44), 42, 35);
+      doc.text(doc.splitTextToSize(filtrosLinha, W - 44), 42, 43);
+
+      const kpis = [
+        ['Total', String(dados.total)],
+        ['Ativos', String(dados.ativos)],
+        ['Concluidos', String(dados.concluidos)],
+        ['Reagendados', String(dados.reagendados)],
+        ['Cancelados', String(dados.cancelados)],
+        ['1o atendimento', String(dados.primeiros)],
+        ['Fechamentos', String(dados.fechamentos)],
+        ['Prox. 7 dias', String(dados.proximos7Dias)]
+      ];
+      const kpiY = 56;
+      const kpiW = (W - 20) / kpis.length;
+      kpis.forEach(([label, value], index) => {
+        const x = 10 + (index * kpiW);
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(x, kpiY, kpiW - 2, 19, 2.5, 2.5, 'F');
+        doc.setDrawColor(220, 185, 100);
+        doc.roundedRect(x, kpiY, kpiW - 2, 19, 2.5, 2.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.4);
+        doc.setTextColor(135, 108, 58);
+        doc.text(label.toUpperCase(), x + ((kpiW - 2) / 2), kpiY + 6, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(184, 144, 42);
+        doc.text(value, x + ((kpiW - 2) / 2), kpiY + 14, { align: 'center' });
+      });
+
+      let tabelaResumoY = 81;
+      const tabelaResumoW = W - 20;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 92, 46);
+      doc.text('Resumo por corretor', 10, tabelaResumoY - 3);
+      let resumoCorretorFinalY = agDesenharTabelaResumoTipo(doc, {
+        titulo: 'Corretor',
+        lista: resumoCorretor,
+        startY: tabelaResumoY,
+        tableWidth: tabelaResumoW,
+        left: 10,
+        nomeWidth: 74,
+        numeroWidth: 22
+      });
+
+      tabelaResumoY = resumoCorretorFinalY + 11;
+      if (tabelaResumoY > H - 58) {
+        doc.addPage();
+        tabelaResumoY = 24;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(120, 92, 46);
+      doc.text('Resumo por equipe', 10, tabelaResumoY - 3);
+      let resumoEquipeFinalY = agDesenharTabelaResumoTipo(doc, {
+        titulo: 'Equipe',
+        lista: resumoEquipe,
+        startY: tabelaResumoY,
+        tableWidth: tabelaResumoW,
+        left: 10,
+        nomeWidth: 74,
+        numeroWidth: 22
+      });
+
+      let infoY = resumoEquipeFinalY + 6;
+      if (infoY > H - 22) {
+        doc.addPage();
+        infoY = 18;
+      }
+      doc.setFillColor(253, 248, 238);
+      doc.roundedRect(10, infoY, W - 20, 15, 2.5, 2.5, 'F');
+      doc.setDrawColor(220, 185, 100);
+      doc.roundedRect(10, infoY, W - 20, 15, 2.5, 2.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.4);
+      doc.setTextColor(120, 92, 46);
+      doc.text('Leitura rapida do periodo', 14, infoY + 5.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.1);
+      doc.setTextColor(70, 56, 32);
+      const linhaInfo = `Ativos = agendados com data/hora futura. Concluidos = cliente compareceu. Cancelados = cliente cancelou. Pendentes de tratativa: ${dados.tratativasPendentes}. Pendentes de sincronizacao: ${dados.pendentesSync}.`;
+      doc.text(doc.splitTextToSize(linhaInfo, W - 28), 14, infoY + 10.8);
+
+      doc.addPage();
+      doc.setFillColor(184, 144, 42);
+      doc.rect(0, 0, W, 16, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Detalhamento completo dos agendamentos', 12, 10);
+
+      doc.autoTable({
+        startY: 22,
+        tableWidth: W - 14,
+        margin: { left: 7, right: 7 },
+        head: [[
+          '#',
+          'Preench.',
+          'Data',
+          'Hora',
+          'Tipo',
+          'Situacao',
+          'Unidade',
+          'Equipe',
+          'Corretor',
+          'Cliente',
+          'Telefone',
+          'Lancado',
+          'Tratativa',
+          'Reag.'
+        ]],
+        body: dados.lista.map(item => [
+          item.id || '',
+          agFormatarDataRelatorio(item.preenchidoEm),
+          agFormatarDataRelatorio(item.dataAgendamento),
+          agTexto(item.horarioAgendamento || '—'),
+          agTexto(item.tipoVisita || '—'),
+          agTexto(agSituacao(item)),
+          agTexto(item.unidade || '—'),
+          agTexto(agEquipeValor(item)),
+          agTexto(item.corretor || '—'),
+          agTexto(item.cliente || '—'),
+          agTexto(agFormatarTelefone(item.telefone || '') || item.telefone || '—'),
+          agTexto(item.criadoPor || 'Sistema'),
+          agTexto(agResumoTratativaRelatorio(item)),
+          agTexto(agResumoReagendamentoRelatorio(item))
+        ]),
+        theme: 'plain',
+        headStyles: { fillColor: [253, 248, 238], textColor: [184, 144, 42], fontSize: 6.2, fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { fontSize: 5.9, textColor: [60, 48, 30], valign: 'top' },
+        alternateRowStyles: { fillColor: [250, 245, 236] },
+        styles: { cellPadding: 1.3, overflow: 'linebreak', lineColor: [232, 220, 192], lineWidth: 0.12 },
+        columnStyles: {
+          0: { cellWidth: 8 },
+          1: { cellWidth: 14 },
+          2: { cellWidth: 14 },
+          3: { cellWidth: 10 },
+          4: { cellWidth: 18 },
+          5: { cellWidth: 16 },
+          6: { cellWidth: 16 },
+          7: { cellWidth: 18 },
+          8: { cellWidth: 25 },
+          9: { cellWidth: 28 },
+          10: { cellWidth: 18 },
+          11: { cellWidth: 24 },
+          12: { cellWidth: 38 },
+          13: { cellWidth: 28 }
+        },
+        didDrawPage: data => {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(5.5);
+          doc.setTextColor(140, 110, 60);
+          doc.text(`Relatorio de agendamentos | ${hoje()} | Pag. ${data.pageNumber}`, W / 2, H - 4, { align: 'center' });
+        }
+      });
+
+      doc.save(`agendamentos-relatorio-${agHojeIso()}.pdf`);
+      showToast('OK', 'Relatorio de agendamentos gerado com sucesso.');
+    } catch (erro) {
+      console.error('Erro ao gerar relatorio de agendamentos:', erro);
+      showToast('ERRO', 'Nao foi possivel gerar o relatorio dos agendamentos.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = textoOriginal || 'Relatorio PDF';
+      }
+    }
+  }, 80);
+}
+
 function agGarantirDataSelecionada() {
   const fallback = agDataNoMes(agHojeIso(), agMesRef)
     ? agHojeIso()
@@ -1035,10 +1442,25 @@ function renderAgendamentos() {
         <div class="ag-title">Agenda comercial</div>
         <div class="ag-sub">${agTexto(agResumoPermissao())}</div>
       </div>
-      <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
-        Novo agendamento
-      </button>
+      <div class="ag-top-actions">
+        <div class="ag-report-range">
+          <div class="ag-report-date-field">
+            <label>De</label>
+            <input type="date" value="${agAttr(agFiltroDataDe)}" onchange="agAtualizarFiltroPeriodo('de',this.value)">
+          </div>
+          <div class="ag-report-date-field">
+            <label>Ate</label>
+            <input type="date" value="${agAttr(agFiltroDataAte)}" onchange="agAtualizarFiltroPeriodo('ate',this.value)">
+          </div>
+        </div>
+        <button class="ag-clear-btn ag-report-btn" id="ag-report-btn" type="button" onclick="exportarRelatorioAgendamentos()">
+          Relatorio PDF
+        </button>
+        <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
+          Novo agendamento
+        </button>
+      </div>
     </div>
 
     ${avisoSync}
@@ -1476,6 +1898,7 @@ zRegisterModule('agendamentos', {
   agAtualizarFiltroPeriodo,
   limparFiltrosAgendamento,
   salvarAgendamento,
+  exportarRelatorioAgendamentos,
   temTratativaAgendamentoObrigatoriaAberta,
   verificarPendenciasAgendamento,
   iniciarMonitorTratativaAgendamento,

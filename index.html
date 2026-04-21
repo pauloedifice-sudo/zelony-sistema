@@ -364,38 +364,50 @@
 <div class="sidebar">
   <div class="sb-nav">
     <div class="sb-lbl">Módulos</div>
-    <button class="sb-item" id="sb-financeiro" onclick="setMod('financeiro',this)" style="display:none;">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 7h14"/><path d="M5 11h2M10 11h1"/></svg>
-      Financeiro
-    </button>
-    <button class="sb-item" onclick="setMod('carteira',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M11 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg>
-      Minha Carteira
-    </button>
-    <button class="sb-item active" onclick="setMod('vendas',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg>
-      Vendas / Comissão
-    </button>
-    <button class="sb-item" onclick="setMod('agendamentos',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1.5v3M11 1.5v3M2 6.5h12"/><path d="M5 9h2v2H5z" fill="currentColor" stroke="none"/></svg>
-      Agendamentos
-    </button>
-    <button class="sb-item" onclick="setMod('trein',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="9" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
-      Treinamentos
-    </button>
-    <button class="sb-item" onclick="setMod('documentos',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h5.5L13.5 5v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z"/><path d="M9.5 1.5V5h4"/><path d="M5.5 8.5h5M5.5 11h5"/></svg>
-      Documentos
-    </button>
-    <button class="sb-item" onclick="setMod('proc',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7M3 12h5"/></svg>
-      Proc. Operacional
-    </button>
-    <button class="sb-item" onclick="setMod('usuarios',this)">
-      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-3 2-4.5 5-4.5s5 1.5 5 4.5"/><circle cx="12" cy="5" r="2"/><path d="M11.5 8.5c1.5 0 3 .8 3 3.5"/></svg>
-      Usuários
-    </button>
+    <div class="sb-group">
+      <button class="sb-item" onclick="setMod('dashboard',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 11V8M8 11V5M11 11V7"/></svg>
+        Dashboard
+      </button>
+      <button class="sb-item" onclick="setMod('agendamentos',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1.5v3M11 1.5v3M2 6.5h12"/><path d="M5 9h2v2H5z" fill="currentColor" stroke="none"/></svg>
+        Agendamentos
+      </button>
+    </div>
+    <div class="sb-group">
+      <button class="sb-item" id="sb-financeiro" onclick="setMod('financeiro',this)" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 7h14"/><path d="M5 11h2M10 11h1"/></svg>
+        Financeiro
+      </button>
+      <button class="sb-item" onclick="setMod('carteira',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M11 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg>
+        Minha Carteira
+      </button>
+      <button class="sb-item active" onclick="setMod('vendas',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg>
+        Vendas / Comissão
+      </button>
+    </div>
+    <div class="sb-group">
+      <button class="sb-item" onclick="setMod('trein',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="9" rx="1"/><path d="M5 14h6M8 12v2"/></svg>
+        Treinamentos
+      </button>
+      <button class="sb-item" onclick="setMod('documentos',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 1.5h5.5L13.5 5v9.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1z"/><path d="M9.5 1.5V5h4"/><path d="M5.5 8.5h5M5.5 11h5"/></svg>
+        Documentos
+      </button>
+      <button class="sb-item" onclick="setMod('proc',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h7M3 12h5"/></svg>
+        Proc. Operacional
+      </button>
+    </div>
+    <div class="sb-group">
+      <button class="sb-item" onclick="setMod('usuarios',this)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-3 2-4.5 5-4.5s5 1.5 5 4.5"/><circle cx="12" cy="5" r="2"/><path d="M11.5 8.5c1.5 0 3 .8 3 3.5"/></svg>
+        Usuários
+      </button>
+    </div>
   </div>
   <div class="sb-bottom">
     <div style="display:flex;align-items:center;gap:9px;">
@@ -588,6 +600,7 @@
 
     <div class="page hidden" id="mod-financeiro"><div class="carteira-wrap" id="financeiro-content"></div></div>
     <div class="page hidden" id="mod-carteira"><div class="carteira-wrap" id="carteira-content"></div></div>
+    <div class="page hidden" id="mod-dashboard"><div class="dash-wrap" id="dashboard-content"></div></div>
 
     <div class="page" id="mod-vendas">
       <div class="v-toolbar">
@@ -1296,15 +1309,17 @@
 <script src="js/carteira.js"></script>
 <!-- 6. Financeiro: calendÃ¡rio de previsÃµes â€” depende de vendas -->
 <script src="js/financeiro.js"></script>
-<!-- 7. Treinamentos + Processos Operacionais -->
+<!-- 7. Dashboard: resultado de vendas em tempo real -->
+<script src="js/dashboard.js"></script>
+<!-- 8. Treinamentos + Processos Operacionais -->
 <script src="js/treinamentos.js"></script>
-<!-- 8. Documentos: biblioteca de PDFs, visualizacao e download -->
+<!-- 9. Documentos: biblioteca de PDFs, visualizacao e download -->
 <script src="js/documentos.js"></script>
-<!-- 9. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
+<!-- 10. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
 <script src="js/usuarios.js"></script>
-<!-- 10. Agendamentos: agenda comercial por perfil -->
+<!-- 11. Agendamentos: agenda comercial por perfil -->
 <script src="js/agendamentos.js"></script>
-<!-- 11. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
+<!-- 12. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
 <script src="js/app.js"></script>
 
 <!-- â”€â”€â”€ INICIALIZAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->

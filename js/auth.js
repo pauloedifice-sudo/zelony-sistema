@@ -101,6 +101,7 @@ function fazerLogin() {
     atualizarTopbar(usuario, rv);
     document.getElementById('login-screen').classList.add('hidden');
     renderFiltros(); renderVList(); renderTrein(); renderProc(); atualizarBadgeNotificacoes();
+    if (typeof iniciarDashboardLive === 'function') iniciarDashboardLive();
     if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
     resetBtn();
     showToast(zUiText('👋'), zUiText(`Bem-vindo(a), ${usuario.nome.split(' ')[0]}!`));
@@ -189,6 +190,7 @@ function trocaRole() {
   if (!document.getElementById('mod-trein').classList.contains('hidden')) renderTrein();
   if (!document.getElementById('mod-documentos').classList.contains('hidden')) renderDocumentos();
   if (!document.getElementById('mod-agendamentos').classList.contains('hidden')) renderAgendamentos();
+  if (!document.getElementById('mod-dashboard').classList.contains('hidden') && typeof renderDashboard === 'function') renderDashboard();
   if (!document.getElementById('mod-usuarios').classList.contains('hidden')) renderUsuarios();
   atualizarBadgeNotificacoes();
   if (!document.getElementById('npanel').classList.contains('hidden')) renderNots();
@@ -198,18 +200,20 @@ function trocaRole() {
 // NAVEGACAO
 const modTitles = {
   carteira:'Minha Carteira', vendas:'Vendas e Comissão',
+  dashboard:'Dashboard',
   agendamentos:'Agendamentos', trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
   usuarios:'Usuários', financeiro:'Financeiro'
 };
 
 function setMod(m, el) {
-  ['carteira','vendas','agendamentos','trein','documentos','proc','usuarios','financeiro']
+  ['carteira','vendas','dashboard','agendamentos','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
   document.getElementById('mod-' + m).classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
-  el.classList.add('active');
+  if (el) el.classList.add('active');
   document.getElementById('pg-title').textContent = zUiText(modTitles[m]);
   if (m === 'carteira')   renderCarteira();
+  if (m === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
   if (m === 'trein')      renderTrein();
   if (m === 'agendamentos') renderAgendamentos();
   if (m === 'documentos') renderDocumentos();

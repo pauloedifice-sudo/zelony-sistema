@@ -1344,7 +1344,7 @@ function abrirModalVenda(){
   const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
   const todos=USUARIOS.filter(u=>filtrarUnid(u)&&usuarioAtivo(u));
   const capitaes=todos.filter(u=>perfilRole(u)==='cap');
-  const gerentes=todos.filter(u=>['ger','dir','cap'].includes(perfilRole(u)));
+  const gerentes=todos.filter(u=>['ger','dir','cap','dono'].includes(perfilRole(u)));
   const diretores=todos.filter(u=>perfilRole(u)==='dir');
   const perfilOrdem=[
     {label:'Dono', role:'dono'},

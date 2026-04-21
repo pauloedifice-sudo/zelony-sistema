@@ -336,7 +336,12 @@ async function executarPosCargaSupabase(opcoes={}){
         );
       }
     }catch(e){
-      console.warn('Pos-carga do Supabase: falha ao sincronizar agendamentos pendentes:',e.message||e);
+      const msg=e&&e.message?e.message:e;
+      if(/timeout/i.test(String(msg||''))){
+        console.info('Pos-carga do Supabase: sincronizacao de agendamentos pendentes ficou para a proxima tentativa:',msg);
+      }else{
+        console.warn('Pos-carga do Supabase: falha ao sincronizar agendamentos pendentes:',msg);
+      }
     }
     try{
       if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
@@ -1111,6 +1116,9 @@ function salvarLS(){
     zSetState('state.data.agendamentos', AGENDAMENTOS);
     atualizarEstadoSyncAgendamentos();
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
+    if(typeof renderDashboard==='function'&&!document.getElementById('mod-dashboard')?.classList.contains('hidden')){
+      renderDashboard();
+    }
   }catch(e){}
 }
 function carregarLS(){/* substituído pelo Supabase — mantido como fallback */}
@@ -1184,6 +1192,7 @@ function carregarLS(){
 
 function iniciarApp(){
   renderFiltros(); renderVList(); renderTrein(); renderProc();
+  if(typeof iniciarDashboardLive==='function') iniciarDashboardLive();
   verificarConviteURL();
   const splash=document.getElementById('app-splash');
   if(splash){
@@ -1204,7 +1213,7 @@ async function carregarComRetry(tentativa=1){
     if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
     iniciarApp();
     agendarPosCargaSupabase({
-      timeoutMs:12000,
+      timeoutMs:30000,
       silenciosoAgendamentos:true,
       renderizarAgendamentos:true,
       persistirRh:true,
