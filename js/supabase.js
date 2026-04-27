@@ -52,6 +52,12 @@ const SUPABASE_BOOT_STATUS={
   etapa:'inicializando',
   ultimaAtualizacao:''
 };
+const TREINAMENTOS_COMPAT_STATUS={
+  origem:'desconhecida',
+  videosCompartilhados:true,
+  regrasCompartilhadas:true,
+  ultimaAtualizacao:''
+};
 let supabasePosCargaPromise=null;
 function setBootStage(etapa){
   const texto=String(etapa||'').trim()||'inicializando';
@@ -63,6 +69,33 @@ function setBootStage(etapa){
 function getBootStage(){
   return SUPABASE_BOOT_STATUS.etapa||'inicializando';
 }
+function setTreinamentosCompatStatus(parcial={}){
+  Object.assign(TREINAMENTOS_COMPAT_STATUS,parcial||{});
+  TREINAMENTOS_COMPAT_STATUS.ultimaAtualizacao=new Date().toISOString();
+  zSetState('state.sync.treinamentosCompat',{...TREINAMENTOS_COMPAT_STATUS});
+  return {...TREINAMENTOS_COMPAT_STATUS};
+}
+function inferirTreinamentosCompatStatus(lista,origem='banco'){
+  const amostra=Array.isArray(lista)?lista.find(item=>item&&typeof item==='object'):null;
+  if(!amostra){
+    return setTreinamentosCompatStatus({
+      origem,
+      videosCompartilhados:true,
+      regrasCompartilhadas:true
+    });
+  }
+  const hasProp=(prop)=>Object.prototype.hasOwnProperty.call(amostra,prop);
+  return setTreinamentosCompatStatus({
+    origem,
+    videosCompartilhados:hasProp('videos'),
+    regrasCompartilhadas:hasProp('obrigatorio')&&hasProp('prerequisito')
+  });
+}
+function getTreinamentosCompatStatus(){
+  return {...TREINAMENTOS_COMPAT_STATUS};
+}
+window.getTreinamentosCompatStatus=getTreinamentosCompatStatus;
+setTreinamentosCompatStatus();
 function promiseComTimeout(promise,ms,contexto='operacao'){
   return Promise.race([
     promise,
@@ -230,6 +263,8 @@ async function carregarDB(){
     zSetState('state.ui.nextVendaId', nextVendaId);
   }
   {
+    if(Array.isArray(ts)) inferirTreinamentosCompatStatus(ts,'banco');
+    else setTreinamentosCompatStatus({origem:'local'});
     const treinBanco=Array.isArray(ts)?ts.map(mapTreinIn):[];
     const treinLocal=carregarTreinamentosLS();
     const treinMap=new Map();
@@ -972,6 +1007,11 @@ async function dbSalvarTrein(t, idx){
     const msg=String(e && (e.message||e.details||e.hint||e.code) || '').toLowerCase();
     const colunaInvalida=msg.includes('column') || msg.includes('schema cache') || msg.includes('videos') || msg.includes('obrigatorio') || msg.includes('prerequisito');
     if(!colunaInvalida) throw e;
+    setTreinamentosCompatStatus({
+      origem:'banco',
+      videosCompartilhados:msg.includes('videos')?false:TREINAMENTOS_COMPAT_STATUS.videosCompartilhados,
+      regrasCompartilhadas:(msg.includes('obrigatorio')||msg.includes('prerequisito'))?false:TREINAMENTOS_COMPAT_STATUS.regrasCompartilhadas
+    });
     const tentativasFallback=[
       { label:'payload sem regras', payload:{ ...dadosBase, videos:dados.videos } },
       { label:'payload sem videos', payload:{ ...dadosBase, obrigatorio:!!t.obrigatorio, prerequisito:t.prerequisito||'' } },

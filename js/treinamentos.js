@@ -83,6 +83,16 @@ function podeAlternarCategoriaTrein(){
   return ['dir','dono','fin','rh'].includes(role);
 }
 
+function getTreinCompatStatus(){
+  return typeof getTreinamentosCompatStatus === 'function'
+    ? getTreinamentosCompatStatus()
+    : { origem:'desconhecida', videosCompartilhados:true, regrasCompartilhadas:true };
+}
+
+function treinVideosCompartilhadosNoBanco(){
+  return getTreinCompatStatus().videosCompartilhados !== false;
+}
+
 function getCategoriasTreinVisiveis(){
   if(podeAlternarCategoriaTrein()) return ['Corretor','Capitão','Gerente'];
   return [categoriaTreinPorRole()];
@@ -1770,6 +1780,10 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
         <span>${zUiText(bloqueado ? `Finalize "${prerequisito.titulo}" para liberar este treinamento.` : `Este treinamento foi liberado apos a conclusao de "${prerequisito.titulo}".`)}</span>
       </div>`
     : '';
+  const videosCompartilhados = treinVideosCompartilhadosNoBanco();
+  const avisoCompatVideos = !videosCompartilhados && (isDiretor || !videos.length)
+    ? `<div class="trein-lock-note"><strong>${zUiText(isDiretor ? 'Videos ainda nao compartilhados' : 'Videos indisponiveis neste acesso')}</strong>${zUiText(isDiretor ? 'A tabela de treinamentos ainda nao suporta videos compartilhados no banco. Hoje eles ficam apenas no navegador onde foram cadastrados.' : 'Este treinamento pode ter sido salvo apenas no navegador original. Por isso os videos nao apareceram neste acesso.')}</div>`
+    : '';
   const videoAtivoEmbed = videoAtivo && isTreinVideoYoutube(videoAtivo) ? getTreinVideoEmbedUrl(videoAtivo) : '';
   const playerPrincipal = videoAtivo && isTreinVideoYoutube(videoAtivo)
     ? `<iframe class="trein-video-player is-embed" src="${videoAtivoEmbed}" title="${String(videoAtivo.nome || 'Video do treinamento').replace(/"/g,'&quot;')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
@@ -1831,6 +1845,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
 
     ${notaBloqueio}
     ${notaCertificado}
+    ${avisoCompatVideos}
     <div class="trein-detail-note">${zUiText('O video fica livre para assistir. Quando terminar, use "Concluir aula" para avancar na trilha deste usuario.')}</div>
 
     <div class="trein-videos-panel">
@@ -1859,7 +1874,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
             </span>
           </button>`).join('')}
         </div>` : `
-        <div class="trein-video-empty">${zUiText('Nenhum video foi enviado para este treinamento ainda.')}</div>
+        <div class="trein-video-empty">${zUiText(videosCompartilhados ? 'Nenhum video foi enviado para este treinamento ainda.' : (isDiretor ? 'Os videos deste treinamento ficaram apenas no navegador onde foram cadastrados.' : 'Os videos deste treinamento nao estao disponiveis neste acesso.'))}</div>
       `}
     </div>
 
@@ -1902,6 +1917,7 @@ function renderTrein(){
 
   const isDiretor = role === 'dir';
   const canDelete = role === 'dir' || role === 'dono';
+  const compatTrein = getTreinCompatStatus();
   document.getElementById('btn-add-wrap').innerHTML = isDiretor
     ? `<button class="btn-add-trein" onclick="abrirModalTrein()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>${zUiText('Novo treinamento')}</button>`
     : `<div class="btn-add-lock"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="8" height="7" rx="1"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>${zUiText('Catalogo disponivel para consumo')}</div>`;
@@ -2005,6 +2021,7 @@ function renderTrein(){
       </div>`;
 
   document.getElementById('trein-grid').innerHTML = `
+    ${isDiretor && compatTrein.videosCompartilhados === false ? `<div class="trein-lock-note" style="margin-bottom:12px;"><strong>${zUiText('Atencao com os videos')}</strong>${zUiText('O banco de treinamentos ainda nao possui o campo de videos. Enquanto isso, os materiais ficam presos ao navegador onde foram cadastrados e podem sumir para outros usuarios.')}</div>` : ''}
     <div class="trein-shell">
       <div class="trein-list-col">
         <div class="trein-toolbar">
@@ -2338,7 +2355,14 @@ async function salvarTrein(){
       await dbSalvarTrein(novoRef, editIdx >= 0 ? editIdx : TREIN.indexOf(novoRef));
     }catch(e){
       console.error('Erro ao salvar videos do treinamento:', e);
-      showToast(zUiText('!'), zUiText('Treinamento salvo, mas os videos nao puderam ser gravados neste navegador.'));
+      showToast(
+        zUiText('!'),
+        zUiText(
+          treinVideosCompartilhadosNoBanco()
+            ? 'Treinamento salvo, mas os videos nao puderam ser gravados neste navegador.'
+            : 'Treinamento salvo, mas os videos ficaram apenas neste navegador porque o banco ainda nao suporta videos compartilhados.'
+        )
+      );
     }
 
     zSetState('state.data.treinamentos', TREIN);

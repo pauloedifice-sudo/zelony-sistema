@@ -1,5 +1,5 @@
 // DASHBOARD
-// Resultado comercial em tempo real, sem vendas distratadas e sem comissoes.
+// Resultado comercial em tempo real, sem vendas distratadas e sem comissões.
 
 let dashDataDe = '';
 let dashDataAte = '';
@@ -84,9 +84,9 @@ function dashMesAtualNome() {
 
 function dashPeriodoLabel() {
   if (dashDataDe || dashDataAte) {
-    const de = dashDataDe ? dashFormatarDataISO(dashDataDe) : 'inicio';
+    const de = dashDataDe ? dashFormatarDataISO(dashDataDe) : 'início';
     const ate = dashDataAte ? dashFormatarDataISO(dashDataAte) : 'hoje';
-    return `${de} ate ${ate}`;
+    return `${de} até ${ate}`;
   }
   return dashTexto(dashMesAtualNome());
 }
@@ -149,26 +149,9 @@ function dashCampoBateUsuario(campo, usuario) {
 }
 
 function dashVendaVisivelPerfil(v) {
-  const perfil = typeof role === 'string' ? role : 'cor';
-  const usuario = typeof usuarioLogado !== 'undefined' ? usuarioLogado : null;
-  const unidadeUsuario = usuario && usuario.unidade ? usuario.unidade : 'Ambas';
-
-  if (unidadeUsuario && unidadeUsuario !== 'Ambas' && v.unidade && v.unidade !== unidadeUsuario) return false;
-  if (perfil === 'dono' || perfil === 'fin' || perfil === 'dir') return true;
-  if (perfil === 'rh') return !!(v.pct_rh && v.pct_rh > 0);
-  if (!usuario) return false;
-
-  if (perfil === 'cor') {
-    return typeof corretorVendaPertenceAoUsuario === 'function'
-      ? corretorVendaPertenceAoUsuario(v, usuario)
-      : dashCampoBateUsuario(v.corretor, usuario);
-  }
-  if (perfil === 'cap') {
-    return dashCampoBateUsuario(v.capitao, usuario) || dashCampoBateUsuario(v.corretor, usuario);
-  }
-  if (perfil === 'ger') {
-    return dashCampoBateUsuario(v.gerente, usuario) || dashCampoBateUsuario(v.capitao, usuario) || dashCampoBateUsuario(v.corretor, usuario);
-  }
+  if (!v) return false;
+  // O dashboard funciona como um ranking geral: todos veem o mesmo placar,
+  // independentemente do perfil ou da unidade do usuário logado.
   return true;
 }
 
@@ -182,7 +165,7 @@ function dashUsuarioPorCampo(v, campo) {
 }
 
 function dashEquipeVenda(v) {
-  // No dashboard, a producao deve fechar no gerente responsavel.
+  // No dashboard, a produção deve fechar no gerente responsável.
   // Se o gerente nao tiver equipe cadastrada, agrupamos pelo nome dele.
   const usuarioGerente = dashUsuarioPorCampo(v, 'gerente');
   if (usuarioGerente && usuarioGerente.equipe) return usuarioGerente.equipe;
@@ -205,7 +188,7 @@ function dashVendasBase() {
 
 function dashNovoGrupo(nome) {
   return {
-    nome: dashTexto(nome, 'Sem identificacao'),
+    nome: dashTexto(nome, 'Sem identificação'),
     qtd: 0,
     vgv: 0,
     ticket: 0
@@ -215,7 +198,7 @@ function dashNovoGrupo(nome) {
 function dashAgrupar(lista, seletorNome) {
   const mapa = new Map();
   lista.forEach(v => {
-    const nome = dashTexto(seletorNome(v), 'Sem identificacao');
+    const nome = dashTexto(seletorNome(v), 'Sem identificação');
     const chave = dashNorm(nome) || nome;
     if (!mapa.has(chave)) mapa.set(chave, dashNovoGrupo(nome));
     const item = mapa.get(chave);
@@ -280,8 +263,8 @@ function dashRanking(titulo, subtitulo, lista, tipo) {
     `;
   }).join('') : `
     <div class="dash-empty">
-      <strong>${zUiText('Sem vendas ativas neste periodo.')}</strong>
-      <span>${zUiText('Quando o financeiro lancar uma venda ativa, ela aparece aqui.')}</span>
+      <strong>${zUiText('Sem vendas ativas neste período.')}</strong>
+      <span>${zUiText('Quando o financeiro lançar uma venda ativa, ela aparece aqui.')}</span>
     </div>
   `;
 
@@ -366,7 +349,7 @@ async function dashRecarregarVendasBanco() {
     if (typeof salvarLS === 'function') salvarLS();
     else dashRenderSeVisivel();
   } catch (e) {
-    console.info('Dashboard: atualizacao de vendas ficou para a proxima tentativa:', e.message || e);
+    console.info('Dashboard: atualização de vendas ficou para a próxima tentativa:', e.message || e);
   } finally {
     dashAtualizando = false;
   }
@@ -393,7 +376,7 @@ function iniciarDashboardLive() {
         }
       });
   } catch (e) {
-    console.info('Dashboard: realtime indisponivel, usando atualizacao periodica.', e.message || e);
+    console.info('Dashboard: realtime indisponível, usando atualização periódica.', e.message || e);
   }
 }
 
@@ -403,7 +386,7 @@ function renderDashboard() {
   iniciarDashboardLive();
 
   const resumo = dashResumo();
-  const liveLabel = dashRealtimeAtivo ? 'Ao vivo' : 'Atualizacao periodica';
+  const liveLabel = dashRealtimeAtivo ? 'Ao vivo' : 'Atualização periódica';
   const ultima = dashUltimaAtualizacao
     ? `${zUiText('Atualizado')} ${new Date(dashUltimaAtualizacao).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
     : zUiText('Aguardando movimento');
@@ -415,7 +398,7 @@ function renderDashboard() {
       <div class="dash-hero-copy">
         <div class="dash-eyebrow">${zUiText('Dashboard comercial')}</div>
         <h2>${zUiText('Resultado de vendas em tempo real')}</h2>
-        <p>${zUiText('Foco no mes atual por padrao. Use o periodo personalizado para analisar qualquer janela de datas.')}</p>
+        <p>${zUiText('Foco no mês atual por padrão. Use o período personalizado para analisar qualquer janela de datas.')}</p>
         <div class="dash-live-row">
           <span class="dash-live-dot"></span>
           <strong>${zUiText(liveLabel)}</strong>
@@ -423,7 +406,7 @@ function renderDashboard() {
         </div>
       </div>
       <div class="dash-filter-card">
-        <div class="dash-filter-title">${zUiText('Periodo')}</div>
+        <div class="dash-filter-title">${zUiText('Período')}</div>
         <div class="dash-filter-current">${zUiText(dashPeriodoLabel())}</div>
         <div class="dash-filter-grid">
           <label>
@@ -431,29 +414,29 @@ function renderDashboard() {
             <input type="date" value="${dashAttr(dashDataDe)}" onchange="dashSetPeriodo('de', this.value)">
           </label>
           <label>
-            <span>Ate</span>
+            <span>Até</span>
             <input type="date" value="${dashAttr(dashDataAte)}" onchange="dashSetPeriodo('ate', this.value)">
           </label>
         </div>
         <div class="dash-filter-actions">
-          <button type="button" onclick="dashLimparPeriodo()">${zUiText('Voltar ao mes atual')}</button>
+          <button type="button" onclick="dashLimparPeriodo()">${zUiText('Voltar ao mês atual')}</button>
           <button type="button" class="primary" onclick="dashRecarregarVendasBanco()">${zUiText('Atualizar agora')}</button>
         </div>
       </div>
     </div>
 
     <div class="dash-kpis">
-      ${dashCardKpi('Numero de vendas', dashNumero(resumo.qtd), zUiText('Somente vendas ativas'), true)}
+      ${dashCardKpi('Número de vendas', dashNumero(resumo.qtd), zUiText('Somente vendas ativas'), true)}
       ${dashCardKpi('VGV', dashMoney(resumo.vgv), zUiText('Valor geral de vendas'))}
-      ${dashCardKpi('Ticket medio', dashMoney(resumo.ticket), zUiText('VGV dividido por vendas'))}
-      ${dashCardKpi('Top corretor', topCorretor, zUiText('Maior VGV no periodo'))}
-      ${dashCardKpi('Top equipe', topEquipe, zUiText('Maior VGV no periodo'))}
+      ${dashCardKpi('Ticket médio', dashMoney(resumo.ticket), zUiText('VGV dividido por vendas'))}
+      ${dashCardKpi('Top corretor', topCorretor, zUiText('Maior VGV no período'))}
+      ${dashCardKpi('Top equipe', topEquipe, zUiText('Maior VGV no período'))}
     </div>
 
     <div class="dash-grid">
       ${dashRanking('Corretores', 'Ranking por VGV', resumo.corretores, 'corretores')}
-      ${dashRanking('Equipes', 'Producao agrupada', resumo.equipes, 'equipes')}
-      ${dashRanking('Unidades', 'Visao por unidade', resumo.unidades, 'unidades')}
+      ${dashRanking('Equipes', 'Produção agrupada', resumo.equipes, 'equipes')}
+      ${dashRanking('Unidades', 'Visão por unidade', resumo.unidades, 'unidades')}
     </div>
   `;
 }
