@@ -6,8 +6,8 @@ values (
   'documentos',
   'documentos',
   false,
-  5242880,
-  array['application/pdf']
+  10485760,
+  array['application/pdf','image/jpeg','image/png','image/webp','image/jpg']
 )
 on conflict (id) do update
 set

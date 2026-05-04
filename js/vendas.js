@@ -25,7 +25,7 @@ const PROC_DATA={
 };
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ ESTADO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
-let curVId=null, pendId=null, fEtapa='all', relMes='TODOS', vtab='acomp', filtroUnidade='all', fPrazo='all', maisFiltrosAbertos=false;
+let curVId=null, pendId=null, fEtapa='all', fEtapaModo='incluir', fEtapasSelecionadas=[], filtroEtapaMenuAberto=false, relMes='TODOS', vtab='acomp', filtroUnidade='all', fPrazo='all', maisFiltrosAbertos=false;
 let nextVendaId=1;
 let mvDocs={comp:null,cont:null};
 let distratoVendaId=null;
@@ -40,9 +40,47 @@ zSetState('config.procData', PROC_DATA);
 zSetState('state.ui.curVId', curVId);
 zSetState('state.ui.pendId', pendId);
 zSetState('state.ui.fEtapa', fEtapa);
+zSetState('state.ui.fEtapaModo', fEtapaModo);
+zSetState('state.ui.fEtapasSelecionadas', fEtapasSelecionadas);
+zSetState('state.ui.filtroEtapaMenuAberto', filtroEtapaMenuAberto);
 zSetState('state.ui.relMes', relMes);
 zSetState('state.ui.fPrazo', fPrazo);
 zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
+
+function normalizarEtapasSelecionadas(lista){
+  return [...new Set((Array.isArray(lista)?lista:[])
+    .map(item=>Number(item))
+    .filter(item=>Number.isInteger(item)&&item>=0&&item<ETAPAS.length))]
+    .sort((a,b)=>a-b);
+}
+function syncFiltroEtapaState(){
+  fEtapasSelecionadas=normalizarEtapasSelecionadas(fEtapasSelecionadas);
+  fEtapa=fEtapasSelecionadas.length===0?'all':(fEtapaModo==='incluir'&&fEtapasSelecionadas.length===1?fEtapasSelecionadas[0]:'multi');
+  zSetState('state.ui.fEtapa', fEtapa);
+  zSetState('state.ui.fEtapaModo', fEtapaModo);
+  zSetState('state.ui.fEtapasSelecionadas', [...fEtapasSelecionadas]);
+  zSetState('state.ui.filtroEtapaMenuAberto', filtroEtapaMenuAberto);
+}
+function etapaSelecionadaNoFiltro(etapa){
+  return fEtapasSelecionadas.includes(Number(etapa));
+}
+function vendaPassaFiltroEtapa(v){
+  if(!fEtapasSelecionadas.length) return true;
+  const selecionada=etapaSelecionadaNoFiltro(v&&v.etapa);
+  return fEtapaModo==='excluir'?!selecionada:selecionada;
+}
+function resumoFiltroEtapas(limite=3){
+  if(!fEtapasSelecionadas.length) return zUiText('Todas');
+  const labels=fEtapasSelecionadas.map(idx=>labelFiltroEtapa(ETAPAS[idx]));
+  if(labels.length<=limite) return labels.join(', ');
+  return `${labels.slice(0,limite).join(', ')} +${labels.length-limite}`;
+}
+function resumoFiltroEtapasDetalhado(){
+  if(!fEtapasSelecionadas.length) return zUiText('Mostrando todas as etapas do pipeline.');
+  if(fEtapaModo==='excluir') return `${zUiText('Mostrando todas as etapas, exceto')}: ${zUiText(resumoFiltroEtapas(4))}`;
+  return `${zUiText('Mostrando somente')}: ${zUiText(resumoFiltroEtapas(4))}`;
+}
+syncFiltroEtapaState();
 
 function histAfetaFluxo(h){
   return h.tipo!=='edicao'
@@ -489,13 +527,13 @@ function comMinha(v){
 }
 
 function lblCom(){
-  if(role==='cor') return 'Minha comissÃƒÂ£o';
+  if(role==='cor') return 'Minha comissão';
   if(role==='cap') return 'Cap + Corretor';
   if(role==='ger') return 'Ger + equipe';
   if(role==='dir') return 'Dir + equipe';
-  if(role==='rh') return 'ComissÃƒÂ£o RH';
-  if(role==='dono') return 'Com. lÃƒÂ­quida total';
-  return 'Com. lÃƒÂ­quida total';
+  if(role==='rh') return 'Comissão RH';
+  if(role==='dono') return 'Com. líquida total';
+  return 'Com. líquida total';
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ FILTRO POR UNIDADE ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
@@ -658,10 +696,12 @@ function setFiltroPrazoRapido(valor){
 function limparTodosFiltrosVendas(){
   const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem','vf-situacao','vf-pend-comercial'];
   ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  fEtapa='all';
+  fEtapaModo='incluir';
+  fEtapasSelecionadas=[];
+  filtroEtapaMenuAberto=false;
   fPrazo='all';
   filtroUnidade='all';
-  zSetState('state.ui.fEtapa', fEtapa);
+  syncFiltroEtapaState();
   zSetState('state.ui.fPrazo', fPrazo);
   zSetState('state.ui.filtroUnidade', filtroUnidade);
   document.querySelectorAll('.uf').forEach(b=>{b.className='uf';});
@@ -688,11 +728,53 @@ function labelFiltroEtapa(etapa){
 function chipFiltroHTML(label,count,onclick,extraClass='',extraStyle=''){
   return `<button class="fe ${extraClass}" onclick="${onclick}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></button>`;
 }
+function chipEtapaVisualHTML(label,count,extraClass='',extraStyle=''){
+  return `<span class="fe fe-static ${extraClass}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></span>`;
+}
 function renderFiltros(){
   const base=aplicarFiltroPendencia(aplicarFiltroSituacao(vendasU(VENDAS)));
   const cnt={}; base.forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});
-  let h=chipFiltroHTML('Todas',base.length,`setFE('all')`,fEtapa==='all'?'active':'');
-  ETAPAS.forEach((e,i)=>{if(cnt[i])h+=chipFiltroHTML(labelFiltroEtapa(e),cnt[i],`setFE(${i})`,fEtapa==i?'active':'');});
+  const mostrarTodasAtiva=!fEtapasSelecionadas.length;
+  const hPainelEtapas=`
+    <div class="vf-stage-inline-tools">
+      <button type="button" class="vf-stage-filter-btn ${filtroEtapaMenuAberto?'active':''}" onclick="toggleFiltroEtapaMenu()">
+        ${zUiText('Filtrar etapas')}
+        ${fEtapasSelecionadas.length?`<span class="vf-stage-filter-count">${fEtapasSelecionadas.length}</span>`:''}
+      </button>
+      <div class="vf-stage-summary">${resumoFiltroEtapasDetalhado()}</div>
+    </div>
+    ${filtroEtapaMenuAberto?`
+      <div class="vf-stage-panel">
+        <div class="vf-stage-panel-top">
+          <div class="vf-stage-mode">
+            <span class="vf-stage-mode-label">${zUiText('Modo')}</span>
+            <button type="button" class="vf-stage-toggle ${fEtapaModo==='incluir'?'active':''}" onclick="setModoFiltroEtapa('incluir')">${zUiText('Incluir')}</button>
+            <button type="button" class="vf-stage-toggle ${fEtapaModo==='excluir'?'active':''}" onclick="setModoFiltroEtapa('excluir')">${zUiText('Exceto')}</button>
+          </div>
+          <div class="vf-stage-actions">
+            <button type="button" class="vf-stage-action" onclick="selecionarTodasEtapasFiltro()">${zUiText('Selecionar todas')}</button>
+            <button type="button" class="vf-stage-action ${mostrarTodasAtiva?'active':''}" onclick="limparFiltroEtapa()">${zUiText('Limpar')}</button>
+            <button type="button" class="vf-stage-action" onclick="toggleFiltroEtapaMenu(false)">${zUiText('Fechar')}</button>
+          </div>
+        </div>
+        <div class="vf-stage-checklist">
+          ${ETAPAS.map((e,i)=>`
+            <label class="vf-stage-check">
+              <span class="vf-stage-check-main">
+                <input type="checkbox" ${etapaSelecionadaNoFiltro(i)?'checked':''} onchange="setFE(${i})">
+                <span>${zUiText(e)}</span>
+              </span>
+              <b>${cnt[i]||0}</b>
+            </label>`).join('')}
+        </div>
+      </div>`:''}`;
+  let h=chipEtapaVisualHTML('Todas',base.length,mostrarTodasAtiva?'active':'');
+  ETAPAS.forEach((e,i)=>{
+    if(cnt[i]||etapaSelecionadaNoFiltro(i)){
+      const classe=etapaSelecionadaNoFiltro(i)?(fEtapaModo==='excluir'?'active-exclude':'active'):'';
+      h+=chipEtapaVisualHTML(labelFiltroEtapa(e),cnt[i]||0,classe);
+    }
+  });
   let hPrazo='';
   if(document.getElementById('vf-situacao')?.value!=='distratos'){
     const comPrazo=base.filter(v=>!v.distratada&&PRAZOS_ETAPA[v.etapa]!==null&&v.etapa<ETAPAS.length-1);
@@ -703,7 +785,7 @@ function renderFiltros(){
     if(vencem.length) hPrazo+=chipFiltroHTML('⚠️ Vence hoje',vencem.length,`filtrarPrazo('alerta')`,`${fPrazo==='alerta'?'is-highlighted ':''}fe-vence`,'background:#FFF8E8;color:#C08020;border-color:#E8C060;');
     if(noPrazo.length) hPrazo+=chipFiltroHTML('✓ No prazo',noPrazo.length,`filtrarPrazo('ok')`,`${fPrazo==='ok'?'is-highlighted ':''}fe-ok`,'background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;');
   }
-  document.getElementById('vfilters').innerHTML=`<div class="vf-chip-stage-row">${h}</div>${hPrazo?`<div class="vf-chip-row">${hPrazo}</div>`:''}`;
+  document.getElementById('vfilters').innerHTML=`${hPainelEtapas}<div class="vf-chip-stage-row">${h}</div>${hPrazo?`<div class="vf-chip-row">${hPrazo}</div>`:''}`;
   const unidEl=document.getElementById('unid-filter');
   const temAmbas=['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas');
   if(unidEl) unidEl.classList.toggle('hidden',!temAmbas);
@@ -759,6 +841,12 @@ function atualizarTagsFiltros(){
   if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
   if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
   if(vfPend) tags.push({label:zUiText(`🟠 ${vfPend==='com'?'Com pendência comercial':'Sem pendência comercial'}`),clear:()=>{document.getElementById('vf-pend-comercial').value='';renderFiltros();renderVList();}});
+  if(fEtapasSelecionadas.length){
+    const prefixo=fEtapaModo==='excluir'
+      ? `🧭 ${zUiText('Todas exceto')}`
+      : `🧭 ${zUiText('Somente')}`;
+    tags.push({label:`${prefixo} ${zUiText(resumoFiltroEtapas())}`,clear:()=>{limparFiltroEtapa();}});
+  }
   if(filtroUnidade!=='all') tags.push({label:zUiText(`📍 ${filtroUnidade}`),clear:()=>{const ufAll=document.getElementById('uf-all');if(ufAll) setUnidade('all',ufAll);}});
   if(fPrazo!=='all'){
     const labels={atrasada:'❗ Atrasadas',alerta:'⚠️ Vence hoje',ok:'✓ No prazo'};
@@ -776,7 +864,44 @@ function clearTag(i){
   const tags=wrap&&wrap._tags;
   if(tags&&tags[i]&&typeof tags[i].clear==='function') tags[i].clear();
 }
-function setFE(v){fEtapa=v==='all'?'all':parseInt(v);zSetState('state.ui.fEtapa', fEtapa);renderFiltros();renderVList();}
+function toggleFiltroEtapaMenu(force){
+  filtroEtapaMenuAberto=typeof force==='boolean'?force:!filtroEtapaMenuAberto;
+  zSetState('state.ui.filtroEtapaMenuAberto', filtroEtapaMenuAberto);
+  renderFiltros();
+}
+function limparFiltroEtapa(){
+  fEtapasSelecionadas=[];
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function selecionarTodasEtapasFiltro(){
+  fEtapasSelecionadas=ETAPAS.map((_,idx)=>idx);
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function setModoFiltroEtapa(modo){
+  const proximo=modo==='excluir'?'excluir':'incluir';
+  if(fEtapaModo===proximo) return;
+  fEtapaModo=proximo;
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function setFE(v){
+  if(v==='all'){
+    limparFiltroEtapa();
+    return;
+  }
+  const etapa=parseInt(v,10);
+  if(!Number.isInteger(etapa)) return;
+  if(etapaSelecionadaNoFiltro(etapa)) fEtapasSelecionadas=fEtapasSelecionadas.filter(item=>item!==etapa);
+  else fEtapasSelecionadas=[...fEtapasSelecionadas,etapa];
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
 function setUnidade(u,el){
   filtroUnidade=u;
   zSetState('state.ui.filtroUnidade', filtroUnidade);
@@ -800,7 +925,7 @@ function filtrarPrazo(tipo){
 }
 function renderVList(){
   let l=aplicarFiltroPendencia(aplicarFiltroSituacao(vendasU(VENDAS)));
-  if(fEtapa!=='all') l=l.filter(v=>v.etapa===parseInt(fEtapa));
+  l=l.filter(vendaPassaFiltroEtapa);
   const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();
   if(q) l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q)||v.construtora.toLowerCase().includes(q)||v.corretor.toLowerCase().includes(q));
   const vfMes=document.getElementById('vf-mes')?.value;

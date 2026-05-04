@@ -35,6 +35,9 @@ const VENDAS=[];
 let TREIN=[];
 const DOCUMENTOS=[];
 let AGENDAMENTOS=[];
+const FINANCEIRO_LANCAMENTOS=[];
+const FINANCEIRO_COMPROVANTE_DB='zel_financeiro_comprovantes';
+const FINANCEIRO_COMPROVANTE_STORE='arquivos';
 const USUARIOS_PADRAO=[
   {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
   {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
@@ -59,6 +62,7 @@ const TREINAMENTOS_COMPAT_STATUS={
   ultimaAtualizacao:''
 };
 let supabasePosCargaPromise=null;
+let financeiroComprovanteDBPromise=null;
 function setBootStage(etapa){
   const texto=String(etapa||'').trim()||'inicializando';
   SUPABASE_BOOT_STATUS.etapa=texto;
@@ -185,6 +189,7 @@ zSetState('state.data.vendas', VENDAS);
 zSetState('state.data.treinamentos', TREIN);
 zSetState('state.data.documentos', DOCUMENTOS);
 zSetState('state.data.agendamentos', AGENDAMENTOS);
+zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
 zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 
@@ -213,7 +218,7 @@ async function carregarDB(){
   const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
 
   setBootStage('buscando tabelas principais');
-  const [us,ss,vs,ts,ds,ags]=await Promise.all([
+  const [us,ss,vs,ts,ds,ags,fls]=await Promise.all([
     carregar('usuarios','id'),
     carregar('senhas',null),
     (async()=>{
@@ -245,7 +250,8 @@ async function carregarDB(){
         console.warn('Falha ao carregar "agendamentos":',msg||e.message||e);
         return null;
       }
-    })()
+    })(),
+    carregar('financeiro_lancamentos','data_prevista')
   ]);
 
   setBootStage('mesclando dados locais');
@@ -295,6 +301,12 @@ async function carregarDB(){
     });
     DOCUMENTOS.splice(0,DOCUMENTOS.length,...Array.from(docsMap.values()).sort(ordenarDocumentos));
     zSetState('state.data.documentos', DOCUMENTOS);
+  }
+  {
+    const finLocal=carregarFinanceiroLancamentosLS();
+    const finMesclados=mesclarFinanceiroLancamentosBancoComLocal(Array.isArray(fls)?fls:[], finLocal);
+    FINANCEIRO_LANCAMENTOS.splice(0,FINANCEIRO_LANCAMENTOS.length,...finMesclados);
+    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
   }
   {
     const agBanco=Array.isArray(ags)?ags.map(item=>{
@@ -354,6 +366,8 @@ async function executarPosCargaSupabase(opcoes={}){
     timeoutMs:Math.max(5000,parseInt(opcoes.timeoutMs,10)||12000),
     silenciosoAgendamentos:opcoes.silenciosoAgendamentos!==false,
     renderizarAgendamentos:opcoes.renderizarAgendamentos!==false,
+    silenciosoFinanceiro:opcoes.silenciosoFinanceiro!==false,
+    renderizarFinanceiro:opcoes.renderizarFinanceiro!==false,
     persistirRh:opcoes.persistirRh!==false,
     renderizarRh:opcoes.renderizarRh!==false
   };
@@ -376,6 +390,26 @@ async function executarPosCargaSupabase(opcoes={}){
         console.info('Pos-carga do Supabase: sincronizacao de agendamentos pendentes ficou para a proxima tentativa:',msg);
       }else{
         console.warn('Pos-carga do Supabase: falha ao sincronizar agendamentos pendentes:',msg);
+      }
+    }
+    try{
+      if(FINANCEIRO_LANCAMENTOS.some(lancamentoFinanceiroTemSyncPendente)){
+        setBootStage('sincronizando financeiro pendente');
+        await promiseComTimeout(
+          sincronizarFinanceiroPendentes({
+            silencioso:config.silenciosoFinanceiro,
+            renderizar:config.renderizarFinanceiro
+          }),
+          config.timeoutMs,
+          'Sincronizacao do financeiro'
+        );
+      }
+    }catch(e){
+      const msg=e&&e.message?e.message:e;
+      if(/timeout/i.test(String(msg||''))){
+        console.info('Pos-carga do Supabase: sincronizacao do financeiro ficou para a proxima tentativa:',msg);
+      }else{
+        console.warn('Pos-carga do Supabase: falha ao sincronizar o financeiro pendente:',msg);
       }
     }
     try{
@@ -699,6 +733,257 @@ function preferirAgendamentoMaisRecente(atual, proximo){
 }
 
 // ── CRUD VENDAS ───────────────────────────────────────────────────────────────
+function tipoLancamentoFinanceiroNormalizado(tipo){
+  return String(tipo||'').trim().toLowerCase()==='saida' ? 'saida' : 'entrada';
+}
+
+function statusLancamentoFinanceiroNormalizado(status){
+  return String(status||'').trim().toLowerCase()==='realizado' ? 'realizado' : 'previsto';
+}
+
+function gerarRefLocalFinanceiro(){
+  if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function'){
+    return `fin-${crypto.randomUUID()}`;
+  }
+  return `fin-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+}
+
+function garantirRefLocalFinanceiro(item){
+  if(!item||typeof item!=='object') return '';
+  const atual=String(item.refLocal||item.ref_local||'').trim();
+  if(atual){
+    item.refLocal=atual;
+    return atual;
+  }
+  item.refLocal=gerarRefLocalFinanceiro();
+  return item.refLocal;
+}
+
+function abrirFinanceiroComprovanteDB(){
+  if(!window.indexedDB) return Promise.reject(new Error('indexedDB indisponivel'));
+  if(financeiroComprovanteDBPromise) return financeiroComprovanteDBPromise;
+  financeiroComprovanteDBPromise=new Promise((resolve,reject)=>{
+    const req=indexedDB.open(FINANCEIRO_COMPROVANTE_DB,1);
+    req.onupgradeneeded=()=>{
+      const db=req.result;
+      if(!db.objectStoreNames.contains(FINANCEIRO_COMPROVANTE_STORE)){
+        db.createObjectStore(FINANCEIRO_COMPROVANTE_STORE,{ keyPath:'id' });
+      }
+    };
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('Falha ao abrir o banco local de comprovantes do financeiro.'));
+  });
+  return financeiroComprovanteDBPromise;
+}
+
+async function salvarFinanceiroComprovanteLocal(id, arquivo, meta={}){
+  if(!id||!arquivo) return null;
+  const db=await abrirFinanceiroComprovanteDB();
+  const registro={
+    id:String(id),
+    file:arquivo,
+    nome:String(meta.nome||arquivo.name||'comprovante').trim()||'comprovante',
+    mime:String(meta.mime||arquivo.type||'').trim(),
+    size:parseInt(meta.size||arquivo.size,10)||0,
+    atualizadoEm:new Date().toISOString()
+  };
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(FINANCEIRO_COMPROVANTE_STORE,'readwrite');
+    tx.onabort=()=>reject(tx.error||new Error('Falha ao salvar o comprovante local do financeiro.'));
+    tx.onerror=()=>reject(tx.error||new Error('Falha ao salvar o comprovante local do financeiro.'));
+    tx.oncomplete=()=>resolve(registro);
+    tx.objectStore(FINANCEIRO_COMPROVANTE_STORE).put(registro);
+  });
+}
+
+async function obterFinanceiroComprovanteLocal(id){
+  if(!id) return null;
+  const db=await abrirFinanceiroComprovanteDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(FINANCEIRO_COMPROVANTE_STORE,'readonly');
+    const req=tx.objectStore(FINANCEIRO_COMPROVANTE_STORE).get(String(id));
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error||new Error('Falha ao carregar o comprovante local do financeiro.'));
+  });
+}
+
+async function excluirFinanceiroComprovanteLocal(id){
+  if(!id) return true;
+  const db=await abrirFinanceiroComprovanteDB();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(FINANCEIRO_COMPROVANTE_STORE,'readwrite');
+    tx.onabort=()=>reject(tx.error||new Error('Falha ao remover o comprovante local do financeiro.'));
+    tx.onerror=()=>reject(tx.error||new Error('Falha ao remover o comprovante local do financeiro.'));
+    tx.oncomplete=()=>resolve(true);
+    tx.objectStore(FINANCEIRO_COMPROVANTE_STORE).delete(String(id));
+  });
+}
+
+async function dataUrlParaArquivoFinanceiro(dataUrl,nome='comprovante.pdf',mime=''){
+  const res=await fetch(String(dataUrl||''));
+  const blob=await res.blob();
+  const tipo=String(mime||blob.type||'application/octet-stream').trim()||'application/octet-stream';
+  if(typeof File==='function') return new File([blob], nome||'comprovante.pdf', { type: tipo });
+  return Object.assign(blob,{ name:nome||'comprovante.pdf', type:tipo });
+}
+
+async function prepararComprovanteFinanceiroParaUpload(lancamento){
+  if(!lancamento) return null;
+  const nome=String(lancamento.comprovanteNome||'comprovante.pdf').trim()||'comprovante.pdf';
+  const mime=String(lancamento.comprovanteMime||'').trim();
+  if(lancamento.comprovanteLocalId){
+    const local=await obterFinanceiroComprovanteLocal(lancamento.comprovanteLocalId).catch(()=>null);
+    if(local&&local.file){
+      if(typeof File==='function'&&local.file instanceof File) return local.file;
+      return new File([local.file], local.nome||nome, { type: local.mime||mime||local.file.type||'application/octet-stream' });
+    }
+  }
+  if(lancamento.comprovanteDataUrl){
+    return dataUrlParaArquivoFinanceiro(lancamento.comprovanteDataUrl,nome,mime);
+  }
+  return null;
+}
+
+function mapLancamentoFinanceiroIn(item){
+  const lancamento={
+    id:parseInt(item&&item.id,10)||0,
+    tipo:tipoLancamentoFinanceiroNormalizado(item&&(item.tipo||item.natureza)),
+    categoria:String(item&&(item.categoria||item.grupo)||'').trim()||'Outros',
+    descricao:String(item&&(item.descricao||item.nome)||'').trim(),
+    status:statusLancamentoFinanceiroNormalizado(item&&item.status),
+    valor:parseFloat(item&&item.valor)||0,
+    unidade:String(item&&item.unidade||'').trim(),
+    dataPrevista:String(item&&(item.data_prevista||item.dataPrevista)||'').slice(0,10),
+    dataRealizada:String(item&&(item.data_realizada||item.dataRealizada)||'').slice(0,10),
+    observacao:String(item&&(item.observacao||item.obs)||'').trim(),
+    comprovanteNome:String(item&&(item.comprovante_nome||item.comprovanteNome)||'').trim(),
+    comprovanteMime:String(item&&(item.comprovante_mime||item.comprovanteMime)||'').trim(),
+    comprovanteSize:parseInt(item&&(item.comprovante_size||item.comprovanteSize),10)||0,
+    comprovanteDataUrl:String(item&&(item.comprovante_data_url||item.comprovanteDataUrl)||'').trim(),
+    comprovanteLocalId:String(item&&(item.comprovante_local_id||item.comprovanteLocalId)||'').trim(),
+    comprovanteStorageBucket:String(item&&(item.comprovante_storage_bucket||item.comprovanteStorageBucket)||'').trim(),
+    comprovanteStoragePath:String(item&&(item.comprovante_storage_path||item.comprovanteStoragePath)||'').trim(),
+    criadoPor:String(item&&(item.criado_por||item.criadoPor)||'').trim(),
+    criadoPorId:parseInt(item&&(item.criado_por_id||item.criadoPorId),10)||0,
+    criadoPorEmail:String(item&&(item.criado_por_email||item.criadoPorEmail)||'').trim(),
+    atualizadoEm:String(item&&(item.atualizado_em||item.atualizadoEm)||'').trim(),
+    refLocal:String(item&&(item.ref_local||item.refLocal)||'').trim(),
+    syncPendente:!!(item&&(item.sync_pendente||item.syncPendente)),
+    syncErro:String(item&&(item.sync_erro||item.syncErro)||'').trim()
+  };
+  garantirRefLocalFinanceiro(lancamento);
+  if(!lancamento.atualizadoEm) lancamento.atualizadoEm=new Date().toISOString();
+  return lancamento;
+}
+
+function mapLancamentoFinanceiroOut(item){
+  garantirRefLocalFinanceiro(item);
+  return{
+    tipo:tipoLancamentoFinanceiroNormalizado(item.tipo),
+    categoria:item.categoria||'Outros',
+    descricao:item.descricao||'',
+    status:statusLancamentoFinanceiroNormalizado(item.status),
+    valor:parseFloat(item.valor)||0,
+    unidade:item.unidade||'',
+    data_prevista:item.dataPrevista||null,
+    data_realizada:item.dataRealizada||null,
+    observacao:item.observacao||'',
+    comprovante_nome:item.comprovanteNome||'',
+    comprovante_mime:item.comprovanteMime||'',
+    comprovante_size:item.comprovanteSize||0,
+    comprovante_data_url:item.comprovanteDataUrl||'',
+    comprovante_storage_bucket:item.comprovanteStorageBucket||'',
+    comprovante_storage_path:item.comprovanteStoragePath||'',
+    criado_por:item.criadoPor||'',
+    criado_por_id:item.criadoPorId||null,
+    criado_por_email:item.criadoPorEmail||'',
+    atualizado_em:item.atualizadoEm||new Date().toISOString(),
+    ref_local:item.refLocal||null,
+    sync_pendente:!!item.syncPendente,
+    sync_erro:item.syncErro||''
+  };
+}
+
+function extrairColunaAusenteSupabase(error,tabela=''){
+  const msg=mensagemErroSyncAgendamentos(error);
+  const bruto=String(msg||'');
+  const prefixo=tabela?`${tabela}.`:'';
+  const regexComTabela=new RegExp(`column\\s+${prefixo}([a-z0-9_]+)\\s+does not exist`,'i');
+  const regexSemTabela=/column\s+([a-z0-9_]+)\s+does not exist/i;
+  const match=bruto.match(regexComTabela)||bruto.match(regexSemTabela);
+  return match&&match[1]?String(match[1]).trim().toLowerCase():'';
+}
+
+function reduzirPayloadFinanceiroPorSchema(payload,colunaAusente=''){
+  const reduzido={...(payload||{})};
+  const grupos={
+    comprovante_nome:['comprovante_nome','comprovante_mime','comprovante_size','comprovante_data_url','comprovante_storage_bucket','comprovante_storage_path'],
+    comprovante_mime:['comprovante_nome','comprovante_mime','comprovante_size','comprovante_data_url','comprovante_storage_bucket','comprovante_storage_path'],
+    comprovante_size:['comprovante_nome','comprovante_mime','comprovante_size','comprovante_data_url','comprovante_storage_bucket','comprovante_storage_path'],
+    comprovante_data_url:['comprovante_nome','comprovante_mime','comprovante_size','comprovante_data_url','comprovante_storage_bucket','comprovante_storage_path'],
+    comprovante_storage_bucket:['comprovante_nome','comprovante_mime','comprovante_size','comprovante_data_url','comprovante_storage_bucket','comprovante_storage_path'],
+    comprovante_storage_path:['comprovante_nome','comprovante_mime','comprovante_size','comprovante_data_url','comprovante_storage_bucket','comprovante_storage_path']
+  };
+  const lista=grupos[colunaAusente]||[colunaAusente];
+  lista.forEach(coluna=>{ if(coluna) delete reduzido[coluna]; });
+  return reduzido;
+}
+
+function getFinanceiroLancamentoMergeKey(item){
+  const mapped=mapLancamentoFinanceiroIn(item);
+  if(mapped.refLocal) return `ref:${mapped.refLocal}`;
+  if(mapped.id) return `id:${mapped.id}`;
+  return `local:${mapped.tipo}:${mapped.dataPrevista}:${mapped.valor}:${mapped.descricao}`;
+}
+
+function ordenarFinanceiroLancamentos(a,b){
+  const dataA=String(a&&a.dataRealizada||a&&a.dataPrevista||'');
+  const dataB=String(b&&b.dataRealizada||b&&b.dataPrevista||'');
+  if(dataA!==dataB) return dataA.localeCompare(dataB);
+  const valorA=parseFloat(a&&a.valor)||0;
+  const valorB=parseFloat(b&&b.valor)||0;
+  if(valorA!==valorB) return valorB-valorA;
+  return String(a&&a.descricao||'').localeCompare(String(b&&b.descricao||''),'pt-BR');
+}
+
+function preferirLancamentoFinanceiroMaisRecente(atual, proximo){
+  if(!atual) return proximo;
+  const dataAtual=Date.parse(atual&&atual.atualizadoEm||'')||0;
+  const dataProxima=Date.parse(proximo&&proximo.atualizadoEm||'')||0;
+  const atualPendente=!!(atual&&atual.syncPendente);
+  const proximoPendente=!!(proximo&&proximo.syncPendente);
+  if(atualPendente!==proximoPendente){
+    if(proximoPendente&&dataProxima>=dataAtual) return proximo;
+    if(atualPendente&&dataAtual>=dataProxima) return atual;
+  }
+  return dataProxima>=dataAtual?proximo:atual;
+}
+
+function carregarFinanceiroLancamentosLS(){
+  try{
+    const raw=localStorage.getItem('zel_financeiro_lancamentos');
+    const lista=raw?JSON.parse(raw):[];
+    return Array.isArray(lista)?lista.map(mapLancamentoFinanceiroIn):[];
+  }catch(e){
+    return [];
+  }
+}
+
+function mesclarFinanceiroLancamentosBancoComLocal(bancoLista, localLista){
+  const mapa=new Map();
+  (Array.isArray(localLista)?localLista:[]).forEach(item=>{
+    const mapped=mapLancamentoFinanceiroIn(item);
+    const chave=getFinanceiroLancamentoMergeKey(mapped);
+    mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
+  });
+  (Array.isArray(bancoLista)?bancoLista:[]).forEach(item=>{
+    const mapped=mapLancamentoFinanceiroIn(item);
+    const chave=getFinanceiroLancamentoMergeKey(mapped);
+    mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
+  });
+  return [...mapa.values()].sort(ordenarFinanceiroLancamentos);
+}
+
 function mapDocumentoIn(d){
   const brutoArquivo=d.data_url||d.dataUrl||'';
   const storageInfo=parseDocumentoStorageRef(d.storage_ref||d.storageRef||brutoArquivo);
@@ -1096,6 +1381,133 @@ async function dbExcluirAgendamento(agOuId){
   }
 }
 
+async function dbSalvarLancamentoFinanceiro(lancamento, id){
+  garantirRefLocalFinanceiro(lancamento);
+  if(!lancamento.atualizadoEm) lancamento.atualizadoEm=new Date().toISOString();
+  const payloadOriginal=mapLancamentoFinanceiroOut(lancamento);
+  const alvoId=parseInt(id||lancamento.id,10)||0;
+  try{
+    let payloadAtual={...payloadOriginal};
+    let data=null;
+    let payloadReduzido=false;
+    for(let tentativa=0; tentativa<8; tentativa++){
+      try{
+        data=null;
+        if(payloadAtual.ref_local){
+          const respostaRef=await sb.from('financeiro_lancamentos').update(payloadAtual).eq('ref_local',payloadAtual.ref_local).select().maybeSingle();
+          if(respostaRef.error) throw respostaRef.error;
+          data=respostaRef.data||null;
+        }
+        if(!data&&alvoId){
+          const respostaId=await sb.from('financeiro_lancamentos').update(payloadAtual).eq('id',alvoId).select().maybeSingle();
+          if(respostaId.error) throw respostaId.error;
+          data=respostaId.data||null;
+        }
+        if(!data){
+          const respostaInsert=await sb.from('financeiro_lancamentos').insert(payloadAtual).select().single();
+          if(respostaInsert.error) throw respostaInsert.error;
+          data=respostaInsert.data||null;
+        }
+        break;
+      }catch(errorInterno){
+        const colunaAusente=extrairColunaAusenteSupabase(errorInterno,'financeiro_lancamentos');
+        if(colunaAusente&&Object.prototype.hasOwnProperty.call(payloadAtual,colunaAusente)){
+          payloadAtual=reduzirPayloadFinanceiroPorSchema(payloadAtual,colunaAusente);
+          payloadReduzido=true;
+          continue;
+        }
+        throw errorInterno;
+      }
+    }
+    if(data){
+      const dadosMapeados=mapLancamentoFinanceiroIn(data);
+      if(payloadReduzido){
+        const preservados={
+          comprovanteNome:lancamento.comprovanteNome||'',
+          comprovanteMime:lancamento.comprovanteMime||'',
+          comprovanteSize:lancamento.comprovanteSize||0,
+          comprovanteDataUrl:lancamento.comprovanteDataUrl||'',
+          comprovanteLocalId:lancamento.comprovanteLocalId||'',
+          comprovanteStorageBucket:lancamento.comprovanteStorageBucket||'',
+          comprovanteStoragePath:lancamento.comprovanteStoragePath||''
+        };
+        Object.assign(lancamento,dadosMapeados,preservados);
+      }else{
+        Object.assign(lancamento,dadosMapeados);
+      }
+    }
+    lancamento.syncPendente=!!payloadReduzido;
+    lancamento.syncErro=payloadReduzido?'Schema do Supabase ainda nao possui todas as colunas do financeiro.':'';
+    return lancamento;
+  }catch(error){
+    lancamento.syncPendente=true;
+    lancamento.syncErro=mensagemErroSyncAgendamentos(error);
+    throw error;
+  }
+}
+
+async function dbExcluirLancamentoFinanceiro(lancamentoOuId){
+  const alvoId=typeof lancamentoOuId==='object'&&lancamentoOuId?lancamentoOuId.id:lancamentoOuId;
+  if(!alvoId) return true;
+  const {error}=await sb.from('financeiro_lancamentos').delete().eq('id',alvoId);
+  if(error) throw error;
+  return true;
+}
+
+function lancamentoFinanceiroTemSyncPendente(item){
+  return !!(item&&item.syncPendente);
+}
+
+async function sincronizarFinanceiroPendentes(opcoes={}){
+  const pendentes=(Array.isArray(FINANCEIRO_LANCAMENTOS)?FINANCEIRO_LANCAMENTOS:[]).filter(lancamentoFinanceiroTemSyncPendente);
+  if(!pendentes.length) return {pendentes:0,sincronizados:0,falhas:0};
+  let sincronizados=0;
+  let falhas=0;
+  for(const item of pendentes){
+    try{
+      if(!item.comprovanteStoragePath&&(item.comprovanteLocalId||item.comprovanteDataUrl)){
+        const arquivo=await prepararComprovanteFinanceiroParaUpload(item);
+        if(item.comprovanteLocalId&&!arquivo){
+          throw new Error('Comprovante local pendente nao encontrado para sincronizacao.');
+        }
+        if(arquivo){
+          const upload=await dbUploadDocumentoArquivo(arquivo,{ folder:'financeiro/comprovantes' });
+          item.comprovanteStorageBucket=upload.bucket||'';
+          item.comprovanteStoragePath=upload.path||'';
+          item.comprovanteDataUrl='';
+          if(item.comprovanteLocalId){
+            await excluirFinanceiroComprovanteLocal(item.comprovanteLocalId).catch(()=>true);
+            item.comprovanteLocalId='';
+          }
+        }
+      }
+      item.atualizadoEm=new Date().toISOString();
+      await dbSalvarLancamentoFinanceiro(item,0);
+      if(item.comprovanteStoragePath&&item.comprovanteLocalId){
+        await excluirFinanceiroComprovanteLocal(item.comprovanteLocalId).catch(()=>true);
+        item.comprovanteLocalId='';
+      }
+      sincronizados++;
+    }catch(error){
+      item.syncPendente=true;
+      item.syncErro=mensagemErroSyncAgendamentos(error);
+      falhas++;
+    }
+  }
+  FINANCEIRO_LANCAMENTOS.splice(0,FINANCEIRO_LANCAMENTOS.length,...FINANCEIRO_LANCAMENTOS.sort(ordenarFinanceiroLancamentos));
+  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+  salvarLS();
+  if(opcoes.renderizar!==false&&typeof renderFinanceiro==='function'&&!document.getElementById('mod-financeiro')?.classList.contains('hidden')){
+    renderFinanceiro();
+  }
+  if(opcoes.silencioso!==true&&typeof showToast==='function'){
+    if(sincronizados&&!falhas) showToast('âœ…',`${sincronizados} lancamento${sincronizados>1?'s':''} financeiro${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''} com o Supabase.`);
+    else if(sincronizados&&falhas) showToast('âš ï¸',`${sincronizados} lancamento${sincronizados>1?'s':''} financeiro${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''}, mas ${falhas} ainda pendente${falhas>1?'s':''}.`);
+    else if(falhas) showToast('âš ï¸','Nao foi possivel sincronizar os lancamentos pendentes do financeiro agora.');
+  }
+  return {pendentes:pendentes.length,sincronizados,falhas};
+}
+
 async function sincronizarAgendamentosPendentes(opcoes={}){
   const pendentes=(Array.isArray(AGENDAMENTOS)?AGENDAMENTOS:[]).filter(agendamentoTemSyncPendente);
   const statusAtual=getStatusAgendamentosSync();
@@ -1148,18 +1560,24 @@ function salvarLS(){
     localStorage.setItem('zel_trein',JSON.stringify(TREIN));
     localStorage.setItem('zel_docs',JSON.stringify(DOCUMENTOS));
     localStorage.setItem('zel_agendamentos',JSON.stringify(AGENDAMENTOS));
+    localStorage.setItem('zel_financeiro_lancamentos',JSON.stringify(FINANCEIRO_LANCAMENTOS));
     localStorage.setItem('zel_senhas',JSON.stringify(SENHAS_INDIVIDUAIS));
     zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
     zSetState('state.data.vendas', VENDAS);
     zSetState('state.data.treinamentos', TREIN);
     zSetState('state.data.documentos', DOCUMENTOS);
     zSetState('state.data.agendamentos', AGENDAMENTOS);
+    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
     atualizarEstadoSyncAgendamentos();
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
     if(typeof renderDashboard==='function'&&!document.getElementById('mod-dashboard')?.classList.contains('hidden')){
       renderDashboard();
     }
-  }catch(e){}
+    return true;
+  }catch(e){
+    console.warn('Falha ao salvar cache local:',e.message||e);
+    return false;
+  }
 }
 function carregarLS(){/* substituído pelo Supabase — mantido como fallback */}
 
@@ -1172,6 +1590,7 @@ function carregarLS(){
     const senhasRaw=localStorage.getItem('zel_senhas');
     const docsLocal=carregarDocumentosLS();
     const agendamentosLocal=carregarAgendamentosLS();
+    const financeirosLocal=carregarFinanceiroLancamentosLS();
 
     if(usuariosRaw&&typeof USUARIOS!=='undefined'){
       const usuarios=JSON.parse(usuariosRaw);
@@ -1215,6 +1634,8 @@ function carregarLS(){
       zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
     }
     zSetState('state.data.agendamentos', AGENDAMENTOS);
+    FINANCEIRO_LANCAMENTOS.splice(0,FINANCEIRO_LANCAMENTOS.length,...financeirosLocal.sort(ordenarFinanceiroLancamentos));
+    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
     atualizarEstadoSyncAgendamentos();
 
     if(senhasRaw){
@@ -1281,6 +1702,20 @@ async function carregarComRetry(tentativa=1){
   }
 }
 
+if(typeof window!=='undefined'&&window&&typeof window.addEventListener==='function'){
+  window.addEventListener('online', ()=>{
+    agendarPosCargaSupabase({
+      timeoutMs:30000,
+      silenciosoAgendamentos:true,
+      renderizarAgendamentos:true,
+      silenciosoFinanceiro:true,
+      renderizarFinanceiro:true,
+      persistirRh:false,
+      renderizarRh:false
+    });
+  });
+}
+
 zRegisterModule('supabase', {
   client: sb,
   carregarDB,
@@ -1299,12 +1734,18 @@ zRegisterModule('supabase', {
   dbExcluirTrein,
   dbSalvarAgendamento,
   dbExcluirAgendamento,
+  dbSalvarLancamentoFinanceiro,
+  dbExcluirLancamentoFinanceiro,
   sincronizarAgendamentosPendentes,
+  sincronizarFinanceiroPendentes,
   getStatusAgendamentosSync,
   dbSalvarDocumento,
   dbExcluirDocumento,
   dbUploadDocumentoArquivo,
   dbBaixarDocumentoArquivo,
   dbExcluirDocumentoArquivo,
+  salvarFinanceiroComprovanteLocal,
+  obterFinanceiroComprovanteLocal,
+  excluirFinanceiroComprovanteLocal,
   docsBucket: SB_DOCS_BUCKET
 });

@@ -1900,6 +1900,219 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
   </div>`;
 }
 
+function renderTreinPainel(t, progresso, isDiretor, canDelete){
+  const statusMeta = TREIN_STATUS_META[progresso.status] || TREIN_STATUS_META.nao_iniciado;
+  const licoes = getTreinLicoes(t);
+  const token = treinToken(t);
+  const videos = getTreinVideos(t);
+  const videosLoading = !!TREIN_VIDEO_LOADING[treinKey(t)];
+  const videoAtivoId = getTreinVideoAtivoId(t, videos);
+  const videoAtivo = videos.find(v => v.id === videoAtivoId) || videos[0] || null;
+  const iniciou = progresso.iniciadaEm ? new Date(progresso.iniciadaEm).toLocaleDateString('pt-BR') : '-';
+  const concluiu = progresso.concluidaEm ? new Date(progresso.concluidaEm).toLocaleDateString('pt-BR') : '-';
+  const atualizado = progresso.atualizadaEm ? new Date(progresso.atualizadaEm).toLocaleDateString('pt-BR') : '-';
+  const certificado = progresso.certificadoEm ? new Date(progresso.certificadoEm).toLocaleDateString('pt-BR') : '-';
+  const proxima = progresso.proxima ? `${zUiText(progresso.proxima.titulo)} - ${zUiText(progresso.proxima.resumo)}` : zUiText('Todas as aulas concluidas');
+  const meta = getTreinMeta(t);
+  const prerequisito = getTreinPrerequisito(t);
+  const bloqueado = isTreinBloqueado(t);
+  const aprovado = progresso.status === 'aprovado';
+  const concluidoVisual = progresso.status === 'concluido' || aprovado;
+  const rotuloConcluirAula = progresso.proxima
+    ? zUiText(progresso.total > 1 ? `Concluir aula ${progresso.proxima.idx + 1}` : 'Concluir aula')
+    : zUiText('Concluir aula');
+  const resumoStatus = bloqueado
+    ? zUiText(`Conclua o pre-requisito "${prerequisito?.titulo || ''}" para liberar esta trilha.`)
+    : aprovado
+      ? zUiText(`Certificado registrado em ${certificado}.`)
+      : progresso.status === 'concluido'
+        ? zUiText('Todas as aulas foram marcadas. Clique em "Concluir treinamento" para finalizar a trilha.')
+        : zUiText(`Proxima aula para concluir: ${proxima}`);
+  const acaoPrincipal = bloqueado
+    ? `<button class="btn-s" onclick="irParaTreinamento('${prerequisito ? treinKey(prerequisito) : ''}')">${zUiText('Abrir pre-requisito')}</button>`
+    : aprovado
+      ? ''
+      : progresso.status === 'concluido'
+        ? `<button class="btn-s" onclick="emitirCertificadoTrein('${token}')">${zUiText('Concluir treinamento')}</button>`
+        : `<button class="btn-s" onclick="marcarProximaAulaTrein('${token}')">${rotuloConcluirAula}</button>`;
+  const acaoSecundaria = bloqueado
+    ? ''
+    : aprovado
+      ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('Refazer trilha')}</button>`
+      : progresso.concluidas > 0
+        ? `<button class="btn-c" onclick="reiniciarTreinamento('${token}')">${zUiText('Reiniciar')}</button>`
+        : '';
+  const notaBloqueio = bloqueado
+    ? `<div class="trein-lock-note"><strong>${zUiText('Trilha bloqueada')}</strong>${zUiText(`Conclua primeiro "${prerequisito?.titulo || ''}" para liberar este treinamento e os proximos passos da trilha.`)}</div>`
+    : '';
+  const notaCertificado = aprovado
+    ? `<div class="trein-cert-note"><strong>${zUiText('Certificacao registrada')}</strong>${zUiText(`Voce concluiu esta trilha e o certificado foi emitido em ${certificado}.`)}</div>`
+    : (progresso.status === 'concluido'
+      ? `<div class="trein-cert-note"><strong>${zUiText('Ultimo passo')}</strong>${zUiText('Todas as aulas foram concluidas. Agora clique em "Concluir treinamento" para finalizar a trilha.')}</div>`
+      : '');
+  const destaquePrerequisito = prerequisito
+    ? `<div class="trein-prereq-banner ${bloqueado ? 'locked' : 'done'}">
+        <strong>${zUiText(bloqueado ? 'Liberacao por pre-requisito' : 'Pre-requisito concluido')}</strong>
+        <span>${zUiText(bloqueado ? `Finalize "${prerequisito.titulo}" para liberar este treinamento.` : `Este treinamento foi liberado apos a conclusao de "${prerequisito.titulo}".`)}</span>
+      </div>`
+    : '';
+  const videosCompartilhados = treinVideosCompartilhadosNoBanco();
+  const avisoCompatVideos = !videosCompartilhados && (isDiretor || !videos.length)
+    ? `<div class="trein-lock-note"><strong>${zUiText(isDiretor ? 'Videos ainda nao compartilhados' : 'Videos indisponiveis neste acesso')}</strong>${zUiText(isDiretor ? 'A tabela de treinamentos ainda nao suporta videos compartilhados no banco. Hoje eles ficam apenas no navegador onde foram cadastrados.' : 'Este treinamento pode ter sido salvo apenas no navegador original. Por isso os videos nao apareceram neste acesso.')}</div>`
+    : '';
+  const videoAtivoEmbed = videoAtivo && isTreinVideoYoutube(videoAtivo) ? getTreinVideoEmbedUrl(videoAtivo) : '';
+  const playerPrincipal = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? `<iframe class="trein-video-player is-embed" src="${videoAtivoEmbed}" title="${String(videoAtivo.nome || 'Video do treinamento').replace(/"/g,'&quot;')}" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`
+    : `<video class="trein-video-player" controls preload="metadata" src="${getTreinVideoSrc(videoAtivo)}"></video>`;
+  const metaVideoAtivo = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? zUiText('YouTube - video incorporado')
+    : `${zUiText(videoAtivo?.mime || 'Video')} ${zUiText('·')} ${fmtTamanho(videoAtivo?.size || 0)}`;
+  const acaoVideoAtivo = videoAtivo && isTreinVideoYoutube(videoAtivo)
+    ? `<a class="btn-c trein-video-watch-link" href="${getTreinVideoYoutubeUrl(videoAtivo)}" target="_blank" rel="noopener noreferrer">${zUiText('Abrir no YouTube')}</a>`
+    : '';
+  const avisos = [notaBloqueio, notaCertificado, avisoCompatVideos].filter(Boolean).join('');
+  const playlistHtml = videos.length
+    ? videos.map((video, idx) => {
+        const thumbUrl = isTreinVideoYoutube(video) ? getTreinVideoThumb(video) : '';
+        const metaLinha = [
+          zUiText(`Video ${idx + 1}`),
+          isTreinVideoYoutube(video) ? zUiText('YouTube') : fmtTamanho(video.size || 0)
+        ].filter(Boolean).join(` ${zUiText('·')} `);
+        return `<button class="trein-video-row ${video.id === videoAtivoId ? 'active' : ''}" onclick="selecionarTreinVideo('${token}', '${video.id}')">
+          <span class="trein-video-row-thumb ${thumbUrl ? 'has-image' : ''}">
+            ${thumbUrl
+              ? `<img src="${thumbUrl}" alt="${String(video.nome || `Video ${idx + 1}`).replace(/"/g,'&quot;')}">`
+              : `<span class="trein-video-row-fallback">${zUiText('▶')}</span>`}
+          </span>
+          <span class="trein-video-row-main">
+            <strong>${zUiText(video.nome)}</strong>
+            <small>${metaLinha}</small>
+          </span>
+          <span class="trein-video-row-status">${video.id === videoAtivoId ? zUiText('Assistindo') : `#${idx + 1}`}</span>
+        </button>`;
+      }).join('')
+    : `<div class="trein-video-empty">${zUiText(videosCompartilhados ? 'Nenhum video foi enviado para este treinamento ainda.' : (isDiretor ? 'Os videos deste treinamento ficaram apenas no navegador onde foram cadastrados.' : 'Os videos deste treinamento nao estao disponiveis neste acesso.'))}</div>`;
+  const licoesHtml = licoes.map(licao => {
+    const done = progresso.aulas.includes(licao.idx);
+    const atual = !done && progresso.proxima && progresso.proxima.idx === licao.idx;
+    return `<button class="trein-lesson ${done ? 'done' : ''} ${atual ? 'current' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
+      <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
+      <span class="trein-lesson-main">
+        <strong>${zUiText(licao.titulo)}</strong>
+        <small>${zUiText(licao.resumo)}</small>
+      </span>
+      <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluida') : (atual ? zUiText('Proxima') : zUiText('Concluir')))}</span>
+    </button>`;
+  }).join('');
+
+  return `<div class="trein-detail-panel trein-detail-panel-watch">
+    <div class="trein-detail-hero">
+      <div class="trein-detail-thumb" style="background:${t.bg || CAT_BG_T[normalizarCatTrein(t.cat)] || '#EEF4FE'};">${zUiText(t.thumb || 'TR')}</div>
+      <div class="trein-detail-main">
+        <div class="trein-detail-tags">
+          <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
+          <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
+          ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
+        </div>
+        <div class="trein-detail-title">${zUiText(t.titulo)}</div>
+        <div class="trein-detail-copy">${zUiText('Trilha pratica para acelerar a execucao da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
+        <div class="trein-detail-meta">
+          <span>${t.aulas} ${zUiText('aulas')}</span>
+          <span>${zUiText(t.dur)}</span>
+          <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluidas')}</span>
+          <span>${videos.length} ${zUiText(videos.length === 1 ? 'video' : 'videos')}</span>
+        </div>
+        <div class="trein-rule-chips">
+          ${meta.obrigatorio ? `<span class="trein-rule-chip">${zUiText('Obrigatorio')}</span>` : ''}
+          ${prerequisito ? `<span class="trein-rule-chip ${bloqueado ? 'locked' : 'done'}">${zUiText('Pre-requisito')}: ${zUiText(prerequisito.titulo)}</span>` : ''}
+        </div>
+        ${destaquePrerequisito}
+      </div>
+      <div class="trein-detail-admin">
+        ${isDiretor ? `<button class="btn-c trein-detail-edit" onclick="editarTrein(${TREIN.indexOf(t)})">${zUiText('Editar')}</button>` : ''}
+        ${canDelete ? `<button class="btn-c trein-detail-delete" onclick="excluirTrein(${TREIN.indexOf(t)})">${zUiText('Excluir')}</button>` : ''}
+      </div>
+    </div>
+
+    <div class="trein-detail-progressbar">
+      <div class="trein-detail-progress-top">
+        <strong>${progresso.pct}%</strong>
+        <span>${resumoStatus}</span>
+      </div>
+      <div class="pb trein-progress-large"><div class="pf ${concluidoVisual ? 'done' : ''}" style="width:${progresso.pct}%"></div></div>
+      <div class="trein-detail-progress-meta">
+        <div><strong>${zUiText('Iniciado em')}</strong><span>${zUiText(iniciou)}</span></div>
+        <div><strong>${zUiText('Atualizado em')}</strong><span>${zUiText(atualizado)}</span></div>
+        <div><strong>${zUiText('Concluido em')}</strong><span>${zUiText(concluiu)}</span></div>
+        ${aprovado ? `<div><strong>${zUiText('Certificado')}</strong><span>${zUiText(certificado)}</span></div>` : ''}
+      </div>
+    </div>
+
+    <div class="trein-detail-actions">
+      ${acaoPrincipal}
+      ${acaoSecundaria}
+    </div>
+
+    ${avisos ? `<div class="trein-detail-alerts">${avisos}</div>` : ''}
+
+    <div class="trein-watch-layout">
+      <section class="trein-watch-main">
+        <div class="trein-video-stage">
+          <div class="trein-video-stage-head">
+            <div class="trein-video-stage-copy">
+              <div class="trein-video-stage-kicker">${zUiText('Modo de estudo')}</div>
+              <h3>${zUiText(videoAtivo ? videoAtivo.nome : 'Video principal do treinamento')}</h3>
+              <p>${zUiText(videos.length ? 'Player central para assistir sem distracao e avancar a trilha logo em seguida.' : 'Assim que houver video publicado, ele aparece aqui em destaque para toda a equipe.')}</p>
+            </div>
+            <div class="trein-video-stage-tools">
+              ${acaoVideoAtivo}
+              ${isDiretor ? `<button class="btn-c trein-videos-edit" onclick="editarTrein(${TREIN.indexOf(t)})">${zUiText('Gerenciar videos')}</button>` : ''}
+            </div>
+          </div>
+          ${videosLoading ? `<div class="trein-video-empty">${zUiText('Carregando videos...')}</div>` : videos.length ? `
+            <div class="trein-video-stage-frame">
+              ${playerPrincipal}
+            </div>
+            <div class="trein-video-stage-footer">
+              <div class="trein-video-stage-meta">
+                <strong>${zUiText(videoAtivo.nome)}</strong>
+                <span>${metaVideoAtivo}</span>
+              </div>
+              <div class="trein-video-stage-hint">${zUiText('Assista e depois clique em "Concluir aula" para registrar o avanço desta trilha.')}</div>
+            </div>
+          ` : `
+            <div class="trein-video-empty">${zUiText(videosCompartilhados ? 'Nenhum video foi enviado para este treinamento ainda.' : (isDiretor ? 'Os videos deste treinamento ficaram apenas no navegador onde foram cadastrados.' : 'Os videos deste treinamento nao estao disponiveis neste acesso.'))}</div>
+          `}
+        </div>
+      </section>
+
+      <aside class="trein-watch-side">
+        <section class="trein-side-card">
+          <div class="trein-side-card-head">
+            <div>
+              <div class="trein-side-card-kicker">${zUiText('Playlist')}</div>
+              <h4>${zUiText('Sequencia de videos')}</h4>
+            </div>
+            <span class="trein-side-count">${videos.length}</span>
+          </div>
+          <div class="trein-video-playlist">${playlistHtml}</div>
+        </section>
+
+        <section class="trein-side-card">
+          <div class="trein-side-card-head">
+            <div>
+              <div class="trein-side-card-kicker">${zUiText('Trilha')}</div>
+              <h4>${zUiText('Aulas na sequencia')}</h4>
+            </div>
+            <span class="trein-side-count">${progresso.concluidas}/${progresso.total}</span>
+          </div>
+          <div class="trein-lessons-list">${licoesHtml}</div>
+        </section>
+      </aside>
+    </div>
+  </div>`;
+}
+
 function renderTrein(){
   if(!TREIN_PROGRESSO || typeof TREIN_PROGRESSO !== 'object' || Array.isArray(TREIN_PROGRESSO)){
     carregarTreinProgressoLS();
