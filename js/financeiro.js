@@ -27,25 +27,25 @@ let finCategoriaNovaValor = '';
 
 const FIN_CATEGORIAS = {
   entrada: [
-    'Aporte',
-    'Bonificacao',
-    'Comissao',
-    'Emprestimo recebido',
-    'Receita financeira',
-    'Reembolso',
-    'Outras entradas'
+    'APORTE',
+    'BONIFICACAO',
+    'COMISSAO',
+    'EMPRESTIMO RECEBIDO',
+    'RECEITA FINANCEIRA',
+    'REEMBOLSO',
+    'OUTRAS ENTRADAS'
   ],
   saida: [
-    'Aluguel',
+    'ALUGUEL',
     'CRM',
-    'Despesas bancarias',
-    'Emprestimo',
-    'Eventos',
-    'Impostos',
-    'Marketing',
-    'Outras saidas',
-    'Salario',
-    'Servicos'
+    'DESPESAS BANCARIAS',
+    'EMPRESTIMO',
+    'EVENTOS',
+    'IMPOSTOS',
+    'MARKETING',
+    'OUTRAS SAIDAS',
+    'SALARIO',
+    'SERVICOS'
   ]
 };
 
@@ -75,6 +75,21 @@ function finHojeRef() {
 
 function finPad2(valor) {
   return String(valor).padStart(2, '0');
+}
+
+function finForcarMaiusculo(valor) {
+  return String(valor == null ? '' : valor).toUpperCase();
+}
+
+function finTextoMaiusculo(valor) {
+  return String(valor == null ? '' : valor).trim().toUpperCase();
+}
+
+function finAtualizarCampoMaiusculo(elemento) {
+  if (!elemento) return '';
+  const normalizado = finForcarMaiusculo(elemento.value);
+  if (elemento.value !== normalizado) elemento.value = normalizado;
+  return normalizado;
 }
 
 function finDataValidaIso(valor) {
@@ -352,8 +367,12 @@ function finCategoriasPorTipo(tipo, adicionais = []) {
   const base = tipo === 'saida' ? FIN_CATEGORIAS.saida : FIN_CATEGORIAS.entrada;
   const usadas = (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : [])
     .filter(item => tipoLancamentoFinanceiroNormalizado(item && item.tipo) === tipo)
-    .map(item => item && item.categoria);
-  return finListaUnica([...(base || []), ...usadas, ...(adicionais || [])]);
+    .map(item => finTextoMaiusculo(item && item.categoria))
+    .filter(Boolean);
+  const extras = (Array.isArray(adicionais) ? adicionais : [])
+    .map(item => finTextoMaiusculo(item))
+    .filter(Boolean);
+  return finListaUnica([...(base || []), ...usadas, ...extras]);
 }
 
 function finUnidadesDisponiveis() {
@@ -378,8 +397,8 @@ function finResetCategoriaNovaState() {
 
 function finPlaceholderCategoriaNova(tipo) {
   return zUiText(tipo === 'saida'
-    ? 'Ex: condominio, manutencao, licenca, viagens...'
-    : 'Ex: cashback, parceria, venda de ativo, bonus...');
+    ? 'EX: CONDOMINIO, MANUTENCAO, LICENCA, VIAGENS...'
+    : 'EX: CASHBACK, PARCERIA, VENDA DE ATIVO, BONUS...');
 }
 
 function finAtualizarCategoriaNovaUi() {
@@ -392,13 +411,13 @@ function finAtualizarCategoriaNovaUi() {
   if (wrap) wrap.style.display = finCategoriaNovaAtiva ? 'flex' : 'none';
   if (input) {
     input.placeholder = finPlaceholderCategoriaNova(tipo);
-    input.value = finCategoriaNovaValor || '';
+    input.value = finForcarMaiusculo(finCategoriaNovaValor || '');
   }
 }
 
 function finAlternarCategoriaNova() {
   const input = document.getElementById('fin-lanc-categoria-nova');
-  if (finCategoriaNovaAtiva && input) finCategoriaNovaValor = String(input.value || '').trim();
+  if (finCategoriaNovaAtiva && input) finCategoriaNovaValor = finTextoMaiusculo(input.value || '');
   finCategoriaNovaAtiva = !finCategoriaNovaAtiva;
   if (!finCategoriaNovaAtiva) finCategoriaNovaValor = '';
   finAtualizarCategoriaNovaUi();
@@ -410,8 +429,10 @@ function finAlternarCategoriaNova() {
   }
 }
 
-function finAtualizarCategoriaNovaValor(valor) {
-  finCategoriaNovaValor = String(valor || '');
+function finAtualizarCategoriaNovaValor(valor, elemento = null) {
+  const normalizado = finForcarMaiusculo(valor || '');
+  finCategoriaNovaValor = normalizado;
+  if (elemento && elemento.value !== normalizado) elemento.value = normalizado;
 }
 
 function finTemFiltrosVenda() {
@@ -459,7 +480,7 @@ function finCriarItemComissao(v, bruto, liquido, dataRef, status, atraso, manual
     key: `venda-${v.id}-${status}-${dataRef.getTime()}`,
     origem: 'venda',
     natureza: 'entrada',
-    categoria: 'Comissao',
+    categoria: 'COMISSAO',
     descricao: finNomeClienteVenda(v.cliente),
     valorBruto: bruto,
     valorLiquido: liquido,
@@ -498,7 +519,7 @@ function finColetarComissoesMes(mes, ano) {
       if (!ultInfo || !ultInfo.date || ultInfo.precision === 'daymonth') return;
       if (ultInfo.date.getMonth() !== mes || ultInfo.date.getFullYear() !== ano) return;
       const item = finCriarItemComissao(v, bruto, liquido, ultInfo.date, 'realizado', 0, false);
-      if (finFiltroCategoria && finFiltroCategoria !== 'Comissao') return;
+      if (finFiltroCategoria && finFiltroCategoria !== 'COMISSAO') return;
       if (!finMatchCamposItem(item)) return;
       realizadas.push(item);
       return;
@@ -516,7 +537,7 @@ function finColetarComissoesMes(mes, ano) {
     const dataRef = new Date(anoPrev, mesPrev, dia, 12, 0, 0, 0);
     const status = prev.totalAtraso > 0 ? 'atrasado' : 'previsto';
     const item = finCriarItemComissao(v, bruto, liquido, dataRef, status, prev.totalAtraso || 0, !!prev.manual);
-    if (finFiltroCategoria && finFiltroCategoria !== 'Comissao') return;
+    if (finFiltroCategoria && finFiltroCategoria !== 'COMISSAO') return;
     if (!finMatchCamposItem(item)) return;
     previstas.push(item);
   });
@@ -562,8 +583,8 @@ function finNormalizarLancamentoManual(item) {
     key: `manual-${item.refLocal || item.id}`,
     origem: 'manual',
     natureza: tipo,
-    categoria: item.categoria || (tipo === 'saida' ? 'Outras saidas' : 'Outras entradas'),
-    descricao: item.descricao || (tipo === 'saida' ? 'Saida manual' : 'Entrada manual'),
+    categoria: finTextoMaiusculo(item.categoria) || (tipo === 'saida' ? 'OUTRAS SAIDAS' : 'OUTRAS ENTRADAS'),
+    descricao: finTextoMaiusculo(item.descricao) || (tipo === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL'),
     valorBruto: Math.abs(finValorSeguro(item.valor)),
     valorLiquido: Math.abs(finValorSeguro(item.valor)),
     dataRef,
@@ -573,7 +594,7 @@ function finNormalizarLancamentoManual(item) {
     unidade: item.unidade || '',
     construtora: '',
     gerente: '',
-    observacao: item.observacao || '',
+    observacao: finTextoMaiusculo(item.observacao),
     comprovanteNome: item.comprovanteNome || '',
     comprovanteMime: item.comprovanteMime || '',
     comprovanteSize: finValorSeguro(item.comprovanteSize),
@@ -666,20 +687,20 @@ function finDreDentroPeriodo(dataRef, meta) {
 }
 
 function finDreBucketCategoria(tipo, categoria) {
-  const cat = String(categoria || '').trim();
+  const cat = finTextoMaiusculo(categoria);
   if (tipo === 'entrada') {
-    if (cat === 'Comissao') return { bucket: 'receita', grupo: 'Receita operacional', conta: 'Comissao' };
-    if (cat === 'Receita financeira') return { bucket: 'financeiro_receita', grupo: 'Receitas financeiras', conta: cat };
-    if (cat === 'Aporte' || cat === 'Emprestimo recebido') return { bucket: 'fora_receita', grupo: 'Movimentacoes fora do DRE', conta: cat };
-    return { bucket: 'receita', grupo: 'Outras receitas', conta: cat || 'Outras entradas' };
+    if (cat === 'COMISSAO') return { bucket: 'receita', grupo: 'Receita operacional', conta: 'COMISSAO' };
+    if (cat === 'RECEITA FINANCEIRA') return { bucket: 'financeiro_receita', grupo: 'Receitas financeiras', conta: cat };
+    if (cat === 'APORTE' || cat === 'EMPRESTIMO RECEBIDO') return { bucket: 'fora_receita', grupo: 'Movimentacoes fora do DRE', conta: cat };
+    return { bucket: 'receita', grupo: 'Outras receitas', conta: cat || 'OUTRAS ENTRADAS' };
   }
-  if (cat === 'Impostos') return { bucket: 'impostos', grupo: 'Impostos e taxas', conta: cat };
-  if (cat === 'Despesas bancarias') return { bucket: 'financeiro_despesa', grupo: 'Despesas financeiras', conta: cat };
-  if (cat === 'Emprestimo') return { bucket: 'fora_despesa', grupo: 'Movimentacoes fora do DRE', conta: cat };
-  if (cat === 'Marketing' || cat === 'CRM' || cat === 'Eventos') return { bucket: 'despesa', grupo: 'Despesas comerciais', conta: cat };
-  if (cat === 'Salario') return { bucket: 'despesa', grupo: 'Despesas com pessoal', conta: cat };
-  if (cat === 'Aluguel' || cat === 'Servicos') return { bucket: 'despesa', grupo: 'Despesas administrativas', conta: cat };
-  return { bucket: 'despesa', grupo: 'Despesas operacionais', conta: cat || 'Outras saidas' };
+  if (cat === 'IMPOSTOS') return { bucket: 'impostos', grupo: 'Impostos e taxas', conta: cat };
+  if (cat === 'DESPESAS BANCARIAS') return { bucket: 'financeiro_despesa', grupo: 'Despesas financeiras', conta: cat };
+  if (cat === 'EMPRESTIMO') return { bucket: 'fora_despesa', grupo: 'Movimentacoes fora do DRE', conta: cat };
+  if (cat === 'MARKETING' || cat === 'CRM' || cat === 'EVENTOS') return { bucket: 'despesa', grupo: 'Despesas comerciais', conta: cat };
+  if (cat === 'SALARIO') return { bucket: 'despesa', grupo: 'Despesas com pessoal', conta: cat };
+  if (cat === 'ALUGUEL' || cat === 'SERVICOS') return { bucket: 'despesa', grupo: 'Despesas administrativas', conta: cat };
+  return { bucket: 'despesa', grupo: 'Despesas operacionais', conta: cat || 'OUTRAS SAIDAS' };
 }
 
 function finDreCriarLinha(dataRef, natureza, categoria, descricao, valor, origem, unidade = '') {
@@ -717,7 +738,7 @@ function finDreColetarLinhas(meta) {
     linhas.push(finDreCriarLinha(
       ultInfo.date,
       'entrada',
-      'Comissao',
+      'COMISSAO',
       finNomeClienteVenda(v.cliente),
       bruto,
       'venda',
@@ -1316,8 +1337,8 @@ function finAcaoItem(item) {
 }
 
 function finNomeItem(item) {
-  if (item.origem === 'venda') return item.descricao || 'Comissao';
-  return item.descricao || item.categoria || (item.natureza === 'saida' ? 'Saida manual' : 'Entrada manual');
+  if (item.origem === 'venda') return item.descricao || 'COMISSAO';
+  return item.descricao || item.categoria || (item.natureza === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL');
 }
 
 function finSideItem(item) {
@@ -1675,13 +1696,14 @@ function finAtualizarCamposModalLancamento() {
   const dataRealizadaWrap = document.getElementById('fin-lanc-realizada-wrap');
   const helpEl = document.getElementById('fin-lanc-status-help');
   const descricaoEl = document.getElementById('fin-lanc-descricao');
+  const observacaoEl = document.getElementById('fin-lanc-observacao');
   const realizarBtn = document.getElementById('fin-lanc-realizar-btn');
   const comprovanteHelpEl = document.getElementById('fin-comprovante-help');
   if (!tipoEl || !categoriaEl || !statusEl) return;
 
-  if (categoriaNovaEl) finCategoriaNovaValor = String(categoriaNovaEl.value || '').trim();
+  if (categoriaNovaEl) finAtualizarCategoriaNovaValor(categoriaNovaEl.value || '', categoriaNovaEl);
   const tipo = tipoLancamentoFinanceiroNormalizado(tipoEl.value);
-  const categoriaAtual = categoriaEl.value;
+  const categoriaAtual = finTextoMaiusculo(categoriaEl.value);
   const categorias = finCategoriasPorTipo(tipo, categoriaAtual ? [categoriaAtual] : []);
   categoriaEl.innerHTML = categorias.map(item => `<option value="${finEscapeAttr(item)}">${zUiText(item)}</option>`).join('');
   categoriaEl.value = categorias.includes(categoriaAtual) ? categoriaAtual : (categorias[0] || '');
@@ -1695,10 +1717,12 @@ function finAtualizarCamposModalLancamento() {
     );
   }
   if (descricaoEl) {
+    finAtualizarCampoMaiusculo(descricaoEl);
     descricaoEl.placeholder = zUiText(tipo === 'saida'
-      ? 'Ex: aluguel da unidade Centro, imposto, CRM...'
-      : 'Ex: aporte dos socios, reembolso, bonificacao...');
+      ? 'EX: ALUGUEL DA UNIDADE CENTRO, IMPOSTO, CRM...'
+      : 'EX: APORTE DOS SOCIOS, REEMBOLSO, BONIFICACAO...');
   }
+  if (observacaoEl) finAtualizarCampoMaiusculo(observacaoEl);
   if (realizarBtn) {
     const atual = finLancamentoAtual();
     const podeMostrar = !!(atual && atual.origem !== 'venda' && statusEl.value !== 'realizado');
@@ -1740,15 +1764,19 @@ async function finSalvarLancamento() {
   if (!tipoEl || !categoriaEl || !descricaoEl || !dataPrevistaEl || !statusEl || !valorEl) return;
 
   const tipo = tipoLancamentoFinanceiroNormalizado(tipoEl.value);
-  const categoriaNova = String(categoriaNovaEl && categoriaNovaEl.value || '').trim();
-  const categoria = String((finCategoriaNovaAtiva && categoriaNova) ? categoriaNova : (categoriaEl.value || '')).trim();
-  const descricao = String(descricaoEl.value || '').trim();
+  const categoriaNova = finTextoMaiusculo(categoriaNovaEl && categoriaNovaEl.value || '');
+  const categoria = finTextoMaiusculo((finCategoriaNovaAtiva && categoriaNova) ? categoriaNova : (categoriaEl.value || ''));
+  const descricao = finTextoMaiusculo(descricaoEl.value || '');
   const unidade = unidadeEl ? String(unidadeEl.value || '').trim() : '';
   const dataPrevista = String(dataPrevistaEl.value || '').trim();
   const status = statusLancamentoFinanceiroNormalizado(statusEl.value);
   const dataRealizada = status === 'realizado' ? String(dataRealizadaEl && dataRealizadaEl.value || '').trim() : '';
   const valor = finValorSeguro(valorEl.value);
-  const observacao = String(observacaoEl && observacaoEl.value || '').trim();
+  const observacao = finTextoMaiusculo(observacaoEl && observacaoEl.value || '');
+
+  if (categoriaNovaEl) categoriaNovaEl.value = categoriaNova;
+  if (descricaoEl) descricaoEl.value = descricao;
+  if (observacaoEl) observacaoEl.value = observacao;
 
   if (!categoria) { showToast('⚠️', zUiText('Selecione a categoria do lancamento.')); return; }
   if (finCategoriaNovaAtiva && !categoriaNova) { showToast('⚠️', zUiText('Digite o nome da nova categoria para continuar.')); return; }
@@ -2495,7 +2523,7 @@ function renderFinanceiro() {
               <button class="btn-c" type="button" id="fin-categoria-nova-btn" onclick="finAlternarCategoriaNova()">${zUiText('Nova categoria')}</button>
             </div>
             <div class="fin-category-new" id="fin-categoria-nova-wrap">
-              <input type="text" id="fin-lanc-categoria-nova" value="${finEscapeAttr(finCategoriaNovaValor)}" placeholder="${finEscapeAttr(finPlaceholderCategoriaNova(tipoModal))}" oninput="finAtualizarCategoriaNovaValor(this.value)">
+              <input type="text" id="fin-lanc-categoria-nova" value="${finEscapeAttr(finCategoriaNovaValor)}" placeholder="${finEscapeAttr(finPlaceholderCategoriaNova(tipoModal))}" oninput="finAtualizarCategoriaNovaValor(this.value,this)" style="text-transform:uppercase;">
               <div class="fin-inline-help">${zUiText('Depois de salvar este lancamento, a nova categoria passa a ficar disponivel nesta lista.')}</div>
             </div>
           </div>
@@ -2509,7 +2537,7 @@ function renderFinanceiro() {
         </div>
         <div class="f-field">
           <label>Descricao</label>
-          <input type="text" id="fin-lanc-descricao" value="${finEscapeAttr(itemEditando ? itemEditando.descricao || '' : '')}">
+          <input type="text" id="fin-lanc-descricao" value="${finEscapeAttr(itemEditando ? itemEditando.descricao || '' : '')}" oninput="finAtualizarCampoMaiusculo(this)" style="text-transform:uppercase;">
         </div>
         <div class="f-row">
           <div class="f-field">
@@ -2529,7 +2557,7 @@ function renderFinanceiro() {
         </div>
         <div class="f-field">
           <label>Observacao</label>
-          <textarea id="fin-lanc-observacao" rows="4" placeholder="${zUiText('Campo opcional para contexto interno do financeiro.')}" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:74px;">${finEscapeAttr(itemEditando ? itemEditando.observacao || '' : '')}</textarea>
+          <textarea id="fin-lanc-observacao" rows="4" placeholder="${zUiText('CAMPO OPCIONAL PARA CONTEXTO INTERNO DO FINANCEIRO.')}" oninput="finAtualizarCampoMaiusculo(this)" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:74px;text-transform:uppercase;">${finEscapeAttr(itemEditando ? itemEditando.observacao || '' : '')}</textarea>
         </div>
         <div class="fin-proof-card">
           <div class="fin-proof-top">

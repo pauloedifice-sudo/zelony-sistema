@@ -741,6 +741,27 @@ function statusLancamentoFinanceiroNormalizado(status){
   return String(status||'').trim().toLowerCase()==='realizado' ? 'realizado' : 'previsto';
 }
 
+function textoFinanceiroMaiusculo(valor){
+  return String(valor==null?'':valor).trim().toUpperCase();
+}
+
+function prepararTextoLancamentoFinanceiro(item){
+  const tipo=tipoLancamentoFinanceiroNormalizado(item&&(item.tipo||item.natureza));
+  const categoriaRaw=String(item&&(item.categoria||item.grupo)||'').trim();
+  const descricaoRaw=String(item&&(item.descricao||item.nome)||'').trim();
+  const observacaoRaw=String(item&&(item.observacao||item.obs)||'').trim();
+  const categoria=textoFinanceiroMaiusculo(categoriaRaw)||(tipo==='saida'?'OUTRAS SAIDAS':'OUTRAS ENTRADAS');
+  const descricao=textoFinanceiroMaiusculo(descricaoRaw)||(tipo==='saida'?'SAIDA MANUAL':'ENTRADA MANUAL');
+  const observacao=textoFinanceiroMaiusculo(observacaoRaw);
+  return{
+    tipo,
+    categoria,
+    descricao,
+    observacao,
+    alterado:categoria!==categoriaRaw||descricao!==descricaoRaw||observacao!==observacaoRaw
+  };
+}
+
 function gerarRefLocalFinanceiro(){
   if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function'){
     return `fin-${crypto.randomUUID()}`;
@@ -845,17 +866,19 @@ async function prepararComprovanteFinanceiroParaUpload(lancamento){
 }
 
 function mapLancamentoFinanceiroIn(item){
+  const texto=prepararTextoLancamentoFinanceiro(item);
+  const syncErroOriginal=String(item&&(item.sync_erro||item.syncErro)||'').trim();
   const lancamento={
     id:parseInt(item&&item.id,10)||0,
-    tipo:tipoLancamentoFinanceiroNormalizado(item&&(item.tipo||item.natureza)),
-    categoria:String(item&&(item.categoria||item.grupo)||'').trim()||'Outros',
-    descricao:String(item&&(item.descricao||item.nome)||'').trim(),
+    tipo:texto.tipo,
+    categoria:texto.categoria,
+    descricao:texto.descricao,
     status:statusLancamentoFinanceiroNormalizado(item&&item.status),
     valor:parseFloat(item&&item.valor)||0,
     unidade:String(item&&item.unidade||'').trim(),
     dataPrevista:String(item&&(item.data_prevista||item.dataPrevista)||'').slice(0,10),
     dataRealizada:String(item&&(item.data_realizada||item.dataRealizada)||'').slice(0,10),
-    observacao:String(item&&(item.observacao||item.obs)||'').trim(),
+    observacao:texto.observacao,
     comprovanteNome:String(item&&(item.comprovante_nome||item.comprovanteNome)||'').trim(),
     comprovanteMime:String(item&&(item.comprovante_mime||item.comprovanteMime)||'').trim(),
     comprovanteSize:parseInt(item&&(item.comprovante_size||item.comprovanteSize),10)||0,
@@ -868,8 +891,8 @@ function mapLancamentoFinanceiroIn(item){
     criadoPorEmail:String(item&&(item.criado_por_email||item.criadoPorEmail)||'').trim(),
     atualizadoEm:String(item&&(item.atualizado_em||item.atualizadoEm)||'').trim(),
     refLocal:String(item&&(item.ref_local||item.refLocal)||'').trim(),
-    syncPendente:!!(item&&(item.sync_pendente||item.syncPendente)),
-    syncErro:String(item&&(item.sync_erro||item.syncErro)||'').trim()
+    syncPendente:!!(item&&(item.sync_pendente||item.syncPendente))||texto.alterado,
+    syncErro:syncErroOriginal||(texto.alterado?'Padronizacao de texto pendente.':'')
   };
   garantirRefLocalFinanceiro(lancamento);
   if(!lancamento.atualizadoEm) lancamento.atualizadoEm=new Date().toISOString();
@@ -878,16 +901,17 @@ function mapLancamentoFinanceiroIn(item){
 
 function mapLancamentoFinanceiroOut(item){
   garantirRefLocalFinanceiro(item);
+  const texto=prepararTextoLancamentoFinanceiro(item);
   return{
-    tipo:tipoLancamentoFinanceiroNormalizado(item.tipo),
-    categoria:item.categoria||'Outros',
-    descricao:item.descricao||'',
+    tipo:texto.tipo,
+    categoria:texto.categoria,
+    descricao:texto.descricao,
     status:statusLancamentoFinanceiroNormalizado(item.status),
     valor:parseFloat(item.valor)||0,
     unidade:item.unidade||'',
     data_prevista:item.dataPrevista||null,
     data_realizada:item.dataRealizada||null,
-    observacao:item.observacao||'',
+    observacao:texto.observacao,
     comprovante_nome:item.comprovanteNome||'',
     comprovante_mime:item.comprovanteMime||'',
     comprovante_size:item.comprovanteSize||0,
