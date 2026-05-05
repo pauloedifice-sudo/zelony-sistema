@@ -726,7 +726,7 @@ function labelFiltroEtapa(etapa){
   return mapa[zUiText(etapa)]||zUiText(etapa);
 }
 function chipFiltroHTML(label,count,onclick,extraClass='',extraStyle=''){
-  return `<button class="fe ${extraClass}" onclick="${onclick}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></button>`;
+  return `<button type="button" class="fe ${extraClass}" onclick="${onclick}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></button>`;
 }
 function chipEtapaVisualHTML(label,count,extraClass='',extraStyle=''){
   return `<span class="fe fe-static ${extraClass}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></span>`;
@@ -768,11 +768,11 @@ function renderFiltros(){
             </label>`).join('')}
         </div>
       </div>`:''}`;
-  let h=chipEtapaVisualHTML('Todas',base.length,mostrarTodasAtiva?'active':'');
+  let h=chipFiltroHTML('Todas',base.length,'limparFiltroEtapa()',mostrarTodasAtiva?'active':'');
   ETAPAS.forEach((e,i)=>{
     if(cnt[i]||etapaSelecionadaNoFiltro(i)){
       const classe=etapaSelecionadaNoFiltro(i)?(fEtapaModo==='excluir'?'active-exclude':'active'):'';
-      h+=chipEtapaVisualHTML(labelFiltroEtapa(e),cnt[i]||0,classe);
+      h+=chipFiltroHTML(labelFiltroEtapa(e),cnt[i]||0,`setFE(${i})`,classe);
     }
   });
   let hPrazo='';

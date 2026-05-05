@@ -682,6 +682,21 @@ function finColetarMes(mes, ano) {
   };
 }
 
+function finColetarSaidasVencidasHistorico(mes, ano) {
+  const limiteMes = new Date(ano, mes + 1, 0, 12, 0, 0, 0);
+  return (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : [])
+    .map(item => finNormalizarLancamentoManual(item))
+    .filter(item => {
+      if (!item) return false;
+      if (item.natureza !== 'saida' || item.status !== 'atrasado') return false;
+      if (!(item.dataRef instanceof Date) || Number.isNaN(item.dataRef.getTime())) return false;
+      if (item.dataRef.getTime() > limiteMes.getTime()) return false;
+      return finMatchCamposItem(item);
+    })
+    .sort((a, b) => b.atraso - a.atraso || a.dataRef - b.dataRef || b.valorBruto - a.valorBruto)
+    .slice(0, 5);
+}
+
 function finDreDentroPeriodo(dataRef, meta) {
   if (!(dataRef instanceof Date) || Number.isNaN(dataRef.getTime()) || !meta) return false;
   const tempo = dataRef.getTime();
@@ -1430,11 +1445,11 @@ function finBuildSideCards(atual, dataInicioRecorte, dataFim7) {
       .sort((a, b) => a.dataRef - b.dataRef || b.valorBruto - a.valorBruto)
       .slice(0, 5);
     const maiores = atual.saidas.todos.slice().sort((a, b) => b.valorBruto - a.valorBruto).slice(0, 5);
-    const vencidas = atual.saidas.previstas.filter(item => item.status === 'atrasado').sort((a, b) => b.atraso - a.atraso || b.valorBruto - a.valorBruto).slice(0, 5);
+    const vencidas = finColetarSaidasVencidasHistorico(finMesAtual, finAnoAtual);
     return [
       finSideList('Proximos pagamentos', 'Saidas previstas para os proximos 7 dias dentro do recorte.', proximas, 'Nenhum pagamento previsto nos proximos 7 dias.'),
       finSideList('Maiores saidas do mes', 'Leitura rapida das maiores saidas previstas ou pagas.', maiores, 'Nenhuma saida no recorte.'),
-      finSideList('Saidas vencidas', 'O que pede atencao imediata por vencimento.', vencidas, 'Nenhuma saida vencida neste periodo.')
+      finSideList('Saidas vencidas', 'As contas mais vencidas ate este mes, incluindo pendencias de meses anteriores.', vencidas, 'Nenhuma saida vencida ate este periodo.')
     ].join('');
   }
 
