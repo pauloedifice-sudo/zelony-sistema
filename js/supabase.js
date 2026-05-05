@@ -1471,10 +1471,23 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
 }
 
 async function dbExcluirLancamentoFinanceiro(lancamentoOuId){
-  const alvoId=typeof lancamentoOuId==='object'&&lancamentoOuId?lancamentoOuId.id:lancamentoOuId;
-  if(!alvoId) return true;
-  const {error}=await sb.from('financeiro_lancamentos').delete().eq('id',alvoId);
-  if(error) throw error;
+  const alvo=typeof lancamentoOuId==='object'&&lancamentoOuId?lancamentoOuId:null;
+  const alvoId=parseInt(alvo?alvo.id:lancamentoOuId,10)||0;
+  const refLocal=String(alvo&&(alvo.refLocal||alvo.ref_local)||'').trim();
+  if(!alvoId&&!refLocal) return true;
+  let ultimoErro=null;
+  let executouAlgumaExclusao=false;
+  if(refLocal){
+    const {error}=await sb.from('financeiro_lancamentos').delete().eq('ref_local',refLocal);
+    if(error) ultimoErro=error;
+    else executouAlgumaExclusao=true;
+  }
+  if(alvoId){
+    const {error}=await sb.from('financeiro_lancamentos').delete().eq('id',alvoId);
+    if(error) ultimoErro=error;
+    else executouAlgumaExclusao=true;
+  }
+  if(ultimoErro&&!executouAlgumaExclusao) throw ultimoErro;
   return true;
 }
 

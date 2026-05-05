@@ -15,6 +15,8 @@ let finModalAberto = false;
 let finModalLancamentoId = '';
 let finModalTipoPadrao = '';
 let finModalBaixaRapida = false;
+let finDiaDetalheAberto = false;
+let finDiaDetalheAtual = 0;
 let finComprovanteFile = null;
 let finComprovanteDataUrl = '';
 let finComprovanteNome = '';
@@ -1200,6 +1202,36 @@ function finItensDoDia(coleta, dia) {
   return lista;
 }
 
+function finResetDetalheDiaState() {
+  finDiaDetalheAberto = false;
+  finDiaDetalheAtual = 0;
+}
+
+function finAbrirDetalheDia(dia) {
+  const numero = parseInt(dia, 10) || 0;
+  if (!numero) return;
+  if (finDiaDetalheAberto && finDiaDetalheAtual === numero) {
+    finResetDetalheDiaState();
+    renderFinanceiro();
+    return;
+  }
+  const atual = finColetarMes(finMesAtual, finAnoAtual);
+  const itens = finItensDoDia(atual, numero);
+  if (!itens.length) return;
+  finDiaDetalheAberto = true;
+  finDiaDetalheAtual = numero;
+  renderFinanceiro();
+}
+
+function finFecharDetalheDia() {
+  finResetDetalheDiaState();
+  renderFinanceiro();
+}
+
+function finHandleBackdropDetalheDia(event) {
+  if (event.target === document.getElementById('m-fin-dia')) finFecharDetalheDia();
+}
+
 function finValorTotalDia(itens) {
   if (finVisao === 'geral') {
     return itens.reduce((soma, item) => soma + (item.natureza === 'saida' ? -item.valorBruto : item.valorBruto), 0);
@@ -1330,10 +1362,15 @@ function finSideList(titulo, subtitulo, itens, vazio) {
 }
 
 function finAcaoItem(item) {
+  return finAcaoItemComOpcao(item, false);
+}
+
+function finAcaoItemComOpcao(item, pararEvento = false) {
   if (!item) return '';
-  if (item.origem === 'venda' && item.v && item.v.id) return `onclick="irParaVenda(${item.v.id})"`;
+  const prefixo = pararEvento ? 'event.stopPropagation();' : '';
+  if (item.origem === 'venda' && item.v && item.v.id) return `onclick="${prefixo}irParaVenda(${item.v.id})"`;
   const chave = finEscapeAttr(item.refLocal || (item.raw && item.raw.refLocal) || item.key || '');
-  return `onclick="finEditarLancamentoManual('${chave}')"`; 
+  return `onclick="${prefixo}finEditarLancamentoManual('${chave}')"`; 
 }
 
 function finNomeItem(item) {
@@ -1352,6 +1389,37 @@ function finSideItem(item) {
       <div class="fcal-side-item-meta">${finMetaItem(item)}</div>
     </button>
     ${finPodeBaixaRapida(item) ? `<button class="fcal-side-action-btn" onclick="event.stopPropagation();finAbrirBaixaLancamento('${chave}')">${zUiText(finRotuloBaixaRapida(item))}</button>` : ''}
+  </div>`;
+}
+
+function finTituloDetalheDia(dia) {
+  if (finVisao === 'saidas') return `Saidas do dia ${dia}`;
+  if (finVisao === 'entradas') return `Entradas do dia ${dia}`;
+  return `Movimentacoes do dia ${dia}`;
+}
+
+function finSubtituloDetalheDia(dia, mes, ano, itens) {
+  const meses = finMeses();
+  const dataTexto = `${dia} de ${meses[mes]} de ${ano}`;
+  const total = finVisao === 'geral' ? finFmtAssinado(finValorTotalDia(itens)) : fmt(finValorTotalDia(itens));
+  const rotulo = finVisao === 'saidas' ? 'saidas' : finVisao === 'entradas' ? 'entradas' : 'movimentacoes';
+  return `${itens.length} ${rotulo} em ${dataTexto} · Total ${total}`;
+}
+
+function finDetalheDiaItem(item) {
+  const chave = finEscapeAttr(item && (item.refLocal || (item.raw && item.raw.refLocal) || item.key || ''));
+  const valor = item.natureza === 'saida' ? `-${fmt(item.valorBruto)}` : fmt(item.valorBruto);
+  return `<div class="fin-day-item fin-day-item-${finClasseItem(item)}">
+    <button class="fin-day-item-main" type="button" ${finAcaoItem(item)}>
+      <div class="fin-day-item-top">
+        <span class="fin-day-item-status">${finStatusItem(item, 'calendario')}</span>
+        <strong>${valor}</strong>
+      </div>
+      <div class="fin-day-item-name">${zUiText(finNomeItem(item))}</div>
+      <div class="fin-day-item-meta">${finMetaItem(item)}</div>
+      ${item.observacao ? `<div class="fin-day-item-note">${zUiText(item.observacao)}</div>` : ''}
+    </button>
+    ${finPodeBaixaRapida(item) ? `<button class="fcal-side-action-btn" type="button" onclick="event.stopPropagation();finAbrirBaixaLancamento('${chave}')">${zUiText(finRotuloBaixaRapida(item))}</button>` : ''}
   </div>`;
 }
 
@@ -1409,14 +1477,15 @@ function finBuildCalendario(atual, ano, mes, hoje, primeiroDia, diasNoMes) {
     const extra = itens.length - visiveis.length;
     const totalDia = finValorTotalDia(itens);
     const classeTotalDia = totalDia < 0 ? ' neg' : totalDia > 0 ? ' pos' : '';
+    const podeAbrirDetalhe = itens.length > 0;
 
-    cells += `<div class="fcal-cell${isHoje ? ' fcal-hoje' : ''}">
+    cells += `<div class="fcal-cell${isHoje ? ' fcal-hoje' : ''}${podeAbrirDetalhe ? ' fcal-cell-clickable' : ''}" ${podeAbrirDetalhe ? `onclick="finAbrirDetalheDia(${d})"` : ''}>
       <div class="fcal-headline">
         <div class="fcal-num${isHoje ? ' fcal-num-hoje' : ''}">${d}</div>
         ${itens.length ? `<div class="fcal-day-total${classeTotalDia}">${finVisao === 'geral' ? finFmtKAssinado(totalDia) : fmtK(totalDia)}</div>` : ''}
       </div>
       <div class="fcal-events">
-        ${visiveis.map(item => `<button class="fcal-ev fcal-ev-${finClasseItem(item)}" ${finAcaoItem(item)} title="${finEscapeAttr(finNomeItem(item))}">
+        ${visiveis.map(item => `<button class="fcal-ev fcal-ev-${finClasseItem(item)}" ${finAcaoItemComOpcao(item, true)} title="${finEscapeAttr(finNomeItem(item))}">
           <div class="fcal-ev-top">
             <span class="fcal-ev-status">${finStatusItem(item, 'calendario')}</span>
             <strong>${item.natureza === 'saida' ? `-${fmtK(item.valorBruto)}` : fmtK(item.valorBruto)}</strong>
@@ -1424,7 +1493,7 @@ function finBuildCalendario(atual, ano, mes, hoje, primeiroDia, diasNoMes) {
           <div class="fcal-ev-name">${zUiText(finNomeItem(item))}</div>
           <div class="fcal-ev-meta">${finMetaItem(item)}</div>
         </button>`).join('')}
-        ${extra > 0 ? `<div class="fcal-more">+${extra} ${zUiText('movimentacoes')}</div>` : ''}
+        ${extra > 0 ? `<button class="fcal-more" type="button" onclick="event.stopPropagation();finAbrirDetalheDia(${d})">+${extra} ${zUiText('movimentacoes')}</button>` : ''}
       </div>
     </div>`;
   }
@@ -1646,6 +1715,7 @@ async function finVerComprovanteAtual() {
 }
 
 function finAbrirModalLancamento(tipo = '') {
+  finResetDetalheDiaState();
   finModalAberto = true;
   finModalLancamentoId = '';
   finModalTipoPadrao = tipo || finTipoPadraoNovaAcao() || 'entrada';
@@ -1661,6 +1731,7 @@ function finAbrirModalLancamento(tipo = '') {
 
 function finEditarLancamentoManual(chave) {
   const item = (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(entry => String(entry.refLocal || entry.id || '') === String(chave || '')) || null;
+  finResetDetalheDiaState();
   finModalAberto = true;
   finModalLancamentoId = String(chave || '');
   finModalTipoPadrao = '';
@@ -1976,8 +2047,8 @@ async function finExcluirLancamentoAtual() {
   finFecharModalLancamento();
 
   try {
-    if (removido && removido.id && !removido.syncPendente && typeof dbExcluirLancamentoFinanceiro === 'function') {
-      await dbExcluirLancamentoFinanceiro(removido.id);
+    if (removido && (removido.id || removido.refLocal) && typeof dbExcluirLancamentoFinanceiro === 'function') {
+      await dbExcluirLancamentoFinanceiro(removido);
     }
     if (removido && removido.comprovanteLocalId && typeof excluirFinanceiroComprovanteLocal === 'function') {
       try {
@@ -2005,6 +2076,7 @@ async function finExcluirLancamentoAtual() {
 }
 
 function finSetVisao(visao) {
+  finResetDetalheDiaState();
   finVisao = ['geral', 'entradas', 'saidas', 'dre'].includes(visao) ? visao : 'geral';
   finFiltroSituacao = '';
   finFiltroCategoria = '';
@@ -2019,6 +2091,7 @@ function finSetVisao(visao) {
 }
 
 function finSetFiltro(chave, valor) {
+  finResetDetalheDiaState();
   if (chave === 'unidade') finFiltroUnidade = valor || '';
   if (chave === 'construtora') finFiltroConstrutora = valor || '';
   if (chave === 'gerente') finFiltroGerente = valor || '';
@@ -2030,6 +2103,7 @@ function finSetFiltro(chave, valor) {
 }
 
 function finAnterior() {
+  finResetDetalheDiaState();
   if (finVisao === 'dre') {
     finDreMover(-1);
     syncFinState();
@@ -2046,6 +2120,7 @@ function finAnterior() {
 }
 
 function finProximo() {
+  finResetDetalheDiaState();
   if (finVisao === 'dre') {
     finDreMover(1);
     syncFinState();
@@ -2062,6 +2137,7 @@ function finProximo() {
 }
 
 function finHoje() {
+  finResetDetalheDiaState();
   const hoje = new Date();
   finMesAtual = hoje.getMonth();
   finAnoAtual = hoje.getFullYear();
@@ -2127,6 +2203,8 @@ function renderFinanceiro() {
   const kpisHtml = finBuildKpisPainel(atual, anterior, anteriorRef, meses);
   const cardsLaterais = finBuildSideCards(atual, dataInicioRecorte, dataFim7);
   const legenda = finLegendaAtual();
+  const detalheDiaItens = finDiaDetalheAberto ? finItensDoDia(atual, finDiaDetalheAtual) : [];
+  const detalheDiaAtivo = !!(finDiaDetalheAberto && finDiaDetalheAtual && detalheDiaItens.length);
   const itemEditando = finLancamentoAtual();
   const tipoModal = finModalTipoAtual();
   const categoriaModal = itemEditando ? (itemEditando.categoria || '') : (finCategoriasPorTipo(tipoModal)[0] || '');
@@ -2303,6 +2381,8 @@ function renderFinanceiro() {
     .fcal-cell{background:linear-gradient(180deg,#fff 0%,#FEFCF6 100%);border:1px solid rgba(184,144,42,0.18);border-radius:10px;padding:6px;min-height:86px;display:flex;flex-direction:column;gap:5px;overflow:hidden;}
     .fcal-cell.fcal-empty{background:transparent;border-color:transparent;box-shadow:none;}
     .fcal-cell.fcal-hoje{border-color:var(--gold);box-shadow:0 0 0 1px rgba(184,144,42,0.2);}
+    .fcal-cell.fcal-cell-clickable{cursor:pointer;transition:border-color .12s ease,box-shadow .12s ease,transform .12s ease;}
+    .fcal-cell.fcal-cell-clickable:hover{border-color:rgba(184,144,42,0.34);box-shadow:0 10px 22px rgba(184,144,42,0.08);transform:translateY(-1px);}
     .fcal-headline{display:flex;align-items:center;justify-content:space-between;gap:8px;}
     .fcal-num{font-size:11px;font-weight:700;color:var(--tm);}
     .fcal-num-hoje{color:var(--gold);}
@@ -2336,7 +2416,8 @@ function renderFinanceiro() {
     .fcal-ev-out-delay .fcal-ev-status{background:#F6C2BC;color:#B42318;}
     .fcal-ev-name{font-size:9px;font-weight:700;color:var(--tx);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .fcal-ev-meta{font-size:8px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .fcal-more{font-size:8px;color:var(--tm);padding-top:1px;}
+    .fcal-more{font-size:8px;color:var(--tm);padding-top:1px;background:transparent;border:none;text-align:left;cursor:pointer;font-family:'Inter',sans-serif;}
+    .fcal-more:hover{color:var(--gold);}
     .fcal-side-wrap{padding:12px;display:flex;flex-direction:column;gap:10px;min-height:0;overflow:auto;}
     .fcal-side-card{border:1px solid rgba(184,144,42,0.16);border-radius:14px;padding:12px;background:linear-gradient(180deg,#fff 0%,#FEFCF6 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);}
     .fcal-side-title{font-size:10px;text-transform:uppercase;letter-spacing:0.11em;color:var(--gold);font-weight:800;}
@@ -2415,6 +2496,30 @@ function renderFinanceiro() {
     .fin-proof-badge{display:inline-flex;align-items:center;max-width:100%;padding:7px 10px;border-radius:999px;background:#fff;border:1px solid rgba(184,144,42,0.16);font-size:10px;color:var(--ts);line-height:1.4;}
     .fin-proof-actions{display:flex;gap:8px;flex-wrap:wrap;}
     .fin-proof-remove{border-color:#E0B6AE;color:#C05030;}
+    .fin-day-modal{max-width:680px !important;width:min(680px,calc(100vw - 24px));max-height:min(78vh,720px);display:flex;flex-direction:column;}
+    .fin-day-modal-body{display:flex;flex-direction:column;gap:12px;padding:18px;max-height:72vh;overflow-y:auto;}
+    .fin-day-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px;border:1px solid var(--bd);border-radius:12px;background:linear-gradient(180deg,#FFFEFB 0%,#FFF8ED 100%);}
+    .fin-day-summary-copy{display:flex;flex-direction:column;gap:3px;}
+    .fin-day-summary-kicker{font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--tm);}
+    .fin-day-summary-sub{font-size:11px;color:var(--tm);line-height:1.4;}
+    .fin-day-summary-total{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold);}
+    .fin-day-list{display:flex;flex-direction:column;gap:10px;}
+    .fin-day-item{display:flex;flex-direction:column;gap:8px;}
+    .fin-day-item-main{width:100%;text-align:left;border:1px solid var(--bd);border-left:4px solid transparent;border-radius:12px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;font-family:'Inter',sans-serif;}
+    .fin-day-item-main:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(184,144,42,0.08);}
+    .fin-day-item-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+    .fin-day-item-top strong{font-family:'Playfair Display',serif;font-size:19px;line-height:1;color:var(--gold);}
+    .fin-day-item-status{display:inline-flex;align-items:center;min-height:20px;padding:2px 7px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(184,144,42,0.1);color:var(--tm);}
+    .fin-day-item-name{font-size:13px;font-weight:800;color:var(--ts);line-height:1.25;}
+    .fin-day-item-meta{font-size:10px;color:var(--tm);line-height:1.45;}
+    .fin-day-item-note{font-size:11px;color:var(--ts);line-height:1.45;padding-top:2px;border-top:1px dashed rgba(184,144,42,0.2);}
+    .fin-day-item-paid .fin-day-item-main{background:#FFF6F2;border-left-color:#D65145;}
+    .fin-day-item-out .fin-day-item-main{background:#FFF6F3;border-left-color:#D65145;}
+    .fin-day-item-out-delay .fin-day-item-main{background:#FBE0DC;border-left-color:#B42318;}
+    .fin-day-item-ok .fin-day-item-main{background:#F0FAF4;border-left-color:#15803D;}
+    .fin-day-item-soon .fin-day-item-main{background:#F3F8FF;border-left-color:#7DB3FF;}
+    .fin-day-item-invoice .fin-day-item-main{background:#EBF2FF;border-left-color:#1D4ED8;}
+    .fin-day-item-delay .fin-day-item-main{background:#FFF4E5;border-left-color:#D97706;}
     .fin-modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
     .fin-delete-btn{background:#fff;border:1px solid #E0B6AE;border-radius:999px;padding:8px 12px;font-size:10px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;}
     @media (max-width:1260px){
@@ -2483,6 +2588,30 @@ function renderFinanceiro() {
     ${filtroBarHtml}
 
     ${conteudoPrincipalHtml}
+  </div>
+
+  <div class="modal-backdrop${detalheDiaAtivo ? ' show' : ''}" id="m-fin-dia" onclick="finHandleBackdropDetalheDia(event)">
+    <div class="modal fin-day-modal">
+      <div class="modal-top">
+        <div>
+          <div class="modal-title">${zUiText(detalheDiaAtivo ? finTituloDetalheDia(finDiaDetalheAtual) : '')}</div>
+          <div style="font-size:10px;color:var(--tm);margin-top:2px;">${zUiText(detalheDiaAtivo ? finSubtituloDetalheDia(finDiaDetalheAtual, mes, ano, detalheDiaItens) : '')}</div>
+        </div>
+        <button class="mclose" onclick="finFecharDetalheDia()">âœ•</button>
+      </div>
+      <div class="modal-body fin-day-modal-body">
+        <div class="fin-day-summary">
+          <div class="fin-day-summary-copy">
+            <div class="fin-day-summary-kicker">${zUiText(finVisao === 'saidas' ? 'Saidas do calendario' : finVisao === 'entradas' ? 'Entradas do calendario' : 'Movimentacoes do calendario')}</div>
+            <div class="fin-day-summary-sub">${zUiText(detalheDiaAtivo ? finSubtituloDetalheDia(finDiaDetalheAtual, mes, ano, detalheDiaItens) : '')}</div>
+          </div>
+          <div class="fin-day-summary-total">${detalheDiaAtivo ? (finVisao === 'geral' ? finFmtAssinado(finValorTotalDia(detalheDiaItens)) : fmt(finValorTotalDia(detalheDiaItens))) : ''}</div>
+        </div>
+        <div class="fin-day-list">
+          ${detalheDiaAtivo ? detalheDiaItens.map(item => finDetalheDiaItem(item)).join('') : ''}
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="modal-backdrop${finModalAberto ? ' show' : ''}" id="m-fin-lanc" onclick="finHandleBackdropModal(event)">
