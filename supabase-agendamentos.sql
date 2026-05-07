@@ -13,7 +13,8 @@ create table if not exists public.agendamentos (
   telefone text not null,
   data_agendamento date not null,
   horario_agendamento time without time zone not null,
-  tipo_visita text not null check (tipo_visita in ('Primeiro atendimento', 'Fechamento')),
+  tipo_visita text not null check (tipo_visita in ('Primeiro atendimento', 'Fechamento', 'Envio de documentacao online')),
+  canal_agendamento text not null default 'Presencial - escritorio' check (canal_agendamento in ('Presencial - escritorio', 'Online - WhatsApp')),
   criado_por text,
   criado_por_id bigint,
   criado_por_email text,
@@ -33,6 +34,7 @@ create table if not exists public.agendamentos (
 alter table public.agendamentos add column if not exists criado_por_id bigint;
 alter table public.agendamentos add column if not exists criado_por_email text;
 alter table public.agendamentos add column if not exists situacao text default 'Agendado';
+alter table public.agendamentos add column if not exists canal_agendamento text default 'Presencial - escritorio';
 alter table public.agendamentos add column if not exists tratativa_em timestamptz;
 alter table public.agendamentos add column if not exists tratativa_por text;
 alter table public.agendamentos add column if not exists tratativa_por_id bigint;
@@ -42,6 +44,24 @@ alter table public.agendamentos add column if not exists reagendado_para_horario
 alter table public.agendamentos add column if not exists origem_agendamento_id bigint;
 alter table public.agendamentos add column if not exists novo_agendamento_id bigint;
 alter table public.agendamentos add column if not exists ref_local text;
+
+alter table public.agendamentos drop constraint if exists agendamentos_tipo_visita_check;
+alter table public.agendamentos add constraint agendamentos_tipo_visita_check
+  check (tipo_visita in ('Primeiro atendimento', 'Fechamento', 'Envio de documentacao online'));
+
+alter table public.agendamentos drop constraint if exists agendamentos_canal_agendamento_check;
+alter table public.agendamentos add constraint agendamentos_canal_agendamento_check
+  check (canal_agendamento in ('Presencial - escritorio', 'Online - WhatsApp'));
+
+update public.agendamentos
+set canal_agendamento = case
+  when coalesce(tipo_visita, '') = 'Envio de documentacao online' then 'Online - WhatsApp'
+  else 'Presencial - escritorio'
+end
+where canal_agendamento is null or btrim(canal_agendamento) = '';
+
+alter table public.agendamentos alter column canal_agendamento set default 'Presencial - escritorio';
+alter table public.agendamentos alter column canal_agendamento set not null;
 
 create index if not exists idx_agendamentos_data
   on public.agendamentos (data_agendamento, horario_agendamento);

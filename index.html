@@ -1194,8 +1194,8 @@
       <div class="modal ag-modal">
         <div class="modal-top">
           <div>
-            <div class="modal-title" id="ma-title">Novo agendamento</div>
-            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Registre visitas, primeiros atendimentos e fechamentos da equipe</div>
+            <div class="modal-title" id="ma-title">Novo compromisso</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;">Registre compromissos presenciais e envios de documentacao online da equipe</div>
           </div>
           <button class="mclose" onclick="fecharAgendamentoModal()">✕</button>
         </div>
@@ -1232,26 +1232,38 @@
           </div>
           <div class="f-row">
             <div class="f-field">
-              <label>Data do agendamento *</label>
+              <label>Data do compromisso *</label>
               <input type="date" id="ma-data">
             </div>
             <div class="f-field">
-              <label>Horário do agendamento *</label>
+              <label>Horario do compromisso *</label>
               <input type="time" id="ma-horario">
             </div>
           </div>
-          <div class="f-field">
-            <label>Tipo de visita *</label>
-            <select id="ma-tipo">
-              <option value="Primeiro atendimento">Primeiro atendimento</option>
-              <option value="Fechamento">Fechamento</option>
-            </select>
+          <div class="f-row">
+            <div class="f-field">
+              <label>Tipo de compromisso *</label>
+              <select id="ma-tipo" onchange="atualizarCamposAgendamentoModal()">
+                <option value="">Selecione o tipo</option>
+                <option value="Primeiro atendimento">Primeiro atendimento</option>
+                <option value="Fechamento">Fechamento</option>
+                <option value="Envio de documentacao online">Envio de documentacao online</option>
+              </select>
+            </div>
+            <div class="f-field">
+              <label>Canal do compromisso *</label>
+              <select id="ma-canal">
+                <option value="">Selecione o canal</option>
+                <option value="Presencial - escritorio">Presencial - escritorio</option>
+                <option value="Online - WhatsApp">Online - WhatsApp</option>
+              </select>
+            </div>
           </div>
-          <div class="ag-modal-note">Os campos de unidade, equipe e corretor respeitam o perfil logado para evitar agendamentos fora da sua operação.</div>
+          <div class="ag-modal-note">Os campos de unidade, equipe e corretor respeitam o perfil logado. Quando o tipo for documentacao online, o canal passa automaticamente para WhatsApp.</div>
         </div>
         <div class="modal-foot">
           <button class="btn-c" onclick="fecharAgendamentoModal()">Cancelar</button>
-          <button class="btn-s" id="ma-save-btn" onclick="salvarAgendamento()">✓ Salvar agendamento</button>
+          <button class="btn-s" id="ma-save-btn" onclick="salvarAgendamento()">✓ Salvar compromisso</button>
         </div>
       </div>
     </div>
@@ -1260,7 +1272,7 @@
       <div class="modal agt-modal">
         <div class="modal-top">
           <div>
-            <div class="modal-title" id="mat-title">Tratativa obrigatória do agendamento</div>
+            <div class="modal-title" id="mat-title">Tratativa obrigatoria do compromisso</div>
             <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="mat-sub">Pendência de tratativa</div>
           </div>
         </div>

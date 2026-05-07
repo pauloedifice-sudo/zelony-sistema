@@ -12,8 +12,13 @@ let agFiltroCorretor = '';
 let agFiltroDataDe = '';
 let agFiltroDataAte = '';
 let agMostrarTodosProximos = false;
-const AG_TIPOS_VISITA = ['Primeiro atendimento', 'Fechamento'];
+const AG_TIPOS_VISITA = ['Primeiro atendimento', 'Fechamento', 'Envio de documentacao online'];
+const AG_CANAIS_AGENDAMENTO = ['Presencial - escritorio', 'Online - WhatsApp'];
 const AG_SITUACOES = ['Agendado', 'Concluída', 'Reagendado', 'Cliente cancelou'];
+const AG_SITUACAO_AGENDADO = AG_SITUACOES[0];
+const AG_SITUACAO_CONCLUIDA = AG_SITUACOES[1];
+const AG_SITUACAO_REAGENDADO = AG_SITUACOES[2];
+const AG_SITUACAO_CANCELADO = AG_SITUACOES[3];
 let agTratativaFila = [];
 let agTratativaAtualId = 0;
 let agTratativaSelecao = '';
@@ -85,15 +90,86 @@ function formatarTelefoneAgendamento(input) {
 
 function agSituacao(item) {
   const situacao = agTexto(item && item.situacao);
-  return AG_SITUACOES.includes(situacao) ? situacao : 'Agendado';
+  return AG_SITUACOES.includes(situacao) ? situacao : AG_SITUACAO_AGENDADO;
 }
 
 function agSituacaoClasse(situacao) {
-  const valor = agTexto(situacao || 'Agendado');
-  if (valor === 'Concluída') return 'done';
-  if (valor === 'Reagendado') return 'rescheduled';
-  if (valor === 'Cliente cancelou') return 'cancelled';
+  const valor = agTexto(situacao || AG_SITUACAO_AGENDADO);
+  if (valor === AG_SITUACAO_CONCLUIDA) return 'done';
+  if (valor === AG_SITUACAO_REAGENDADO) return 'rescheduled';
+  if (valor === AG_SITUACAO_CANCELADO) return 'cancelled';
   return 'pending';
+}
+
+function agTipoVisitaValor(valor) {
+  const tipo = agTexto(valor);
+  return AG_TIPOS_VISITA.includes(tipo) ? tipo : AG_TIPOS_VISITA[0];
+}
+
+function agTipoPrimeiro(item) {
+  return agTipoVisitaValor(item && item.tipoVisita) === 'Primeiro atendimento';
+}
+
+function agTipoFechamento(item) {
+  return agTipoVisitaValor(item && item.tipoVisita) === 'Fechamento';
+}
+
+function agTipoDocumentacao(item) {
+  return agTipoVisitaValor(item && item.tipoVisita) === 'Envio de documentacao online';
+}
+
+function agCanalPadraoPorTipo(tipoVisita) {
+  return agTipoVisitaValor(tipoVisita) === 'Envio de documentacao online'
+    ? 'Online - WhatsApp'
+    : 'Presencial - escritorio';
+}
+
+function agCanalAgendamentoValor(valor, tipoVisita = '') {
+  const canal = agTexto(valor);
+  return AG_CANAIS_AGENDAMENTO.includes(canal) ? canal : agCanalPadraoPorTipo(tipoVisita);
+}
+
+function agTipoBadgeClasse(item) {
+  if (agTipoDocumentacao(item)) return 'docs';
+  if (agTipoFechamento(item)) return 'close';
+  return 'first';
+}
+
+function agTipoBadgeRotulo(item) {
+  const tipo = agTipoVisitaValor(item && item.tipoVisita);
+  return tipo === 'Envio de documentacao online' ? 'Docs online' : tipo;
+}
+
+function agCanalBadgeClasse(item) {
+  return agCanalAgendamentoValor(item && item.canalAgendamento, item && item.tipoVisita) === 'Online - WhatsApp'
+    ? 'online'
+    : 'office';
+}
+
+function agCanalBadgeRotulo(item) {
+  return agCanalAgendamentoValor(item && item.canalAgendamento, item && item.tipoVisita) === 'Online - WhatsApp'
+    ? 'WhatsApp'
+    : 'Presencial';
+}
+
+function agRotuloConclusao(item) {
+  return agTipoDocumentacao(item) ? 'Documentacao recebida' : 'Visita concluida';
+}
+
+function agDescricaoConclusao(item) {
+  return agTipoDocumentacao(item)
+    ? 'O cliente enviou a documentacao para analise online.'
+    : 'O cliente foi atendido normalmente.';
+}
+
+function agSituacaoExibicao(item) {
+  return agSituacaoNormalizada(item) === 'concluida' ? agRotuloConclusao(item) : agTexto(agSituacao(item));
+}
+
+function agHintTratativa(item) {
+  return agTipoDocumentacao(item)
+    ? 'Clique no compromisso para registrar documentacao recebida, reagendamento ou cancelamento.'
+    : 'Clique no compromisso para registrar visita concluida, reagendamento ou cancelamento.';
 }
 
 function agHojeIso() {
@@ -370,7 +446,8 @@ function agFiltrarLista(lista, incluirBusca = true) {
         item.corretor,
         item.unidade,
         item.equipe,
-        item.tipoVisita
+        item.tipoVisita,
+        item.canalAgendamento
       ].map(agNormalizarTexto).join(' ');
       return pilha.includes(termo);
     });
@@ -471,10 +548,6 @@ function agSituacaoNormalizada(item) {
   return agNormalizarTexto(agSituacao(item));
 }
 
-function agTipoFechamento(item) {
-  return agNormalizarTexto(item && item.tipoVisita) === 'fechamento';
-}
-
 function agAtivoRelatorio(item) {
   return agSituacaoNormalizada(item) === 'agendado' && agAgendamentoAtivoFuturo(item);
 }
@@ -486,7 +559,7 @@ function agResumoTratativaRelatorio(item) {
   const em = agFormatarDataRelatorio(item && item.tratativaEm, { comHora: true });
   if (em && em !== '—') partes.push(em);
   if (partes.length) return partes.join(' | ');
-  return agSituacaoNormalizada(item) === 'agendado' ? 'Sem tratativa' : agTexto(agSituacao(item));
+  return agSituacaoNormalizada(item) === 'agendado' ? 'Sem tratativa' : agSituacaoExibicao(item);
 }
 
 function agResumoReagendamentoRelatorio(item) {
@@ -526,7 +599,8 @@ function agColetarDadosRelatorio() {
     concluidos: lista.filter(item => agSituacaoNormalizada(item) === 'concluida').length,
     reagendados: lista.filter(item => agSituacaoNormalizada(item) === 'reagendado').length,
     cancelados: lista.filter(item => agSituacaoNormalizada(item) === 'cliente cancelou').length,
-    primeiros: lista.filter(item => !agTipoFechamento(item)).length,
+    primeiros: lista.filter(agTipoPrimeiro).length,
+    documentacaoOnline: lista.filter(agTipoDocumentacao).length,
     fechamentos: lista.filter(agTipoFechamento).length,
     proximos7Dias: agContarProximosDias(lista.filter(agAgendamentoAtivoFuturo), 7),
     tratativasPendentes: lista.filter(agTratativaPendente).length,
@@ -541,6 +615,10 @@ function agNovoResumoTipoRelatorio(nome) {
     primeiraConcluida: 0,
     primeiraCancelada: 0,
     primeiraTotal: 0,
+    documentacaoAtivos: 0,
+    documentacaoConcluida: 0,
+    documentacaoCancelada: 0,
+    documentacaoTotal: 0,
     fechamentoAtivos: 0,
     fechamentoConcluida: 0,
     fechamentoCancelada: 0,
@@ -550,9 +628,8 @@ function agNovoResumoTipoRelatorio(nome) {
 }
 
 function agAtualizarResumoTipoRelatorio(registro, item) {
-  const fechamento = agTipoFechamento(item);
   const situacao = agSituacaoNormalizada(item);
-  const prefixo = fechamento ? 'fechamento' : 'primeira';
+  const prefixo = agTipoDocumentacao(item) ? 'documentacao' : (agTipoFechamento(item) ? 'fechamento' : 'primeira');
   registro[`${prefixo}Total`] += 1;
   registro.totalGeral += 1;
   if (agAtivoRelatorio(item)) registro[`${prefixo}Ativos`] += 1;
@@ -589,6 +666,10 @@ function agLinhaResumoTipoRelatorio(item) {
     item.primeiraConcluida,
     item.primeiraCancelada,
     item.primeiraTotal,
+    item.documentacaoAtivos,
+    item.documentacaoConcluida,
+    item.documentacaoCancelada,
+    item.documentacaoTotal,
     item.fechamentoAtivos,
     item.fechamentoConcluida,
     item.fechamentoCancelada,
@@ -600,12 +681,13 @@ function agDesenharTabelaResumoTipo(doc, config) {
   const head = [
     [
       { content: config.titulo, rowSpan: 2 },
-      { content: 'Primeira Visita', colSpan: 4 },
+      { content: 'Primeiro atendimento', colSpan: 4 },
+      { content: 'Documentacao online', colSpan: 4 },
       { content: 'Fechamento', colSpan: 4 }
     ],
-    ['Ativos', 'Concluida', 'Cancelada', 'Total', 'Ativos', 'Concluida', 'Cancelada', 'Total']
+    ['Ativos', 'Concluida', 'Cancelada', 'Total', 'Ativos', 'Concluida', 'Cancelada', 'Total', 'Ativos', 'Concluida', 'Cancelada', 'Total']
   ];
-  const numeroWidth = config.numeroWidth || 21;
+  const numeroWidth = config.numeroWidth || 17;
   doc.autoTable({
     startY: config.startY,
     tableWidth: config.tableWidth,
@@ -618,7 +700,7 @@ function agDesenharTabelaResumoTipo(doc, config) {
     alternateRowStyles: { fillColor: [250, 245, 236] },
     styles: { cellPadding: 1.5, overflow: 'linebreak', lineColor: [232, 220, 192], lineWidth: 0.15 },
     columnStyles: {
-      0: { cellWidth: config.nomeWidth || 56, halign: 'left', fontStyle: 'bold' },
+      0: { cellWidth: config.nomeWidth || 58, halign: 'left', fontStyle: 'bold' },
       1: { cellWidth: numeroWidth, halign: 'center' },
       2: { cellWidth: numeroWidth, halign: 'center' },
       3: { cellWidth: numeroWidth, halign: 'center' },
@@ -626,7 +708,11 @@ function agDesenharTabelaResumoTipo(doc, config) {
       5: { cellWidth: numeroWidth, halign: 'center' },
       6: { cellWidth: numeroWidth, halign: 'center' },
       7: { cellWidth: numeroWidth, halign: 'center' },
-      8: { cellWidth: numeroWidth, halign: 'center', fontStyle: 'bold' }
+      8: { cellWidth: numeroWidth, halign: 'center', fontStyle: 'bold' },
+      9: { cellWidth: numeroWidth, halign: 'center' },
+      10: { cellWidth: numeroWidth, halign: 'center' },
+      11: { cellWidth: numeroWidth, halign: 'center' },
+      12: { cellWidth: numeroWidth, halign: 'center', fontStyle: 'bold' }
     }
   });
   return doc.lastAutoTable.finalY;
@@ -692,6 +778,7 @@ function exportarRelatorioAgendamentos() {
         ['Reagendados', String(dados.reagendados)],
         ['Cancelados', String(dados.cancelados)],
         ['1o atendimento', String(dados.primeiros)],
+        ['Docs online', String(dados.documentacaoOnline)],
         ['Fechamentos', String(dados.fechamentos)],
         ['Prox. 7 dias', String(dados.proximos7Dias)]
       ];
@@ -725,8 +812,8 @@ function exportarRelatorioAgendamentos() {
         startY: tabelaResumoY,
         tableWidth: tabelaResumoW,
         left: 10,
-        nomeWidth: 74,
-        numeroWidth: 22
+        nomeWidth: 60,
+        numeroWidth: 17
       });
 
       tabelaResumoY = resumoCorretorFinalY + 11;
@@ -744,8 +831,8 @@ function exportarRelatorioAgendamentos() {
         startY: tabelaResumoY,
         tableWidth: tabelaResumoW,
         left: 10,
-        nomeWidth: 74,
-        numeroWidth: 22
+        nomeWidth: 60,
+        numeroWidth: 17
       });
 
       let infoY = resumoEquipeFinalY + 6;
@@ -764,7 +851,7 @@ function exportarRelatorioAgendamentos() {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.1);
       doc.setTextColor(70, 56, 32);
-      const linhaInfo = `Ativos = agendados com data/hora futura. Concluidos = cliente compareceu. Cancelados = cliente cancelou. Pendentes de tratativa: ${dados.tratativasPendentes}. Pendentes de sincronizacao: ${dados.pendentesSync}.`;
+      const linhaInfo = `Ativos = agendados com data/hora futura. Concluidos = visita concluida ou documentacao recebida. Cancelados = cliente cancelou. Pendentes de tratativa: ${dados.tratativasPendentes}. Pendentes de sincronizacao: ${dados.pendentesSync}.`;
       doc.text(doc.splitTextToSize(linhaInfo, W - 28), 14, infoY + 10.8);
 
       doc.addPage();
@@ -785,6 +872,7 @@ function exportarRelatorioAgendamentos() {
           'Data',
           'Hora',
           'Tipo',
+          'Canal',
           'Situacao',
           'Unidade',
           'Equipe',
@@ -800,8 +888,9 @@ function exportarRelatorioAgendamentos() {
           agFormatarDataRelatorio(item.preenchidoEm),
           agFormatarDataRelatorio(item.dataAgendamento),
           agTexto(item.horarioAgendamento || '—'),
-          agTexto(item.tipoVisita || '—'),
-          agTexto(agSituacao(item)),
+          agTexto(agTipoVisitaValor(item && item.tipoVisita)),
+          agTexto(agCanalAgendamentoValor(item && item.canalAgendamento, item && item.tipoVisita)),
+          agTexto(agSituacaoExibicao(item)),
           agTexto(item.unidade || '—'),
           agTexto(agEquipeValor(item)),
           agTexto(item.corretor || '—'),
@@ -817,20 +906,21 @@ function exportarRelatorioAgendamentos() {
         alternateRowStyles: { fillColor: [250, 245, 236] },
         styles: { cellPadding: 1.3, overflow: 'linebreak', lineColor: [232, 220, 192], lineWidth: 0.12 },
         columnStyles: {
-          0: { cellWidth: 8 },
-          1: { cellWidth: 14 },
-          2: { cellWidth: 14 },
-          3: { cellWidth: 10 },
-          4: { cellWidth: 18 },
-          5: { cellWidth: 16 },
-          6: { cellWidth: 16 },
-          7: { cellWidth: 18 },
-          8: { cellWidth: 25 },
-          9: { cellWidth: 28 },
-          10: { cellWidth: 18 },
-          11: { cellWidth: 24 },
-          12: { cellWidth: 38 },
-          13: { cellWidth: 28 }
+          0: { cellWidth: 7 },
+          1: { cellWidth: 12 },
+          2: { cellWidth: 12 },
+          3: { cellWidth: 9 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 18 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 12 },
+          8: { cellWidth: 15 },
+          9: { cellWidth: 22 },
+          10: { cellWidth: 24 },
+          11: { cellWidth: 17 },
+          12: { cellWidth: 18 },
+          13: { cellWidth: 30 },
+          14: { cellWidth: 20 }
         },
         didDrawPage: data => {
           doc.setFont('helvetica', 'normal');
@@ -934,9 +1024,8 @@ function agRenderItem(item, opcoes = {}) {
   const mostrarData = !!opcoes.mostrarData;
   const telefoneExibicao = agFormatarTelefone(item.telefone || '') || agTexto(item.telefone || 'Telefone nÃ£o informado');
   const telefoneEncoded = encodeURIComponent(String(telefoneExibicao || ''));
-  const tipoClass = agTexto(item.tipoVisita) === 'Fechamento' ? 'close' : 'first';
-  const situacao = agSituacao(item);
-  const situacaoClasse = agSituacaoClasse(situacao);
+  const tipoClass = agTipoBadgeClasse(item);
+  const situacaoClasse = agSituacaoClasse(agSituacao(item));
   const itemId = parseInt(item && item.id, 10) || 0;
   const podeTratar = !!itemId && agPodeTratarManual(item);
   const dataRef = agDataHoraRef(item.dataAgendamento, item.horarioAgendamento || '12:00');
@@ -954,8 +1043,9 @@ function agRenderItem(item, opcoes = {}) {
         <div class="ag-item-top">
           <div class="ag-client">${agTexto(item.cliente || 'Cliente não informado')}</div>
           <div class="ag-item-badges">
-            <span class="ag-badge ${tipoClass}">${agTexto(item.tipoVisita || 'Primeiro atendimento')}</span>
-            <span class="ag-badge status ${situacaoClasse}">${agTexto(situacao)}</span>
+            <span class="ag-badge ${tipoClass}">${agTipoBadgeRotulo(item)}</span>
+            <span class="ag-badge channel ${agCanalBadgeClasse(item)}">${agCanalBadgeRotulo(item)}</span>
+            <span class="ag-badge status ${situacaoClasse}">${agSituacaoExibicao(item)}</span>
             ${agTratativaPendente(item) ? `<span class="ag-badge warn">Tratativa pendente</span>` : ''}
           </div>
         </div>
@@ -970,7 +1060,7 @@ function agRenderItem(item, opcoes = {}) {
           </div>
           ${item.telefone ? `<button class="ag-copy-btn" type="button" onclick="event.stopPropagation();copiarTexto(decodeURIComponent('${telefoneEncoded}'),'Telefone do cliente')">Copiar telefone</button>` : ''}
         </div>
-        ${podeTratar ? `<div class="ag-item-hint">Clique no agendamento para registrar visita concluída, reagendamento ou cancelamento.</div>` : ''}
+        ${podeTratar ? `<div class="ag-item-hint">${agHintTratativa(item)}</div>` : ''}
       </div>
     </div>
   </div>`;
@@ -1007,13 +1097,16 @@ function renderTratativaAgendamentoModal() {
   const modoObrigatorio = agTratativaModo === 'obrigatoria';
   const botaoFechar = document.getElementById('mat-cancel-btn');
   const botaoSalvar = document.getElementById('mat-save-btn');
+  const rotuloConclusao = agRotuloConclusao(atual);
+  const descricaoConclusao = agDescricaoConclusao(atual);
+  const canalAgendamento = agCanalAgendamentoValor(atual && atual.canalAgendamento, atual && atual.tipoVisita);
 
   const idxAtual = Math.max(agTratativaFila.indexOf(atual.id), 0);
   const totalFila = agTratativaFila.length || 1;
   const infoAgendamento = `${agTexto(atual.cliente)} • ${agTexto(atual.dataAgendamento)} às ${agTexto(atual.horarioAgendamento)}`;
   const tituloFila = totalFila > 1 ? `Pendência ${idxAtual + 1} de ${totalFila}` : 'Pendência de tratativa';
 
-  document.getElementById('mat-title').textContent = zUiText(modoObrigatorio ? 'Tratativa obrigatória do agendamento' : 'Atualizar agendamento');
+  document.getElementById('mat-title').textContent = zUiText(modoObrigatorio ? 'Tratativa obrigatoria do compromisso' : 'Atualizar compromisso');
   document.getElementById('mat-sub').textContent = zUiText(modoObrigatorio ? `${tituloFila} • ${infoAgendamento}` : `Escolha como este compromisso deve ficar registrado. • ${infoAgendamento}`);
   if (botaoFechar) botaoFechar.style.display = modoObrigatorio ? 'none' : 'inline-flex';
   if (botaoSalvar) botaoSalvar.textContent = zUiText(modoObrigatorio ? 'Confirmar tratativa' : 'Salvar atualização');
@@ -1021,8 +1114,8 @@ function renderTratativaAgendamentoModal() {
   corpo.innerHTML = `
     <div class="agt-alert">
       ${modoObrigatorio
-        ? 'Este agendamento passou do horário há mais de 30 minutos. Para seguir usando o sistema, registre a tratativa agora.'
-        : 'Se o cliente já foi atendido, cancelou ou precisou remarcar, registre aqui sem precisar esperar o horário vencer.'}
+        ? 'Este compromisso passou do horario ha mais de 30 minutos. Para seguir usando o sistema, registre a tratativa agora.'
+        : 'Se o cliente ja foi atendido, enviou a documentacao, cancelou ou precisou remarcar, registre aqui sem precisar esperar o horario vencer.'}
     </div>
 
     <div class="agt-info-grid">
@@ -1032,9 +1125,9 @@ function renderTratativaAgendamentoModal() {
         <small>${agTexto(atual.telefone || 'Telefone não informado')}</small>
       </div>
       <div class="agt-info-card">
-        <span>Agendamento</span>
+        <span>Compromisso</span>
         <strong>${agTexto(atual.dataAgendamento)}</strong>
-        <small>${agTexto(atual.horarioAgendamento)} • ${agTexto(atual.tipoVisita)}</small>
+        <small>${agTexto(atual.horarioAgendamento)} • ${agTexto(agTipoVisitaValor(atual && atual.tipoVisita))} • ${agTexto(canalAgendamento)}</small>
       </div>
       <div class="agt-info-card">
         <span>Equipe</span>
@@ -1043,7 +1136,7 @@ function renderTratativaAgendamentoModal() {
       </div>
       <div class="agt-info-card">
         <span>${modoObrigatorio ? 'Prazo da tratativa' : 'Status atual'}</span>
-        <strong>${agTexto(modoObrigatorio ? agFormatarPrazoTratativa(atual) : agSituacao(atual))}</strong>
+        <strong>${agTexto(modoObrigatorio ? agFormatarPrazoTratativa(atual) : agSituacaoExibicao(atual))}</strong>
         <small>Lançado por ${agTexto(atual.criadoPor || 'Sistema')}</small>
       </div>
     </div>
@@ -1051,22 +1144,22 @@ function renderTratativaAgendamentoModal() {
     <div class="agt-section">
       <div class="agt-label">Escolha a tratativa</div>
       <div class="agt-options">
-        <button type="button" class="agt-option ${agTratativaSelecao === 'Concluída' ? 'active' : ''}" onclick="selecionarTratativaAgendamento('Concluída')">
-          <strong>Visita concluída</strong>
-          <span>O cliente foi atendido normalmente.</span>
+        <button type="button" class="agt-option ${agTratativaSelecao === AG_SITUACAO_CONCLUIDA ? 'active' : ''}" onclick="selecionarTratativaAgendamento('${agAttr(AG_SITUACAO_CONCLUIDA)}')">
+          <strong>${rotuloConclusao}</strong>
+          <span>${descricaoConclusao}</span>
         </button>
-        <button type="button" class="agt-option ${agTratativaSelecao === 'Reagendado' ? 'active' : ''}" onclick="selecionarTratativaAgendamento('Reagendado')">
+        <button type="button" class="agt-option ${agTratativaSelecao === AG_SITUACAO_REAGENDADO ? 'active' : ''}" onclick="selecionarTratativaAgendamento('${agAttr(AG_SITUACAO_REAGENDADO)}')">
           <strong>Reagendamento</strong>
-          <span>Cria automaticamente um novo agendamento com nova data e horário.</span>
+          <span>Cria automaticamente um novo compromisso com nova data e horario.</span>
         </button>
-        <button type="button" class="agt-option ${agTratativaSelecao === 'Cliente cancelou' ? 'active' : ''}" onclick="selecionarTratativaAgendamento('Cliente cancelou')">
+        <button type="button" class="agt-option ${agTratativaSelecao === AG_SITUACAO_CANCELADO ? 'active' : ''}" onclick="selecionarTratativaAgendamento('${agAttr(AG_SITUACAO_CANCELADO)}')">
           <strong>Cliente cancelou</strong>
           <span>Fecha este compromisso como cancelado pelo cliente.</span>
         </button>
       </div>
     </div>
 
-    <div id="agt-reagendar-box" class="agt-reagendar-box ${agTratativaSelecao === 'Reagendado' ? 'show' : ''}">
+    <div id="agt-reagendar-box" class="agt-reagendar-box ${agTratativaSelecao === AG_SITUACAO_REAGENDADO ? 'show' : ''}">
       <div class="agt-label">Novo horário do compromisso</div>
       <div class="f-row">
         <div class="f-field">
@@ -1078,7 +1171,7 @@ function renderTratativaAgendamentoModal() {
           <input type="time" id="agt-novo-horario" value="${agAttr(atual.reagendadoParaHorario || '')}">
         </div>
       </div>
-      <div class="agt-help">Ao confirmar, este agendamento atual fica marcado como reagendado e um novo compromisso será criado automaticamente.</div>
+      <div class="agt-help">Ao confirmar, este compromisso atual fica marcado como reagendado e um novo compromisso sera criado automaticamente.</div>
     </div>
   `;
 }
@@ -1116,10 +1209,10 @@ function abrirTratativaAgendamentoManual(id) {
     return;
   }
   if (!agPodeTratarManual(item)) {
-    const situacao = agSituacao(item);
+    const situacao = agSituacaoExibicao(item);
     showToast('⚠️', situacao === 'Agendado'
-      ? 'Você não tem permissão para alterar este agendamento.'
-      : `Esse agendamento já está marcado como ${situacao.toLowerCase()}.`);
+      ? 'Voce nao tem permissao para alterar este compromisso.'
+      : `Esse compromisso ja esta marcado como ${situacao.toLowerCase()}.`);
     return;
   }
   abrirTratativaAgendamentoModal(item, { modo: 'manual' });
@@ -1225,8 +1318,8 @@ async function confirmarTratativaAgendamento() {
       : 'Tratativas temporariamente bloqueadas enquanto a sincronização compartilhada estiver indisponível.');
     return;
   }
-  if (!AG_SITUACOES.includes(agTratativaSelecao) || agTratativaSelecao === 'Agendado') {
-    showToast('⚠️', 'Escolha a tratativa deste agendamento.');
+  if (!AG_SITUACOES.includes(agTratativaSelecao) || agTratativaSelecao === AG_SITUACAO_AGENDADO) {
+    showToast('⚠️', 'Escolha a tratativa deste compromisso.');
     return;
   }
 
@@ -1236,7 +1329,7 @@ async function confirmarTratativaAgendamento() {
   const modoTratativa = agTratativaModo || 'manual';
   const novosAgendamentos = [];
 
-  if (agTratativaSelecao === 'Reagendado') {
+  if (agTratativaSelecao === AG_SITUACAO_REAGENDADO) {
     const novaData = document.getElementById('agt-nova-data') ? document.getElementById('agt-nova-data').value : '';
     const novoHorario = document.getElementById('agt-novo-horario') ? agHoraNormalizada(document.getElementById('agt-novo-horario').value) : '';
     const novoRef = agDataHoraRef(novaData, novoHorario);
@@ -1245,7 +1338,7 @@ async function confirmarTratativaAgendamento() {
       return;
     }
     if (novoRef.getTime() <= Date.now()) {
-      showToast('⚠️', 'O novo agendamento precisa ficar em um horário futuro.');
+      showToast('⚠️', 'O novo compromisso precisa ficar em um horario futuro.');
       return;
     }
 
@@ -1262,10 +1355,11 @@ async function confirmarTratativaAgendamento() {
       dataAgendamento: novaData,
       horarioAgendamento: novoHorario,
       tipoVisita: atual.tipoVisita || 'Primeiro atendimento',
+      canalAgendamento: agCanalAgendamentoValor(atual.canalAgendamento, atual.tipoVisita),
       criadoPor: agTexto(usuarioAtual.nome || atual.criadoPor || 'Sistema'),
       criadoPorId: parseInt(usuarioAtual.id, 10) || 0,
       criadoPorEmail: agTexto(usuarioAtual.email).toLowerCase(),
-      situacao: 'Agendado',
+      situacao: AG_SITUACAO_AGENDADO,
       tratativaEm: '',
       tratativaPor: '',
       tratativaPorId: 0,
@@ -1387,16 +1481,25 @@ function renderAgendamentos() {
 
   const totalFeitos = lista.length;
   const totalAtivos = listaAtivos.length;
-  const totalConcluidos = lista.filter(item => agSituacao(item) === 'Concluída').length;
-  const totalPrimeirosAtivos = listaAtivos.filter(item => agTexto(item.tipoVisita) !== 'Fechamento').length;
-  const totalFechamentosAtivos = listaAtivos.filter(item => agTexto(item.tipoVisita) === 'Fechamento').length;
-  const totalPrimeirosProximos7 = agContarProximosDias(listaAtivos.filter(item => agTexto(item.tipoVisita) !== 'Fechamento'), 7);
-  const totalFechamentosProximos7 = agContarProximosDias(listaAtivos.filter(item => agTexto(item.tipoVisita) === 'Fechamento'), 7);
+  const listaConcluidos = lista.filter(item => agSituacaoNormalizada(item) === 'concluida');
+  const listaCancelados = lista.filter(item => agSituacaoNormalizada(item) === 'cliente cancelou');
+  const totalConcluidos = listaConcluidos.length;
+  const totalPrimeirosAtivos = listaAtivos.filter(agTipoPrimeiro).length;
+  const totalDocumentacaoAtivos = listaAtivos.filter(agTipoDocumentacao).length;
+  const totalFechamentosAtivos = listaAtivos.filter(agTipoFechamento).length;
+  const totalPrimeirosCancelados = listaCancelados.filter(agTipoPrimeiro).length;
+  const totalDocumentacaoCancelada = listaCancelados.filter(agTipoDocumentacao).length;
+  const totalFechamentosCancelados = listaCancelados.filter(agTipoFechamento).length;
+  const totalPrimeirosProximos7 = agContarProximosDias(listaAtivos.filter(agTipoPrimeiro), 7);
+  const totalDocumentacaoProximos7 = agContarProximosDias(listaAtivos.filter(agTipoDocumentacao), 7);
+  const totalFechamentosProximos7 = agContarProximosDias(listaAtivos.filter(agTipoFechamento), 7);
   const periodoResumo = agPeriodoResumo(periodo);
-  const resumoDiaPrimeiro = listaDia.filter(item => agTexto(item.tipoVisita) !== 'Fechamento').length;
-  const resumoDiaFechamento = listaDia.filter(item => agTexto(item.tipoVisita) === 'Fechamento').length;
-  const resumoProximosPrimeiro = proximos.filter(item => agTexto(item.tipoVisita) !== 'Fechamento').length;
-  const resumoProximosFechamento = proximos.filter(item => agTexto(item.tipoVisita) === 'Fechamento').length;
+  const resumoDiaPrimeiro = listaDia.filter(agTipoPrimeiro).length;
+  const resumoDiaDocumentacao = listaDia.filter(agTipoDocumentacao).length;
+  const resumoDiaFechamento = listaDia.filter(agTipoFechamento).length;
+  const resumoProximosPrimeiro = proximos.filter(agTipoPrimeiro).length;
+  const resumoProximosDocumentacao = proximos.filter(agTipoDocumentacao).length;
+  const resumoProximosFechamento = proximos.filter(agTipoFechamento).length;
   const orientacaoSync = encodeURIComponent('Aplicar o arquivo supabase-agendamentos.sql no SQL Editor do Supabase antes de liberar novamente o módulo de agendamentos.');
   const avisoSync = syncInfo.tabelaAusente
     ? `<div class="ag-sync-banner danger">
@@ -1458,7 +1561,7 @@ function renderAgendamentos() {
         </button>
         <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
-          Novo agendamento
+          Novo compromisso
         </button>
       </div>
     </div>
@@ -1479,17 +1582,37 @@ function renderAgendamentos() {
       <div class="ag-stat">
         <div class="ag-stat-tag">Agendamentos concluídos</div>
         <div class="ag-stat-value">${totalConcluidos}</div>
-        <div class="ag-stat-copy">Visitas já marcadas como concluídas dentro do período analisado.</div>
+        <div class="ag-stat-copy">Compromissos finalizados como visita concluida ou documentacao recebida dentro do periodo analisado.</div>
       </div>
       <div class="ag-stat">
         <div class="ag-stat-tag">Primeiro atendimento ativos</div>
         <div class="ag-stat-value">${totalPrimeirosAtivos}</div>
-        <div class="ag-stat-copy">${totalPrimeirosProximos7} primeiros atendimentos ativos previstos nos próximos 7 dias.</div>
+        <div class="ag-stat-copy">${totalPrimeirosProximos7} primeiros atendimentos ativos previstos nos proximos 7 dias.</div>
+      </div>
+      <div class="ag-stat">
+        <div class="ag-stat-tag">Documentacao online ativa</div>
+        <div class="ag-stat-value">${totalDocumentacaoAtivos}</div>
+        <div class="ag-stat-copy">${totalDocumentacaoProximos7} envios de documentacao online previstos nos proximos 7 dias.</div>
       </div>
       <div class="ag-stat">
         <div class="ag-stat-tag">Fechamentos ativos</div>
         <div class="ag-stat-value">${totalFechamentosAtivos}</div>
-        <div class="ag-stat-copy">${totalFechamentosProximos7} fechamentos ativos previstos nos próximos 7 dias.</div>
+        <div class="ag-stat-copy">${totalFechamentosProximos7} fechamentos ativos previstos nos proximos 7 dias.</div>
+      </div>
+      <div class="ag-stat cancelled">
+        <div class="ag-stat-tag">Primeiro atendimento cancelado</div>
+        <div class="ag-stat-value">${totalPrimeirosCancelados}</div>
+        <div class="ag-stat-copy">${totalPrimeirosCancelados} cancelamento${totalPrimeirosCancelados !== 1 ? 's' : ''} de primeiro atendimento dentro do periodo analisado.</div>
+      </div>
+      <div class="ag-stat cancelled">
+        <div class="ag-stat-tag">Documentacao cancelada</div>
+        <div class="ag-stat-value">${totalDocumentacaoCancelada}</div>
+        <div class="ag-stat-copy">${totalDocumentacaoCancelada} cancelamento${totalDocumentacaoCancelada !== 1 ? 's' : ''} de documentacao online dentro do periodo analisado.</div>
+      </div>
+      <div class="ag-stat cancelled">
+        <div class="ag-stat-tag">Fechamento cancelado</div>
+        <div class="ag-stat-value">${totalFechamentosCancelados}</div>
+        <div class="ag-stat-copy">${totalFechamentosCancelados} cancelamento${totalFechamentosCancelados !== 1 ? 's' : ''} de fechamento dentro do periodo analisado.</div>
       </div>
     </div>
 
@@ -1562,12 +1685,16 @@ function renderAgendamentos() {
                   <strong>${resumoDiaPrimeiro}</strong>
                 </div>
                 <div class="ag-panel-stat">
+                  <span>Docs online</span>
+                  <strong>${resumoDiaDocumentacao}</strong>
+                </div>
+                <div class="ag-panel-stat">
                   <span>Fechamento</span>
                   <strong>${resumoDiaFechamento}</strong>
                 </div>
               </div>
               <div class="ag-list">
-                ${listaDia.length ? listaDia.map(item => agRenderItem(item)).join('') : `<div class="ag-empty"><strong>Sem compromissos ativos neste dia</strong>Use o botão acima para registrar um novo agendamento na data selecionada.</div>`}
+                ${listaDia.length ? listaDia.map(item => agRenderItem(item)).join('') : `<div class="ag-empty"><strong>Sem compromissos ativos neste dia</strong>Use o botao acima para registrar um novo compromisso na data selecionada.</div>`}
               </div>
             </div>
           </div>
@@ -1592,6 +1719,10 @@ function renderAgendamentos() {
                 <div class="ag-panel-stat">
                   <span>Primeiro atendimento</span>
                   <strong>${resumoProximosPrimeiro}</strong>
+                </div>
+                <div class="ag-panel-stat">
+                  <span>Docs online</span>
+                  <strong>${resumoProximosDocumentacao}</strong>
                 </div>
                 <div class="ag-panel-stat">
                   <span>Fechamento</span>
@@ -1676,24 +1807,25 @@ function abrirAgendamentoModal(dataIso) {
   if (agMutacaoBloqueada()) {
     const info = agStatusSyncInfo();
     showToast('⚠️', info.tabelaAusente
-      ? 'Novos agendamentos estão bloqueados até aplicar a tabela no Supabase.'
-      : 'Novos agendamentos estão temporariamente bloqueados enquanto a sincronização compartilhada estiver indisponível.');
+      ? 'Novos compromissos estao bloqueados ate aplicar a tabela no Supabase.'
+      : 'Novos compromissos estao temporariamente bloqueados enquanto a sincronizacao compartilhada estiver indisponivel.');
     return;
   }
 
   const usuariosPermitidos = agUsuariosPermitidosCadastro();
   if (!usuariosPermitidos.length) {
-    showToast('⚠️', 'Não há corretores disponíveis para o seu perfil cadastrar agendamentos.');
+    showToast('⚠️', 'Nao ha corretores disponiveis para o seu perfil cadastrar compromissos.');
     return;
   }
 
-  document.getElementById('ma-title').textContent = zUiText('Novo agendamento');
+  document.getElementById('ma-title').textContent = zUiText('Novo compromisso');
   document.getElementById('ma-preenchimento').value = agHojeIso();
   document.getElementById('ma-cliente').value = '';
   document.getElementById('ma-telefone').value = '';
-  document.getElementById('ma-horario').value = '09:00';
-  document.getElementById('ma-tipo').value = AG_TIPOS_VISITA[0];
-  document.getElementById('ma-data').value = agDataValidaIso(dataIso) ? dataIso : (agDataSelecionada || agHojeIso());
+  document.getElementById('ma-horario').value = '';
+  document.getElementById('ma-tipo').value = '';
+  document.getElementById('ma-canal').value = '';
+  document.getElementById('ma-data').value = '';
 
   atualizarCamposAgendamentoModal();
 
@@ -1718,7 +1850,22 @@ function handleBackdropAgendamento(event) {
 function atualizarCamposAgendamentoModal() {
   const unidadeSelect = document.getElementById('ma-unidade');
   const equipeSelect = document.getElementById('ma-equipe');
-  if (!unidadeSelect || !equipeSelect) return;
+  const tipoSelect = document.getElementById('ma-tipo');
+  const canalSelect = document.getElementById('ma-canal');
+  if (!unidadeSelect || !equipeSelect || !tipoSelect || !canalSelect) return;
+
+  const tipoAtual = AG_TIPOS_VISITA.includes(tipoSelect.value) ? tipoSelect.value : '';
+  tipoSelect.innerHTML = ['<option value="">Selecione o tipo</option>']
+    .concat(AG_TIPOS_VISITA.map(tipo => `<option value="${agTexto(tipo)}">${agTexto(tipo)}</option>`))
+    .join('');
+  tipoSelect.value = tipoAtual;
+
+  const canalAtual = AG_CANAIS_AGENDAMENTO.includes(canalSelect.value) ? canalSelect.value : '';
+  canalSelect.innerHTML = ['<option value="">Selecione o canal</option>']
+    .concat(AG_CANAIS_AGENDAMENTO.map(canal => `<option value="${agTexto(canal)}">${agTexto(canal)}</option>`))
+    .join('');
+  canalSelect.value = agTipoDocumentacao({ tipoVisita: tipoSelect.value }) ? 'Online - WhatsApp' : canalAtual;
+  canalSelect.disabled = agTipoDocumentacao({ tipoVisita: tipoSelect.value });
 
   const unidades = agUnidadesPermitidasCriacao();
   const unidadeAtual = unidades.includes(unidadeSelect.value) ? unidadeSelect.value : (unidades[0] || '');
@@ -1770,8 +1917,8 @@ async function salvarAgendamento() {
   if (agMutacaoBloqueada()) {
     const info = agStatusSyncInfo();
     showToast('⚠️', info.tabelaAusente
-      ? 'Novos agendamentos estão bloqueados até aplicar a tabela no Supabase.'
-      : 'Novos agendamentos estão temporariamente bloqueados enquanto a sincronização compartilhada estiver indisponível.');
+      ? 'Novos compromissos estao bloqueados ate aplicar a tabela no Supabase.'
+      : 'Novos compromissos estao temporariamente bloqueados enquanto a sincronizacao compartilhada estiver indisponivel.');
     return;
   }
   const btn = document.getElementById('ma-save-btn');
@@ -1785,6 +1932,8 @@ async function salvarAgendamento() {
   const dataAgendamento = document.getElementById('ma-data').value;
   const horarioAgendamento = agHoraNormalizada(document.getElementById('ma-horario').value);
   const tipoVisita = document.getElementById('ma-tipo').value;
+  const canalSelecionado = document.getElementById('ma-canal').value;
+  const canalAgendamento = agCanalAgendamentoValor(canalSelecionado, tipoVisita);
   const corretorUsuario = agUsuariosPermitidosCadastro().find(usuario => String(usuario.id) === String(corretorId));
 
   if (!agDataValidaIso(preenchidoEm)) { showToast('⚠️', 'Informe a data do preenchimento.'); return; }
@@ -1793,9 +1942,10 @@ async function salvarAgendamento() {
   if (!corretorUsuario) { showToast('⚠️', 'Selecione o corretor responsável.'); return; }
   if (!cliente) { showToast('⚠️', 'Informe o nome do cliente.'); return; }
   if (!telefone) { showToast('⚠️', 'Informe o telefone do cliente.'); return; }
-  if (!agDataValidaIso(dataAgendamento)) { showToast('⚠️', 'Informe a data do agendamento.'); return; }
-  if (!horarioAgendamento) { showToast('⚠️', 'Informe o horário do agendamento.'); return; }
-  if (!AG_TIPOS_VISITA.includes(tipoVisita)) { showToast('⚠️', 'Selecione o tipo de visita.'); return; }
+  if (!agDataValidaIso(dataAgendamento)) { showToast('⚠️', 'Informe a data do compromisso.'); return; }
+  if (!horarioAgendamento) { showToast('⚠️', 'Informe o horario do compromisso.'); return; }
+  if (!AG_TIPOS_VISITA.includes(tipoVisita)) { showToast('⚠️', 'Selecione o tipo de compromisso.'); return; }
+  if (!AG_CANAIS_AGENDAMENTO.includes(canalSelecionado || canalAgendamento)) { showToast('⚠️', 'Selecione o canal do compromisso.'); return; }
 
   const novo = {
     id: nextAgendamentoId++,
@@ -1810,10 +1960,11 @@ async function salvarAgendamento() {
     dataAgendamento,
     horarioAgendamento,
     tipoVisita,
+    canalAgendamento,
     criadoPor: usuarioLogado ? agTexto(usuarioLogado.nome) : 'Sistema',
     criadoPorId: usuarioLogado ? (parseInt(usuarioLogado.id, 10) || 0) : 0,
     criadoPorEmail: usuarioLogado ? agTexto(usuarioLogado.email).toLowerCase() : '',
-    situacao: 'Agendado',
+    situacao: AG_SITUACAO_AGENDADO,
     tratativaEm: '',
     tratativaPor: '',
     tratativaPorId: 0,
@@ -1858,16 +2009,16 @@ async function salvarAgendamento() {
     }
     salvarLS();
     renderAgendamentos();
-    showToast('✅', 'Agendamento salvo com sucesso.');
+    showToast('✅', 'Compromisso salvo com sucesso.');
   } catch (erro) {
     console.warn('Falha ao sincronizar agendamento no banco:', erro && erro.message ? erro.message : erro);
     salvarLS();
     renderAgendamentos();
-    showToast('⚠️', 'O agendamento não foi sincronizado com o Supabase. Este registro ficou pendente apenas neste navegador.');
+    showToast('⚠️', 'O compromisso nao foi sincronizado com o Supabase. Este registro ficou pendente apenas neste navegador.');
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = zUiText('✓ Salvar agendamento');
+      btn.textContent = zUiText('✓ Salvar compromisso');
     }
   }
 }

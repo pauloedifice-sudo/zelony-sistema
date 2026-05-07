@@ -1390,7 +1390,7 @@ function finAcaoItemComOpcao(item, pararEvento = false) {
   if (!item) return '';
   const prefixo = pararEvento ? 'event.stopPropagation();' : '';
   if (item.origem === 'venda' && item.v && item.v.id) return `onclick="${prefixo}irParaVenda(${item.v.id})"`;
-  const chave = finEscapeAttr(item.refLocal || (item.raw && item.raw.refLocal) || item.key || '');
+  const chave = finEscapeAttr(finChaveItem(item));
   return `onclick="${prefixo}finEditarLancamentoManual('${chave}')"`; 
 }
 
@@ -1400,7 +1400,6 @@ function finNomeItem(item) {
 }
 
 function finSideItem(item) {
-  const chave = finEscapeAttr(item && (item.refLocal || (item.raw && item.raw.refLocal) || item.key || ''));
   return `<div class="fcal-side-item-wrap">
     <button class="fcal-side-item ${finClasseItem(item)}" ${finAcaoItem(item)}>
       <div class="fcal-side-item-top">
@@ -1409,7 +1408,7 @@ function finSideItem(item) {
       </div>
       <div class="fcal-side-item-meta">${finMetaItem(item)}</div>
     </button>
-    ${finPodeBaixaRapida(item) ? `<button class="fcal-side-action-btn" onclick="event.stopPropagation();finAbrirBaixaLancamento('${chave}')">${zUiText(finRotuloBaixaRapida(item))}</button>` : ''}
+    ${finAcoesSecundariasItem(item)}
   </div>`;
 }
 
@@ -1428,7 +1427,6 @@ function finSubtituloDetalheDia(dia, mes, ano, itens) {
 }
 
 function finDetalheDiaItem(item) {
-  const chave = finEscapeAttr(item && (item.refLocal || (item.raw && item.raw.refLocal) || item.key || ''));
   const valor = item.natureza === 'saida' ? `-${fmt(item.valorBruto)}` : fmt(item.valorBruto);
   return `<div class="fin-day-item fin-day-item-${finClasseItem(item)}">
     <button class="fin-day-item-main" type="button" ${finAcaoItem(item)}>
@@ -1440,7 +1438,7 @@ function finDetalheDiaItem(item) {
       <div class="fin-day-item-meta">${finMetaItem(item, { includeStatus: false })}</div>
       ${item.observacao ? `<div class="fin-day-item-note">${zUiText(item.observacao)}</div>` : ''}
     </button>
-    ${finPodeBaixaRapida(item) ? `<button class="fcal-side-action-btn" type="button" onclick="event.stopPropagation();finAbrirBaixaLancamento('${chave}')">${zUiText(finRotuloBaixaRapida(item))}</button>` : ''}
+    ${finAcoesSecundariasItem(item)}
   </div>`;
 }
 
@@ -1554,6 +1552,19 @@ function finPrepararComprovanteModal(item = null) {
   if (item.comprovanteMime) finComprovanteMime = item.comprovanteMime;
   if (item.comprovanteSize) finComprovanteSize = item.comprovanteSize;
   if (item.comprovanteLocalId) finComprovanteLocalId = item.comprovanteLocalId;
+}
+
+function finChaveItem(item) {
+  return String(item && (item.refLocal || (item.raw && item.raw.refLocal) || item.id || item.key || '') || '');
+}
+
+function finLancamentoPorChave(chave) {
+  const alvo = String(chave || '').trim();
+  if (!alvo) return null;
+  return (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(item => {
+    const atual = String(item && (item.refLocal || item.id || '') || '').trim();
+    return atual && atual === alvo;
+  }) || null;
 }
 
 function finComprovanteModalAtual(item = finLancamentoAtual()) {
@@ -1695,7 +1706,81 @@ function finAbrirBaixaLancamento(chave) {
   setTimeout(() => finMarcarModalComoRealizado(true), 80);
 }
 
+function finAbrirArquivoComprovante(url) {
+  const win = window.open(url, '_blank', 'noopener');
+  if (!win) {
+    showToast('⚠️', zUiText('Nao foi possivel abrir o comprovante em nova aba.'));
+    return false;
+  }
+  return true;
+}
+
+async function finAbrirComprovante(item = null) {
+  const atual = finComprovanteModalAtual(item || finLancamentoAtual());
+  if (!atual) return;
+  if (atual.dataUrl) {
+    finAbrirArquivoComprovante(atual.dataUrl);
+    return;
+  }
+  if (atual.storageBucket && atual.storagePath && typeof dbBaixarDocumentoArquivo === 'function') {
+    try {
+      const blob = await dbBaixarDocumentoArquivo({
+        storageBucket: atual.storageBucket,
+        storagePath: atual.storagePath,
+        dataUrl: atual.dataUrl || ''
+      });
+      if (!blob) throw new Error('Blob do comprovante indisponivel.');
+      const url = URL.createObjectURL(blob);
+      finAbrirArquivoComprovante(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return;
+    } catch (erro) {
+      console.warn('Falha ao abrir comprovante salvo do financeiro:', erro);
+    }
+  }
+  if (atual.localId && typeof obterFinanceiroComprovanteLocal === 'function') {
+    try {
+      const registro = await obterFinanceiroComprovanteLocal(atual.localId);
+      if (!registro || !registro.file) {
+        showToast('⚠️', zUiText('O comprovante local ainda nao esta disponivel neste navegador.'));
+        return;
+      }
+      const url = URL.createObjectURL(registro.file);
+      finAbrirArquivoComprovante(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return;
+    } catch (erro) {
+      console.warn('Falha ao abrir comprovante local do financeiro:', erro);
+    }
+  }
+  showToast('⚠️', zUiText('Nao foi possivel abrir o comprovante deste lancamento.'));
+}
+
+async function finVerComprovanteLancamento(chave) {
+  const item = finLancamentoPorChave(chave);
+  if (!item) {
+    showToast('⚠️', zUiText('Nao encontramos este lancamento para abrir o comprovante.'));
+    return;
+  }
+  await finAbrirComprovante(item);
+}
+
+function finAcoesSecundariasItem(item) {
+  const chave = finEscapeAttr(finChaveItem(item));
+  const acoes = [];
+  if (finTemComprovante(item)) {
+    acoes.push(`<button class="fcal-side-action-btn secondary" type="button" onclick="event.stopPropagation();finVerComprovanteLancamento('${chave}')">${zUiText('Ver comprovante')}</button>`);
+  }
+  if (finPodeBaixaRapida(item)) {
+    acoes.push(`<button class="fcal-side-action-btn" type="button" onclick="event.stopPropagation();finAbrirBaixaLancamento('${chave}')">${zUiText(finRotuloBaixaRapida(item))}</button>`);
+  }
+  if (!acoes.length) return '';
+  return `<div class="fcal-side-actions">${acoes.join('')}</div>`;
+}
+
 async function finVerComprovanteAtual() {
+  await finAbrirComprovante();
+  return;
   const atual = finComprovanteModalAtual();
   if (!atual) return;
   if (atual.dataUrl) {
@@ -2447,6 +2532,7 @@ function renderFinanceiro() {
     .fcal-side-sub{font-size:9px;color:var(--tm);margin-top:4px;line-height:1.55;max-width:27ch;}
     .fcal-side-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
     .fcal-side-item-wrap{display:flex;flex-direction:column;gap:7px;}
+    .fcal-side-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
     .fcal-side-item{background:var(--bg2);border:1px solid rgba(184,144,42,0.14);border-left:3px solid transparent;border-radius:10px;padding:10px 11px;text-align:left;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease;}
     .fcal-side-item:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(184,144,42,0.07);}
     .fcal-side-item.ok{border-left-color:#15803D;background:#EBF8F1;}
@@ -2468,6 +2554,7 @@ function renderFinanceiro() {
     .fcal-side-item.out-delay .fcal-side-item-top span{color:#B42318;}
     .fcal-side-item-meta{font-size:8px;color:var(--tm);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .fcal-side-action-btn{align-self:flex-start;background:#fff;border:1px solid var(--gold-bd);border-radius:999px;padding:6px 10px;font-size:9px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;}
+    .fcal-side-action-btn.secondary{color:var(--ts);border-color:rgba(184,144,42,0.22);}
     .fcal-side-action-btn:hover{background:var(--gold-bg);}
     .fcal-empty-state{font-size:10px;color:var(--tm);padding:6px 0 2px;}
     .fcal-legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:10px;color:var(--tm);padding-top:2px;}
