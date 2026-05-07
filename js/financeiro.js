@@ -45,6 +45,7 @@ const FIN_CATEGORIAS = {
     'EVENTOS',
     'IMPOSTOS',
     'MARKETING',
+    'REPASSE COMISSAO',
     'OUTRAS SAIDAS',
     'SALARIO',
     'SERVICOS'
@@ -275,6 +276,240 @@ function finDiffDias(maior, menor) {
 function finValorSeguro(valor) {
   const numero = parseFloat(valor);
   return Number.isFinite(numero) ? numero : 0;
+}
+
+function finRefLocalRepasseComissaoVenda(vendaId, papel) {
+  const alvoId = parseInt(vendaId, 10) || 0;
+  const chave = String(papel || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+  if (!alvoId || !chave) return '';
+  return `fin-comissao-venda-${alvoId}-${chave}`;
+}
+
+function finExtrairMetaRepasseComissao(refLocal) {
+  const match = /^fin-comissao-venda-(\d+)-([a-z0-9_]+)$/i.exec(String(refLocal || '').trim());
+  if (!match) return null;
+  return {
+    vendaId: parseInt(match[1], 10) || 0,
+    papel: String(match[2] || '').trim().toLowerCase()
+  };
+}
+
+function finBuscarVendaRepasseComissao(refLocal) {
+  const meta = finExtrairMetaRepasseComissao(refLocal);
+  if (!meta) return null;
+  return {
+    ...meta,
+    venda: Array.isArray(VENDAS)
+      ? VENDAS.find(item => parseInt(item && item.id, 10) === meta.vendaId) || null
+      : null
+  };
+}
+
+function finValorComissaoCalculado(venda, calculadora) {
+  if (!venda || typeof calculadora !== 'function') return 0;
+  return Math.abs(finValorSeguro(calculadora(venda)));
+}
+
+function finAdicionarParteRepasseComissao(lista, config = {}) {
+  const nome = finTextoMaiusculo(config.nome || '');
+  const valor = Math.abs(finValorSeguro(config.valor));
+  if (!nome || valor <= 0) return;
+  lista.push({
+    papel: String(config.papel || '').trim().toLowerCase() || 'repasse',
+    papelLabel: finTextoMaiusculo(config.papelLabel || config.papel || 'REPASSE'),
+    nome,
+    valor
+  });
+}
+
+function finMontarPartesRepasseComissaoVenda(venda) {
+  if (!venda) return [];
+  const alvo = typeof normalizarVendaNumeros === 'function' ? normalizarVendaNumeros(venda) : venda;
+  const partes = [];
+  finAdicionarParteRepasseComissao(partes, {
+    papel: 'corretor',
+    papelLabel: 'CORRETOR',
+    nome: alvo.corretor,
+    valor: finValorComissaoCalculado(alvo, typeof comC === 'function' ? comC : null)
+      + finValorComissaoCalculado(alvo, typeof bonusCor === 'function' ? bonusCor : null)
+  });
+  finAdicionarParteRepasseComissao(partes, {
+    papel: 'capitao',
+    papelLabel: 'CAPITAO',
+    nome: alvo.capitao,
+    valor: finValorComissaoCalculado(alvo, typeof comCap === 'function' ? comCap : null)
+  });
+  finAdicionarParteRepasseComissao(partes, {
+    papel: 'gerente',
+    papelLabel: 'GERENTE',
+    nome: alvo.gerente,
+    valor: finValorComissaoCalculado(alvo, typeof comG === 'function' ? comG : null)
+      + finValorComissaoCalculado(alvo, typeof bonusGer === 'function' ? bonusGer : null)
+  });
+  finAdicionarParteRepasseComissao(partes, {
+    papel: 'diretor',
+    papelLabel: 'DIRETOR',
+    nome: alvo.diretor,
+    valor: finValorComissaoCalculado(alvo, typeof comD === 'function' ? comD : null)
+      + finValorComissaoCalculado(alvo, typeof bonusDir === 'function' ? bonusDir : null)
+  });
+  finAdicionarParteRepasseComissao(partes, {
+    papel: 'diretor_2',
+    papelLabel: 'DIRETOR 2',
+    nome: alvo.diretor2,
+    valor: finValorComissaoCalculado(alvo, typeof comD2 === 'function' ? comD2 : null)
+  });
+  return partes;
+}
+
+function finObterDataRecebimentoComissaoVenda(venda) {
+  const etapaFinal = Array.isArray(ETAPAS) && ETAPAS.length ? ETAPAS.length - 1 : 0;
+  const historicoFinal = Array.isArray(venda && venda.hist)
+    ? [...venda.hist].reverse().find(item => item
+      && parseInt(item.e, 10) === etapaFinal
+      && (typeof histAfetaFluxo !== 'function' || histAfetaFluxo(item)))
+    : null;
+  const infoFinal = historicoFinal && typeof obterMomentoHistorico === 'function'
+    ? obterMomentoHistorico(historicoFinal, { preferTs: false })
+    : null;
+  if (infoFinal && infoFinal.date instanceof Date && !Number.isNaN(infoFinal.date.getTime())) {
+    return new Date(infoFinal.date.getFullYear(), infoFinal.date.getMonth(), infoFinal.date.getDate(), 12, 0, 0, 0);
+  }
+  const historicoFallback = Array.isArray(venda && venda.hist) && venda.hist.length ? venda.hist[venda.hist.length - 1] : null;
+  const infoFallback = historicoFallback && typeof obterMomentoHistorico === 'function'
+    ? obterMomentoHistorico(historicoFallback, { preferTs: false })
+    : null;
+  if (infoFallback && infoFallback.date instanceof Date && !Number.isNaN(infoFallback.date.getTime())) {
+    return new Date(infoFallback.date.getFullYear(), infoFallback.date.getMonth(), infoFallback.date.getDate(), 12, 0, 0, 0);
+  }
+  return finHojeRef();
+}
+
+function finDescricaoRepasseComissao(parte) {
+  return finTextoMaiusculo(`REPASSE ${parte.papelLabel} - ${parte.nome}`);
+}
+
+function finObservacaoRepasseComissao(venda) {
+  const partes = [
+    finNomeClienteVenda(venda && venda.cliente),
+    venda && venda.produto,
+    venda && venda.construtora
+  ].filter(Boolean);
+  return finTextoMaiusculo(`VENDA ${partes.join(' - ')}`);
+}
+
+async function finSincronizarSaidasComissaoVenda(venda, opcoes = {}) {
+  const etapaFinal = Array.isArray(ETAPAS) && ETAPAS.length ? ETAPAS.length - 1 : 0;
+  if (!venda || !venda.id || venda.distratada || parseInt(venda.etapa, 10) !== etapaFinal) {
+    return { itens: 0, criados: 0, atualizados: 0, falhas: 0, ignorado: true };
+  }
+
+  const partes = finMontarPartesRepasseComissaoVenda(venda);
+  if (!partes.length) {
+    return { itens: 0, criados: 0, atualizados: 0, falhas: 0, ignorado: true };
+  }
+
+  const dataRecebimento = finObterDataRecebimentoComissaoVenda(venda);
+  const dataLiquidacao = finDateParaIso(dataRecebimento) || finDateParaIso(finHojeRef());
+  const observacao = finObservacaoRepasseComissao(venda);
+  const alterados = [];
+  let criados = 0;
+  let atualizados = 0;
+  let falhas = 0;
+
+  partes.forEach((parte, indice) => {
+    const refLocal = finRefLocalRepasseComissaoVenda(venda.id, parte.papel);
+    if (!refLocal) return;
+
+    const existente = (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(item => {
+      return String(item && (item.refLocal || item.ref_local) || '') === refLocal;
+    }) || null;
+
+    const alvo = existente || {
+      id: Date.now() + indice,
+      refLocal,
+      criadoPor: usuarioLogado ? (usuarioLogado.nome || '') : 'Sistema',
+      criadoPorId: usuarioLogado ? (parseInt(usuarioLogado.id, 10) || 0) : 0,
+      criadoPorEmail: usuarioLogado ? (usuarioLogado.email || '') : '',
+      syncPendente: false,
+      syncErro: ''
+    };
+
+    const proximo = {
+      tipo: 'saida',
+      categoria: 'REPASSE COMISSAO',
+      descricao: finDescricaoRepasseComissao(parte),
+      unidade: venda.unidade || '',
+      dataPrevista: dataLiquidacao,
+      status: 'realizado',
+      dataRealizada: dataLiquidacao,
+      valor: parte.valor,
+      observacao,
+      atualizadoEm: new Date().toISOString(),
+      refLocal
+    };
+
+    const camposComparacao = [
+      'tipo',
+      'categoria',
+      'descricao',
+      'unidade',
+      'dataPrevista',
+      'status',
+      'dataRealizada',
+      'observacao',
+      'refLocal'
+    ];
+
+    let mudou = !existente;
+    if (!mudou) {
+      mudou = camposComparacao.some(campo => String(alvo[campo] || '') !== String(proximo[campo] || ''));
+    }
+    if (!mudou) {
+      mudou = Math.abs(finValorSeguro(alvo.valor) - finValorSeguro(proximo.valor)) > 0.009;
+    }
+
+    Object.assign(alvo, proximo);
+
+    if (!existente) {
+      FINANCEIRO_LANCAMENTOS.push(alvo);
+      criados++;
+    } else if (mudou) {
+      atualizados++;
+    }
+
+    if (mudou || alvo.syncPendente) alterados.push(alvo);
+  });
+
+  if (!criados && !atualizados && !alterados.length) {
+    return { itens: partes.length, criados: 0, atualizados: 0, falhas: 0, ignorado: false };
+  }
+
+  FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
+  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+  if (typeof salvarLS === 'function') salvarLS();
+
+  if (opcoes.persistir !== false && typeof dbSalvarLancamentoFinanceiro === 'function') {
+    for (const item of alterados) {
+      try {
+        await dbSalvarLancamentoFinanceiro(item, item.id || 0);
+      } catch (erro) {
+        falhas++;
+        console.warn('Falha ao sincronizar repasse automatico de comissao no financeiro:', erro);
+      }
+    }
+  }
+
+  FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
+  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+  if (typeof salvarLS === 'function') salvarLS();
+  if (!document.getElementById('mod-financeiro')?.classList.contains('hidden')) renderFinanceiro();
+
+  return { itens: partes.length, criados, atualizados, falhas, ignorado: false };
 }
 
 function finTamanhoArquivoTexto(bytes) {
@@ -581,9 +816,10 @@ function finNormalizarLancamentoManual(item) {
   if (!dataRef) return null;
   const status = finStatusLoteManual(statusLancamentoFinanceiroNormalizado(item.status), item.dataPrevista);
   const atraso = status === 'atrasado' ? finDiffDias(finHojeRef(), finDataIsoParaDate(item.dataPrevista)) : 0;
+  const origemAuto = finBuscarVendaRepasseComissao(item.refLocal || item.ref_local || '');
   return {
     key: `manual-${item.refLocal || item.id}`,
-    origem: 'manual',
+    origem: origemAuto ? 'venda_comissao_saida' : 'manual',
     natureza: tipo,
     categoria: finTextoMaiusculo(item.categoria) || (tipo === 'saida' ? 'OUTRAS SAIDAS' : 'OUTRAS ENTRADAS'),
     descricao: finTextoMaiusculo(item.descricao) || (tipo === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL'),
@@ -605,6 +841,9 @@ function finNormalizarLancamentoManual(item) {
     comprovanteStorageBucket: item.comprovanteStorageBucket || '',
     comprovanteStoragePath: item.comprovanteStoragePath || '',
     refLocal: item.refLocal || '',
+    origemVendaId: origemAuto ? origemAuto.vendaId : 0,
+    origemComissaoPapel: origemAuto ? origemAuto.papel : '',
+    v: origemAuto ? (origemAuto.venda || null) : null,
     raw: item
   };
 }
@@ -714,6 +953,7 @@ function finDreBucketCategoria(tipo, categoria) {
   if (cat === 'IMPOSTOS') return { bucket: 'impostos', grupo: 'Impostos e taxas', conta: cat };
   if (cat === 'DESPESAS BANCARIAS') return { bucket: 'financeiro_despesa', grupo: 'Despesas financeiras', conta: cat };
   if (cat === 'EMPRESTIMO') return { bucket: 'fora_despesa', grupo: 'Movimentacoes fora do DRE', conta: cat };
+  if (cat === 'REPASSE COMISSAO') return { bucket: 'despesa', grupo: 'Comissoes e repasses', conta: cat };
   if (cat === 'MARKETING' || cat === 'CRM' || cat === 'EVENTOS') return { bucket: 'despesa', grupo: 'Despesas comerciais', conta: cat };
   if (cat === 'SALARIO') return { bucket: 'despesa', grupo: 'Despesas com pessoal', conta: cat };
   if (cat === 'ALUGUEL' || cat === 'SERVICOS') return { bucket: 'despesa', grupo: 'Despesas administrativas', conta: cat };
@@ -1162,7 +1402,8 @@ function finMetaItem(item, opcoes = {}) {
 }
 
 function finTemComprovante(item) {
-  return !!(item && ((item.comprovanteStorageBucket && item.comprovanteStoragePath) || item.comprovanteDataUrl || item.comprovanteLocalId));
+  const atual = finResolverComprovanteSalvo(item);
+  return !!(atual && ((atual.storageBucket && atual.storagePath) || atual.dataUrl || atual.localId));
 }
 
 function finPodeBaixaRapida(item) {
@@ -1390,12 +1631,17 @@ function finAcaoItemComOpcao(item, pararEvento = false) {
   if (!item) return '';
   const prefixo = pararEvento ? 'event.stopPropagation();' : '';
   if (item.origem === 'venda' && item.v && item.v.id) return `onclick="${prefixo}irParaVenda(${item.v.id})"`;
+  if (item.origem === 'venda_comissao_saida' && (item.origemVendaId || (item.v && item.v.id))) {
+    const vendaId = item.origemVendaId || item.v.id;
+    return `onclick="${prefixo}irParaVenda(${vendaId})"`;
+  }
   const chave = finEscapeAttr(finChaveItem(item));
   return `onclick="${prefixo}finEditarLancamentoManual('${chave}')"`; 
 }
 
 function finNomeItem(item) {
   if (item.origem === 'venda') return item.descricao || 'COMISSAO';
+  if (item.origem === 'venda_comissao_saida') return item.descricao || 'REPASSE COMISSAO';
   return item.descricao || item.categoria || (item.natureza === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL');
 }
 
@@ -1582,16 +1828,7 @@ function finComprovanteModalAtual(item = finLancamentoAtual()) {
     };
   }
   if (!item || !finTemComprovante(item)) return null;
-  return {
-    nome: item.comprovanteNome || 'Comprovante',
-    mime: item.comprovanteMime || '',
-    size: item.comprovanteSize || 0,
-    dataUrl: item.comprovanteDataUrl || '',
-    localId: item.comprovanteLocalId || '',
-    storageBucket: item.comprovanteStorageBucket || '',
-    storagePath: item.comprovanteStoragePath || '',
-    origem: 'salvo'
-  };
+  return finResolverComprovanteSalvo(item);
 }
 
 function finComprovanteResumo(item = finLancamentoAtual()) {
@@ -1706,9 +1943,85 @@ function finAbrirBaixaLancamento(chave) {
   setTimeout(() => finMarcarModalComoRealizado(true), 80);
 }
 
-function finAbrirArquivoComprovante(url) {
-  const win = window.open(url, '_blank', 'noopener');
+function finResolverComprovanteSalvo(item) {
+  if (!item) return null;
+  const bucketPadrao = typeof SB_DOCS_BUCKET === 'string' && SB_DOCS_BUCKET.trim() ? SB_DOCS_BUCKET.trim() : 'documentos';
+  const brutoDataUrl = String(item.comprovanteDataUrl || item.comprovante_data_url || '').trim();
+  let dataUrl = brutoDataUrl;
+  let storageBucket = String(item.comprovanteStorageBucket || item.comprovante_storage_bucket || '').trim();
+  let storagePath = String(item.comprovanteStoragePath || item.comprovante_storage_path || '').trim();
+  const aplicarStorageInfo = info => {
+    if (!info) return false;
+    storageBucket = storageBucket || String(info.bucket || bucketPadrao).trim();
+    storagePath = storagePath || String(info.path || '').trim();
+    if (!storageBucket || !storagePath) return false;
+    dataUrl = '';
+    return true;
+  };
+
+  if ((!storageBucket || !storagePath) && brutoDataUrl && typeof parseDocumentoStorageRef === 'function') {
+    aplicarStorageInfo(parseDocumentoStorageRef(brutoDataUrl));
+  }
+
+  if ((!storageBucket || !storagePath) && brutoDataUrl && brutoDataUrl.startsWith('{')) {
+    try {
+      const payload = JSON.parse(brutoDataUrl);
+      if (payload && typeof payload === 'object') {
+        if (!aplicarStorageInfo(payload)) {
+          const refBruta = String(payload.storageRef || payload.storage_ref || payload.ref || '').trim();
+          if (refBruta && typeof parseDocumentoStorageRef === 'function') {
+            aplicarStorageInfo(parseDocumentoStorageRef(refBruta));
+          }
+        }
+      }
+    } catch (erro) {
+      console.warn('Falha ao interpretar comprovante legado do financeiro:', erro);
+    }
+  }
+
+  if (!storageBucket && storagePath) storageBucket = bucketPadrao;
+
+  return {
+    nome: item.comprovanteNome || item.comprovante_nome || 'Comprovante',
+    mime: item.comprovanteMime || item.comprovante_mime || '',
+    size: item.comprovanteSize || item.comprovante_size || 0,
+    dataUrl,
+    localId: item.comprovanteLocalId || item.comprovante_local_id || '',
+    storageBucket,
+    storagePath,
+    origem: 'salvo'
+  };
+}
+
+function finAbrirJanelaComprovante() {
+  const win = window.open('', '_blank');
   if (!win) {
+    showToast('⚠️', zUiText('Nao foi possivel abrir o comprovante em nova aba.'));
+    return null;
+  }
+  try {
+    win.opener = null;
+    if (win.document) {
+      win.document.title = zUiText('Comprovante');
+      win.document.body.innerHTML = '<div style="font-family:Arial,sans-serif;padding:24px;color:#6B5B3E;">Abrindo comprovante...</div>';
+    }
+  } catch (erro) {
+    console.warn('Falha ao preparar a janela do comprovante:', erro);
+  }
+  return win;
+}
+
+function finAbrirArquivoComprovante(url, winExistente = null) {
+  const win = winExistente || finAbrirJanelaComprovante();
+  if (!win) return false;
+  try {
+    win.location.href = url;
+    return true;
+  } catch (erro) {
+    console.warn('Falha ao redirecionar a janela do comprovante:', erro);
+  }
+  const fallback = window.open(url, '_blank', 'noopener');
+  if (!fallback) {
     showToast('⚠️', zUiText('Nao foi possivel abrir o comprovante em nova aba.'));
     return false;
   }
@@ -1718,10 +2031,8 @@ function finAbrirArquivoComprovante(url) {
 async function finAbrirComprovante(item = null) {
   const atual = finComprovanteModalAtual(item || finLancamentoAtual());
   if (!atual) return;
-  if (atual.dataUrl) {
-    finAbrirArquivoComprovante(atual.dataUrl);
-    return;
-  }
+  const win = finAbrirJanelaComprovante();
+  if (!win) return;
   if (atual.storageBucket && atual.storagePath && typeof dbBaixarDocumentoArquivo === 'function') {
     try {
       const blob = await dbBaixarDocumentoArquivo({
@@ -1731,28 +2042,47 @@ async function finAbrirComprovante(item = null) {
       });
       if (!blob) throw new Error('Blob do comprovante indisponivel.');
       const url = URL.createObjectURL(blob);
-      finAbrirArquivoComprovante(url);
+      finAbrirArquivoComprovante(url, win);
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       return;
     } catch (erro) {
       console.warn('Falha ao abrir comprovante salvo do financeiro:', erro);
     }
   }
+  if (atual.dataUrl) {
+    try {
+      if (typeof dbBaixarDocumentoArquivo === 'function') {
+        const blob = await dbBaixarDocumentoArquivo({ dataUrl: atual.dataUrl });
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          finAbrirArquivoComprovante(url, win);
+          setTimeout(() => URL.revokeObjectURL(url), 60000);
+          return;
+        }
+      }
+    } catch (erro) {
+      console.warn('Falha ao abrir comprovante em dataUrl do financeiro:', erro);
+    }
+    finAbrirArquivoComprovante(atual.dataUrl, win);
+    return;
+  }
   if (atual.localId && typeof obterFinanceiroComprovanteLocal === 'function') {
     try {
       const registro = await obterFinanceiroComprovanteLocal(atual.localId);
       if (!registro || !registro.file) {
+        try { win.close(); } catch (erroClose) {}
         showToast('⚠️', zUiText('O comprovante local ainda nao esta disponivel neste navegador.'));
         return;
       }
       const url = URL.createObjectURL(registro.file);
-      finAbrirArquivoComprovante(url);
+      finAbrirArquivoComprovante(url, win);
       setTimeout(() => URL.revokeObjectURL(url), 60000);
       return;
     } catch (erro) {
       console.warn('Falha ao abrir comprovante local do financeiro:', erro);
     }
   }
+  try { win.close(); } catch (erroClose) {}
   showToast('⚠️', zUiText('Nao foi possivel abrir o comprovante deste lancamento.'));
 }
 

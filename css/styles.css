@@ -1483,6 +1483,20 @@ textarea::placeholder{color:#B8A880;}
 .ag-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--tx);}
 .ag-sub{font-size:12px;color:var(--tm);max-width:620px;line-height:1.55;}
 .ag-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+.agenda-dashboard-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+.ag-stat-group{background:rgba(255,255,255,0.96);border:1px solid var(--bd);border-radius:16px;padding:16px 18px;box-shadow:0 12px 26px rgba(184,144,42,0.05);display:flex;flex-direction:column;gap:14px;}
+.ag-stat-group.first{background:linear-gradient(180deg,#F7FAFF 0%,#EEF4FE 100%);border-color:#C7D8F3;}
+.ag-stat-group.close{background:linear-gradient(180deg,#F7FCF8 0%,#EEF8F2 100%);border-color:#BEDFCB;}
+.ag-stat-group.docs{background:linear-gradient(180deg,#FFF8F3 0%,#FFF1E8 100%);border-color:#F0C9AF;}
+.ag-stat-group-title{font-size:12px;text-transform:uppercase;letter-spacing:0.08em;font-weight:800;color:var(--tx);}
+.ag-stat-group-body{display:flex;flex-direction:column;gap:8px;}
+.ag-stat-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:8px;border-top:1px solid rgba(184,144,42,0.12);}
+.ag-stat-row:first-child{padding-top:0;border-top:none;}
+.ag-stat-row span{font-size:10px;color:var(--tm);line-height:1.45;max-width:180px;}
+.ag-stat-row strong{font-family:'Playfair Display',serif;font-size:26px;line-height:1;color:var(--gold);flex-shrink:0;}
+.ag-stat-group.first .ag-stat-group-title,.ag-stat-group.first .ag-stat-row strong{color:#315EAE;}
+.ag-stat-group.close .ag-stat-group-title,.ag-stat-group.close .ag-stat-row strong{color:#237A52;}
+.ag-stat-group.docs .ag-stat-group-title,.ag-stat-group.docs .ag-stat-row strong{color:#B85D1F;}
 .ag-stat{background:rgba(255,255,255,0.94);border:1px solid var(--bd);border-radius:14px;padding:16px;box-shadow:0 10px 24px rgba(184,144,42,0.05);display:flex;flex-direction:column;gap:6px;}
 .ag-stat.cancelled{background:linear-gradient(180deg,#FFF9F6 0%,#FFF1EB 100%);border-color:rgba(212,116,75,0.18);}
 .ag-stat.cancelled .ag-stat-tag{color:#B86A47;}

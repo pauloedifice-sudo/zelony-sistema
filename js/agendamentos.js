@@ -548,6 +548,16 @@ function agSituacaoNormalizada(item) {
   return agNormalizarTexto(agSituacao(item));
 }
 
+function agResumoDashboardTipo(lista, filtroTipo) {
+  const filtrados = (Array.isArray(lista) ? lista : []).filter(filtroTipo);
+  return {
+    total: filtrados.length,
+    concluidos: filtrados.filter(item => agSituacaoNormalizada(item) === 'concluida').length,
+    reagendados: filtrados.filter(item => agSituacaoNormalizada(item) === 'reagendado').length,
+    cancelados: filtrados.filter(item => agSituacaoNormalizada(item) === 'cliente cancelou').length
+  };
+}
+
 function agAtivoRelatorio(item) {
   return agSituacaoNormalizada(item) === 'agendado' && agAgendamentoAtivoFuturo(item);
 }
@@ -1494,6 +1504,9 @@ function renderAgendamentos() {
   const totalDocumentacaoProximos7 = agContarProximosDias(listaAtivos.filter(agTipoDocumentacao), 7);
   const totalFechamentosProximos7 = agContarProximosDias(listaAtivos.filter(agTipoFechamento), 7);
   const periodoResumo = agPeriodoResumo(periodo);
+  const resumoPrimeiroDashboard = agResumoDashboardTipo(lista, agTipoPrimeiro);
+  const resumoFechamentoDashboard = agResumoDashboardTipo(lista, agTipoFechamento);
+  const resumoDocumentacaoDashboard = agResumoDashboardTipo(lista, agTipoDocumentacao);
   const resumoDiaPrimeiro = listaDia.filter(agTipoPrimeiro).length;
   const resumoDiaDocumentacao = listaDia.filter(agTipoDocumentacao).length;
   const resumoDiaFechamento = listaDia.filter(agTipoFechamento).length;
@@ -1568,7 +1581,73 @@ function renderAgendamentos() {
 
     ${avisoSync}
 
-    <div class="ag-stat-grid">
+    <div class="ag-stat-grid agenda-dashboard-grid">
+      <div class="ag-stat-group first">
+        <div class="ag-stat-group-title">Primeiro atendimento</div>
+        <div class="ag-stat-group-body">
+          <div class="ag-stat-row">
+            <span>Total de agendamentos feitos</span>
+            <strong>${resumoPrimeiroDashboard.total}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Agendamentos concluidos</span>
+            <strong>${resumoPrimeiroDashboard.concluidos}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Agendamentos reagendados</span>
+            <strong>${resumoPrimeiroDashboard.reagendados}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Agendamentos cancelados</span>
+            <strong>${resumoPrimeiroDashboard.cancelados}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="ag-stat-group close">
+        <div class="ag-stat-group-title">Fechamento</div>
+        <div class="ag-stat-group-body">
+          <div class="ag-stat-row">
+            <span>Total de agendamentos feitos</span>
+            <strong>${resumoFechamentoDashboard.total}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Agendamentos concluidos</span>
+            <strong>${resumoFechamentoDashboard.concluidos}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Agendamentos reagendados</span>
+            <strong>${resumoFechamentoDashboard.reagendados}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Agendamentos cancelados</span>
+            <strong>${resumoFechamentoDashboard.cancelados}</strong>
+          </div>
+        </div>
+      </div>
+      <div class="ag-stat-group docs">
+        <div class="ag-stat-group-title">Documentacao</div>
+        <div class="ag-stat-group-body">
+          <div class="ag-stat-row">
+            <span>Total de agendamentos feitos</span>
+            <strong>${resumoDocumentacaoDashboard.total}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Documentacao recebida</span>
+            <strong>${resumoDocumentacaoDashboard.concluidos}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Documentacao reagendada</span>
+            <strong>${resumoDocumentacaoDashboard.reagendados}</strong>
+          </div>
+          <div class="ag-stat-row">
+            <span>Documentacao cancelada</span>
+            <strong>${resumoDocumentacaoDashboard.cancelados}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ag-stat-grid" style="display:none;">
       <div class="ag-stat">
         <div class="ag-stat-tag">Agendamentos feitos</div>
         <div class="ag-stat-value">${totalFeitos}</div>

@@ -870,6 +870,13 @@ async function prepararComprovanteFinanceiroParaUpload(lancamento){
 function mapLancamentoFinanceiroIn(item){
   const texto=prepararTextoLancamentoFinanceiro(item);
   const syncErroOriginal=String(item&&(item.sync_erro||item.syncErro)||'').trim();
+  const comprovanteBruto=String(item&&(item.comprovante_data_url||item.comprovanteDataUrl)||'').trim();
+  const storageInfoComprovante=(
+    !String(item&&(item.comprovante_storage_bucket||item.comprovanteStorageBucket)||'').trim()
+    || !String(item&&(item.comprovante_storage_path||item.comprovanteStoragePath)||'').trim()
+  ) && typeof parseDocumentoStorageRef==='function'
+    ? parseDocumentoStorageRef(comprovanteBruto)
+    : null;
   const lancamento={
     id:parseInt(item&&item.id,10)||0,
     tipo:texto.tipo,
@@ -884,10 +891,10 @@ function mapLancamentoFinanceiroIn(item){
     comprovanteNome:String(item&&(item.comprovante_nome||item.comprovanteNome)||'').trim(),
     comprovanteMime:String(item&&(item.comprovante_mime||item.comprovanteMime)||'').trim(),
     comprovanteSize:parseInt(item&&(item.comprovante_size||item.comprovanteSize),10)||0,
-    comprovanteDataUrl:String(item&&(item.comprovante_data_url||item.comprovanteDataUrl)||'').trim(),
+    comprovanteDataUrl:storageInfoComprovante?'':comprovanteBruto,
     comprovanteLocalId:String(item&&(item.comprovante_local_id||item.comprovanteLocalId)||'').trim(),
-    comprovanteStorageBucket:String(item&&(item.comprovante_storage_bucket||item.comprovanteStorageBucket)||'').trim(),
-    comprovanteStoragePath:String(item&&(item.comprovante_storage_path||item.comprovanteStoragePath)||'').trim(),
+    comprovanteStorageBucket:String(item&&(item.comprovante_storage_bucket||item.comprovanteStorageBucket)||'').trim()||(storageInfoComprovante&&storageInfoComprovante.bucket)||'',
+    comprovanteStoragePath:String(item&&(item.comprovante_storage_path||item.comprovanteStoragePath)||'').trim()||(storageInfoComprovante&&storageInfoComprovante.path)||'',
     criadoPor:String(item&&(item.criado_por||item.criadoPor)||'').trim(),
     criadoPorId:parseInt(item&&(item.criado_por_id||item.criadoPorId),10)||0,
     criadoPorEmail:String(item&&(item.criado_por_email||item.criadoPorEmail)||'').trim(),
@@ -1124,13 +1131,17 @@ async function dbUploadDocumentoArquivo(file, opts={}){
 }
 
 async function dbBaixarDocumentoArquivo(doc){
-  if(doc&&doc.storageBucket&&doc.storagePath){
-    const {data,error}=await sb.storage.from(doc.storageBucket).download(doc.storagePath);
+  const brutoDataUrl=String(doc&&doc.dataUrl||'').trim();
+  const storageInfo=typeof parseDocumentoStorageRef==='function' ? parseDocumentoStorageRef(brutoDataUrl) : null;
+  const bucket=String(doc&&doc.storageBucket||'').trim()||(storageInfo&&storageInfo.bucket)||'';
+  const path=String(doc&&doc.storagePath||'').trim()||(storageInfo&&storageInfo.path)||'';
+  if(bucket&&path){
+    const {data,error}=await sb.storage.from(bucket).download(path);
     if(error) throw error;
     return data||null;
   }
-  if(doc&&doc.dataUrl){
-    const res=await fetch(doc.dataUrl);
+  if(brutoDataUrl){
+    const res=await fetch(brutoDataUrl);
     return await res.blob();
   }
   return null;
@@ -1177,6 +1188,13 @@ async function dbSalvarVenda(v, tentativa=1){
     const {data,error}=await sb.from('vendas').insert(payload).select().single();
     if(error) throw error;
     if(data) v.id=data.id;
+    if(typeof finSincronizarSaidasComissaoVenda==='function'){
+      try{
+        await finSincronizarSaidasComissaoVenda(v,{persistir:true});
+      }catch(erroFinanceiro){
+        console.warn('Falha ao sincronizar repasse automatico de comissao apos salvar a venda:',erroFinanceiro);
+      }
+    }
     return true;
   }catch(e){
     console.error(`Erro ao salvar venda (tentativa ${tentativa}):`,e.message);
@@ -1222,6 +1240,13 @@ async function dbAtualizarVenda(v){
   };
   const {error}=await sb.from('vendas').update(payload).eq('id',v.id);
   if(error) throw error;
+  if(typeof finSincronizarSaidasComissaoVenda==='function'){
+    try{
+      await finSincronizarSaidasComissaoVenda(v,{persistir:true});
+    }catch(erroFinanceiro){
+      console.warn('Falha ao sincronizar repasse automatico de comissao apos atualizar a venda:',erroFinanceiro);
+    }
+  }
   return true;
 }
 
