@@ -1144,7 +1144,10 @@ function finStatusItem(item, contexto = 'lista') {
   return zUiText(contexto === 'calendario' ? 'Prevista' : 'No prazo');
 }
 
-function finMetaItem(item) {
+function finMetaItem(item, opcoes = {}) {
+  const config = opcoes || {};
+  const includeStatus = config.includeStatus !== false;
+  const includeProof = config.includeProof !== false;
   const partes = [];
   if (item.origem === 'venda') {
     if (item.construtora) partes.push(item.construtora);
@@ -1153,8 +1156,8 @@ function finMetaItem(item) {
     if (item.categoria) partes.push(item.categoria);
     if (item.unidade) partes.push(item.unidade);
   }
-  partes.push(finStatusItem(item));
-  if (finTemComprovante(item)) partes.push(item.natureza === 'saida' ? 'comprovante anexado' : 'anexo');
+  if (includeStatus) partes.push(finStatusItem(item));
+  if (includeProof && finTemComprovante(item)) partes.push(item.natureza === 'saida' ? 'comprovante anexado' : 'anexo');
   return zUiText(partes.filter(Boolean).join(' · '));
 }
 
@@ -1200,7 +1203,7 @@ function finLegendaStyle(classe) {
   if (classe === 'soon') return 'background:#EEF5FF;border-left:2px solid #7DB3FF;';
   if (classe === 'invoice') return 'background:#E7F0FF;border-left:2px solid #1D4ED8;';
   if (classe === 'delay') return 'background:#FFF4E5;border-left:2px solid #D97706;';
-  if (classe === 'paid') return 'background:#FFF0EE;border-left:2px solid #D65145;';
+  if (classe === 'paid') return 'background:#EFF8F0;border-left:2px solid #2F8F5B;';
   if (classe === 'out-delay') return 'background:#FAD9D5;border-left:2px solid #B42318;';
   return 'background:#FFF0EE;border-left:2px solid #D65145;';
 }
@@ -1212,9 +1215,12 @@ function finPeriodoComparado() {
 
 function finItensDoDia(coleta, dia) {
   const lista = coleta.agendaPorDia[dia] || [];
-  if (finVisao === 'entradas') return lista.filter(item => item.natureza === 'entrada');
-  if (finVisao === 'saidas') return lista.filter(item => item.natureza === 'saida');
-  return lista;
+  const filtrada = finVisao === 'entradas'
+    ? lista.filter(item => item.natureza === 'entrada')
+    : finVisao === 'saidas'
+      ? lista.filter(item => item.natureza === 'saida')
+      : lista.slice();
+  return filtrada.sort((a, b) => finPrioridadeItem(a) - finPrioridadeItem(b) || b.valorBruto - a.valorBruto);
 }
 
 function finResetDetalheDiaState() {
@@ -1431,7 +1437,7 @@ function finDetalheDiaItem(item) {
         <strong>${valor}</strong>
       </div>
       <div class="fin-day-item-name">${zUiText(finNomeItem(item))}</div>
-      <div class="fin-day-item-meta">${finMetaItem(item)}</div>
+      <div class="fin-day-item-meta">${finMetaItem(item, { includeStatus: false })}</div>
       ${item.observacao ? `<div class="fin-day-item-note">${zUiText(item.observacao)}</div>` : ''}
     </button>
     ${finPodeBaixaRapida(item) ? `<button class="fcal-side-action-btn" type="button" onclick="event.stopPropagation();finAbrirBaixaLancamento('${chave}')">${zUiText(finRotuloBaixaRapida(item))}</button>` : ''}
@@ -1506,7 +1512,7 @@ function finBuildCalendario(atual, ano, mes, hoje, primeiroDia, diasNoMes) {
             <strong>${item.natureza === 'saida' ? `-${fmtK(item.valorBruto)}` : fmtK(item.valorBruto)}</strong>
           </div>
           <div class="fcal-ev-name">${zUiText(finNomeItem(item))}</div>
-          <div class="fcal-ev-meta">${finMetaItem(item)}</div>
+          <div class="fcal-ev-meta">${finMetaItem(item, { includeStatus: false, includeProof: false })}</div>
         </button>`).join('')}
         ${extra > 0 ? `<button class="fcal-more" type="button" onclick="event.stopPropagation();finAbrirDetalheDia(${d})">+${extra} ${zUiText('movimentacoes')}</button>` : ''}
       </div>
@@ -2412,7 +2418,7 @@ function renderFinanceiro() {
     .fcal-ev-invoice{background:#E7F0FF;border-left-color:#1D4ED8;}
     .fcal-ev-delay{background:#FFF4E5;border-left-color:#D97706;}
     .fcal-ev-out{background:#FFF0EE;border-left-color:#D65145;}
-    .fcal-ev-paid{background:#FFF0EE;border-left-color:#D65145;}
+    .fcal-ev-paid{background:#EFF8F0;border-left-color:#2F8F5B;}
     .fcal-ev-out-delay{background:#FAD9D5;border-left-color:#B42318;}
     .fcal-ev-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
     .fcal-ev-top strong{font-size:10px;color:var(--gold);line-height:1.1;white-space:nowrap;}
@@ -2420,14 +2426,16 @@ function renderFinanceiro() {
     .fcal-ev-soon .fcal-ev-top strong{color:#4A86E8;}
     .fcal-ev-invoice .fcal-ev-top strong{color:#1D4ED8;}
     .fcal-ev-delay .fcal-ev-top strong{color:#D97706;}
-    .fcal-ev-out .fcal-ev-top strong,.fcal-ev-paid .fcal-ev-top strong{color:#D65145;}
+    .fcal-ev-out .fcal-ev-top strong{color:#D65145;}
+    .fcal-ev-paid .fcal-ev-top strong{color:#2F8F5B;}
     .fcal-ev-out-delay .fcal-ev-top strong{color:#B42318;}
     .fcal-ev-status{display:inline-flex;align-items:center;min-height:18px;padding:1px 5px;border-radius:999px;background:rgba(184,144,42,0.1);font-size:7px;text-transform:uppercase;letter-spacing:0.08em;color:var(--tm);font-weight:700;white-space:nowrap;}
     .fcal-ev-ok .fcal-ev-status{background:#DDF3E5;color:#15803D;}
     .fcal-ev-soon .fcal-ev-status{background:#DCEBFF;color:#4A86E8;}
     .fcal-ev-invoice .fcal-ev-status{background:#D9E8FF;color:#1D4ED8;}
     .fcal-ev-delay .fcal-ev-status{background:#FDE9CC;color:#D97706;}
-    .fcal-ev-out .fcal-ev-status,.fcal-ev-paid .fcal-ev-status{background:#FCD9D4;color:#D65145;}
+    .fcal-ev-out .fcal-ev-status{background:#FCD9D4;color:#D65145;}
+    .fcal-ev-paid .fcal-ev-status{background:#DCEFE1;color:#2F8F5B;}
     .fcal-ev-out-delay .fcal-ev-status{background:#F6C2BC;color:#B42318;}
     .fcal-ev-name{font-size:9px;font-weight:700;color:var(--tx);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .fcal-ev-meta{font-size:8px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2446,7 +2454,7 @@ function renderFinanceiro() {
     .fcal-side-item.invoice{border-left-color:#1D4ED8;background:#E7F0FF;}
     .fcal-side-item.delay{border-left-color:#D97706;background:#FFF4E5;}
     .fcal-side-item.out{border-left-color:#D65145;background:#FFF0EE;}
-    .fcal-side-item.paid{border-left-color:#D65145;background:#FFF0EE;}
+    .fcal-side-item.paid{border-left-color:#2F8F5B;background:#EFF8F0;}
     .fcal-side-item.out-delay{border-left-color:#B42318;background:#FAD9D5;}
     .fcal-side-item-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
     .fcal-side-item-top strong{font-size:10px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -2455,7 +2463,8 @@ function renderFinanceiro() {
     .fcal-side-item.soon .fcal-side-item-top span{color:#4A86E8;}
     .fcal-side-item.invoice .fcal-side-item-top span{color:#1D4ED8;}
     .fcal-side-item.delay .fcal-side-item-top span{color:#D97706;}
-    .fcal-side-item.out .fcal-side-item-top span,.fcal-side-item.paid .fcal-side-item-top span{color:#D65145;}
+    .fcal-side-item.out .fcal-side-item-top span{color:#D65145;}
+    .fcal-side-item.paid .fcal-side-item-top span{color:#2F8F5B;}
     .fcal-side-item.out-delay .fcal-side-item-top span{color:#B42318;}
     .fcal-side-item-meta{font-size:8px;color:var(--tm);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .fcal-side-action-btn{align-self:flex-start;background:#fff;border:1px solid var(--gold-bd);border-radius:999px;padding:6px 10px;font-size:9px;font-weight:700;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;}
@@ -2528,13 +2537,19 @@ function renderFinanceiro() {
     .fin-day-item-name{font-size:13px;font-weight:800;color:var(--ts);line-height:1.25;}
     .fin-day-item-meta{font-size:10px;color:var(--tm);line-height:1.45;}
     .fin-day-item-note{font-size:11px;color:var(--ts);line-height:1.45;padding-top:2px;border-top:1px dashed rgba(184,144,42,0.2);}
-    .fin-day-item-paid .fin-day-item-main{background:#FFF6F2;border-left-color:#D65145;}
+    .fin-day-item-paid .fin-day-item-main{background:#F3FAF5;border-left-color:#2F8F5B;}
     .fin-day-item-out .fin-day-item-main{background:#FFF6F3;border-left-color:#D65145;}
     .fin-day-item-out-delay .fin-day-item-main{background:#FBE0DC;border-left-color:#B42318;}
     .fin-day-item-ok .fin-day-item-main{background:#F0FAF4;border-left-color:#15803D;}
     .fin-day-item-soon .fin-day-item-main{background:#F3F8FF;border-left-color:#7DB3FF;}
     .fin-day-item-invoice .fin-day-item-main{background:#EBF2FF;border-left-color:#1D4ED8;}
     .fin-day-item-delay .fin-day-item-main{background:#FFF4E5;border-left-color:#D97706;}
+    .fin-day-item-paid .fin-day-item-top strong{color:#2F8F5B;}
+    .fin-day-item-out .fin-day-item-top strong{color:#D65145;}
+    .fin-day-item-out-delay .fin-day-item-top strong{color:#B42318;}
+    .fin-day-item-paid .fin-day-item-status{background:#DCEFE1;color:#2F8F5B;}
+    .fin-day-item-out .fin-day-item-status{background:#FCD9D4;color:#D65145;}
+    .fin-day-item-out-delay .fin-day-item-status{background:#F6C2BC;color:#B42318;}
     .fin-modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
     .fin-delete-btn{background:#fff;border:1px solid #E0B6AE;border-radius:999px;padding:8px 12px;font-size:10px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;}
     @media (max-width:1260px){
