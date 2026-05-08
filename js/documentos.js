@@ -487,6 +487,7 @@ async function onDocumentoFileChange(event){
 }
 
 async function salvarDocumento(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os documentos estão em modo consulta.'})) return;
   if(!podeGerirDocumentos()){
     showToast(zUiText('⚠️'), zUiText('Seu perfil nao tem permissao para gerenciar documentos.'));
     return;
@@ -624,6 +625,7 @@ async function salvarDocumento(){
 }
 
 async function excluirDocumento(token){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os documentos estão em modo consulta.'})) return;
   if(!podeGerirDocumentos()){
     showToast(zUiText('⚠️'), zUiText('Seu perfil nao tem permissao para excluir documentos.'));
     return;

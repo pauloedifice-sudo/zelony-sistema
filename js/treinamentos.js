@@ -1594,6 +1594,7 @@ function fecharMT(){
 }
 
 async function salvarTrein(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os treinamentos estão em modo consulta.'})) return;
   const titulo = document.getElementById('mt-titulo').value.trim();
   const aulas = parseInt(document.getElementById('mt-aulas').value, 10);
   const dur = document.getElementById('mt-dur').value.trim();
@@ -1689,6 +1690,7 @@ async function salvarTrein(){
 }
 
 async function excluirTrein(idx){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os treinamentos estão em modo consulta.'})) return;
   if(role!=='dir' && role!=='dono'){
     showToast(zUiText('🔒'), zUiText('Apenas Dono ou Diretor podem excluir treinamentos.'));
     return;
@@ -2493,6 +2495,7 @@ function emitirCertificadoTrein(token){
 }
 
 async function salvarTrein(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os treinamentos estão em modo consulta.'})) return;
   const titulo = document.getElementById('mt-titulo').value.trim();
   const aulas = parseInt(document.getElementById('mt-aulas').value, 10);
   const dur = document.getElementById('mt-dur').value.trim();
@@ -2595,6 +2598,7 @@ async function salvarTrein(){
 }
 
 async function excluirTrein(idx){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os treinamentos estão em modo consulta.'})) return;
   if(role!=='dir' && role!=='dono'){
     showToast(zUiText('!'), zUiText('Apenas Dono ou Diretor podem excluir treinamentos.'));
     return;

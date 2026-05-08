@@ -323,6 +323,7 @@ async function alternarStatusUsuario(idx) {
 }
 
 async function excluirUsuario(idx) {
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os usuários estão em modo consulta.'})) return;
   const u = USUARIOS[idx];
   const emailKey = (u.email || '').toLowerCase();
   if (!confirm(zUiText(`Excluir o usuÃ¡rio "${u.nome}"? Esta aÃ§Ã£o nÃ£o pode ser desfeita.`))) return;
@@ -363,6 +364,7 @@ function fecharMU() { document.getElementById('muser').classList.remove('show');
 function handleBackdropU(e) { if (e.target === document.getElementById('muser')) fecharMU(); }
 
 async function salvarUsuario() {
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os usuários estão em modo consulta.'})) return;
   const nome      = document.getElementById('mu-nome').value.trim().toUpperCase();
   const email     = document.getElementById('mu-email').value.trim();
   const tel       = document.getElementById('mu-tel').value.trim();

@@ -28,7 +28,52 @@ function zRegisterModule(name, api){
 const SB_URL='https://szaxwkfaferrfqcmzfab.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6YXh3a2ZhZmVycmZxY216ZmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMTk4NjksImV4cCI6MjA4OTU5NTg2OX0.JhD9PraW5tIcR6gTP_K4olC0eka8KXITu0ajcFDsnOY';
 const SB_DOCS_BUCKET='documentos';
-const sb=supabase.createClient(SB_URL, SB_KEY);
+const SB_FETCH_TIMEOUT_MS=8000;
+
+async function sbFetchComTimeout(resource, init={}){
+  if(typeof fetch!=='function') throw new Error('Fetch indisponivel no ambiente atual.');
+  const controller=typeof AbortController==='function'?new AbortController():null;
+  const finalInit={...(init||{})};
+  const timeoutMs=Math.max(2500,parseInt(finalInit._timeoutMs,10)||SB_FETCH_TIMEOUT_MS);
+  delete finalInit._timeoutMs;
+  let timeoutId=null;
+
+  if(controller){
+    const signalOriginal=finalInit.signal;
+    if(signalOriginal){
+      if(signalOriginal.aborted){
+        controller.abort();
+      }else if(typeof signalOriginal.addEventListener==='function'){
+        signalOriginal.addEventListener('abort',()=>controller.abort(),{once:true});
+      }
+    }
+    finalInit.signal=controller.signal;
+  }
+
+  try{
+    if(controller){
+      timeoutId=setTimeout(()=>controller.abort(),timeoutMs);
+    }
+    return await fetch(resource, finalInit);
+  }catch(error){
+    const abortado=error&&(
+      error.name==='AbortError'
+      || /aborted|abort/i.test(String(error.message||''))
+    );
+    if(abortado){
+      throw new Error(`Supabase timeout apos ${timeoutMs}ms`);
+    }
+    throw error;
+  }finally{
+    if(timeoutId) clearTimeout(timeoutId);
+  }
+}
+
+const sb=supabase.createClient(SB_URL, SB_KEY, {
+  global: {
+    fetch: sbFetchComTimeout
+  }
+});
 zSetState('config.supabase', { url: SB_URL, key: SB_KEY });
 zSetState('modules.supabase', { client: sb });
 const VENDAS=[];
@@ -61,6 +106,12 @@ const TREINAMENTOS_COMPAT_STATUS={
   regrasCompartilhadas:true,
   ultimaAtualizacao:''
 };
+const APP_CONECTIVIDADE_STATUS={
+  somenteLeitura:false,
+  origem:'supabase',
+  motivo:'',
+  ultimaAtualizacao:''
+};
 let supabasePosCargaPromise=null;
 let financeiroComprovanteDBPromise=null;
 function setBootStage(etapa){
@@ -73,6 +124,58 @@ function setBootStage(etapa){
 function getBootStage(){
   return SUPABASE_BOOT_STATUS.etapa||'inicializando';
 }
+function atualizarBannerConectividadeApp(){
+  if(typeof document==='undefined') return;
+  const docBody=document.body;
+  let banner=document.getElementById('app-readonly-banner');
+  if(!APP_CONECTIVIDADE_STATUS.somenteLeitura){
+    if(banner) banner.remove();
+    return;
+  }
+  if(!docBody) return;
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='app-readonly-banner';
+    banner.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100000;max-width:min(920px,calc(100vw - 32px));background:#FFF7E8;border:1px solid #E3C98C;color:#6F5720;border-radius:14px;box-shadow:0 14px 32px rgba(111,87,32,0.16);padding:12px 16px;font:600 12px/1.45 Arial,sans-serif;';
+    docBody.appendChild(banner);
+  }
+  const motivo=String(APP_CONECTIVIDADE_STATUS.motivo||'').trim()||'Modo consulta ativo. Cadastros e alterações estão bloqueados até a conexão com o Supabase voltar.';
+  banner.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span>${zUiText('Modo consulta')}</span><span style="font-weight:500;color:#8C7340;">${zUiText(motivo)}</span><button type="button" onclick="window.location.reload()" style="margin-left:auto;background:#C9A646;color:#fff;border:0;border-radius:999px;padding:8px 14px;font:600 12px Arial,sans-serif;cursor:pointer;">${zUiText('Recarregar')}</button></div>`;
+}
+function setAppConectividadeStatus(parcial={}){
+  Object.assign(APP_CONECTIVIDADE_STATUS,parcial||{});
+  APP_CONECTIVIDADE_STATUS.ultimaAtualizacao=new Date().toISOString();
+  zSetState('state.sync.conectividadeApp',{...APP_CONECTIVIDADE_STATUS});
+  atualizarBannerConectividadeApp();
+  return {...APP_CONECTIVIDADE_STATUS};
+}
+function getAppConectividadeStatus(){
+  return {...APP_CONECTIVIDADE_STATUS};
+}
+function appModoSomenteLeituraAtivo(){
+  return !!APP_CONECTIVIDADE_STATUS.somenteLeitura;
+}
+function appMensagemSomenteLeitura(){
+  return String(APP_CONECTIVIDADE_STATUS.motivo||'').trim()||'Sem conexão com o Supabase. O sistema está em modo consulta.';
+}
+function appPodePersistirNoSupabase(opcoes={}){
+  if(!appModoSomenteLeituraAtivo()) return true;
+  if(opcoes.avisar!==false&&typeof showToast==='function'){
+    showToast('⚠️', zUiText(opcoes.mensagem||appMensagemSomenteLeitura()));
+  }
+  return false;
+}
+function appExigirModoOnline(opcoes={}){
+  if(appPodePersistirNoSupabase(opcoes)) return true;
+  const erro=new Error(opcoes.erro||'Modo consulta local ativo.');
+  erro.code='APP_OFFLINE_READONLY';
+  throw erro;
+}
+window.getAppConectividadeStatus=getAppConectividadeStatus;
+window.appPodePersistirNoSupabase=appPodePersistirNoSupabase;
+window.appModoSomenteLeituraAtivo=appModoSomenteLeituraAtivo;
+window.atualizarBannerConectividadeApp=atualizarBannerConectividadeApp;
+setAppConectividadeStatus();
 function setTreinamentosCompatStatus(parcial={}){
   Object.assign(TREINAMENTOS_COMPAT_STATUS,parcial||{});
   TREINAMENTOS_COMPAT_STATUS.ultimaAtualizacao=new Date().toISOString();
@@ -937,6 +1040,27 @@ function mapLancamentoFinanceiroOut(item){
   };
 }
 
+function preservarComprovanteFinanceiroLocal(destino, original = {}){
+  if(!destino) return destino;
+  if(!destino.comprovanteStorageBucket && original.comprovanteStorageBucket) destino.comprovanteStorageBucket=original.comprovanteStorageBucket;
+  if(!destino.comprovanteStoragePath && original.comprovanteStoragePath) destino.comprovanteStoragePath=original.comprovanteStoragePath;
+
+  const storageBucket=String(destino.comprovanteStorageBucket||'').trim();
+  const storagePath=String(destino.comprovanteStoragePath||'').trim();
+  const possuiStorage=!!(storageBucket&&storagePath);
+
+  if(!destino.comprovanteNome && original.comprovanteNome) destino.comprovanteNome=original.comprovanteNome;
+  if(!destino.comprovanteMime && original.comprovanteMime) destino.comprovanteMime=original.comprovanteMime;
+  if(!(parseInt(destino.comprovanteSize,10)||0) && (parseInt(original.comprovanteSize,10)||0)) destino.comprovanteSize=original.comprovanteSize;
+
+  if(!possuiStorage){
+    if(!destino.comprovanteDataUrl && original.comprovanteDataUrl) destino.comprovanteDataUrl=original.comprovanteDataUrl;
+    if(!destino.comprovanteLocalId && original.comprovanteLocalId) destino.comprovanteLocalId=original.comprovanteLocalId;
+  }
+
+  return destino;
+}
+
 function extrairColunaAusenteSupabase(error,tabela=''){
   const msg=mensagemErroSyncAgendamentos(error);
   const bruto=String(msg||'');
@@ -1157,6 +1281,7 @@ async function dbExcluirDocumentoArquivo(docOrBucket,pathMaybe){
 }
 
 async function dbSalvarDocumento(doc, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para documentos.'});
   const dados=mapDocumentoOut(doc);
   const alvoId=id||doc.id;
   if(alvoId){
@@ -1172,6 +1297,7 @@ async function dbSalvarDocumento(doc, id){
 }
 
 async function dbExcluirDocumento(docOuId){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para documentos.'});
   const alvoId=typeof docOuId==='object'&&docOuId?docOuId.id:docOuId;
   if(!alvoId) return true;
   const {error}=await sb.from('documentos').delete().eq('id',alvoId);
@@ -1180,6 +1306,7 @@ async function dbExcluirDocumento(docOuId){
 }
 
 async function dbSalvarVenda(v, tentativa=1){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para vendas.'});
   try{
     const payload={
       ...mapVendaOut(v),
@@ -1213,6 +1340,7 @@ async function dbSalvarVenda(v, tentativa=1){
 }
 
 async function dbAtualizarVenda(v){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para vendas.'});
   await sb.from('vendas').update({
     etapa:v.etapa,hist:v.hist,distratada:v.distratada||false,
     cliente:v.cliente,produto:v.produto,construtora:v.construtora,
@@ -1234,6 +1362,7 @@ async function dbSalvarAnexos(vendaId, anexos){
 }
 
 async function dbAtualizarVenda(v){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para vendas.'});
   const payload={
     ...mapVendaOut(v),
     anexos:mapVendaAnexos(v.anexos)
@@ -1266,6 +1395,7 @@ async function carregarAnexosVenda(id){
 
 // ── CRUD USUÁRIOS ─────────────────────────────────────────────────────────────
 async function dbSalvarUsuario(u, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para usuários.'});
   const dados=mapUsuarioOut(u);
   if(id){
     const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
@@ -1282,6 +1412,7 @@ async function dbSalvarUsuario(u, id){
 }
 
 async function dbExcluirUsuario(email){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para usuários.'});
   const {error}=await sb.from('usuarios').delete().eq('email',email);
   if(error) throw error;
   zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
@@ -1292,6 +1423,7 @@ function mapUsuarioOutSnake(u){
 }
 
 async function dbSalvarUsuario(u, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para usuários.'});
   const dados=mapUsuarioOut(u);
   if(id){
     const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
@@ -1315,6 +1447,7 @@ async function dbSalvarSenha(email, senha){
 
 // ── CRUD TREINAMENTOS ─────────────────────────────────────────────────────────
 async function dbSalvarTrein(t, idx){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para treinamentos.'});
   const dados=mapTreinOut(t);
   const dadosBase={
     titulo:t.titulo,
@@ -1368,6 +1501,7 @@ async function dbSalvarTrein(t, idx){
 }
 
 async function dbExcluirTrein(t){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para treinamentos.'});
   if(!t || !t.id) return true;
   const {error}=await sb.from('treinamentos').delete().eq('id', t.id);
   if(error) throw error;
@@ -1375,6 +1509,7 @@ async function dbExcluirTrein(t){
 }
 
 async function dbSalvarAgendamento(a, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para agendamentos.'});
   garantirRefLocalAgendamento(a,a&&a.id?'banco':'local');
   if(!a.atualizadoEm) a.atualizadoEm=new Date().toISOString();
   const payload=mapAgendamentoOut(a);
@@ -1433,9 +1568,19 @@ async function dbExcluirAgendamento(agOuId){
 }
 
 async function dbSalvarLancamentoFinanceiro(lancamento, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para o financeiro.'});
   garantirRefLocalFinanceiro(lancamento);
   if(!lancamento.atualizadoEm) lancamento.atualizadoEm=new Date().toISOString();
   const payloadOriginal=mapLancamentoFinanceiroOut(lancamento);
+  const comprovantePreservado={
+    comprovanteNome:lancamento.comprovanteNome||'',
+    comprovanteMime:lancamento.comprovanteMime||'',
+    comprovanteSize:lancamento.comprovanteSize||0,
+    comprovanteDataUrl:lancamento.comprovanteDataUrl||'',
+    comprovanteLocalId:lancamento.comprovanteLocalId||'',
+    comprovanteStorageBucket:lancamento.comprovanteStorageBucket||'',
+    comprovanteStoragePath:lancamento.comprovanteStoragePath||''
+  };
   const alvoId=parseInt(id||lancamento.id,10)||0;
   try{
     let payloadAtual={...payloadOriginal};
@@ -1473,18 +1618,10 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
     if(data){
       const dadosMapeados=mapLancamentoFinanceiroIn(data);
       if(payloadReduzido){
-        const preservados={
-          comprovanteNome:lancamento.comprovanteNome||'',
-          comprovanteMime:lancamento.comprovanteMime||'',
-          comprovanteSize:lancamento.comprovanteSize||0,
-          comprovanteDataUrl:lancamento.comprovanteDataUrl||'',
-          comprovanteLocalId:lancamento.comprovanteLocalId||'',
-          comprovanteStorageBucket:lancamento.comprovanteStorageBucket||'',
-          comprovanteStoragePath:lancamento.comprovanteStoragePath||''
-        };
-        Object.assign(lancamento,dadosMapeados,preservados);
+        Object.assign(lancamento,dadosMapeados,comprovantePreservado);
       }else{
         Object.assign(lancamento,dadosMapeados);
+        preservarComprovanteFinanceiroLocal(lancamento,comprovantePreservado);
       }
     }
     lancamento.syncPendente=!!payloadReduzido;
@@ -1498,6 +1635,7 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
 }
 
 async function dbExcluirLancamentoFinanceiro(lancamentoOuId){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para o financeiro.'});
   const alvo=typeof lancamentoOuId==='object'&&lancamentoOuId?lancamentoOuId:null;
   const alvoId=parseInt(alvo?alvo.id:lancamentoOuId,10)||0;
   const refLocal=String(alvo&&(alvo.refLocal||alvo.ref_local)||'').trim();
@@ -1719,6 +1857,7 @@ function iniciarApp(){
   renderFiltros(); renderVList(); renderTrein(); renderProc();
   if(typeof iniciarDashboardLive==='function') iniciarDashboardLive();
   verificarConviteURL();
+  atualizarBannerConectividadeApp();
   const splash=document.getElementById('app-splash');
   if(splash){
     splash.style.transition='opacity 0.5s ease';
@@ -1729,11 +1868,16 @@ function iniciarApp(){
 }
 
 async function carregarComRetry(tentativa=1){
-  const MAX=3, TIMEOUT=15000;
+  const MAX=2, TIMEOUT=9000;
   const st=document.getElementById('sp-status-txt');
   if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Carregando dados';
   try{
     await promiseComTimeout(carregarDB(), TIMEOUT, 'Carga inicial do Supabase');
+    setAppConectividadeStatus({
+      somenteLeitura:false,
+      origem:'supabase',
+      motivo:''
+    });
     const temSessao=restaurarSessao();
     if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
     iniciarApp();
@@ -1759,15 +1903,23 @@ async function carregarComRetry(tentativa=1){
       erro:'Modo offline — sem conexão com o Supabase.',
       sincronizando:false
     });
+    setAppConectividadeStatus({
+      somenteLeitura:true,
+      origem:'cache_local',
+      motivo:'Sem conexão com o Supabase. Apenas consulta do último cache está liberada; novos cadastros e alterações estão bloqueados até reconectar e recarregar a página.'
+    });
     const temSessao=restaurarSessao();
     if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
     iniciarApp();
-    setTimeout(()=>{ showToast('⚠️','Modo offline — dados podem estar desatualizados'); },1000);
+    setTimeout(()=>{ showToast('⚠️','Modo consulta: dados locais podem estar desatualizados. Cadastros e alterações estão bloqueados até o Supabase voltar.'); },1000);
   }
 }
 
 if(typeof window!=='undefined'&&window&&typeof window.addEventListener==='function'){
   window.addEventListener('online', ()=>{
+    if(appModoSomenteLeituraAtivo()&&typeof showToast==='function'){
+      showToast('✅','Conexão restabelecida. Recarregue a página para voltar ao modo online.');
+    }
     agendarPosCargaSupabase({
       timeoutMs:30000,
       silenciosoAgendamentos:true,

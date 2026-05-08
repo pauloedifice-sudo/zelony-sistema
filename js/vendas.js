@@ -1032,6 +1032,7 @@ function fecharM(){
 }
 function handleBackdropAv(e){ if(e.target===document.getElementById('mbackdrop'))fecharM(); }
 async function confirmAv(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. As vendas estão em modo consulta até o banco voltar.'})) return;
   const v=VENDAS.find(x=>x.id===pendId);
   if(!v)return;
   const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
@@ -1145,6 +1146,7 @@ function fecharModalPrevisaoRecebimento(){
 }
 
 async function salvarPrevisaoRecebimento(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A previsão de recebimento está bloqueada no modo consulta.'})) return;
   if(previsaoRecebSalvando) return;
   if(!podeGerirPrevisaoRecebimento()) return;
   const v=VENDAS.find(x=>x.id===previsaoRecebVendaId);
@@ -1197,6 +1199,7 @@ async function salvarPrevisaoRecebimento(){
 }
 
 async function marcarCorretorVendaComoExterno(vendaId){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Esse ajuste está bloqueado no modo consulta.'})) return;
   if(!['dir','fin','dono'].includes(role)){showToast(zUiText('⚠️'),zUiText('Sem permissão para ajustar o vínculo do corretor.'));return;}
   const v=VENDAS.find(x=>x.id===vendaId);
   if(!v) return;
@@ -1222,6 +1225,7 @@ async function marcarCorretorVendaComoExterno(vendaId){
 }
 
 function voltarEtapa(id){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A reversão de etapa está bloqueada no modo consulta.'})) return;
   if(!['fin','dir','dono'].includes(role)){showToast('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢','Sem permissÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o.');return;}
   const v=VENDAS.find(x=>x.id===id);
   if(!v||v.etapa<=0)return;
@@ -1280,6 +1284,7 @@ function fecharDistrato(){
   zSetState('state.ui.distratoVendaId', distratoVendaId);
 }
 function confirmarDistrato(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O registro de distrato está bloqueado no modo consulta.'})) return;
   if(distratoSalvando) return;
   const v=VENDAS.find(x=>x.id===distratoVendaId);
   if(!v)return;
@@ -1407,6 +1412,7 @@ function fecharEditVenda(){
 }
 
 function salvarEditVenda(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A edição da venda está bloqueada no modo consulta.'})) return;
   if(editVendaSalvando) return;
   const v=VENDAS.find(x=>x.id===editVendaId);
   if(!v)return;
@@ -1526,6 +1532,7 @@ function abrirModalVenda(){
 function fecharMV(){ document.getElementById('mvenda').classList.remove('show'); }
 function handleBackdropV(e){ if(e.target===document.getElementById('mvenda'))fecharMV(); }
 function salvarVenda(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O cadastro de vendas está bloqueado no modo consulta.'})) return;
   const cliente=document.getElementById('mv-cliente').value.trim().toUpperCase();
   const dataVal=document.getElementById('mv-data').value;
   const produto=document.getElementById('mv-produto').value.trim();

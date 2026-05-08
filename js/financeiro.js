@@ -52,6 +52,13 @@ const FIN_CATEGORIAS = {
   ]
 };
 
+const finMoedaFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
 function syncFinState() {
   zSetState('state.ui.finMesAtual', finMesAtual);
   zSetState('state.ui.finAnoAtual', finAnoAtual);
@@ -273,9 +280,38 @@ function finDiffDias(maior, menor) {
   return Math.max(0, Math.floor((maior.getTime() - menor.getTime()) / 86400000));
 }
 
+function finNormalizarTextoValor(valor) {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? String(valor) : '0';
+  let texto = String(valor == null ? '' : valor).trim();
+  if (!texto) return '0';
+  texto = texto
+    .replace(/\s+/g, '')
+    .replace(/^R\$/i, '')
+    .replace(/[^0-9,.\-]/g, '');
+
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(texto)) return texto.replace(/\./g, '');
+  if (/^-?\d{1,3}(,\d{3})+$/.test(texto)) return texto.replace(/,/g, '');
+
+  const ultimoPonto = texto.lastIndexOf('.');
+  const ultimaVirgula = texto.lastIndexOf(',');
+
+  if (ultimoPonto >= 0 && ultimaVirgula >= 0) {
+    if (ultimaVirgula > ultimoPonto) return texto.replace(/\./g, '').replace(/,/g, '.');
+    return texto.replace(/,/g, '');
+  }
+  if (ultimaVirgula >= 0) return texto.replace(/\./g, '').replace(/,/g, '.');
+  return texto;
+}
+
 function finValorSeguro(valor) {
-  const numero = parseFloat(valor);
+  if (valor == null || String(valor).trim() === '') return 0;
+  const numero = Number(finNormalizarTextoValor(valor));
   return Number.isFinite(numero) ? numero : 0;
+}
+
+function finValorParaInput(valor) {
+  if (valor == null || String(valor).trim() === '') return '';
+  return finValorSeguro(valor).toFixed(2).replace('.', ',');
 }
 
 function finRefLocalRepasseComissaoVenda(vendaId, papel) {
@@ -553,15 +589,17 @@ function finEscapeAttr(valor) {
 }
 
 function finFmtAssinado(valor) {
-  if (!valor) return fmt(0);
+  if (!valor) return finFmtMoeda(0);
   const sinal = valor > 0 ? '+' : '-';
-  return `${sinal}${fmt(Math.abs(valor))}`;
+  return `${sinal}${finFmtMoeda(Math.abs(valor))}`;
 }
 
 function finFmtKAssinado(valor) {
-  if (!valor) return fmtK(0);
-  const sinal = valor > 0 ? '+' : '-';
-  return `${sinal}${fmtK(Math.abs(valor))}`;
+  return finFmtAssinado(valor);
+}
+
+function finFmtMoeda(valor) {
+  return finMoedaFormatter.format(finValorSeguro(valor));
 }
 
 function finRotuloVisao(visao) {
@@ -1135,7 +1173,7 @@ function finMontarDadosDre(meta) {
 }
 
 function finDreTabelaSecao(titulo, grupos, total, classe = '', sinal = 'normal') {
-  const valorTotal = sinal === 'signed' ? finFmtAssinado(total) : fmt(total);
+  const valorTotal = sinal === 'signed' ? finFmtAssinado(total) : finFmtMoeda(total);
   return `
     <tr class="dre-row dre-section ${classe}">
       <td>${zUiText(titulo)}</td>
@@ -1144,12 +1182,12 @@ function finDreTabelaSecao(titulo, grupos, total, classe = '', sinal = 'normal')
     ${grupos.map(grupo => `
       <tr class="dre-row dre-group">
         <td><span class="dre-indent dre-indent-1">${zUiText(grupo.label)}</span></td>
-        <td>${fmt(grupo.total)}</td>
+        <td>${finFmtMoeda(grupo.total)}</td>
       </tr>
       ${grupo.contas.map(conta => `
         <tr class="dre-row dre-account">
           <td><span class="dre-indent dre-indent-2">${zUiText(conta.label)}</span></td>
-          <td>${fmt(conta.total)}</td>
+          <td>${finFmtMoeda(conta.total)}</td>
         </tr>`).join('')}
     `).join('')}
   `;
@@ -1226,20 +1264,20 @@ function finDreListaResumo(titulo, subtitulo, itens, vazio) {
 function finDreBuildSide(dados) {
   const topReceitas = dados.gruposReceita
     .slice(0, 5)
-    .map(item => ({ label: item.label, meta: 'Receita do periodo', valor: fmt(item.total), tom: 'good' }));
+    .map(item => ({ label: item.label, meta: 'Receita do periodo', valor: finFmtMoeda(item.total), tom: 'good' }));
   const topDespesas = [...dados.gruposImpostos, ...dados.gruposDespesa]
     .sort((a, b) => b.total - a.total)
     .slice(0, 5)
-    .map(item => ({ label: item.label, meta: 'Saida realizada', valor: fmt(item.total), tom: 'bad' }));
+    .map(item => ({ label: item.label, meta: 'Saida realizada', valor: finFmtMoeda(item.total), tom: 'bad' }));
   const serie = dados.serie.map(item => ({
     label: item.label,
-    meta: `Receita ${fmt(item.receita)} • Despesa ${fmt(item.impostos + item.despesa + item.financeiroDespesa)}`,
+    meta: `Receita ${finFmtMoeda(item.receita)} • Despesa ${finFmtMoeda(item.impostos + item.despesa + item.financeiroDespesa)}`,
     valor: finFmtAssinado(item.resultadoLiquido),
     tom: item.resultadoLiquido >= 0 ? 'good' : 'bad'
   }));
   const foraDre = [
-    ...dados.gruposForaReceita.map(item => ({ label: item.label, meta: 'Entrada fora do DRE', valor: fmt(item.total), tom: 'good' })),
-    ...dados.gruposForaDespesa.map(item => ({ label: item.label, meta: 'Saida fora do DRE', valor: `-${fmt(item.total)}`, tom: 'bad' }))
+    ...dados.gruposForaReceita.map(item => ({ label: item.label, meta: 'Entrada fora do DRE', valor: finFmtMoeda(item.total), tom: 'good' })),
+    ...dados.gruposForaDespesa.map(item => ({ label: item.label, meta: 'Saida fora do DRE', valor: `-${finFmtMoeda(item.total)}`, tom: 'bad' }))
   ];
   return [
     finDreListaResumo('Composicao da receita', 'Como o resultado do periodo se formou pelo lado das entradas.', topReceitas, 'Nenhuma receita realizada neste periodo.'),
@@ -1251,8 +1289,8 @@ function finDreBuildSide(dados) {
 
 function finDreBuildKpis(dados) {
   return [
-    finResumoCard('Receitas', fmt(dados.receita), 'Entradas que compoem o resultado do periodo', '#2E9E6E', 'good', 'realized'),
-    finResumoCard('Despesas operacionais', fmt(dados.despesa + dados.impostos), 'Saidas operacionais e impostos realizados', '#C05030', 'bad', 'outflow'),
+    finResumoCard('Receitas', finFmtMoeda(dados.receita), 'Entradas que compoem o resultado do periodo', '#2E9E6E', 'good', 'realized'),
+    finResumoCard('Despesas operacionais', finFmtMoeda(dados.despesa + dados.impostos), 'Saidas operacionais e impostos realizados', '#C05030', 'bad', 'outflow'),
     finResumoCard('Resultado operacional', finFmtAssinado(dados.resultadoOperacional), 'Receitas - impostos - despesas operacionais', dados.resultadoOperacional >= 0 ? '#2E9E6E' : '#C05030', dados.resultadoOperacional >= 0 ? 'good' : 'bad', 'total'),
     finResumoCard('Resultado financeiro', finFmtAssinado(dados.resultadoFinanceiro), 'Receitas financeiras - despesas financeiras', dados.resultadoFinanceiro >= 0 ? '#2E9E6E' : '#C05030', dados.resultadoFinanceiro >= 0 ? 'good' : 'bad', 'compare'),
     finResumoCard('Resultado liquido', finFmtAssinado(dados.resultadoLiquido), 'Leitura gerencial final do periodo', dados.resultadoLiquido >= 0 ? '#2E9E6E' : '#C05030', dados.resultadoLiquido >= 0 ? 'good' : 'bad', 'balance'),
@@ -1340,7 +1378,7 @@ function finDelta(atual, anterior) {
 
 function finFmtDelta(info) {
   if (!info.delta) return zUiText('Estavel');
-  return info.delta > 0 ? `+${fmtK(info.delta)}` : `-${fmtK(Math.abs(info.delta))}`;
+  return info.delta > 0 ? `+${finFmtMoeda(info.delta)}` : `-${finFmtMoeda(Math.abs(info.delta))}`;
 }
 
 function finFmtDeltaPct(info) {
@@ -1519,12 +1557,12 @@ function finBuildKpis(atual, anterior, anteriorRef, meses) {
     const realizadoPct = totalAtual > 0 ? (atual.saidas.totalRealizado / totalAtual) * 100 : 0;
     const maiorSaida = atual.saidas.todos.length ? atual.saidas.todos.slice().sort((a, b) => b.valorBruto - a.valorBruto)[0].valorBruto : 0;
     return [
-      finResumoCard('A vencer', fmt(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} lancamentos previstos`, '#C05030', '', 'outflow'),
-      finResumoCard('Ja pagas', fmt(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00', '', 'paid'),
-      finResumoCard('Total do mes', fmt(totalAtual), 'Previsto + pago', '#3060B8', '', 'total'),
+      finResumoCard('A vencer', finFmtMoeda(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} lancamentos previstos`, '#C05030', '', 'outflow'),
+      finResumoCard('Ja pagas', finFmtMoeda(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00', '', 'paid'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Previsto + pago', '#3060B8', '', 'total'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#C05030' : '#2E9E6E', deltaMes.delta >= 0 ? 'bad' : 'good'),
-      finResumoCard('% pago', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${fmt(atual.saidas.totalRealizado)} de ${fmt(totalAtual)}`, '#7A5A00', '', 'progress'),
-      finResumoCard('Maior saida', fmt(maiorSaida), 'Maior valor projetado ou pago no periodo', '#8B6C1A', '', 'neutral')
+      finResumoCard('% pago', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.saidas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#7A5A00', '', 'progress'),
+      finResumoCard('Maior saida', finFmtMoeda(maiorSaida), 'Maior valor projetado ou pago no periodo', '#8B6C1A', '', 'neutral')
     ].join('');
   }
 
@@ -1536,12 +1574,12 @@ function finBuildKpis(atual, anterior, anteriorRef, meses) {
     const totalManuais = atual.manuais.entradas.totalPrevisto + atual.manuais.entradas.totalRealizado;
     const qtdManuais = atual.manuais.entradas.todos.length;
     return [
-      finResumoCard('Previsto no mes', fmt(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)'),
-      finResumoCard('Ja recebido', fmt(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good'),
-      finResumoCard('Total do mes', fmt(totalAtual), 'Comissoes + entradas manuais', '#3060B8'),
+      finResumoCard('Previsto no mes', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)'),
+      finResumoCard('Ja recebido', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Comissoes + entradas manuais', '#3060B8'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#2E9E6E' : '#C05030', deltaMes.delta >= 0 ? 'good' : 'bad'),
-      finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${fmt(atual.entradas.totalRealizado)} de ${fmt(totalAtual)}`, '#2E9E6E', 'good'),
-      finResumoCard('Manuais do mes', fmt(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A')
+      finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.entradas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#2E9E6E', 'good'),
+      finResumoCard('Manuais do mes', finFmtMoeda(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A')
     ].join('');
   }
 
@@ -1554,10 +1592,10 @@ function finBuildKpis(atual, anterior, anteriorRef, meses) {
   const qtdManuais = atual.manuais.entradas.todos.length + atual.manuais.saidas.todos.length;
 
   return [
-    finResumoCard('Entradas previstas', fmt(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)'),
-    finResumoCard('Entradas realizadas', fmt(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas recebidas`, '#2E9E6E', 'good'),
-    finResumoCard('Saidas previstas', fmt(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} saidas previstas`, '#C05030', 'bad'),
-    finResumoCard('Saidas pagas', fmt(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00'),
+    finResumoCard('Entradas previstas', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)'),
+    finResumoCard('Entradas realizadas', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas recebidas`, '#2E9E6E', 'good'),
+    finResumoCard('Saidas previstas', finFmtMoeda(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} saidas previstas`, '#C05030', 'bad'),
+    finResumoCard('Saidas pagas', finFmtMoeda(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00'),
     finResumoCard('Saldo liquido', finFmtAssinado(saldoTotal), `Realizado: ${finFmtAssinado(saldoRealizado)}`, saldoTotal >= 0 ? '#2E9E6E' : '#C05030', saldoTotal >= 0 ? 'good' : 'bad'),
     finResumoCard('Vs mes anterior', finFmtDelta(deltaSaldo), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaSaldo)} • ${qtdManuais} manuais`, deltaSaldo.delta >= 0 ? '#2E9E6E' : '#C05030', deltaSaldo.delta >= 0 ? 'good' : 'bad')
   ].join('');
@@ -1571,12 +1609,12 @@ function finBuildKpisPainel(atual, anterior, anteriorRef, meses) {
     const realizadoPct = totalAtual > 0 ? (atual.saidas.totalRealizado / totalAtual) * 100 : 0;
     const maiorSaida = atual.saidas.todos.length ? atual.saidas.todos.slice().sort((a, b) => b.valorBruto - a.valorBruto)[0].valorBruto : 0;
     return [
-      finResumoCard('A vencer', fmt(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} lancamentos previstos`, '#C05030', '', 'outflow'),
-      finResumoCard('Ja pagas', fmt(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00', '', 'paid'),
-      finResumoCard('Total do mes', fmt(totalAtual), 'Previsto + pago', '#3060B8', '', 'total'),
+      finResumoCard('A vencer', finFmtMoeda(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} lancamentos previstos`, '#C05030', '', 'outflow'),
+      finResumoCard('Ja pagas', finFmtMoeda(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00', '', 'paid'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Previsto + pago', '#3060B8', '', 'total'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#C05030' : '#2E9E6E', deltaMes.delta >= 0 ? 'bad' : 'good', 'compare'),
-      finResumoCard('% pago', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${fmt(atual.saidas.totalRealizado)} de ${fmt(totalAtual)}`, '#7A5A00', '', 'progress'),
-      finResumoCard('Maior saida', fmt(maiorSaida), 'Maior valor projetado ou pago no periodo', '#8B6C1A', '', 'neutral')
+      finResumoCard('% pago', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.saidas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#7A5A00', '', 'progress'),
+      finResumoCard('Maior saida', finFmtMoeda(maiorSaida), 'Maior valor projetado ou pago no periodo', '#8B6C1A', '', 'neutral')
     ].join('');
   }
 
@@ -1588,12 +1626,12 @@ function finBuildKpisPainel(atual, anterior, anteriorRef, meses) {
     const totalManuais = atual.manuais.entradas.totalPrevisto + atual.manuais.entradas.totalRealizado;
     const qtdManuais = atual.manuais.entradas.todos.length;
     return [
-      finResumoCard('Previsto no mes', fmt(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)', '', 'projected'),
-      finResumoCard('Ja recebido', fmt(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good', 'realized'),
-      finResumoCard('Total do mes', fmt(totalAtual), 'Comissoes + entradas manuais', '#3060B8', '', 'total'),
+      finResumoCard('Previsto no mes', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)', '', 'projected'),
+      finResumoCard('Ja recebido', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good', 'realized'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Comissoes + entradas manuais', '#3060B8', '', 'total'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#2E9E6E' : '#C05030', deltaMes.delta >= 0 ? 'good' : 'bad', 'compare'),
-      finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${fmt(atual.entradas.totalRealizado)} de ${fmt(totalAtual)}`, '#2E9E6E', 'good', 'progress'),
-      finResumoCard('Manuais do mes', fmt(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A', '', 'neutral')
+      finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.entradas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#2E9E6E', 'good', 'progress'),
+      finResumoCard('Manuais do mes', finFmtMoeda(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A', '', 'neutral')
     ].join('');
   }
 
@@ -1603,10 +1641,10 @@ function finBuildKpisPainel(atual, anterior, anteriorRef, meses) {
   const qtdManuais = atual.manuais.entradas.todos.length + atual.manuais.saidas.todos.length;
 
   return [
-    finResumoCard('Entradas previstas', fmt(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)', '', 'projected'),
-    finResumoCard('Entradas realizadas', fmt(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas recebidas`, '#2E9E6E', 'good', 'realized'),
-    finResumoCard('Saidas previstas', fmt(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} saidas previstas`, '#C05030', 'bad', 'outflow'),
-    finResumoCard('Saidas pagas', fmt(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00', '', 'paid'),
+    finResumoCard('Entradas previstas', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)', '', 'projected'),
+    finResumoCard('Entradas realizadas', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas recebidas`, '#2E9E6E', 'good', 'realized'),
+    finResumoCard('Saidas previstas', finFmtMoeda(atual.saidas.totalPrevisto), `${atual.saidas.previstas.length} saidas previstas`, '#C05030', 'bad', 'outflow'),
+    finResumoCard('Saidas pagas', finFmtMoeda(atual.saidas.totalRealizado), `${atual.saidas.realizadas.length} pagamentos realizados`, '#7A5A00', '', 'paid'),
     finResumoCard('Saldo liquido', finFmtAssinado(saldoEmConta), 'Entradas realizadas - saidas pagas', saldoEmConta >= 0 ? '#2E9E6E' : '#C05030', saldoEmConta >= 0 ? 'good' : 'bad', 'balance'),
     finResumoCard('Vs mes anterior', finFmtDelta(deltaSaldo), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaSaldo)} • ${qtdManuais} manuais`, deltaSaldo.delta >= 0 ? '#2E9E6E' : '#C05030', deltaSaldo.delta >= 0 ? 'good' : 'bad', 'compare')
   ].join('');
@@ -1650,7 +1688,7 @@ function finSideItem(item) {
     <button class="fcal-side-item ${finClasseItem(item)}" ${finAcaoItem(item)}>
       <div class="fcal-side-item-top">
         <strong>${zUiText(finNomeItem(item))}</strong>
-        <span>${item.natureza === 'saida' ? `-${fmtK(item.valorBruto)}` : fmtK(item.valorBruto)}</span>
+        <span>${item.natureza === 'saida' ? `-${finFmtMoeda(item.valorBruto)}` : finFmtMoeda(item.valorBruto)}</span>
       </div>
       <div class="fcal-side-item-meta">${finMetaItem(item)}</div>
     </button>
@@ -1667,13 +1705,13 @@ function finTituloDetalheDia(dia) {
 function finSubtituloDetalheDia(dia, mes, ano, itens) {
   const meses = finMeses();
   const dataTexto = `${dia} de ${meses[mes]} de ${ano}`;
-  const total = finVisao === 'geral' ? finFmtAssinado(finValorTotalDia(itens)) : fmt(finValorTotalDia(itens));
+  const total = finVisao === 'geral' ? finFmtAssinado(finValorTotalDia(itens)) : finFmtMoeda(finValorTotalDia(itens));
   const rotulo = finVisao === 'saidas' ? 'saidas' : finVisao === 'entradas' ? 'entradas' : 'movimentacoes';
   return `${itens.length} ${rotulo} em ${dataTexto} · Total ${total}`;
 }
 
 function finDetalheDiaItem(item) {
-  const valor = item.natureza === 'saida' ? `-${fmt(item.valorBruto)}` : fmt(item.valorBruto);
+  const valor = item.natureza === 'saida' ? `-${finFmtMoeda(item.valorBruto)}` : finFmtMoeda(item.valorBruto);
   return `<div class="fin-day-item fin-day-item-${finClasseItem(item)}">
     <button class="fin-day-item-main" type="button" ${finAcaoItem(item)}>
       <div class="fin-day-item-top">
@@ -1747,13 +1785,13 @@ function finBuildCalendario(atual, ano, mes, hoje, primeiroDia, diasNoMes) {
     cells += `<div class="fcal-cell${isHoje ? ' fcal-hoje' : ''}${podeAbrirDetalhe ? ' fcal-cell-clickable' : ''}" ${podeAbrirDetalhe ? `onclick="finAbrirDetalheDia(${d})"` : ''}>
       <div class="fcal-headline">
         <div class="fcal-num${isHoje ? ' fcal-num-hoje' : ''}">${d}</div>
-        ${itens.length ? `<div class="fcal-day-total${classeTotalDia}">${finVisao === 'geral' ? finFmtKAssinado(totalDia) : fmtK(totalDia)}</div>` : ''}
+        ${itens.length ? `<div class="fcal-day-total${classeTotalDia}">${finVisao === 'geral' ? finFmtKAssinado(totalDia) : finFmtMoeda(totalDia)}</div>` : ''}
       </div>
       <div class="fcal-events">
         ${visiveis.map(item => `<button class="fcal-ev fcal-ev-${finClasseItem(item)}" ${finAcaoItemComOpcao(item, true)} title="${finEscapeAttr(finNomeItem(item))}">
           <div class="fcal-ev-top">
             <span class="fcal-ev-status">${finStatusItem(item, 'calendario')}</span>
-            <strong>${item.natureza === 'saida' ? `-${fmtK(item.valorBruto)}` : fmtK(item.valorBruto)}</strong>
+            <strong>${item.natureza === 'saida' ? `-${finFmtMoeda(item.valorBruto)}` : finFmtMoeda(item.valorBruto)}</strong>
           </div>
           <div class="fcal-ev-name">${zUiText(finNomeItem(item))}</div>
           <div class="fcal-ev-meta">${finMetaItem(item, { includeStatus: false, includeProof: false })}</div>
@@ -2257,6 +2295,7 @@ function finOrdenarLancamentosLocais(a, b) {
 }
 
 async function finSalvarLancamento() {
+  if (typeof appPodePersistirNoSupabase === 'function' && !appPodePersistirNoSupabase({ mensagem: 'Sem conexão com o Supabase. O financeiro está em modo consulta.' })) return;
   const tipoEl = document.getElementById('fin-lanc-tipo');
   const categoriaEl = document.getElementById('fin-lanc-categoria');
   const categoriaNovaEl = document.getElementById('fin-lanc-categoria-nova');
@@ -2336,7 +2375,7 @@ async function finSalvarLancamento() {
     alvo.comprovanteMime = finComprovanteMime || finComprovanteFile.type || '';
     alvo.comprovanteSize = finComprovanteSize || finComprovanteFile.size || 0;
     alvo.comprovanteLocalId = finComprovanteLocalId || alvo.refLocal || '';
-    alvo.comprovanteDataUrl = '';
+    alvo.comprovanteDataUrl = finComprovanteDataUrl || '';
     alvo.comprovanteStorageBucket = '';
     alvo.comprovanteStoragePath = '';
   } else if (comprovanteAnterior) {
@@ -2402,7 +2441,7 @@ async function finSalvarLancamento() {
         }
         alvo.comprovanteLocalId = '';
       } catch (erroUploadComprovante) {
-        if (!alvo.comprovanteLocalId) alvo.comprovanteDataUrl = finComprovanteDataUrl || alvo.comprovanteDataUrl || '';
+        alvo.comprovanteDataUrl = finComprovanteDataUrl || alvo.comprovanteDataUrl || '';
         console.warn('Falha ao enviar comprovante do financeiro. Mantendo anexo local pendente.', erroUploadComprovante);
       }
     }
@@ -3052,7 +3091,7 @@ function renderFinanceiro() {
             <div class="fin-day-summary-kicker">${zUiText(finVisao === 'saidas' ? 'Saidas do calendario' : finVisao === 'entradas' ? 'Entradas do calendario' : 'Movimentacoes do calendario')}</div>
             <div class="fin-day-summary-sub">${zUiText(detalheDiaAtivo ? finSubtituloDetalheDia(finDiaDetalheAtual, mes, ano, detalheDiaItens) : '')}</div>
           </div>
-          <div class="fin-day-summary-total">${detalheDiaAtivo ? (finVisao === 'geral' ? finFmtAssinado(finValorTotalDia(detalheDiaItens)) : fmt(finValorTotalDia(detalheDiaItens))) : ''}</div>
+          <div class="fin-day-summary-total">${detalheDiaAtivo ? (finVisao === 'geral' ? finFmtAssinado(finValorTotalDia(detalheDiaItens)) : finFmtMoeda(finValorTotalDia(detalheDiaItens))) : ''}</div>
         </div>
         <div class="fin-day-list">
           ${detalheDiaAtivo ? detalheDiaItens.map(item => finDetalheDiaItem(item)).join('') : ''}
@@ -3128,7 +3167,7 @@ function renderFinanceiro() {
         <div class="f-row">
           <div class="f-field">
             <label>Valor (R$)</label>
-            <input type="number" id="fin-lanc-valor" min="0" step="0.01" value="${itemEditando ? finEscapeAttr(itemEditando.valor || '') : ''}">
+            <input type="text" id="fin-lanc-valor" inputmode="decimal" placeholder="0,00" value="${itemEditando ? finEscapeAttr(finValorParaInput(itemEditando.valor)) : ''}">
           </div>
         </div>
         <div class="f-field">

@@ -21,6 +21,7 @@ function setHistObsLoading(loading){
 }
 
 async function salvarObsHistorico(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O histórico da venda está em modo consulta.'})) return;
   if(histObsSalvando) return;
   const v=VENDAS.find(x=>x.id===curVId);
   if(!v) return;
@@ -98,6 +99,7 @@ function fecharPendenciaComercialForm(){
 }
 
 async function salvarPendenciaComercial(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A pendência comercial está bloqueada no modo consulta.'})) return;
   if(pendComercialSalvando) return;
   const v=VENDAS.find(x=>x.id===curVId);
   if(!v) return;
@@ -137,6 +139,7 @@ async function salvarPendenciaComercial(){
 }
 
 async function resolverPendenciaComercial(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A pendência comercial está bloqueada no modo consulta.'})) return;
   if(pendComercialSalvando) return;
   const v=VENDAS.find(x=>x.id===curVId);
   if(!v||(typeof temPendenciaComercial==='function'&&!temPendenciaComercial(v))) return;
@@ -387,6 +390,7 @@ function renderAnexosSec(v){
 function getTipoAnexo(vendaId){const radios=document.querySelectorAll(`input[name="tipo-anexo-${vendaId}"]`);for(const r of radios){if(r.checked)return r.value;}return'outro';}
 function handleAnexoUpload(e,vendaId){processAnexoFiles(e.target.files,vendaId);e.target.value='';}
 function processAnexoFiles(files,vendaId){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O envio de anexos está bloqueado no modo consulta.'})) return;
   const v=VENDAS.find(x=>x.id===vendaId);
   if(!v)return;
   if(!v.anexos) v.anexos=[];
@@ -403,7 +407,7 @@ function processAnexoFiles(files,vendaId){
     reader.readAsDataURL(file);
   });
 }
-function delAnexo(vendaId,idx){const v=VENDAS.find(x=>x.id===vendaId);if(!v||!v.anexos)return;if(!confirm(zUiText(`Remover "${v.anexos[idx].nome}"?`)))return;v.anexos.splice(idx,1);dbAtualizarVenda(v).catch(err=>console.error(err));salvarLS();showVDetail(vendaId);showToast(zUiText('🗑'),zUiText('Anexo removido.'));}
+function delAnexo(vendaId,idx){if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A remoção de anexos está bloqueada no modo consulta.'}))return;const v=VENDAS.find(x=>x.id===vendaId);if(!v||!v.anexos)return;if(!confirm(zUiText(`Remover "${v.anexos[idx].nome}"?`)))return;v.anexos.splice(idx,1);dbAtualizarVenda(v).catch(err=>console.error(err));salvarLS();showVDetail(vendaId);showToast(zUiText('🗑'),zUiText('Anexo removido.'));}
 function verAnexo(vendaId,idx){const v=VENDAS.find(x=>x.id===vendaId);if(!v||!v.anexos||!v.anexos[idx])return;const a=v.anexos[idx];document.getElementById('av-nome').textContent=zUiText(a.nome);const cont=document.getElementById('av-content');if(a.mime&&a.mime.startsWith('image/')){cont.innerHTML=`<img src="${a.dataUrl}" alt="${zUiText(a.nome)}">`;}else if(a.mime==='application/pdf'){cont.innerHTML=`<iframe src="${a.dataUrl}" title="${zUiText(a.nome)}"></iframe>`;}else{cont.innerHTML=`<div style="color:#fff;font-size:13px;padding:20px;background:rgba(255,255,255,0.1);border-radius:8px;">${zUiText('Pré-visualização não disponível.')}<br><a href="${a.dataUrl}" download="${zUiText(a.nome)}" style="color:var(--gold-l);margin-top:10px;display:inline-block;">${zUiText('⬇ Baixar arquivo')}</a></div>`;}document.getElementById('anexo-viewer').classList.add('show');}
 function fecharViewer(){document.getElementById('anexo-viewer').classList.remove('show');document.getElementById('av-content').innerHTML='';}
 function aplicarFiltroCorretorRel(lista){
