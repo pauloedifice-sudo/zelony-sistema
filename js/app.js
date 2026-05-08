@@ -202,7 +202,8 @@ function showVDetail(id){
   const vendasVisiveis=typeof vendasU==='function'?vendasU(VENDAS):VENDAS;
   const v=vendasVisiveis.find(x=>x.id===id);
   if(!v){ limparDetalheVenda(); return; }
-  if(curVId!==id) pendComercialModo='fechado';
+  const mudouVenda=curVId!==id;
+  if(mudouVenda) pendComercialModo='fechado';
   curVId=id;
   zSetState('state.ui.curVId', curVId);
   normalizarVendaNumeros(v);
@@ -369,6 +370,14 @@ function showVDetail(id){
   const pcInput=document.getElementById('pc-obs-input');
   if(pcInput&&pendencia&&pendComercialModo==='editar') pcInput.value=pendencia.obs||'';
   if(['dir','fin','dono'].includes(role)&&!v.anexosCarregados) carregarAnexosVenda(v.id);
+  if(mudouVenda&&window.matchMedia&&window.matchMedia('(max-width: 760px)').matches){
+    const detalhe=document.getElementById('vd-body');
+    if(detalhe){
+      setTimeout(()=>{
+        detalhe.scrollIntoView({behavior:'smooth',block:'start'});
+      },40);
+    }
+  }
 }
 
 function renderAnexosSec(v){

@@ -205,6 +205,38 @@ const modTitles = {
   usuarios:'Usuários', financeiro:'Financeiro'
 };
 
+function appMobileNavAtivo() {
+  return !!(window.matchMedia && window.matchMedia('(max-width: 920px)').matches);
+}
+
+function setMobileNavAberta(aberta) {
+  const app = document.getElementById('main-app');
+  if (!app) return;
+  app.classList.toggle('mobile-nav-open', !!aberta && appMobileNavAtivo());
+}
+
+function toggleMobileNav(force) {
+  const app = document.getElementById('main-app');
+  if (!app) return;
+  const abrir = typeof force === 'boolean' ? force : !app.classList.contains('mobile-nav-open');
+  setMobileNavAberta(abrir);
+}
+
+function fecharMenuMobile() {
+  setMobileNavAberta(false);
+}
+
+window.toggleMobileNav = toggleMobileNav;
+window.fecharMenuMobile = fecharMenuMobile;
+
+window.addEventListener('resize', () => {
+  if (!appMobileNavAtivo()) fecharMenuMobile();
+});
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') fecharMenuMobile();
+});
+
 function setMod(m, el) {
   ['carteira','vendas','dashboard','agendamentos','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
@@ -212,6 +244,7 @@ function setMod(m, el) {
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
   if (el) el.classList.add('active');
   document.getElementById('pg-title').textContent = zUiText(modTitles[m]);
+  fecharMenuMobile();
   if (m === 'carteira')   renderCarteira();
   if (m === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
   if (m === 'trein')      renderTrein();

@@ -336,10 +336,13 @@
 
 <div class="app" id="main-app" style="opacity:0;transition:opacity 0.2s ease;">
 <div class="topbar">
-  <div class="tb-logo">ZELONY <small>Imóveis</small></div>
+  <div class="tb-left">
+    <button class="tb-menu-btn" type="button" onclick="toggleMobileNav()" aria-label="Abrir menu">☰</button>
+    <div class="tb-logo">ZELONY <small>Imóveis</small></div>
+  </div>
   <div class="tb-right">
     <!-- Info do usuÃ¡rio logado -->
-    <div id="tb-user-info" style="display:flex;align-items:center;gap:7px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:7px;padding:4px 12px;cursor:default;">
+    <div id="tb-user-info" class="tb-user-chip" style="display:flex;align-items:center;gap:7px;background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:7px;padding:4px 12px;cursor:default;">
       <span id="tb-user-avatar" style="width:22px;height:22px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;"></span>
       <span id="tb-user-nome" style="font-size:11px;font-weight:600;color:var(--tx);"></span>
       <span id="tb-user-perfil-badge" style="font-size:9px;color:var(--tm);"></span>
@@ -355,13 +358,18 @@
       <option value="rh">👤 RH</option>
     </select>
     <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
-    <button onclick="fazerLogout()" style="background:var(--bg3);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Sair do sistema">↩ Sair</button>
-    <button onclick="abrirTS()" style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" title="Trocar senha">🔑</button>
+    <button class="tb-action-btn" onclick="fazerLogout()" title="Sair do sistema">↩ Sair</button>
+    <button class="tb-action-btn tb-action-accent" onclick="abrirTS()" title="Trocar senha">🔑</button>
   </div>
 </div>
 
 <div class="layout">
+<button class="sidebar-overlay" type="button" aria-label="Fechar menu" onclick="fecharMenuMobile()"></button>
 <div class="sidebar">
+  <div class="sb-mobile-head">
+    <div class="sb-mobile-brand">ZELONY <small>Imóveis</small></div>
+    <button class="sb-mobile-close" type="button" onclick="fecharMenuMobile()" aria-label="Fechar menu">✕</button>
+  </div>
   <div class="sb-nav">
     <div class="sb-lbl">Módulos</div>
     <div class="sb-group">

@@ -1027,7 +1027,7 @@ function agRenderCalendario(listaMes) {
     }
   }
 
-  return `<div class="ag-weekdays">${cabecalho}</div><div class="ag-grid">${corpo}</div>`;
+  return `<div class="ag-calendar-scroll"><div class="ag-calendar-shell"><div class="ag-weekdays">${cabecalho}</div><div class="ag-grid">${corpo}</div></div></div>`;
 }
 
 function agRenderItem(item, opcoes = {}) {
