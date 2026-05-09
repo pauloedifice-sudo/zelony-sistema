@@ -632,6 +632,45 @@ function mapVendaAnexos(anexos){
   }));
 }
 
+function reduzirPayloadVendaPorSchema(payload,colunaAusente=''){
+  const reduzido={...(payload||{})};
+  const grupos={
+    anexos:['anexos'],
+    diretor2:['diretor2','pct_dir2'],
+    pct_dir2:['diretor2','pct_dir2'],
+    pct_rh:['pct_rh'],
+    bonus:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_dir:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_ger:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_cor:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor']
+  };
+  const lista=grupos[colunaAusente]||[colunaAusente];
+  lista.forEach(coluna=>delete reduzido[coluna]);
+  return reduzido;
+}
+
+async function salvarVendaComFallbackSchema(payload,modo='update',vendaId=null){
+  let payloadAtual={...(payload||{})};
+  let payloadReduzido=false;
+  while(true){
+    try{
+      const resposta=modo==='insert'
+        ? await sb.from('vendas').insert(payloadAtual).select().single()
+        : await sb.from('vendas').update(payloadAtual).eq('id',vendaId);
+      if(resposta.error) throw resposta.error;
+      return {data:resposta.data||null,payloadReduzido};
+    }catch(error){
+      const colunaAusente=extrairColunaAusenteSupabase(error,'vendas');
+      if(colunaAusente&&Object.prototype.hasOwnProperty.call(payloadAtual,colunaAusente)){
+        payloadAtual=reduzirPayloadVendaPorSchema(payloadAtual,colunaAusente);
+        payloadReduzido=true;
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
 function mapTreinIn(t){
   const trein = {
     id:t.id,
@@ -1312,9 +1351,11 @@ async function dbSalvarVenda(v, tentativa=1){
       ...mapVendaOut(v),
       anexos:mapVendaAnexos(v.anexos)
     };
-    const {data,error}=await sb.from('vendas').insert(payload).select().single();
-    if(error) throw error;
+    const {data,payloadReduzido}=await salvarVendaComFallbackSchema(payload,'insert');
     if(data) v.id=data.id;
+    if(payloadReduzido){
+      console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Venda salva com payload reduzido.');
+    }
     if(typeof finSincronizarSaidasComissaoVenda==='function'){
       try{
         await finSincronizarSaidasComissaoVenda(v,{persistir:true});
@@ -1367,8 +1408,10 @@ async function dbAtualizarVenda(v){
     ...mapVendaOut(v),
     anexos:mapVendaAnexos(v.anexos)
   };
-  const {error}=await sb.from('vendas').update(payload).eq('id',v.id);
-  if(error) throw error;
+  const {payloadReduzido}=await salvarVendaComFallbackSchema(payload,'update',v.id);
+  if(payloadReduzido){
+    console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Atualizacao salva com payload reduzido.');
+  }
   if(typeof finSincronizarSaidasComissaoVenda==='function'){
     try{
       await finSincronizarSaidasComissaoVenda(v,{persistir:true});
@@ -1382,7 +1425,12 @@ async function dbAtualizarVenda(v){
 async function carregarAnexosVenda(id){
   try{
     const {data,error}=await sb.from('vendas').select('anexos').eq('id',id).single();
-    if(error||!data) return;
+    if(error){
+      const colunaAusente=extrairColunaAusenteSupabase(error,'vendas');
+      if(colunaAusente==='anexos') return;
+      return;
+    }
+    if(!data) return;
     const v=VENDAS.find(x=>x.id===id);
     if(v){
       v.anexos=data.anexos||[];

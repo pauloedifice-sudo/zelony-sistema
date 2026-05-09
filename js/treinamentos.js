@@ -83,6 +83,13 @@ function podeAlternarCategoriaTrein(){
   return ['dir','dono','fin','rh'].includes(role);
 }
 
+function getCategoriasTreinHierarquia(roleAtual = role){
+  if(['dir','dono','fin','rh'].includes(roleAtual)) return ['Corretor','Capitão','Gerente'];
+  if(roleAtual === 'ger') return ['Corretor','Capitão','Gerente'];
+  if(roleAtual === 'cap') return ['Corretor','Capitão'];
+  return [categoriaTreinPorRole()];
+}
+
 function getTreinCompatStatus(){
   return typeof getTreinamentosCompatStatus === 'function'
     ? getTreinamentosCompatStatus()
@@ -94,8 +101,36 @@ function treinVideosCompartilhadosNoBanco(){
 }
 
 function getCategoriasTreinVisiveis(){
-  if(podeAlternarCategoriaTrein()) return ['Corretor','Capitão','Gerente'];
-  return [categoriaTreinPorRole()];
+  return getCategoriasTreinHierarquia();
+}
+
+function getListaTreinPorCategorias(categorias){
+  const listaCategorias = Array.isArray(categorias) ? categorias : [categorias];
+  const permitidas = new Set(listaCategorias.map(item => normalizarCatTrein(item)));
+  return TREIN.filter(t => permitidas.has(normalizarCatTrein(t && t.cat)));
+}
+
+function getCategoriaTreinComConteudo(cats = getCategoriasTreinVisiveis()){
+  return cats.find(cat => getListaTreinPorCategorias(cat).length) || cats[0] || 'Corretor';
+}
+
+function garantirCategoriaTreinAtiva(){
+  const cats = getCategoriasTreinVisiveis();
+  const atual = normalizarCatTrein(tcatAtivo);
+  const temCategoriaAtual = cats.includes(atual);
+  const autoPriorizarCategoriaComConteudo = !podeAlternarCategoriaTrein() && cats.length > 1;
+  const existeConteudoEmOutraCategoria = cats.some(cat => getListaTreinPorCategorias(cat).length);
+  const categoriaVazia = !getListaTreinPorCategorias(atual).length;
+
+  if(!temCategoriaAtual || (autoPriorizarCategoriaComConteudo && categoriaVazia && existeConteudoEmOutraCategoria)){
+    const proxima = getCategoriaTreinComConteudo(cats);
+    if(proxima && proxima !== tcatAtivo){
+      tcatAtivo = proxima;
+      zSetState('state.ui.tcatAtivo', tcatAtivo);
+    }
+  }
+
+  return cats;
 }
 
 function carregarTreinProgressoLS(){
@@ -835,7 +870,7 @@ function irParaTreinamento(chave){
 }
 
 function getListaTreinBase(){
-  return TREIN.filter(t => normalizarCatTrein(t.cat) === tcatAtivo);
+  return getListaTreinPorCategorias(tcatAtivo);
 }
 
 function getListaTreinFiltrada(lista){
@@ -936,11 +971,7 @@ function renderTreinLegacy(){
     carregarTreinProgressoLS();
   }
 
-  const cats = getCategoriasTreinVisiveis();
-  if(!cats.includes(normalizarCatTrein(tcatAtivo))){
-    tcatAtivo = cats[0];
-    zSetState('state.ui.tcatAtivo', tcatAtivo);
-  }
+  const cats = garantirCategoriaTreinAtiva();
 
   document.getElementById('tcats').innerHTML = cats
     .map(c => `<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}')">${zUiText(CAT_ICON[c]||'⭐')} ${zUiText(c)}</button>`)
@@ -1061,7 +1092,10 @@ function renderTreinLegacy(){
 }
 
 function setTcat(c){
-  tcatAtivo = c;
+  const cats = getCategoriasTreinVisiveis();
+  const categoria = normalizarCatTrein(c);
+  if(!cats.includes(categoria)) return;
+  tcatAtivo = categoria;
   treinSelKey = '';
   zSetState('state.ui.tcatAtivo', tcatAtivo);
   zSetState('state.ui.treinSelecionado', treinSelKey);
@@ -1418,11 +1452,7 @@ function renderTreinIntermediario(){
     carregarTreinProgressoLS();
   }
 
-  const cats = getCategoriasTreinVisiveis();
-  if(!cats.includes(normalizarCatTrein(tcatAtivo))){
-    tcatAtivo = cats[0];
-    zSetState('state.ui.tcatAtivo', tcatAtivo);
-  }
+  const cats = garantirCategoriaTreinAtiva();
 
   document.getElementById('tcats').innerHTML = cats
     .map(c => `<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}')">${zUiText(CAT_ICON[c]||'⭐')} ${zUiText(c)}</button>`)
@@ -2120,11 +2150,7 @@ function renderTrein(){
     carregarTreinProgressoLS();
   }
 
-  const cats = getCategoriasTreinVisiveis();
-  if(!cats.includes(normalizarCatTrein(tcatAtivo))){
-    tcatAtivo = cats[0];
-    zSetState('state.ui.tcatAtivo', tcatAtivo);
-  }
+  const cats = garantirCategoriaTreinAtiva();
 
   document.getElementById('tcats').innerHTML = cats
     .map(c => `<button class="cat ${tcatAtivo===c?'active':''}" onclick="setTcat('${c}')">${zUiText(CAT_ICON[c]||'⭐')} ${zUiText(c)}</button>`)
