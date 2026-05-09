@@ -1074,7 +1074,14 @@ async function confirmAv(){
     Object.assign(v,original);
     if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
     console.error(e);
-    showToast(zUiText('❌'),zUiText('Falha ao avançar a etapa no banco. Tente novamente.'));
+    const msgErro=typeof mensagemErroSyncAgendamentos==='function'
+      ? mensagemErroSyncAgendamentos(e)
+      : String((e&&e.message)||e||'');
+    const erroTimeout=/timeout|network|fetch|abort/i.test(String(msgErro||''));
+    showToast(
+      zUiText('❌'),
+      zUiText(erroTimeout?'O Supabase demorou para responder ao avancar a etapa. Tente novamente em alguns segundos.':'Falha ao avançar a etapa no banco. Tente novamente.')
+    );
   }
 }
 

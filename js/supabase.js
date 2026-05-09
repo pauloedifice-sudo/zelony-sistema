@@ -29,6 +29,7 @@ const SB_URL='https://szaxwkfaferrfqcmzfab.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6YXh3a2ZhZmVycmZxY216ZmFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMTk4NjksImV4cCI6MjA4OTU5NTg2OX0.JhD9PraW5tIcR6gTP_K4olC0eka8KXITu0ajcFDsnOY';
 const SB_DOCS_BUCKET='documentos';
 const SB_FETCH_TIMEOUT_MS=8000;
+const SB_WRITE_TIMEOUT_MS=20000;
 
 async function sbFetchComTimeout(resource, init={}){
   if(typeof fetch!=='function') throw new Error('Fetch indisponivel no ambiente atual.');
@@ -69,9 +70,18 @@ async function sbFetchComTimeout(resource, init={}){
   }
 }
 
+function sbFetchComTimeoutLong(resource, init={}){
+  return sbFetchComTimeout(resource,{...(init||{}),_timeoutMs:SB_WRITE_TIMEOUT_MS});
+}
+
 const sb=supabase.createClient(SB_URL, SB_KEY, {
   global: {
     fetch: sbFetchComTimeout
+  }
+});
+const sbLong=supabase.createClient(SB_URL, SB_KEY, {
+  global: {
+    fetch: sbFetchComTimeoutLong
   }
 });
 zSetState('config.supabase', { url: SB_URL, key: SB_KEY });
@@ -655,8 +665,8 @@ async function salvarVendaComFallbackSchema(payload,modo='update',vendaId=null){
   while(true){
     try{
       const resposta=modo==='insert'
-        ? await sb.from('vendas').insert(payloadAtual).select().single()
-        : await sb.from('vendas').update(payloadAtual).eq('id',vendaId);
+        ? await sbLong.from('vendas').insert(payloadAtual).select().single()
+        : await sbLong.from('vendas').update(payloadAtual).eq('id',vendaId);
       if(resposta.error) throw resposta.error;
       return {data:resposta.data||null,payloadReduzido};
     }catch(error){
@@ -1367,7 +1377,7 @@ async function dbSalvarVenda(v, tentativa=1){
   }catch(e){
     console.error(`Erro ao salvar venda (tentativa ${tentativa}):`,e.message);
     if(tentativa<3){
-      await new Promise(r=>setTimeout(r,1500));
+      await new Promise(r=>setTimeout(r,1800*tentativa));
       return dbSalvarVenda(v,tentativa+1);
     }
     showToast('❌','Falha ao salvar no banco. Tente novamente.');
@@ -1398,33 +1408,45 @@ async function dbAtualizarVenda(v){
 
 async function dbSalvarAnexos(vendaId, anexos){
   if(!anexos||!anexos.length) return;
-  try{ await sb.from('vendas').update({anexos:mapVendaAnexos(anexos)}).eq('id',vendaId); }
+  try{ await sbLong.from('vendas').update({anexos:mapVendaAnexos(anexos)}).eq('id',vendaId); }
   catch(e){ console.warn('Erro ao salvar anexos:',e.message); }
 }
 
 async function dbAtualizarVenda(v){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para vendas.'});
-  const payload={
-    ...mapVendaOut(v),
-    anexos:mapVendaAnexos(v.anexos)
-  };
-  const {payloadReduzido}=await salvarVendaComFallbackSchema(payload,'update',v.id);
-  if(payloadReduzido){
-    console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Atualizacao salva com payload reduzido.');
-  }
-  if(typeof finSincronizarSaidasComissaoVenda==='function'){
-    try{
-      await finSincronizarSaidasComissaoVenda(v,{persistir:true});
-    }catch(erroFinanceiro){
-      console.warn('Falha ao sincronizar repasse automatico de comissao apos atualizar a venda:',erroFinanceiro);
+  const tentativa=arguments[1]||1;
+  try{
+    const payload={
+      ...mapVendaOut(v),
+      anexos:mapVendaAnexos(v.anexos)
+    };
+    const {payloadReduzido}=await salvarVendaComFallbackSchema(payload,'update',v.id);
+    if(payloadReduzido){
+      console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Atualizacao salva com payload reduzido.');
     }
+    if(typeof finSincronizarSaidasComissaoVenda==='function'){
+      try{
+        await finSincronizarSaidasComissaoVenda(v,{persistir:true});
+      }catch(erroFinanceiro){
+        console.warn('Falha ao sincronizar repasse automatico de comissao apos atualizar a venda:',erroFinanceiro);
+      }
+    }
+    return true;
+  }catch(error){
+    const msg=mensagemErroSyncAgendamentos(error);
+    const erroTransitorio=/timeout|network|fetch|abort/i.test(String(msg||''));
+    if(erroTransitorio&&tentativa<3){
+      console.warn(`Atualizacao da venda falhou por latencia/rede. Repetindo tentativa ${tentativa+1}...`,msg);
+      await new Promise(r=>setTimeout(r,1800*tentativa));
+      return dbAtualizarVenda(v,tentativa+1);
+    }
+    throw error;
   }
-  return true;
 }
 
 async function carregarAnexosVenda(id){
   try{
-    const {data,error}=await sb.from('vendas').select('anexos').eq('id',id).single();
+    const {data,error}=await sbLong.from('vendas').select('anexos').eq('id',id).single();
     if(error){
       const colunaAusente=extrairColunaAusenteSupabase(error,'vendas');
       if(colunaAusente==='anexos') return;
