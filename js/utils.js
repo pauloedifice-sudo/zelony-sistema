@@ -3,6 +3,20 @@
 
 window.notifs = window.notifs || [];
 
+function zNormalizarAliasSistema(texto) {
+  if (typeof texto !== 'string') return texto;
+  return texto.replace(/\bPERSY\b/gi, trecho => {
+    if (trecho === trecho.toLowerCase()) return 'persi';
+    if (trecho === trecho.toUpperCase()) return 'PERSI';
+    return 'Persi';
+  });
+}
+
+function zNormalizarCampoTexto(valor) {
+  if (valor == null) return '';
+  return zNormalizarAliasSistema(String(valor)).replace(/\s+/g, ' ').trim();
+}
+
 function zUiText(texto) {
   if (typeof texto !== 'string') return texto;
 
@@ -171,6 +185,8 @@ function zUiText(texto) {
     normalizado = normalizado.split(de).join(para.replace(/\\u([0-9a-fA-F]{4})/g, (_, h) => String.fromCharCode(parseInt(h, 16))));
   }
 
+  normalizado = zNormalizarAliasSistema(normalizado);
+
   return normalizado
     .replace(/\s+·/g, ' ·')
     .replace(/·\s+/g, ' · ')
@@ -179,6 +195,8 @@ function zUiText(texto) {
 }
 
 window.zUiText = zUiText;
+window.zNormalizarAliasSistema = zNormalizarAliasSistema;
+window.zNormalizarCampoTexto = zNormalizarCampoTexto;
 
 function ini(n) { return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }

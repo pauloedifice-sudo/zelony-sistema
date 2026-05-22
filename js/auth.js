@@ -54,6 +54,45 @@ function usuarioPodeEntrarNoSistema(usuario) {
   return usuarioEstaAtivo(usuario);
 }
 
+function mostrarTelaLogin() {
+  const ls = document.getElementById('login-screen');
+  if (!ls) return;
+  ls.style.display = 'flex';
+  ls.classList.remove('hidden');
+}
+
+function ocultarTelaLogin() {
+  const ls = document.getElementById('login-screen');
+  if (!ls) return;
+  ls.classList.add('hidden');
+}
+
+function aplicarSessaoUsuario(usuario) {
+  usuarioLogado = usuario;
+  const rv = getPerfil(usuario.perfil);
+  localStorage.setItem('zel_sessao', usuario.email.toLowerCase());
+  RD[rv] = {
+    av: ini(usuario.nome),
+    nome: usuario.nome.split(' ')[0],
+    role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' · ' + usuario.unidade : '')
+  };
+  role = rv;
+  zSetState('state.auth.role', role);
+  zSetState('state.auth.usuarioLogado', usuarioLogado);
+  atualizarTopbar(usuario, rv);
+  return rv;
+}
+
+function sistemaTemDadosConsultaveis() {
+  return !!(
+    (typeof VENDAS !== 'undefined' && Array.isArray(VENDAS) && VENDAS.length) ||
+    (typeof TREIN !== 'undefined' && Array.isArray(TREIN) && TREIN.length) ||
+    (typeof DOCUMENTOS !== 'undefined' && Array.isArray(DOCUMENTOS) && DOCUMENTOS.length) ||
+    (typeof AGENDAMENTOS !== 'undefined' && Array.isArray(AGENDAMENTOS) && AGENDAMENTOS.length) ||
+    (typeof FINANCEIRO_LANCAMENTOS !== 'undefined' && Array.isArray(FINANCEIRO_LANCAMENTOS) && FINANCEIRO_LANCAMENTOS.length)
+  );
+}
+
 // LOGIN
 function fazerLogin() {
   const email = document.getElementById('lg-email').value.trim().toLowerCase();
@@ -69,7 +108,7 @@ function fazerLogin() {
 
   btn.classList.add('loading'); btn.textContent = zUiText('Verificando...');
 
-  setTimeout(() => {
+  setTimeout(async () => {
     const usuario = USUARIOS.find(u => u.email.toLowerCase() === email);
     const resetBtn = () => { btn.classList.remove('loading'); btn.textContent = zUiText('Entrar no sistema'); };
     const showErr = (msg) => { document.getElementById('lg-error-msg').textContent = zUiText(msg); errEl.classList.add('show'); resetBtn(); };
@@ -87,21 +126,33 @@ function fazerLogin() {
       return showErr('Senha incorreta. Tente novamente.');
     }
 
-    usuarioLogado = usuario;
-    const rv = getPerfil(usuario.perfil);
-    localStorage.setItem('zel_sessao', email);
-    RD[rv] = {
-      av: ini(usuario.nome),
-      nome: usuario.nome.split(' ')[0],
-      role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' · ' + usuario.unidade : '')
-    };
-    role = rv;
-    zSetState('state.auth.role', role);
-    zSetState('state.auth.usuarioLogado', usuarioLogado);
-    atualizarTopbar(usuario, rv);
-    document.getElementById('login-screen').classList.add('hidden');
-    renderFiltros(); renderVList(); renderTrein(); renderProc(); atualizarBadgeNotificacoes();
-    if (typeof iniciarDashboardLive === 'function') iniciarDashboardLive();
+    aplicarSessaoUsuario(usuario);
+    btn.textContent = zUiText('Carregando sistema...');
+
+    try {
+      const cargaOk = typeof carregarDadosAposAutenticacao === 'function'
+        ? await carregarDadosAposAutenticacao({ silencioso: true, renderizar: false, maxTentativas: 2, timeoutMs: 45000 })
+        : true;
+      if (!cargaOk && !sistemaTemDadosConsultaveis()) {
+        localStorage.removeItem('zel_sessao');
+        usuarioLogado = null;
+        role = 'cor';
+        zSetState('state.auth.role', role);
+        zSetState('state.auth.usuarioLogado', usuarioLogado);
+        return showErr('Nao foi possivel carregar os dados do sistema. Tente novamente em instantes.');
+      }
+    } catch (erroCarga) {
+      localStorage.removeItem('zel_sessao');
+      usuarioLogado = null;
+      role = 'cor';
+      zSetState('state.auth.role', role);
+      zSetState('state.auth.usuarioLogado', usuarioLogado);
+      return showErr('Nao foi possivel carregar os dados do sistema. Tente novamente em instantes.');
+    }
+
+    ocultarTelaLogin();
+    if (typeof iniciarApp === 'function') iniciarApp();
+    atualizarBadgeNotificacoes();
     if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
     resetBtn();
     showToast(zUiText('👋'), zUiText(`Bem-vindo(a), ${usuario.nome.split(' ')[0]}!`));
@@ -119,8 +170,7 @@ function fazerLogout() {
   atualizarBadgeNotificacoes();
   if (typeof encerrarMonitorTratativaAgendamento === 'function') encerrarMonitorTratativaAgendamento();
   if (typeof limparDetalheVenda === 'function') limparDetalheVenda();
-  const ls = document.getElementById('login-screen');
-  ls.style.display = 'flex'; ls.classList.remove('hidden');
+  mostrarTelaLogin();
   document.getElementById('lg-email').value = '';
   document.getElementById('lg-senha').value = '';
   document.getElementById('lg-error').classList.remove('show');
@@ -146,7 +196,7 @@ function restaurarSessao() {
   zSetState('state.auth.role', role);
   zSetState('state.auth.usuarioLogado', usuarioLogado);
   atualizarTopbar(usuario, rv);
-  document.getElementById('login-screen').classList.add('hidden');
+  ocultarTelaLogin();
   atualizarBadgeNotificacoes();
   if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
   return true;
@@ -280,6 +330,9 @@ zRegisterModule('auth', {
   fazerLogin,
   fazerLogout,
   restaurarSessao,
+  mostrarTelaLogin,
+  ocultarTelaLogin,
+  aplicarSessaoUsuario,
   toggleSenha,
   atualizarTopbar,
   trocaRole,

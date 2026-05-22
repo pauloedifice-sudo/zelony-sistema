@@ -245,10 +245,7 @@ function finDreAnosDisponiveis() {
   const anos = new Set([new Date().getFullYear(), finAnoAtual]);
   (Array.isArray(VENDAS) ? VENDAS : []).forEach(v => {
     if (!v || v.distratada || v.etapa !== ETAPAS.length - 1) return;
-    const ultHist = v.hist && v.hist.length ? v.hist[v.hist.length - 1] : null;
-    const info = typeof obterMomentoHistorico === 'function'
-      ? obterMomentoHistorico(ultHist, { preferTs: false })
-      : null;
+    const info = finInfoRecebimentoComissaoVenda(v);
     if (info && info.date && !Number.isNaN(info.date.getTime()) && info.precision !== 'daymonth') anos.add(info.date.getFullYear());
   });
   (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).forEach(item => {
@@ -402,10 +399,11 @@ function finMontarPartesRepasseComissaoVenda(venda) {
   return partes;
 }
 
-function finObterDataRecebimentoComissaoVenda(venda) {
+function finInfoRecebimentoComissaoVenda(venda) {
   const etapaFinal = Array.isArray(ETAPAS) && ETAPAS.length ? ETAPAS.length - 1 : 0;
-  const historicoFinal = Array.isArray(venda && venda.hist)
-    ? [...venda.hist].reverse().find(item => item
+  const historico = Array.isArray(venda && venda.hist) ? venda.hist : [];
+  const historicoFinal = historico.length
+    ? [...historico].reverse().find(item => item
       && parseInt(item.e, 10) === etapaFinal
       && (typeof histAfetaFluxo !== 'function' || histAfetaFluxo(item)))
     : null;
@@ -413,16 +411,29 @@ function finObterDataRecebimentoComissaoVenda(venda) {
     ? obterMomentoHistorico(historicoFinal, { preferTs: false })
     : null;
   if (infoFinal && infoFinal.date instanceof Date && !Number.isNaN(infoFinal.date.getTime())) {
-    return new Date(infoFinal.date.getFullYear(), infoFinal.date.getMonth(), infoFinal.date.getDate(), 12, 0, 0, 0);
+    return {
+      ...infoFinal,
+      date: new Date(infoFinal.date.getFullYear(), infoFinal.date.getMonth(), infoFinal.date.getDate(), 12, 0, 0, 0)
+    };
   }
-  const historicoFallback = Array.isArray(venda && venda.hist) && venda.hist.length ? venda.hist[venda.hist.length - 1] : null;
+  const historicoFallback = historico.length
+    ? [...historico].reverse().find(item => item && (typeof histAfetaFluxo !== 'function' || histAfetaFluxo(item)))
+    : null;
   const infoFallback = historicoFallback && typeof obterMomentoHistorico === 'function'
     ? obterMomentoHistorico(historicoFallback, { preferTs: false })
     : null;
   if (infoFallback && infoFallback.date instanceof Date && !Number.isNaN(infoFallback.date.getTime())) {
-    return new Date(infoFallback.date.getFullYear(), infoFallback.date.getMonth(), infoFallback.date.getDate(), 12, 0, 0, 0);
+    return {
+      ...infoFallback,
+      date: new Date(infoFallback.date.getFullYear(), infoFallback.date.getMonth(), infoFallback.date.getDate(), 12, 0, 0, 0)
+    };
   }
-  return finHojeRef();
+  return null;
+}
+
+function finObterDataRecebimentoComissaoVenda(venda) {
+  const info = finInfoRecebimentoComissaoVenda(venda);
+  return info && info.date instanceof Date ? info.date : finHojeRef();
 }
 
 function finDescricaoRepasseComissao(parte) {
@@ -787,13 +798,10 @@ function finColetarComissoesMes(mes, ano) {
 
     const concluida = v.etapa === ETAPAS.length - 1;
     if (concluida) {
-      const ultHist = v.hist && v.hist.length ? v.hist[v.hist.length - 1] : null;
-      const ultInfo = typeof obterMomentoHistorico === 'function'
-        ? obterMomentoHistorico(ultHist, { preferTs: false })
-        : null;
-      if (!ultInfo || !ultInfo.date || ultInfo.precision === 'daymonth') return;
-      if (ultInfo.date.getMonth() !== mes || ultInfo.date.getFullYear() !== ano) return;
-      const item = finCriarItemComissao(v, bruto, liquido, ultInfo.date, 'realizado', 0, false);
+      const recebimentoInfo = finInfoRecebimentoComissaoVenda(v);
+      if (!recebimentoInfo || !recebimentoInfo.date || recebimentoInfo.precision === 'daymonth') return;
+      if (recebimentoInfo.date.getMonth() !== mes || recebimentoInfo.date.getFullYear() !== ano) return;
+      const item = finCriarItemComissao(v, bruto, liquido, recebimentoInfo.date, 'realizado', 0, false);
       if (finFiltroCategoria && finFiltroCategoria !== 'COMISSAO') return;
       if (!finMatchCamposItem(item)) return;
       realizadas.push(item);
@@ -1023,15 +1031,12 @@ function finDreColetarLinhas(meta) {
   (Array.isArray(VENDAS) ? VENDAS : []).forEach(v => {
     if (!v || v.distratada || v.etapa !== ETAPAS.length - 1) return;
     if (finFiltroUnidade && v.unidade !== finFiltroUnidade) return;
-    const ultHist = v.hist && v.hist.length ? v.hist[v.hist.length - 1] : null;
-    const ultInfo = typeof obterMomentoHistorico === 'function'
-      ? obterMomentoHistorico(ultHist, { preferTs: false })
-      : null;
-    if (!ultInfo || !ultInfo.date || ultInfo.precision === 'daymonth') return;
-    if (!finDreDentroPeriodo(ultInfo.date, meta)) return;
+    const recebimentoInfo = finInfoRecebimentoComissaoVenda(v);
+    if (!recebimentoInfo || !recebimentoInfo.date || recebimentoInfo.precision === 'daymonth') return;
+    if (!finDreDentroPeriodo(recebimentoInfo.date, meta)) return;
     const bruto = finValorSeguro(v.valor) * finValorSeguro(v.pct);
     linhas.push(finDreCriarLinha(
-      ultInfo.date,
+      recebimentoInfo.date,
       'entrada',
       'COMISSAO',
       finNomeClienteVenda(v.cliente),

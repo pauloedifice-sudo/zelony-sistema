@@ -5,6 +5,17 @@
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
 const PRAZOS_ETAPA=[null,5,5,6,3,3,4,15,null];
 const ETAPA_NOTA_EMITIDA=ETAPAS.indexOf('Nota emitida');
+const DISTRATO_CATEGORIAS_PADRAO=[
+  'Cliente desistiu',
+  'Crédito e financiamento',
+  'Capacidade de pagamento',
+  'Documentação e cadastro',
+  'Jurídico e contrato',
+  'Produto e enquadramento',
+  'Atendimento comercial',
+  'Duplicidade e erro operacional',
+  'Outros'
+];
 
 const PROC_DATA={
   'Comercial':[
@@ -31,6 +42,8 @@ let mvDocs={comp:null,cont:null};
 let distratoVendaId=null;
 let editVendaId=null;
 let distratoSalvando=false;
+let distratoCategoriaNovaAtiva=false;
+let distratoCategoriaNovaValor='';
 let editVendaSalvando=false;
 let previsaoRecebVendaId=null;
 let previsaoRecebSalvando=false;
@@ -246,7 +259,76 @@ function pctSeguro(valor,casas=2){
   return `${(numSeguro(valor,0)*100).toFixed(casas)}%`;
 }
 function normalizarTextoBusca(valor){
-  return String(valor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+  const texto=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(valor):String(valor||'').trim();
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+}
+function limparCategoriaDistrato(valor){
+  return zUiText(String(valor||'')).replace(/\s+/g,' ').trim();
+}
+function chaveCategoriaDistrato(valor){
+  return normalizarTextoBusca(limparCategoriaDistrato(valor));
+}
+function listarCategoriasDistrato(extra=[]){
+  const mapa=new Map();
+  const incluir=(valor)=>{
+    const texto=limparCategoriaDistrato(valor);
+    const chave=chaveCategoriaDistrato(texto);
+    if(!chave||mapa.has(chave)) return;
+    mapa.set(chave,texto);
+  };
+  DISTRATO_CATEGORIAS_PADRAO.forEach(incluir);
+  (VENDAS||[]).forEach(v=>(v&&Array.isArray(v.hist)?v.hist:[]).forEach(h=>{
+    if(h&&h.tipo==='distrato') incluir(h.categoriaDistrato||h.categoria||'');
+  }));
+  (Array.isArray(extra)?extra:[extra]).forEach(incluir);
+  return Array.from(mapa.values()).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function preencherCategoriasDistrato(valorAtual=''){
+  const sel=document.getElementById('dt-categoria');
+  if(!sel) return [];
+  const categorias=listarCategoriasDistrato(valorAtual?[valorAtual]:[]);
+  sel.innerHTML='';
+  const placeholder=document.createElement('option');
+  placeholder.value='';
+  placeholder.textContent=zUiText('Selecione a categoria');
+  sel.appendChild(placeholder);
+  categorias.forEach(item=>{
+    const option=document.createElement('option');
+    option.value=item;
+    option.textContent=zUiText(item);
+    sel.appendChild(option);
+  });
+  sel.value=valorAtual&&categorias.includes(valorAtual)?valorAtual:'';
+  sel.disabled=distratoSalvando||distratoCategoriaNovaAtiva;
+  return categorias;
+}
+function atualizarCampoCategoriaNovaDistrato(valor,campo){
+  distratoCategoriaNovaValor=limparCategoriaDistrato(valor);
+  if(campo&&campo.value!==distratoCategoriaNovaValor) campo.value=distratoCategoriaNovaValor;
+}
+function toggleCategoriaNovaDistrato(forcar){
+  if(distratoSalvando) return;
+  distratoCategoriaNovaAtiva=typeof forcar==='boolean'?forcar:!distratoCategoriaNovaAtiva;
+  const wrap=document.getElementById('dt-categoria-nova-wrap');
+  const input=document.getElementById('dt-categoria-nova');
+  const botao=document.getElementById('dt-categoria-nova-btn');
+  const select=document.getElementById('dt-categoria');
+  if(wrap) wrap.style.display=distratoCategoriaNovaAtiva?'flex':'none';
+  if(botao) botao.textContent=zUiText(distratoCategoriaNovaAtiva?'Cancelar nova categoria':'Nova categoria');
+  if(select) select.disabled=distratoCategoriaNovaAtiva;
+  if(!distratoCategoriaNovaAtiva){
+    distratoCategoriaNovaValor='';
+    if(input) input.value='';
+  }else if(input){
+    input.value=distratoCategoriaNovaValor||'';
+    setTimeout(()=>input.focus(),0);
+  }
+}
+function obterCategoriaDistratoSelecionada(){
+  if(distratoCategoriaNovaAtiva){
+    return limparCategoriaDistrato(distratoCategoriaNovaValor||document.getElementById('dt-categoria-nova')?.value||'');
+  }
+  return limparCategoriaDistrato(document.getElementById('dt-categoria')?.value||'');
 }
 function chavesNomePessoa(nome){
   const base=normalizarTextoBusca(nome);
@@ -1256,22 +1338,35 @@ function abrirDistrato(id){
   distratoVendaId=id;
   zSetState('state.ui.distratoVendaId', distratoVendaId);
   document.getElementById('dt-subtitulo').textContent=zUiText(`Venda: ${v.cliente.split('/')[0].trim()} · ${v.produto}`);
+  distratoCategoriaNovaAtiva=false;
+  distratoCategoriaNovaValor='';
+  preencherCategoriasDistrato('');
+  toggleCategoriaNovaDistrato(false);
   document.getElementById('dt-motivo').value='';
   document.getElementById('dt-data').value=new Date().toISOString().split('T')[0];
   setDistratoLoading(false);
   document.getElementById('m-distrato').classList.add('show');
-  setTimeout(()=>document.getElementById('dt-motivo').focus(),100);
+  setTimeout(()=>{
+    const categoria=document.getElementById('dt-categoria');
+    if(categoria) categoria.focus();
+  },100);
 }
 function setDistratoLoading(loading){
   distratoSalvando=loading;
   zSetState('state.ui.distratoSalvando', distratoSalvando);
   const motivo=document.getElementById('dt-motivo');
+  const categoria=document.getElementById('dt-categoria');
+  const categoriaNova=document.getElementById('dt-categoria-nova');
+  const categoriaNovaBtn=document.getElementById('dt-categoria-nova-btn');
   const data=document.getElementById('dt-data');
   const cancelar=document.getElementById('dt-cancel-btn');
   const confirmar=document.getElementById('dt-confirm-btn');
   const fechar=document.getElementById('dt-close-btn');
   const status=document.getElementById('dt-status');
   if(motivo) motivo.disabled=loading;
+  if(categoria) categoria.disabled=loading||distratoCategoriaNovaAtiva;
+  if(categoriaNova) categoriaNova.disabled=loading;
+  if(categoriaNovaBtn) categoriaNovaBtn.disabled=loading;
   if(data) data.disabled=loading;
   if(cancelar) cancelar.disabled=loading;
   if(fechar) fechar.disabled=loading;
@@ -1286,6 +1381,9 @@ function setDistratoLoading(loading){
 function fecharDistrato(){
   if(distratoSalvando) return;
   setDistratoLoading(false);
+  distratoCategoriaNovaAtiva=false;
+  distratoCategoriaNovaValor='';
+  toggleCategoriaNovaDistrato(false);
   document.getElementById('m-distrato').classList.remove('show');
   distratoVendaId=null;
   zSetState('state.ui.distratoVendaId', distratoVendaId);
@@ -1296,14 +1394,33 @@ function confirmarDistrato(){
   const v=VENDAS.find(x=>x.id===distratoVendaId);
   if(!v)return;
   const motivo=document.getElementById('dt-motivo').value.trim();
+  const categoria=obterCategoriaDistratoSelecionada();
   const dataDistrato=document.getElementById('dt-data').value;
-  if(!motivo){document.getElementById('dt-motivo').focus();showToast(zUiText('⚠️'),zUiText('Informe o motivo do distrato.'));return;}
+  if(!categoria){
+    if(distratoCategoriaNovaAtiva){
+      document.getElementById('dt-categoria-nova')?.focus();
+      showToast(zUiText('⚠️'),zUiText('Digite o nome da nova categoria do distrato.'));
+    }else{
+      document.getElementById('dt-categoria')?.focus();
+      showToast(zUiText('⚠️'),zUiText('Selecione a categoria do distrato.'));
+    }
+    return;
+  }
+  if(!motivo){document.getElementById('dt-motivo').focus();showToast(zUiText('⚠️'),zUiText('Informe a observação do distrato.'));return;}
   const original=JSON.parse(JSON.stringify(v));
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   const dataFmt=dataDistrato?dataDistrato.split('-').reverse().join('/').slice(0,5):hoje().slice(0,5);
   v.distratada=true;
   v.dataDistrato=dataFmt;
-  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:zUiText(`⚠️ DISTRATO: ${motivo}`),tipo:'distrato'},{data:dataDistrato||undefined}));
+  v.hist.push(criarRegistroHistorico({
+    e:v.etapa,
+    u:quem,
+    o:motivo,
+    tipo:'distrato',
+    categoriaDistrato:categoria,
+    observacaoDistrato:motivo,
+    motivoDistrato:motivo
+  },{data:dataDistrato||undefined}));
   setDistratoLoading(true);
   dbAtualizarVenda(v).then(()=>{
     salvarLS();
@@ -1456,7 +1573,7 @@ function salvarEditVenda(){
   v.bonus_pct_ger=lerNumeroInput('ev-bonus-ger',0);
   v.bonus_pct_cor=lerNumeroInput('ev-bonus-cor',0);
   normalizarVendaNumeros(v);
-  v.cca=document.getElementById('ev-cca').value.trim();
+  v.cca=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(document.getElementById('ev-cca').value):document.getElementById('ev-cca').value.trim();
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
   v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:motivo,tipo:'edicao'}));
   setEditVendaLoading(true);
@@ -1563,7 +1680,7 @@ function salvarVenda(){
   const gerente=gerenteUsuario?gerenteUsuario.nome:'';
   const diretor=diretorUsuario?diretorUsuario.nome:'';
   const diretor2=diretor2Usuario?diretor2Usuario.nome:'';
-  const cca=document.getElementById('mv-cca').value.trim();
+  const cca=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(document.getElementById('mv-cca').value):document.getElementById('mv-cca').value.trim();
   const valor=lerNumeroInput('mv-valor',0);
   const pct=lerPercentualInput('mv-pct',0);
   const imp=lerPercentualInput('mv-imp',0.11);

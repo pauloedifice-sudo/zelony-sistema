@@ -398,7 +398,8 @@ async function salvarUsuario() {
     btnSalvar.textContent = zUiText(emEdicao ? '✓ Salvando alterações...' : '✓ Cadastrando usuário...');
   }
 
-  const dados = { nome, email, tel, perfil, status, banco, agencia, conta, tipoConta, pixTipo:pixSel, pix, rhContratacao:rhContr, unidade, equipe };
+  const nomeNormalizado = typeof zNormalizarCampoTexto === 'function' ? zNormalizarCampoTexto(nome) : nome;
+  const dados = { nome: nomeNormalizado, email, tel, perfil, status, banco, agencia, conta, tipoConta, pixTipo:pixSel, pix, rhContratacao:rhContr, unidade, equipe };
   const nextUserIdAnterior = nextUserId;
   const idxAnterior = editUserIdx;
   const usuarioAnterior = emEdicao ? { ...USUARIOS[editUserIdx] } : null;
@@ -437,11 +438,11 @@ async function salvarUsuario() {
     if (syncResumo.alteradas > 0) atualizarViewsPosSyncRh();
 
     const acao = emEdicao ? 'atualizado' : 'cadastrado';
-    let mensagem = `Usuário "${nome}" ${acao}!`;
+    let mensagem = `Usuário "${nomeNormalizado}" ${acao}!`;
     if (emEdicao && statusAnterior && statusAnterior !== statusAtual) {
       mensagem = statusAtual === 'Inativo'
-        ? `Usuário "${nome}" inativado com sucesso!`
-        : `Usuário "${nome}" reativado com sucesso!`;
+        ? `Usuário "${nomeNormalizado}" inativado com sucesso!`
+        : `Usuário "${nomeNormalizado}" reativado com sucesso!`;
     }
     if (syncResumo.alteradas === 1) mensagem += ' 1 venda foi recalculada por causa da participação do RH.';
     if (syncResumo.alteradas > 1) mensagem += ` ${syncResumo.alteradas} vendas foram recalculadas por causa da participação do RH.`;

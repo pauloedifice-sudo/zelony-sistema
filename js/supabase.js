@@ -124,6 +124,10 @@ const APP_CONECTIVIDADE_STATUS={
 };
 let supabasePosCargaPromise=null;
 let financeiroComprovanteDBPromise=null;
+let appShellInicializado=false;
+let cargaCredenciaisPromise=null;
+let cargaModulosPromise=null;
+let cargaModulosConcluida=false;
 function setBootStage(etapa){
   const texto=String(etapa||'').trim()||'inicializando';
   SUPABASE_BOOT_STATUS.etapa=texto;
@@ -180,6 +184,38 @@ function appExigirModoOnline(opcoes={}){
   const erro=new Error(opcoes.erro||'Modo consulta local ativo.');
   erro.code='APP_OFFLINE_READONLY';
   throw erro;
+}
+
+function revelarShellApp(){
+  if(appShellInicializado) return;
+  appShellInicializado=true;
+  atualizarBannerConectividadeApp();
+  if(typeof verificarConviteURL==='function') verificarConviteURL();
+  const splash=document.getElementById('app-splash');
+  if(splash){
+    splash.style.transition='opacity 0.5s ease';
+    splash.style.opacity='0';
+    setTimeout(()=>splash.remove(),500);
+  }
+  const app=document.getElementById('main-app');
+  if(app) app.style.opacity='1';
+}
+
+function renderizarModulosBaseApp(){
+  if(typeof renderFiltros==='function') renderFiltros();
+  if(typeof renderVList==='function') renderVList();
+  if(typeof vtab!=='undefined'&&vtab==='rel'&&typeof renderRel==='function') renderRel();
+  if(typeof curVId!=='undefined'&&curVId&&typeof showVDetail==='function') showVDetail(curVId);
+  if(typeof renderTrein==='function') renderTrein();
+  if(typeof renderProc==='function') renderProc();
+  if(!document.getElementById('mod-documentos')?.classList.contains('hidden')&&typeof renderDocumentos==='function') renderDocumentos();
+  if(!document.getElementById('mod-agendamentos')?.classList.contains('hidden')&&typeof renderAgendamentos==='function') renderAgendamentos();
+  if(!document.getElementById('mod-financeiro')?.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+  if(!document.getElementById('mod-dashboard')?.classList.contains('hidden')&&typeof renderDashboard==='function') renderDashboard();
+  if(!document.getElementById('mod-usuarios')?.classList.contains('hidden')&&typeof renderUsuarios==='function') renderUsuarios();
+  if(typeof renderBtnNovaVenda==='function') renderBtnNovaVenda();
+  if(typeof atualizarBadgeNotificacoes==='function') atualizarBadgeNotificacoes();
+  if(typeof iniciarDashboardLive==='function') iniciarDashboardLive();
 }
 window.getAppConectividadeStatus=getAppConectividadeStatus;
 window.appPodePersistirNoSupabase=appPodePersistirNoSupabase;
@@ -307,79 +343,85 @@ zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
 zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 
 // ── CARREGAR DO BANCO ─────────────────────────────────────────────────────────
-async function carregarDB(){
-  setBootStage('preparando carga inicial');
-  setStatusSyncAgendamentos({
-    tabela:'carregando',
-    erro:'',
-    sincronizando:false,
-    ultimaTentativa:new Date().toISOString()
-  });
-  const carregar=async(tabela,order='id')=>{
-    try{
-      const q=sb.from(tabela).select('*');
-      if(order) q.order(order);
-      const {data,error}=await q;
-      if(error) throw error;
-      return data||[];
-    }catch(e){
-      console.warn(`Falha ao carregar "${tabela}":`,e.message);
-      return null;
-    }
-  };
-
-  const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
-
-  setBootStage('buscando tabelas principais');
-  const [us,ss,vs,ts,ds,ags,fls]=await Promise.all([
-    carregar('usuarios','id'),
-    carregar('senhas',null),
-    (async()=>{
-      let todas=[]; let pagina=0; const LOTE=20;
-      while(true){
-        const {data,error}=await sb.from('vendas').select(VENDAS_COLS).order('id').range(pagina*LOTE,(pagina+1)*LOTE-1);
-        if(error) throw error;
-        if(!data||data.length===0) break;
-        todas=[...todas,...data];
-        if(data.length<LOTE) break;
-        pagina++;
-      }
-      return todas;
-    })().catch(e=>{console.warn('Falha ao carregar "vendas":',e.message);return null;}),
-    carregar('treinamentos','id'),
-    carregar('documentos','id'),
-    (async()=>{
-      try{
-        const {data,error}=await sb.from('agendamentos').select('*').order('data_agendamento').order('horario_agendamento');
-        if(error) throw error;
-        setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
-        return data||[];
-      }catch(e){
-        const msg=mensagemErroSyncAgendamentos(e);
-        setStatusSyncAgendamentos({
-          tabela:erroTabelaAgendamentosAusente(e)?'ausente':'erro',
-          erro:msg
-        });
-        console.warn('Falha ao carregar "agendamentos":',msg||e.message||e);
-        return null;
-      }
-    })(),
-    carregar('financeiro_lancamentos','data_prevista')
-  ]);
-
-  setBootStage('mesclando dados locais');
-  if(us&&us.length){
-    USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
-    nextUserId=Math.max(...USUARIOS.map(u=>u.id))+1;
-    zSetState('state.data.usuarios', USUARIOS);
-    zSetState('state.ui.nextUserId', nextUserId);
+async function carregarTabelaSupabase(tabela, order='id'){
+  try{
+    const q=sbLong.from(tabela).select('*');
+    if(order) q.order(order);
+    const {data,error}=await q;
+    if(error) throw error;
+    return data||[];
+  }catch(e){
+    console.warn(`Falha ao carregar "${tabela}":`,e.message);
+    return null;
   }
-  if(ss) ss.forEach(s=>SENHAS_INDIVIDUAIS[s.email.toLowerCase()]=s.senha);
-  if(vs&&vs.length){
+}
+
+async function carregarVendasSupabase(){
+  const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+  try{
+    let todas=[]; let pagina=0; const LOTE=20;
+    while(true){
+      const {data,error}=await sbLong.from('vendas').select(VENDAS_COLS).order('id').range(pagina*LOTE,(pagina+1)*LOTE-1);
+      if(error) throw error;
+      if(!data||data.length===0) break;
+      todas=[...todas,...data];
+      if(data.length<LOTE) break;
+      pagina++;
+    }
+    return todas;
+  }catch(e){
+    console.warn('Falha ao carregar "vendas":',e.message);
+    return null;
+  }
+}
+
+async function carregarAgendamentosSupabase(){
+  try{
+    const {data,error}=await sbLong.from('agendamentos').select('*').order('data_agendamento').order('horario_agendamento');
+    if(error) throw error;
+    setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
+    return data||[];
+  }catch(e){
+    const msg=mensagemErroSyncAgendamentos(e);
+    setStatusSyncAgendamentos({
+      tabela:erroTabelaAgendamentosAusente(e)?'ausente':'erro',
+      erro:msg
+    });
+    console.warn('Falha ao carregar "agendamentos":',msg||e.message||e);
+    return null;
+  }
+}
+
+function aplicarUsuariosESenhas(us, ss){
+  if(Array.isArray(us)){
+    USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
+    if(typeof nextUserId!=='undefined'){
+      const maiorId=USUARIOS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
+      nextUserId=maiorId+1;
+      zSetState('state.ui.nextUserId', nextUserId);
+    }
+    zSetState('state.data.usuarios', USUARIOS);
+  }
+  if(Array.isArray(ss)){
+    Object.keys(SENHAS_INDIVIDUAIS).forEach(email=>delete SENHAS_INDIVIDUAIS[email]);
+    Object.assign(SENHAS_INDIVIDUAIS, SENHAS_PADRAO_MAP);
+    ss.forEach(s=>{
+      if(s&&s.email) SENHAS_INDIVIDUAIS[String(s.email).toLowerCase()]=s.senha;
+    });
+    zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
+  }
+}
+
+function aplicarDadosOperacionais({vs,ts,ds,ags,fls}={}){
+  setBootStage('mesclando dados operacionais');
+  if(Array.isArray(vs)){
     VENDAS.splice(0,VENDAS.length,...vs.map(mapVendaIn));
-    nextVendaId=Math.max(...VENDAS.map(v=>v.id))+1;
+    if(typeof nextVendaId!=='undefined'){
+      const maiorId=VENDAS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
+      nextVendaId=maiorId+1;
+      zSetState('state.ui.nextVendaId', nextVendaId);
+    }
     zSetState('state.data.vendas', VENDAS);
-    zSetState('state.ui.nextVendaId', nextVendaId);
   }
   {
     if(Array.isArray(ts)) inferirTreinamentosCompatStatus(ts,'banco');
@@ -387,17 +429,12 @@ async function carregarDB(){
     const treinBanco=Array.isArray(ts)?ts.map(mapTreinIn):[];
     const treinLocal=carregarTreinamentosLS();
     const treinMap=new Map();
-
-    treinBanco.forEach(trein=>{
-      treinMap.set(getTreinMergeKeyItem(trein),trein);
-    });
-
+    treinBanco.forEach(trein=>{ treinMap.set(getTreinMergeKeyItem(trein),trein); });
     treinLocal.forEach(treinLocalItem=>{
       const chave=getTreinMergeKeyItem(treinLocalItem);
       const atual=treinMap.get(chave);
       treinMap.set(chave,mesclarTreinBancoComLocal(atual,treinLocalItem));
     });
-
     if(treinMap.size){
       TREIN.splice(0,TREIN.length,...Array.from(treinMap.values()).sort(ordenarTreinamentosMesclados));
       zSetState('state.data.treinamentos', TREIN);
@@ -448,7 +485,9 @@ async function carregarDB(){
       const chave=getAgendamentoMergeKey(agendamento);
       const local=agLocalMap.get(chave);
       const banco=agBancoMap.get(chave);
-      const localMaisRecente=!!local&&(!banco||preferirAgendamentoMaisRecente(banco,local)===local);
+      const localAtualizadoEm=Date.parse(local&&local.atualizadoEm||'')||0;
+      const bancoAtualizadoEm=Date.parse(banco&&banco.atualizadoEm||'')||0;
+      const localMaisRecente=!!local&&(!banco||localAtualizadoEm>bancoAtualizadoEm);
       if(localMaisRecente){
         marcarAgendamentoSyncPendente(agendamento,local&&local.syncErro||'');
       }else{
@@ -463,12 +502,72 @@ async function carregarDB(){
     }
     zSetState('state.data.agendamentos', AGENDAMENTOS);
     atualizarEstadoSyncAgendamentos();
-    salvarLS();
   }
-  zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
+  salvarLS();
+}
 
-  if(us===null&&vs===null) throw new Error('Falha total no carregamento');
-  setBootStage('dados carregados');
+async function carregarCredenciaisDB(){
+  if(cargaCredenciaisPromise) return cargaCredenciaisPromise;
+  cargaCredenciaisPromise=(async()=>{
+    setBootStage('preparando acesso');
+    setStatusSyncAgendamentos({
+      tabela:'carregando',
+      erro:'',
+      sincronizando:false,
+      ultimaTentativa:new Date().toISOString()
+    });
+    setBootStage('acordando projeto do Supabase');
+    await sbLong.from('usuarios').select('id').limit(1);
+    setBootStage('validando usuarios e senhas');
+    const [us,ss]=await Promise.all([
+      carregarTabelaSupabase('usuarios','id'),
+      carregarTabelaSupabase('senhas',null)
+    ]);
+    aplicarUsuariosESenhas(us,ss);
+    if(us===null&&ss===null) throw new Error('Falha total no carregamento das credenciais');
+    setBootStage('credenciais carregadas');
+    return {us,ss};
+  })();
+  try{
+    return await cargaCredenciaisPromise;
+  }finally{
+    cargaCredenciaisPromise=null;
+  }
+}
+
+async function carregarModulosDB(){
+  if(cargaModulosPromise) return cargaModulosPromise;
+  if(cargaModulosConcluida) return {cache:true};
+  cargaModulosPromise=(async()=>{
+    setBootStage('buscando dados dos modulos');
+    const [vs,ts,ds,ags,fls]=await Promise.all([
+      carregarVendasSupabase(),
+      carregarTabelaSupabase('treinamentos','id'),
+      carregarTabelaSupabase('documentos','id'),
+      carregarAgendamentosSupabase(),
+      carregarTabelaSupabase('financeiro_lancamentos','data_prevista')
+    ]);
+    aplicarDadosOperacionais({vs,ts,ds,ags,fls});
+    const tudoFalhou=vs===null&&ts===null&&ds===null&&ags===null&&fls===null;
+    if(tudoFalhou&&VENDAS.length===0&&TREIN.length===0&&DOCUMENTOS.length===0&&AGENDAMENTOS.length===0&&FINANCEIRO_LANCAMENTOS.length===0){
+      throw new Error('Falha total no carregamento dos modulos');
+    }
+    cargaModulosConcluida=true;
+    setBootStage('dados carregados');
+    return {vs,ts,ds,ags,fls};
+  })();
+  try{
+    return await cargaModulosPromise;
+  }finally{
+    cargaModulosPromise=null;
+  }
+}
+
+async function carregarDB(opcoes={}){
+  const config=opcoes||{};
+  await carregarCredenciaisDB();
+  if(config.somenteCredenciais) return true;
+  return carregarModulosDB();
 }
 
 // ── MAPPERS banco → app ───────────────────────────────────────────────────────
@@ -563,7 +662,7 @@ function mapUsuarioIn(u){
   const statusRaw=(u.status||'Ativo');
   const status=statusRaw.charAt(0).toUpperCase()+statusRaw.slice(1).toLowerCase();
   return{
-    id:u.id,nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
+    id:u.id,nome:normalizarCampoSistema(u.nome),email:u.email,tel:u.tel||'',perfil:u.perfil,
     status,unidade:u.unidade||'',equipe:u.equipe||'',
     banco:u.banco||'',agencia:u.agencia||'',conta:u.conta||'',
     tipoConta:u.tipoConta||u.tipo_conta||'',
@@ -577,7 +676,7 @@ function mapUsuarioIn(u){
 
 function mapUsuarioOut(u){
   return{
-    nome:u.nome,email:u.email,tel:u.tel||'',perfil:u.perfil,
+    nome:normalizarCampoSistema(u.nome),email:u.email,tel:u.tel||'',perfil:u.perfil,
     status:u.status||'Ativo',unidade:u.unidade||'',equipe:u.equipe||'',
     banco:u.banco||'',agencia:u.agencia||'',conta:u.conta||'',
     tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',
@@ -594,12 +693,17 @@ function normalizarMesVenda(mes){
   return txt==='MARCO'?'MARÇO':txt;
 }
 
+function normalizarCampoSistema(valor){
+  if(typeof zNormalizarCampoTexto==='function') return zNormalizarCampoTexto(valor);
+  return String(valor||'').trim();
+}
+
 function mapVendaIn(v){
   return{
     id:v.id,data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
-    construtora:v.construtora,origem:v.origem,unidade:v.unidade,
-    corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
-    diretor2:v.diretor2||'',cca:v.cca||'',
+    construtora:normalizarCampoSistema(v.construtora),origem:normalizarCampoSistema(v.origem),unidade:normalizarCampoSistema(v.unidade),
+    corretor:normalizarCampoSistema(v.corretor),capitao:normalizarCampoSistema(v.capitao),gerente:normalizarCampoSistema(v.gerente),diretor:normalizarCampoSistema(v.diretor),
+    diretor2:normalizarCampoSistema(v.diretor2||''),cca:normalizarCampoSistema(v.cca||''),
     valor:parseFloat(v.valor)||0,pct:parseFloat(v.pct)||0,imp:parseFloat(v.imp)||0.11,
     pct_cor:parseFloat(v.pct_cor)||0,pct_cap:parseFloat(v.pct_cap)||0,
     pct_ger:parseFloat(v.pct_ger)||0,pct_dir:parseFloat(v.pct_dir)||0,
@@ -617,12 +721,12 @@ function mapVendaIn(v){
 function mapVendaOut(v){
   return{
     data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
-    construtora:v.construtora,origem:v.origem,unidade:v.unidade,
-    corretor:v.corretor,capitao:v.capitao,gerente:v.gerente,diretor:v.diretor,
+    construtora:normalizarCampoSistema(v.construtora),origem:normalizarCampoSistema(v.origem),unidade:normalizarCampoSistema(v.unidade),
+    corretor:normalizarCampoSistema(v.corretor),capitao:normalizarCampoSistema(v.capitao),gerente:normalizarCampoSistema(v.gerente),diretor:normalizarCampoSistema(v.diretor),
     valor:v.valor,pct:v.pct,imp:v.imp,pct_cor:v.pct_cor,pct_cap:v.pct_cap,
     pct_ger:v.pct_ger,pct_dir:v.pct_dir,pct_rh:v.pct_rh,
-    diretor2:v.diretor2||null,pct_dir2:v.pct_dir2||0,
-    cca:v.cca||'',distratada:v.distratada||false,
+    diretor2:normalizarCampoSistema(v.diretor2||'')||null,pct_dir2:v.pct_dir2||0,
+    cca:normalizarCampoSistema(v.cca||''),distratada:v.distratada||false,
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
     bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
     etapa:v.etapa,hist:v.hist
@@ -1177,17 +1281,29 @@ function carregarFinanceiroLancamentosLS(){
 
 function mesclarFinanceiroLancamentosBancoComLocal(bancoLista, localLista){
   const mapa=new Map();
+  const localMap=new Map();
+  const bancoMap=new Map();
   (Array.isArray(localLista)?localLista:[]).forEach(item=>{
     const mapped=mapLancamentoFinanceiroIn(item);
     const chave=getFinanceiroLancamentoMergeKey(mapped);
+    localMap.set(chave,mapped);
     mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
   });
   (Array.isArray(bancoLista)?bancoLista:[]).forEach(item=>{
     const mapped=mapLancamentoFinanceiroIn(item);
     const chave=getFinanceiroLancamentoMergeKey(mapped);
+    bancoMap.set(chave,mapped);
     mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
   });
-  return [...mapa.values()].sort(ordenarFinanceiroLancamentos);
+  return [...mapa.entries()]
+    .filter(([chave])=>{
+      const local=localMap.get(chave);
+      const banco=bancoMap.get(chave);
+      if(!banco&&local&&!local.syncPendente) return false;
+      return true;
+    })
+    .map(([,item])=>item)
+    .sort(ordenarFinanceiroLancamentos);
 }
 
 function mapDocumentoIn(d){
@@ -1401,7 +1517,7 @@ async function dbAtualizarVenda(v){
     pct_dir:v.pct_dir||0,pct_dir2:v.pct_dir2||0,
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
     bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
-    cca:v.cca||'',
+    cca:normalizarCampoSistema(v.cca)||'',
     anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''}))
   }).eq('id',v.id);
 }
@@ -1924,46 +2040,106 @@ function carregarLS(){
 }
 
 function iniciarApp(){
-  renderFiltros(); renderVList(); renderTrein(); renderProc();
-  if(typeof iniciarDashboardLive==='function') iniciarDashboardLive();
-  verificarConviteURL();
-  atualizarBannerConectividadeApp();
-  const splash=document.getElementById('app-splash');
-  if(splash){
-    splash.style.transition='opacity 0.5s ease';
-    splash.style.opacity='0';
-    setTimeout(()=>splash.remove(),500);
+  revelarShellApp();
+  renderizarModulosBaseApp();
+}
+
+async function carregarDadosAposAutenticacao(opcoes={}){
+  if(cargaModulosConcluida){
+    if(opcoes.renderizar!==false) renderizarModulosBaseApp();
+    return true;
   }
-  document.getElementById('main-app').style.opacity='1';
+  const MAX=Math.max(1,parseInt(opcoes.maxTentativas,10)||2);
+  const TIMEOUT=Math.max(20000,parseInt(opcoes.timeoutMs,10)||45000);
+  const silencioso=opcoes.silencioso===true;
+  const renderizar=opcoes.renderizar!==false;
+
+  for(let tentativa=1;tentativa<=MAX;tentativa++){
+    try{
+      await promiseComTimeout(carregarModulosDB(), TIMEOUT, 'Carga dos modulos do Supabase');
+      setAppConectividadeStatus({
+        somenteLeitura:false,
+        origem:'supabase',
+        motivo:''
+      });
+      if(renderizar) renderizarModulosBaseApp();
+      agendarPosCargaSupabase({
+        timeoutMs:30000,
+        silenciosoAgendamentos:true,
+        renderizarAgendamentos:true,
+        persistirRh:true,
+        renderizarRh:true
+      });
+      return true;
+    }catch(e){
+      const etapa=getBootStage();
+      console.warn(`Tentativa ${tentativa} falhou na etapa "${etapa}":`,e.message);
+      if(tentativa<MAX){
+        await new Promise(r=>setTimeout(r,1500*tentativa));
+        continue;
+      }
+      const haCacheConsultavel=VENDAS.length>0||TREIN.length>0||DOCUMENTOS.length>0||AGENDAMENTOS.length>0||FINANCEIRO_LANCAMENTOS.length>0;
+      setStatusSyncAgendamentos({
+        tabela:'offline',
+        erro:'Modo offline - sem conexao com o Supabase.',
+        sincronizando:false
+      });
+      setAppConectividadeStatus({
+        somenteLeitura:true,
+        origem:'cache_local',
+        motivo:'Sem conexao estavel com o Supabase. Apenas consulta do ultimo cache esta liberada; novos cadastros e alteracoes ficam bloqueados ate reconectar e recarregar a pagina.'
+      });
+      if(renderizar) renderizarModulosBaseApp();
+      if(!silencioso&&typeof showToast==='function'){
+        showToast('!', haCacheConsultavel
+          ? 'Modo consulta ativado. O sistema abriu com o ultimo cache disponivel.'
+          : 'Nao foi possivel sincronizar os modulos do sistema agora. Tente novamente em instantes.');
+      }
+      return haCacheConsultavel;
+    }
+  }
+  return false;
 }
 
 async function carregarComRetry(tentativa=1){
-  const MAX=2, TIMEOUT=9000;
+  const MAX=3, TIMEOUT=18000;
   const st=document.getElementById('sp-status-txt');
-  if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Carregando dados';
+  if(tentativa===1) carregarLS();
+  if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Validando acesso';
   try{
-    await promiseComTimeout(carregarDB(), TIMEOUT, 'Carga inicial do Supabase');
+    await promiseComTimeout(carregarDB({somenteCredenciais:true}), TIMEOUT, 'Autenticacao inicial do Supabase');
     setAppConectividadeStatus({
       somenteLeitura:false,
       origem:'supabase',
       motivo:''
     });
     const temSessao=restaurarSessao();
-    if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
-    iniciarApp();
-    agendarPosCargaSupabase({
-      timeoutMs:30000,
-      silenciosoAgendamentos:true,
-      renderizarAgendamentos:true,
-      persistirRh:true,
-      renderizarRh:true
-    });
+    if(!temSessao){
+      if(typeof mostrarTelaLogin==='function') mostrarTelaLogin();
+      else{
+        const telaLogin=document.getElementById('login-screen');
+        if(telaLogin){
+          telaLogin.style.display='flex';
+          telaLogin.classList.remove('hidden');
+        }
+      }
+    }
+    revelarShellApp();
+    if(temSessao){
+      renderizarModulosBaseApp();
+      void carregarDadosAposAutenticacao({
+        silencioso:true,
+        renderizar:true,
+        maxTentativas:2,
+        timeoutMs:45000
+      });
+    }
   }catch(e){
     const etapa=getBootStage();
     console.warn(`Tentativa ${tentativa} falhou na etapa "${etapa}":`,e.message);
     if(tentativa<MAX){
       if(st) st.textContent=`Reconectando... (${tentativa}/${MAX})`;
-      await new Promise(r=>setTimeout(r,1500));
+      await new Promise(r=>setTimeout(r,2000*tentativa));
       return carregarComRetry(tentativa+1);
     }
     console.error('Supabase indisponível após',MAX,'tentativas. Usando cache local.');
@@ -1979,8 +2155,24 @@ async function carregarComRetry(tentativa=1){
       motivo:'Sem conexão com o Supabase. Apenas consulta do último cache está liberada; novos cadastros e alterações estão bloqueados até reconectar e recarregar a página.'
     });
     const temSessao=restaurarSessao();
-    if(!temSessao) document.getElementById('login-screen').classList.remove('hidden');
-    iniciarApp();
+    if(!temSessao){
+      if(typeof mostrarTelaLogin==='function') mostrarTelaLogin();
+      else{
+        const telaLogin=document.getElementById('login-screen');
+        if(telaLogin){
+          telaLogin.style.display='flex';
+          telaLogin.classList.remove('hidden');
+        }
+      }
+    }
+    revelarShellApp();
+    if(temSessao) renderizarModulosBaseApp();
+    setTimeout(()=>{
+      if(typeof showToast==='function'){
+        showToast('!', 'Modo consulta: dados locais podem estar desatualizados. Cadastros e alteracoes estao bloqueados ate o Supabase voltar.');
+      }
+    },1000);
+    return;
     setTimeout(()=>{ showToast('⚠️','Modo consulta: dados locais podem estar desatualizados. Cadastros e alterações estão bloqueados até o Supabase voltar.'); },1000);
   }
 }
@@ -1989,6 +2181,14 @@ if(typeof window!=='undefined'&&window&&typeof window.addEventListener==='functi
   window.addEventListener('online', ()=>{
     if(appModoSomenteLeituraAtivo()&&typeof showToast==='function'){
       showToast('✅','Conexão restabelecida. Recarregue a página para voltar ao modo online.');
+    }
+    if(typeof usuarioLogado!=='undefined'&&usuarioLogado){
+      void carregarDadosAposAutenticacao({
+        silencioso:true,
+        renderizar:true,
+        maxTentativas:1,
+        timeoutMs:45000
+      });
     }
     agendarPosCargaSupabase({
       timeoutMs:30000,
@@ -2006,6 +2206,7 @@ zRegisterModule('supabase', {
   client: sb,
   carregarDB,
   carregarComRetry,
+  carregarDadosAposAutenticacao,
   iniciarApp,
   salvarLS,
   carregarLS,
