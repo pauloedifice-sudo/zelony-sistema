@@ -1052,7 +1052,7 @@ function renderVList(){
     const pbadge=temPendenciaComercial(v)?`<span class="badge-pend-comercial">${zUiText('🟠 Pend. comercial')}</span>`:'';
     const atraso=labelAtraso(v);
     const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('❗')} ${zUiText(atraso.label)}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚠️')} ${zUiText(atraso.label)}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('✓')} ${zUiText(atraso.label)}</span>`:'';
-    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${zUiText(v.cliente.split('/')[0].trim())}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${dbadge}${pbadge}${abadge}</div></div></div>`;
+    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${dbadge}${pbadge}${abadge}</div></div></div>`;
   }).join('');
   if(typeof showVDetail==='function'&&curVId) showVDetail(curVId);
 }
@@ -1199,7 +1199,7 @@ function abrirModalPrevisaoRecebimento(id){
   const previsaoAutomatica=calcPrevisaoAutomatica(v);
   const editando=!!previsaoManual;
   document.getElementById('mpr-title').textContent=zUiText(editando?'Editar previsão de recebimento':'Definir previsão de recebimento');
-  document.getElementById('mpr-sub').textContent=zUiText(`${v.cliente.split('/')[0].trim()} · ${v.produto}`);
+  document.getElementById('mpr-sub').textContent=zUiText(`${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${v.produto}`);
   document.getElementById('mpr-data').value=dataBrParaIso(previsaoManual?.data||previsaoAutomatica?.data||'');
   document.getElementById('mpr-obs').value='';
   document.getElementById('mpr-obs-wrap').style.display=editando?'block':'none';
@@ -1337,7 +1337,7 @@ function abrirDistrato(id){
   if(!v)return;
   distratoVendaId=id;
   zSetState('state.ui.distratoVendaId', distratoVendaId);
-  document.getElementById('dt-subtitulo').textContent=zUiText(`Venda: ${v.cliente.split('/')[0].trim()} · ${v.produto}`);
+  document.getElementById('dt-subtitulo').textContent=zUiText(`Venda: ${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${v.produto}`);
   distratoCategoriaNovaAtiva=false;
   distratoCategoriaNovaValor='';
   preencherCategoriasDistrato('');
@@ -1475,7 +1475,7 @@ function abrirEditVenda(id){
   normalizarVendaNumeros(v);
   editVendaId=id;
   zSetState('state.ui.editVendaId', editVendaId);
-  document.getElementById('ev-subtitulo').textContent=`Editando: ${v.cliente.split('/')[0].trim()}`;
+  document.getElementById('ev-subtitulo').textContent=`Editando: ${clienteVendaTexto(v.cliente) || 'Sem cliente'}`;
   document.getElementById('ev-cliente').value=v.cliente;
   const partes=v.data?v.data.split('/'):[]; const anoAtual=new Date().getFullYear();
   document.getElementById('ev-data').value=partes.length===2?`${anoAtual}-${partes[1]}-${partes[0]}`:'';

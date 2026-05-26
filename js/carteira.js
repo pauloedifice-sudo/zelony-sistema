@@ -1652,7 +1652,7 @@ function carteiraMetricaAndamento(v) {
   const dataPrevisao = previsao && previsao.data ? carteiraDataTexto(previsao.data) : null;
   const diasAtePrevisao = dataPrevisao ? carteiraDiffDiasAssinado(hoje, dataPrevisao) : null;
   const pendencia = typeof getPendenciaComercial === 'function' ? getPendenciaComercial(v) : null;
-  const cliente = String(v.cliente || '').split('/')[0].trim() || 'Venda';
+  const cliente = clienteVendaTexto(v.cliente) || 'Venda';
   const prazoTipo = prazoInfo ? prazoInfo.tipo : (PRAZOS_ETAPA[v.etapa] === null ? 'sem_sla' : 'sem_base');
   const prazoLabel = prazoInfo ? prazoInfo.label : (PRAZOS_ETAPA[v.etapa] === null ? 'Sem SLA' : 'Sem base');
 
@@ -2689,7 +2689,7 @@ function renderCarteiraTabelaRows(lista, cols) {
 
     return `<tr class="${v.distratada ? 'cart-row-distrato' : 'cart-row-normal'}" style="${v.distratada ? 'opacity:0.62;background:#FEF8F6;' : ''}">${cols.map(c => {
       if (c === 'data') return `<td>${zUiText(v.data)}</td>`;
-      if (c === 'cliente') return `<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${zUiText(v.cliente.split('/')[0].trim())}</td>`;
+      if (c === 'cliente') return `<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${zUiText(clienteVendaTexto(v.cliente) || '—')}</td>`;
       if (c === 'produto') return `<td>${zUiText(v.produto)}</td>`;
       if (c === 'corretor') return `<td>${zUiText(v.corretor)}</td>`;
       if (c === 'capitao') return `<td>${zUiText(v.capitao || '—')}</td>`;

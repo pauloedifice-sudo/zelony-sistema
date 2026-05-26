@@ -358,7 +358,25 @@ function formatarTempoNotificacao(hist) {
 }
 
 function nomeCalendario(cliente) {
-  return cliente.split('/')[0].trim().split(' ').filter(p=>p.length>0).slice(0,2).join(' ');
+  return clienteVendaPrincipal(cliente).split(' ').filter(p=>p.length>0).slice(0,2).join(' ');
+}
+
+function clienteVendaPartes(cliente) {
+  return zUiText(String(cliente || ''))
+    .split('/')
+    .map(parte => parte.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function clienteVendaPrincipal(cliente) {
+  return clienteVendaPartes(cliente)[0] || '';
+}
+
+function clienteVendaTexto(cliente, opcoes = {}) {
+  const partes = clienteVendaPartes(cliente);
+  if (!partes.length) return '';
+  const separador = opcoes.separador || ' / ';
+  return partes.join(separador);
 }
 
 async function copiarTexto(texto, rotulo = 'Texto') {
@@ -423,7 +441,7 @@ function gerarNotificacoes() {
 
   return vendasVisiveis.flatMap(v => {
     const hist = Array.isArray(v && v.hist) ? v.hist : [];
-    const vendaNome = v && v.cliente ? v.cliente.split('/')[0].trim() : 'Venda';
+    const vendaNome = v && v.cliente ? (clienteVendaTexto(v.cliente) || 'Venda') : 'Venda';
 
     return hist
       .filter(h => h && !h.tipo && Number.isFinite(Number(h.e)) && Number(h.e) > 0)
