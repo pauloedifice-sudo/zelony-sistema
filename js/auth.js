@@ -70,7 +70,6 @@ function ocultarTelaLogin() {
 function aplicarSessaoUsuario(usuario) {
   usuarioLogado = usuario;
   const rv = getPerfil(usuario.perfil);
-  localStorage.setItem('zel_sessao', usuario.email.toLowerCase());
   RD[rv] = {
     av: ini(usuario.nome),
     nome: usuario.nome.split(' ')[0],
@@ -178,28 +177,12 @@ function fazerLogout() {
 }
 
 function restaurarSessao() {
-  const emailSalvo = localStorage.getItem('zel_sessao');
-  if (!emailSalvo) return false;
-  const usuario = USUARIOS.find(u => u.email.toLowerCase() === emailSalvo.toLowerCase());
-  if (!usuario || !usuarioPodeEntrarNoSistema(usuario)) {
-    localStorage.removeItem('zel_sessao');
-    return false;
-  }
-  usuarioLogado = usuario;
-  const rv = getPerfil(usuario.perfil);
-  RD[rv] = {
-    av: ini(usuario.nome),
-    nome: usuario.nome.split(' ')[0],
-    role: usuario.perfil + (usuario.unidade && usuario.unidade !== 'Ambas' ? ' · ' + usuario.unidade : '')
-  };
-  role = rv;
+  localStorage.removeItem('zel_sessao');
+  usuarioLogado = null;
+  role = 'cor';
   zSetState('state.auth.role', role);
   zSetState('state.auth.usuarioLogado', usuarioLogado);
-  atualizarTopbar(usuario, rv);
-  ocultarTelaLogin();
-  atualizarBadgeNotificacoes();
-  if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
-  return true;
+  return false;
 }
 
 function toggleSenha() {

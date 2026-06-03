@@ -47,6 +47,8 @@ let distratoCategoriaNovaValor='';
 let editVendaSalvando=false;
 let previsaoRecebVendaId=null;
 let previsaoRecebSalvando=false;
+let vendaSalvando=false;
+let novaVendaRefLocal='';
 zSetState('config.etapas', ETAPAS);
 zSetState('config.prazosEtapa', PRAZOS_ETAPA);
 zSetState('config.procData', PROC_DATA);
@@ -233,6 +235,8 @@ zSetState('state.ui.distratoSalvando', distratoSalvando);
 zSetState('state.ui.editVendaSalvando', editVendaSalvando);
 zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
 zSetState('state.ui.previsaoRecebSalvando', previsaoRecebSalvando);
+zSetState('state.ui.vendaSalvando', vendaSalvando);
+zSetState('state.ui.novaVendaRefLocal', novaVendaRefLocal);
 
 function numSeguro(valor,padrao=0){
   const n=Number(valor);
@@ -1593,6 +1597,34 @@ function salvarEditVenda(){
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ NOVA VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function novaVendaCriarRefLocal(){
+  if(typeof gerarRefLocalVenda==='function') return gerarRefLocalVenda();
+  return `ven-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+}
+
+function setNovaVendaRefLocal(valor=''){
+  novaVendaRefLocal=String(valor||'').trim();
+  zSetState('state.ui.novaVendaRefLocal', novaVendaRefLocal);
+  return novaVendaRefLocal;
+}
+
+function setVendaModalLoading(loading){
+  vendaSalvando=!!loading;
+  zSetState('state.ui.vendaSalvando', vendaSalvando);
+  document.querySelectorAll('#mvenda input, #mvenda select, #mvenda textarea, #mvenda button').forEach(el=>{
+    if(el.id==='mv-salvar-btn'){
+      el.disabled=vendaSalvando;
+      el.textContent=zUiText(vendaSalvando?'💾 Salvando...':'✓ Cadastrar venda');
+      return;
+    }
+    el.disabled=vendaSalvando;
+  });
+  document.querySelectorAll('#mvenda .doc-upload-box').forEach(el=>{
+    el.style.pointerEvents=vendaSalvando?'none':'';
+    el.style.opacity=vendaSalvando?'0.7':'';
+  });
+}
+
 function abrirModalVenda(){
   const filtrarUnid=(u)=>['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas')||!u.unidade||u.unidade===usuarioLogado.unidade;
   const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
@@ -1647,16 +1679,22 @@ function abrirModalVenda(){
   document.getElementById('mv-imp').value='11';
   document.getElementById('mv-data').value=new Date().toISOString().split('T')[0];
   document.getElementById('mv-origem').value='Indicação';
+  setNovaVendaRefLocal(novaVendaCriarRefLocal());
   document.getElementById('mvenda').classList.add('show');
+  setVendaModalLoading(false);
   calcularPrevV();
-  const btnSalvar=document.getElementById('mv-salvar-btn');
-  if(btnSalvar){btnSalvar.disabled=false;btnSalvar.textContent='Salvar venda';}
   setTimeout(()=>document.getElementById('mv-cliente').focus(),100);
 }
-function fecharMV(){ document.getElementById('mvenda').classList.remove('show'); }
+function fecharMV(forcar=false){
+  if(vendaSalvando&&!forcar) return;
+  document.getElementById('mvenda').classList.remove('show');
+  setVendaModalLoading(false);
+  setNovaVendaRefLocal('');
+}
 function handleBackdropV(e){ if(e.target===document.getElementById('mvenda'))fecharMV(); }
-function salvarVenda(){
+async function salvarVenda(){
   if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O cadastro de vendas está bloqueado no modo consulta.'})) return;
+  if(vendaSalvando) return;
   const cliente=document.getElementById('mv-cliente').value.trim().toUpperCase();
   const dataVal=document.getElementById('mv-data').value;
   const produto=document.getElementById('mv-produto').value.trim();
@@ -1710,6 +1748,8 @@ function salvarVenda(){
   if(!pct){document.getElementById('mv-pct').focus();showToast(zUiText('⚠️'),zUiText('Informe o % de comissão.'));return;}
   if(!mvDocs.comp){showToast(zUiText('⚠️'),zUiText('Anexe o comprovante de pagamento.'));return;}
   if(!mvDocs.cont){showToast(zUiText('⚠️'),zUiText('Anexe o contrato assinado.'));return;}
+
+  const refLocal=novaVendaRefLocal||setNovaVendaRefLocal(novaVendaCriarRefLocal());
   const d=new Date(dataVal+'T12:00:00');
   const dia=d.getDate().toString().padStart(2,'0');
   const mesNum=d.getMonth();
@@ -1718,7 +1758,7 @@ function salvarVenda(){
   const mes=meses[mesNum];
   const pct_rh=corretorExterno?0:(usuarioElegivelRhNovaVenda(corretorUsuario)?0.001:0);
   const novaVenda={
-    id:nextVendaId++,data,mes,cliente,produto,construtora,origem,unidade,
+    id:nextVendaId++,refLocal,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,
     bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
@@ -1731,26 +1771,24 @@ function salvarVenda(){
   };
   normalizarVendaNumeros(novaVenda);
   zSetState('state.ui.nextVendaId', nextVendaId);
-  const btnSalvar=document.getElementById('mv-salvar-btn');
-  if(btnSalvar){btnSalvar.disabled=true;btnSalvar.textContent=zUiText('💾 Salvando...');}
+  setVendaModalLoading(true);
   showToast(zUiText('💾'),zUiText('Salvando venda no banco...'));
-  dbSalvarVenda(novaVenda).then(ok=>{
-    if(ok){
-      VENDAS.push(novaVenda);
-      zSetState('state.data.vendas', VENDAS);
-      salvarLS();
-      fecharMV();
-      renderFiltros(); renderVList(); showVDetail(novaVenda.id);
-      showToast(zUiText('✅'),zUiText(`Venda de ${cliente.split(' ')[0]} salva com sucesso!`));
-    } else {
-      if(btnSalvar){btnSalvar.disabled=false;btnSalvar.textContent='Salvar venda';}
-      showToast(zUiText('❌'),zUiText('Falha ao salvar. Verifique sua conexão e tente novamente.'));
-    }
-  }).catch(e=>{
+
+  try{
+    const ok=await dbSalvarVenda(novaVenda);
+    if(!ok) return;
+    VENDAS.push(novaVenda);
+    zSetState('state.data.vendas', VENDAS);
+    salvarLS();
+    fecharMV(true);
+    renderFiltros(); renderVList(); showVDetail(novaVenda.id);
+    showToast(zUiText('✅'),zUiText(`Venda de ${cliente.split(' ')[0]} salva com sucesso!`));
+  }catch(e){
     console.error(e);
-    if(btnSalvar){btnSalvar.disabled=false;btnSalvar.textContent='Salvar venda';}
     showToast(zUiText('❌'),zUiText('Erro inesperado. Tente novamente.'));
-  });
+  }finally{
+    if(vendaSalvando) setVendaModalLoading(false);
+  }
 }
 
 zRegisterModule('vendas', {

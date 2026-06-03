@@ -26,6 +26,7 @@ let finComprovanteLocalId = '';
 let finComprovanteRemovido = false;
 let finCategoriaNovaAtiva = false;
 let finCategoriaNovaValor = '';
+let finLancamentoSalvando = false;
 
 const FIN_CATEGORIAS = {
   entrada: [
@@ -70,6 +71,7 @@ function syncFinState() {
   zSetState('state.ui.finFiltroCategoria', finFiltroCategoria);
   zSetState('state.ui.finVisao', finVisao);
   zSetState('state.ui.finDreEscopo', finDreEscopo);
+  zSetState('state.ui.finLancamentoSalvando', finLancamentoSalvando);
 }
 
 syncFinState();
@@ -2193,6 +2195,19 @@ async function finVerComprovanteAtual() {
   }
 }
 
+function finSetLancamentoLoading(loading, label = '') {
+  finLancamentoSalvando = !!loading;
+  syncFinState();
+  document.querySelectorAll('#m-fin-lanc input, #m-fin-lanc select, #m-fin-lanc textarea, #m-fin-lanc button').forEach(el => {
+    if (el.id === 'fin-lanc-save-btn') {
+      el.disabled = finLancamentoSalvando;
+      el.textContent = zUiText(label || (finLancamentoSalvando ? 'Salvando...' : (finModalLancamentoId ? 'Salvar alteracoes' : 'Salvar lancamento')));
+      return;
+    }
+    el.disabled = finLancamentoSalvando;
+  });
+}
+
 function finAbrirModalLancamento(tipo = '') {
   finResetDetalheDiaState();
   finModalAberto = true;
@@ -2200,6 +2215,7 @@ function finAbrirModalLancamento(tipo = '') {
   finModalTipoPadrao = tipo || finTipoPadraoNovaAcao() || 'entrada';
   finResetCategoriaNovaState();
   finPrepararComprovanteModal(null);
+  finSetLancamentoLoading(false);
   renderFinanceiro();
   setTimeout(() => {
     const foco = document.getElementById('fin-lanc-descricao');
@@ -2216,6 +2232,7 @@ function finEditarLancamentoManual(chave) {
   finModalTipoPadrao = '';
   finResetCategoriaNovaState();
   finPrepararComprovanteModal(item);
+  finSetLancamentoLoading(false);
   renderFinanceiro();
   setTimeout(() => {
     const foco = document.getElementById('fin-lanc-descricao');
@@ -2224,13 +2241,15 @@ function finEditarLancamentoManual(chave) {
   }, 50);
 }
 
-function finFecharModalLancamento() {
+function finFecharModalLancamento(forcar = false) {
+  if (finLancamentoSalvando && !forcar) return;
   finModalAberto = false;
   finModalLancamentoId = '';
   finModalTipoPadrao = '';
   finResetCategoriaNovaState();
   finResetComprovanteState();
   finModalBaixaRapida = false;
+  if (!forcar) finSetLancamentoLoading(false);
   renderFinanceiro();
 }
 
@@ -2300,6 +2319,7 @@ function finOrdenarLancamentosLocais(a, b) {
 }
 
 async function finSalvarLancamento() {
+  if (finLancamentoSalvando) return;
   if (typeof appPodePersistirNoSupabase === 'function' && !appPodePersistirNoSupabase({ mensagem: 'Sem conexão com o Supabase. O financeiro está em modo consulta.' })) return;
   const tipoEl = document.getElementById('fin-lanc-tipo');
   const categoriaEl = document.getElementById('fin-lanc-categoria');
@@ -2336,6 +2356,7 @@ async function finSalvarLancamento() {
   if (status === 'realizado' && !finDataValidaIso(dataRealizada)) { showToast('⚠️', zUiText('Informe a data realizada do lancamento.')); return; }
   if (valor <= 0) { showToast('⚠️', zUiText('Informe um valor maior que zero.')); return; }
 
+  finSetLancamentoLoading(true, 'Salvando...');
   const existente = finLancamentoAtual();
   const agoraIso = new Date().toISOString();
   const comprovanteAnterior = existente ? {
@@ -2425,12 +2446,8 @@ async function finSalvarLancamento() {
   zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
   if (typeof salvarLS === 'function') salvarLS();
 
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = zUiText('Salvando...');
-  }
-
-  finFecharModalLancamento();
+  finFecharModalLancamento(true);
+  finSetLancamentoLoading(false);
 
   try {
     if (finComprovanteFile && typeof dbUploadDocumentoArquivo === 'function') {

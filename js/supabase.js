@@ -357,16 +357,28 @@ async function carregarTabelaSupabase(tabela, order='id'){
 }
 
 async function carregarVendasSupabase(){
-  const VENDAS_COLS='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+  const VENDAS_COLS_BASE='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+  let colunas=`${VENDAS_COLS_BASE},ref_local`;
   try{
     let todas=[]; let pagina=0; const LOTE=20;
     while(true){
-      const {data,error}=await sbLong.from('vendas').select(VENDAS_COLS).order('id').range(pagina*LOTE,(pagina+1)*LOTE-1);
-      if(error) throw error;
-      if(!data||data.length===0) break;
-      todas=[...todas,...data];
-      if(data.length<LOTE) break;
-      pagina++;
+      try{
+        const {data,error}=await sbLong.from('vendas').select(colunas).order('id').range(pagina*LOTE,(pagina+1)*LOTE-1);
+        if(error) throw error;
+        if(!data||data.length===0) break;
+        todas=[...todas,...data];
+        if(data.length<LOTE) break;
+        pagina++;
+      }catch(errorPagina){
+        const colunaAusente=extrairColunaAusenteSupabase(errorPagina,'vendas');
+        if(colunaAusente==='ref_local'&&colunas.includes('ref_local')){
+          colunas=VENDAS_COLS_BASE;
+          todas=[];
+          pagina=0;
+          continue;
+        }
+        throw errorPagina;
+      }
     }
     return todas;
   }catch(e){
@@ -698,8 +710,30 @@ function normalizarCampoSistema(valor){
   return String(valor||'').trim();
 }
 
+function gerarRefLocalVenda(){
+  if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function'){
+    return `ven-${crypto.randomUUID()}`;
+  }
+  return `ven-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+}
+
+function garantirRefLocalVenda(item,origem='local'){
+  if(!item||typeof item!=='object') return '';
+  const atual=String(item.refLocal||item.ref_local||'').trim();
+  if(atual){
+    item.refLocal=atual;
+    return atual;
+  }
+  if(origem==='banco'&&item.id){
+    item.refLocal=`db:${item.id}`;
+    return item.refLocal;
+  }
+  item.refLocal=gerarRefLocalVenda();
+  return item.refLocal;
+}
+
 function mapVendaIn(v){
-  return{
+  const venda={
     id:v.id,data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
     construtora:normalizarCampoSistema(v.construtora),origem:normalizarCampoSistema(v.origem),unidade:normalizarCampoSistema(v.unidade),
     corretor:normalizarCampoSistema(v.corretor),capitao:normalizarCampoSistema(v.capitao),gerente:normalizarCampoSistema(v.gerente),diretor:normalizarCampoSistema(v.diretor),
@@ -713,9 +747,12 @@ function mapVendaIn(v){
     etapa:parseInt(v.etapa)||0,
     hist:v.hist||[],
     distratada:!!v.distratada,
+    refLocal:String(v&&(v.ref_local||v.refLocal)||'').trim(),
     anexos:[], // carregado sob demanda
     anexosCarregados:false
   };
+  garantirRefLocalVenda(venda,v&&v.id?'banco':'local');
+  return venda;
 }
 
 function mapVendaOut(v){
@@ -729,7 +766,8 @@ function mapVendaOut(v){
     cca:normalizarCampoSistema(v.cca||''),distratada:v.distratada||false,
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
     bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
-    etapa:v.etapa,hist:v.hist
+    etapa:v.etapa,hist:v.hist,
+    ref_local:garantirRefLocalVenda(v,v&&v.id?'banco':'local')||null
     // anexos: omitido — salvo separadamente via dbSalvarAnexos
   };
 }
@@ -750,6 +788,7 @@ function reduzirPayloadVendaPorSchema(payload,colunaAusente=''){
   const reduzido={...(payload||{})};
   const grupos={
     anexos:['anexos'],
+    ref_local:['ref_local'],
     diretor2:['diretor2','pct_dir2'],
     pct_dir2:['diretor2','pct_dir2'],
     pct_rh:['pct_rh'],
@@ -768,11 +807,23 @@ async function salvarVendaComFallbackSchema(payload,modo='update',vendaId=null){
   let payloadReduzido=false;
   while(true){
     try{
-      const resposta=modo==='insert'
-        ? await sbLong.from('vendas').insert(payloadAtual).select().single()
-        : await sbLong.from('vendas').update(payloadAtual).eq('id',vendaId);
-      if(resposta.error) throw resposta.error;
-      return {data:resposta.data||null,payloadReduzido};
+      let data=null;
+      if(payloadAtual.ref_local){
+        const respostaRef=await sbLong.from('vendas').update(payloadAtual).eq('ref_local',payloadAtual.ref_local).select().maybeSingle();
+        if(respostaRef.error) throw respostaRef.error;
+        data=respostaRef.data||null;
+      }
+      if(!data&&modo==='insert'){
+        const respostaInsert=await sbLong.from('vendas').insert(payloadAtual).select().single();
+        if(respostaInsert.error) throw respostaInsert.error;
+        data=respostaInsert.data||null;
+      }
+      if(!data&&modo!=='insert'&&vendaId!=null){
+        const respostaId=await sbLong.from('vendas').update(payloadAtual).eq('id',vendaId).select().maybeSingle();
+        if(respostaId.error) throw respostaId.error;
+        data=respostaId.data||null;
+      }
+      return {data,payloadReduzido};
     }catch(error){
       const colunaAusente=extrairColunaAusenteSupabase(error,'vendas');
       if(colunaAusente&&Object.prototype.hasOwnProperty.call(payloadAtual,colunaAusente)){
@@ -1473,12 +1524,16 @@ async function dbExcluirDocumento(docOuId){
 async function dbSalvarVenda(v, tentativa=1){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para vendas.'});
   try{
+    garantirRefLocalVenda(v,v&&v.id?'banco':'local');
     const payload={
       ...mapVendaOut(v),
       anexos:mapVendaAnexos(v.anexos)
     };
     const {data,payloadReduzido}=await salvarVendaComFallbackSchema(payload,'insert');
-    if(data) v.id=data.id;
+    if(data){
+      v.id=data.id;
+      if(data.ref_local) v.refLocal=String(data.ref_local).trim();
+    }
     if(payloadReduzido){
       console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Venda salva com payload reduzido.');
     }

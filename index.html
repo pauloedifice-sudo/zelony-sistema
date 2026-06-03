@@ -373,7 +373,7 @@
   <div class="sb-nav">
     <div class="sb-lbl">Módulos</div>
     <div class="sb-group">
-      <button class="sb-item" onclick="setMod('dashboard',this)">
+      <button class="sb-item active" onclick="setMod('dashboard',this)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 11V8M8 11V5M11 11V7"/></svg>
         Dashboard
       </button>
@@ -391,7 +391,7 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M11 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg>
         Minha Carteira
       </button>
-      <button class="sb-item active" onclick="setMod('vendas',this)">
+      <button class="sb-item" onclick="setMod('vendas',this)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg>
         Vendas / Comissão
       </button>
@@ -429,7 +429,7 @@
 </div>
 
 <div class="main">
-  <div class="pg-title" id="pg-title">Vendas e Comissão</div>
+  <div class="pg-title" id="pg-title">Dashboard</div>
   <div class="content">
 
     <div class="modal-backdrop" id="mbackdrop" onclick="handleBackdrop(event)">
@@ -608,9 +608,9 @@
 
     <div class="page hidden" id="mod-financeiro"><div class="carteira-wrap" id="financeiro-content"></div></div>
     <div class="page hidden" id="mod-carteira"><div class="carteira-wrap" id="carteira-content"></div></div>
-    <div class="page hidden" id="mod-dashboard"><div class="dash-wrap" id="dashboard-content"></div></div>
+    <div class="page" id="mod-dashboard"><div class="dash-wrap" id="dashboard-content"></div></div>
 
-    <div class="page" id="mod-vendas">
+    <div class="page hidden" id="mod-vendas">
       <div class="v-toolbar">
         <div class="v-toolbar-top">
           <div class="vl-ht">
