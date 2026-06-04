@@ -128,6 +128,8 @@ let appShellInicializado=false;
 let cargaCredenciaisPromise=null;
 let cargaModulosPromise=null;
 let cargaModulosConcluida=false;
+let recargaAgendamentosPromise=null;
+const SUPABASE_SCHEMA_AUSENCIAS={};
 function setBootStage(etapa){
   const texto=String(etapa||'').trim()||'inicializando';
   SUPABASE_BOOT_STATUS.etapa=texto;
@@ -372,6 +374,7 @@ async function carregarVendasSupabase(){
       }catch(errorPagina){
         const colunaAusente=extrairColunaAusenteSupabase(errorPagina,'vendas');
         if(colunaAusente==='ref_local'&&colunas.includes('ref_local')){
+          registrarColunaAusenteSupabase('vendas','ref_local');
           colunas=VENDAS_COLS_BASE;
           todas=[];
           pagina=0;
@@ -389,10 +392,28 @@ async function carregarVendasSupabase(){
 
 async function carregarAgendamentosSupabase(){
   try{
-    const {data,error}=await sbLong.from('agendamentos').select('*').order('data_agendamento').order('horario_agendamento');
-    if(error) throw error;
+    let todas=[];
+    let pagina=0;
+    const LOTE=200;
+    while(true){
+      const inicio=pagina*LOTE;
+      const fim=inicio+LOTE-1;
+      const {data,error}=await sbLong
+        .from('agendamentos')
+        .select('*')
+        .order('data_agendamento')
+        .order('horario_agendamento')
+        .order('id')
+        .range(inicio,fim);
+      if(error) throw error;
+      const lote=Array.isArray(data)?data:[];
+      if(!lote.length) break;
+      todas.push(...lote);
+      if(lote.length<LOTE) break;
+      pagina++;
+    }
     setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
-    return data||[];
+    return todas;
   }catch(e){
     const msg=mensagemErroSyncAgendamentos(e);
     setStatusSyncAgendamentos({
@@ -422,6 +443,53 @@ function aplicarUsuariosESenhas(us, ss){
     });
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
   }
+}
+
+function aplicarAgendamentosOperacionais(ags){
+  const agBanco=Array.isArray(ags)?ags.map(item=>{
+    const ag=mapAgendamentoIn(item);
+    garantirRefLocalAgendamento(ag,'banco');
+    limparAgendamentoSyncPendente(ag);
+    return ag;
+  }):[];
+  const agLocal=carregarAgendamentosLS().map(item=>{
+    const ag=mapAgendamentoIn(item);
+    garantirRefLocalAgendamento(ag,'local');
+    return ag;
+  });
+  const agMap=new Map();
+  const agBancoMap=new Map();
+  const agLocalMap=new Map();
+  agBanco.forEach(agendamento=>agBancoMap.set(getAgendamentoMergeKey(agendamento),agendamento));
+  agLocal.forEach(agendamento=>agLocalMap.set(getAgendamentoMergeKey(agendamento),agendamento));
+  [...agLocal,...agBanco].forEach(agendamento=>{
+    const chave=getAgendamentoMergeKey(agendamento);
+    const atual=agMap.get(chave);
+    agMap.set(chave,preferirAgendamentoMaisRecente(atual,agendamento));
+  });
+  const agMesclados=Array.from(agMap.values()).sort(ordenarAgendamentos);
+  agMesclados.forEach(agendamento=>{
+    const chave=getAgendamentoMergeKey(agendamento);
+    const local=agLocalMap.get(chave);
+    const banco=agBancoMap.get(chave);
+    const localAtualizadoEm=Date.parse(local&&local.atualizadoEm||'')||0;
+    const bancoAtualizadoEm=Date.parse(banco&&banco.atualizadoEm||'')||0;
+    const localMaisRecente=!!local&&(!banco||localAtualizadoEm>bancoAtualizadoEm);
+    if(localMaisRecente){
+      marcarAgendamentoSyncPendente(agendamento,local&&local.syncErro||'');
+    }else{
+      limparAgendamentoSyncPendente(agendamento);
+    }
+  });
+  AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...agMesclados);
+  if(typeof nextAgendamentoId!=='undefined'){
+    const maiorId=AGENDAMENTOS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
+    nextAgendamentoId=maiorId+1;
+    zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
+  }
+  zSetState('state.data.agendamentos', AGENDAMENTOS);
+  atualizarEstadoSyncAgendamentos();
+  return AGENDAMENTOS;
 }
 
 function aplicarDadosOperacionais({vs,ts,ds,ags,fls}={}){
@@ -471,49 +539,7 @@ function aplicarDadosOperacionais({vs,ts,ds,ags,fls}={}){
     zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
   }
   {
-    const agBanco=Array.isArray(ags)?ags.map(item=>{
-      const ag=mapAgendamentoIn(item);
-      garantirRefLocalAgendamento(ag,'banco');
-      limparAgendamentoSyncPendente(ag);
-      return ag;
-    }):[];
-    const agLocal=carregarAgendamentosLS().map(item=>{
-      const ag=mapAgendamentoIn(item);
-      garantirRefLocalAgendamento(ag,'local');
-      return ag;
-    });
-    const agMap=new Map();
-    const agBancoMap=new Map();
-    const agLocalMap=new Map();
-    agBanco.forEach(agendamento=>agBancoMap.set(getAgendamentoMergeKey(agendamento),agendamento));
-    agLocal.forEach(agendamento=>agLocalMap.set(getAgendamentoMergeKey(agendamento),agendamento));
-    [...agLocal,...agBanco].forEach(agendamento=>{
-      const chave=getAgendamentoMergeKey(agendamento);
-      const atual=agMap.get(chave);
-      agMap.set(chave,preferirAgendamentoMaisRecente(atual,agendamento));
-    });
-    const agMesclados=Array.from(agMap.values()).sort(ordenarAgendamentos);
-    agMesclados.forEach(agendamento=>{
-      const chave=getAgendamentoMergeKey(agendamento);
-      const local=agLocalMap.get(chave);
-      const banco=agBancoMap.get(chave);
-      const localAtualizadoEm=Date.parse(local&&local.atualizadoEm||'')||0;
-      const bancoAtualizadoEm=Date.parse(banco&&banco.atualizadoEm||'')||0;
-      const localMaisRecente=!!local&&(!banco||localAtualizadoEm>bancoAtualizadoEm);
-      if(localMaisRecente){
-        marcarAgendamentoSyncPendente(agendamento,local&&local.syncErro||'');
-      }else{
-        limparAgendamentoSyncPendente(agendamento);
-      }
-    });
-    AGENDAMENTOS.splice(0,AGENDAMENTOS.length,...agMesclados);
-    if(typeof nextAgendamentoId!=='undefined'){
-      const maiorId=AGENDAMENTOS.reduce((acc,item)=>Math.max(acc,parseInt(item&&item.id,10)||0),0);
-      nextAgendamentoId=maiorId+1;
-      zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
-    }
-    zSetState('state.data.agendamentos', AGENDAMENTOS);
-    atualizarEstadoSyncAgendamentos();
+    aplicarAgendamentosOperacionais(ags);
   }
   salvarLS();
 }
@@ -580,6 +606,37 @@ async function carregarDB(opcoes={}){
   await carregarCredenciaisDB();
   if(config.somenteCredenciais) return true;
   return carregarModulosDB();
+}
+
+async function recarregarAgendamentosCompartilhados(opcoes={}){
+  if(recargaAgendamentosPromise) return recargaAgendamentosPromise;
+  const config={
+    salvarCache:opcoes.salvarCache!==false,
+    renderizar:opcoes.renderizar!==false,
+    renderizarDashboard:opcoes.renderizarDashboard!==false,
+    atualizarNotificacoes:opcoes.atualizarNotificacoes!==false
+  };
+  recargaAgendamentosPromise=(async()=>{
+    const ags=await carregarAgendamentosSupabase();
+    if(!Array.isArray(ags)) return {ok:false,atualizado:false,erro:true};
+    aplicarAgendamentosOperacionais(ags);
+    if(config.salvarCache) salvarLS();
+    if(config.renderizar&&typeof renderAgendamentos==='function'&&!document.getElementById('mod-agendamentos')?.classList.contains('hidden')){
+      renderAgendamentos();
+    }
+    if(config.renderizarDashboard&&typeof renderDashboard==='function'&&!document.getElementById('mod-dashboard')?.classList.contains('hidden')){
+      renderDashboard();
+    }
+    if(config.atualizarNotificacoes&&typeof atualizarBadgeNotificacoes==='function'){
+      atualizarBadgeNotificacoes();
+    }
+    return {ok:true,atualizado:true,total:AGENDAMENTOS.length};
+  })();
+  try{
+    return await recargaAgendamentosPromise;
+  }finally{
+    recargaAgendamentosPromise=null;
+  }
 }
 
 // ── MAPPERS banco → app ───────────────────────────────────────────────────────
@@ -710,6 +767,21 @@ function normalizarCampoSistema(valor){
   return String(valor||'').trim();
 }
 
+function registrarColunaAusenteSupabase(tabela='',coluna=''){
+  const tabelaKey=String(tabela||'').trim().toLowerCase();
+  const colunaKey=String(coluna||'').trim().toLowerCase();
+  if(!tabelaKey||!colunaKey) return false;
+  if(!SUPABASE_SCHEMA_AUSENCIAS[tabelaKey]) SUPABASE_SCHEMA_AUSENCIAS[tabelaKey]=new Set();
+  SUPABASE_SCHEMA_AUSENCIAS[tabelaKey].add(colunaKey);
+  return true;
+}
+
+function colunaAusenteSupabaseRegistrada(tabela='',coluna=''){
+  const tabelaKey=String(tabela||'').trim().toLowerCase();
+  const colunaKey=String(coluna||'').trim().toLowerCase();
+  return !!(tabelaKey&&colunaKey&&SUPABASE_SCHEMA_AUSENCIAS[tabelaKey]&&SUPABASE_SCHEMA_AUSENCIAS[tabelaKey].has(colunaKey));
+}
+
 function gerarRefLocalVenda(){
   if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function'){
     return `ven-${crypto.randomUUID()}`;
@@ -808,7 +880,7 @@ async function salvarVendaComFallbackSchema(payload,modo='update',vendaId=null){
   while(true){
     try{
       let data=null;
-      if(payloadAtual.ref_local){
+      if(payloadAtual.ref_local&&!colunaAusenteSupabaseRegistrada('vendas','ref_local')){
         const respostaRef=await sbLong.from('vendas').update(payloadAtual).eq('ref_local',payloadAtual.ref_local).select().maybeSingle();
         if(respostaRef.error) throw respostaRef.error;
         data=respostaRef.data||null;
@@ -827,6 +899,7 @@ async function salvarVendaComFallbackSchema(payload,modo='update',vendaId=null){
     }catch(error){
       const colunaAusente=extrairColunaAusenteSupabase(error,'vendas');
       if(colunaAusente&&Object.prototype.hasOwnProperty.call(payloadAtual,colunaAusente)){
+        registrarColunaAusenteSupabase('vendas',colunaAusente);
         payloadAtual=reduzirPayloadVendaPorSchema(payloadAtual,colunaAusente);
         payloadReduzido=true;
         continue;
@@ -1271,8 +1344,24 @@ function extrairColunaAusenteSupabase(error,tabela=''){
   const prefixo=tabela?`${tabela}.`:'';
   const regexComTabela=new RegExp(`column\\s+${prefixo}([a-z0-9_]+)\\s+does not exist`,'i');
   const regexSemTabela=/column\s+([a-z0-9_]+)\s+does not exist/i;
-  const match=bruto.match(regexComTabela)||bruto.match(regexSemTabela);
-  return match&&match[1]?String(match[1]).trim().toLowerCase():'';
+  const tabelaEscapada=String(tabela||'').trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const regexRelacaoComTabela=tabelaEscapada
+    ? new RegExp(`column\\s+["']?([a-z0-9_]+)["']?\\s+of\\s+relation\\s+["']?${tabelaEscapada}["']?\\s+does not exist`,'i')
+    : null;
+  const regexRelacaoSemTabela=/column\s+["']?([a-z0-9_]+)["']?\s+of\s+relation\s+["']?[a-z0-9_]+["']?\s+does not exist/i;
+  const regexSchemaCacheComTabela=tabelaEscapada
+    ? new RegExp(`Could not find the ['"]?([a-z0-9_]+)['"]? column of ['"]?${tabelaEscapada}['"]? in the schema cache`,'i')
+    : null;
+  const regexSchemaCacheSemTabela=/Could not find the ['"]?([a-z0-9_]+)['"]? column of ['"]?[a-z0-9_]+['"]? in the schema cache/i;
+  const match=bruto.match(regexComTabela)
+    || bruto.match(regexSemTabela)
+    || (regexRelacaoComTabela?bruto.match(regexRelacaoComTabela):null)
+    || bruto.match(regexRelacaoSemTabela)
+    || (regexSchemaCacheComTabela?bruto.match(regexSchemaCacheComTabela):null)
+    || bruto.match(regexSchemaCacheSemTabela);
+  const coluna=match&&match[1]?String(match[1]).trim().toLowerCase():'';
+  if(coluna&&tabela) registrarColunaAusenteSupabase(tabela,coluna);
+  return coluna;
 }
 
 function reduzirPayloadFinanceiroPorSchema(payload,colunaAusente=''){
@@ -2278,6 +2367,7 @@ zRegisterModule('supabase', {
   dbExcluirAgendamento,
   dbSalvarLancamentoFinanceiro,
   dbExcluirLancamentoFinanceiro,
+  recarregarAgendamentosCompartilhados,
   sincronizarAgendamentosPendentes,
   sincronizarFinanceiroPendentes,
   getStatusAgendamentosSync,

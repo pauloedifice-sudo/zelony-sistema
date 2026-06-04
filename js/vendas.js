@@ -1052,11 +1052,17 @@ function renderVList(){
   }
   document.getElementById('vlista').innerHTML=l.map(v=>{
     const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">${zUiText(`📍 ${v.unidade}`)}</span>`:'';
-    const dbadge=v.distratada?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('⚠️ Distrato')}</span>`:'';
+    const statusBadge=`<span class="vstate ${v.distratada?'vstate-distrato':'vstate-ativa'}">${zUiText(v.distratada?'⚠ Distrato':'● Ativa')}</span>`;
     const pbadge=temPendenciaComercial(v)?`<span class="badge-pend-comercial">${zUiText('🟠 Pend. comercial')}</span>`:'';
     const atraso=labelAtraso(v);
     const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('❗')} ${zUiText(atraso.label)}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚠️')} ${zUiText(atraso.label)}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('✓')} ${zUiText(atraso.label)}</span>`:'';
-    return`<div class="vrow${curVId===v.id?' active':''}" id="vr-${v.id}" onclick="showVDetail(${v.id})" style="${atraso&&atraso.tipo==='atrasada'?'border-left:3px solid #C05030;':''}"><div class="vav" style="${v.distratada?'opacity:0.5;':''}">${ini(v.cliente)}</div><div style="flex:1;min-width:0;${v.distratada?'opacity:0.7;':''}"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;"><span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${dbadge}${pbadge}${abadge}</div></div></div>`;
+    const rowClass=[
+      'vrow',
+      curVId===v.id?'active':'',
+      v.distratada?'vrow-distrato':'vrow-ativa',
+      atraso&&atraso.tipo==='atrasada'?'vrow-atrasada':''
+    ].filter(Boolean).join(' ');
+    return`<div class="${rowClass}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav ${v.distratada?'vav-distrato':'vav-ativa'}">${ini(v.cliente)}</div><div class="vmeta"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div class="vbadges">${statusBadge}<span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${pbadge}${abadge}</div></div></div>`;
   }).join('');
   if(typeof showVDetail==='function'&&curVId) showVDetail(curVId);
 }

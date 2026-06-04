@@ -19,12 +19,17 @@ const AG_SITUACAO_AGENDADO = AG_SITUACOES[0];
 const AG_SITUACAO_CONCLUIDA = AG_SITUACOES[1];
 const AG_SITUACAO_REAGENDADO = AG_SITUACOES[2];
 const AG_SITUACAO_CANCELADO = AG_SITUACOES[3];
+const AG_DATA_MIN_OPERACIONAL = '2020-01-01';
+const AG_DATA_MAX_OPERACIONAL = '2035-12-31';
 let agTratativaFila = [];
 let agTratativaAtualId = 0;
 let agTratativaSelecao = '';
 let agTratativaModo = '';
 let agPendenciaTimer = null;
 let agPendenciaEventosRegistrados = false;
+const AG_REFRESH_INTERVAL_MS = 60000;
+const AG_REFRESH_COOLDOWN_MS = 15000;
+let agUltimaTentativaRecargaEm = 0;
 
 zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
 zSetState('state.ui.agMesRef', agMesRef);
@@ -181,8 +186,24 @@ function agIsoFromDate(ref) {
   return `${ref.getFullYear()}-${pad2(ref.getMonth() + 1)}-${pad2(ref.getDate())}`;
 }
 
+function agDataPartesIso(valor) {
+  const texto = String(valor || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return null;
+  const [ano, mes, dia] = texto.split('-').map(Number);
+  const ref = new Date(ano, mes - 1, dia, 12, 0, 0, 0);
+  if (Number.isNaN(ref.getTime())) return null;
+  if (ref.getFullYear() !== ano || (ref.getMonth() + 1) !== mes || ref.getDate() !== dia) return null;
+  return { texto, ano, mes, dia, ref };
+}
+
 function agDataValidaIso(valor) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '').trim());
+  return !!agDataPartesIso(valor);
+}
+
+function agDataOperacionalValida(valor) {
+  const partes = agDataPartesIso(valor);
+  if (!partes) return false;
+  return partes.texto >= AG_DATA_MIN_OPERACIONAL && partes.texto <= AG_DATA_MAX_OPERACIONAL;
 }
 
 function agHoraNormalizada(valor) {
@@ -193,11 +214,11 @@ function agHoraNormalizada(valor) {
 }
 
 function agDataHoraRef(dataIso, hora) {
-  if (!agDataValidaIso(dataIso)) return null;
-  const [ano, mes, dia] = dataIso.split('-').map(Number);
+  const partes = agDataPartesIso(dataIso);
+  if (!partes) return null;
   const horaBase = agHoraNormalizada(hora) || '12:00';
   const [h, m] = horaBase.split(':').map(Number);
-  const ref = new Date(ano, mes - 1, dia, h, m, 0, 0);
+  const ref = new Date(partes.ano, partes.mes - 1, partes.dia, h, m, 0, 0);
   return Number.isNaN(ref.getTime()) ? null : ref;
 }
 
@@ -485,6 +506,55 @@ function agCompartilhamentoDisponivel() {
 
 function agMutacaoBloqueada() {
   return !agCompartilhamentoDisponivel();
+}
+
+function agModuloVisivel() {
+  const modulo = document.getElementById('mod-agendamentos');
+  return !!(modulo && !modulo.classList.contains('hidden'));
+}
+
+async function agAtualizarDadosCompartilhados(opcoes = {}) {
+  const telaLogin = document.getElementById('login-screen');
+  if (!usuarioLogado || (telaLogin && !telaLogin.classList.contains('hidden'))) {
+    return { ignorado: true, motivo: 'sessao' };
+  }
+  if (typeof recarregarAgendamentosCompartilhados !== 'function') {
+    return { ignorado: true, motivo: 'indisponivel' };
+  }
+
+  const cooldownInformado = parseInt(opcoes.cooldownMs, 10);
+  const cooldownMs = Number.isFinite(cooldownInformado) ? Math.max(0, cooldownInformado) : AG_REFRESH_COOLDOWN_MS;
+  const agora = Date.now();
+  if (!opcoes.forcar && agUltimaTentativaRecargaEm && (agora - agUltimaTentativaRecargaEm) < cooldownMs) {
+    return { ignorado: true, motivo: 'cooldown' };
+  }
+
+  agUltimaTentativaRecargaEm = agora;
+  return recarregarAgendamentosCompartilhados({
+    salvarCache: opcoes.salvarCache !== false,
+    renderizar: opcoes.renderizar !== false && agModuloVisivel(),
+    renderizarDashboard: opcoes.renderizarDashboard !== false,
+    atualizarNotificacoes: opcoes.atualizarNotificacoes !== false
+  });
+}
+
+function agAtualizarDadosCompartilhadosEmSegundoPlano(opcoes = {}) {
+  agAtualizarDadosCompartilhados(opcoes).catch(error => {
+    console.warn('Falha ao recarregar agenda compartilhada:', error && error.message ? error.message : error);
+  });
+}
+
+function agMonitorarAgendaCompartilhada(opcoes = {}) {
+  const opcoesTratativa = opcoes.forcarPendencias ? { forcar: true } : {};
+  agAtualizarDadosCompartilhados(opcoes)
+    .catch(error => {
+      console.warn('Falha ao atualizar agenda compartilhada:', error && error.message ? error.message : error);
+    })
+    .finally(() => {
+      if (opcoes.verificarPendencias !== false) {
+        verificarPendenciasAgendamento(opcoesTratativa);
+      }
+    });
 }
 
 function agPendentesSyncLista() {
@@ -1288,12 +1358,32 @@ function verificarPendenciasAgendamento(opcoes = {}) {
 
 function iniciarMonitorTratativaAgendamento() {
   encerrarMonitorTratativaAgendamento();
-  verificarPendenciasAgendamento({ forcar: true });
-  agPendenciaTimer = window.setInterval(() => verificarPendenciasAgendamento(), 60000);
+  agMonitorarAgendaCompartilhada({
+    forcar: true,
+    renderizar: agModuloVisivel(),
+    verificarPendencias: true,
+    forcarPendencias: true
+  });
+  agPendenciaTimer = window.setInterval(() => {
+    agMonitorarAgendaCompartilhada({
+      renderizar: agModuloVisivel(),
+      verificarPendencias: true
+    });
+  }, AG_REFRESH_INTERVAL_MS);
   if (!agPendenciaEventosRegistrados) {
-    window.addEventListener('focus', () => verificarPendenciasAgendamento());
+    window.addEventListener('focus', () => {
+      agMonitorarAgendaCompartilhada({
+        renderizar: agModuloVisivel(),
+        verificarPendencias: true
+      });
+    });
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) verificarPendenciasAgendamento();
+      if (!document.hidden) {
+        agMonitorarAgendaCompartilhada({
+          renderizar: agModuloVisivel(),
+          verificarPendencias: true
+        });
+      }
     });
     agPendenciaEventosRegistrados = true;
   }
@@ -1342,6 +1432,10 @@ async function confirmarTratativaAgendamento() {
   if (agTratativaSelecao === AG_SITUACAO_REAGENDADO) {
     const novaData = document.getElementById('agt-nova-data') ? document.getElementById('agt-nova-data').value : '';
     const novoHorario = document.getElementById('agt-novo-horario') ? agHoraNormalizada(document.getElementById('agt-novo-horario').value) : '';
+    if (!agDataOperacionalValida(novaData)) {
+      showToast('âš ï¸', 'Informe uma nova data valida para o reagendamento.');
+      return;
+    }
     const novoRef = agDataHoraRef(novaData, novoHorario);
     if (!novoRef) {
       showToast('⚠️', 'Informe a nova data e horário do reagendamento.');
@@ -1450,6 +1544,12 @@ async function confirmarTratativaAgendamento() {
 function renderAgendamentos() {
   const cont = document.getElementById('agendamentos-content');
   if (!cont) return;
+  if (agModuloVisivel()) {
+    agAtualizarDadosCompartilhadosEmSegundoPlano({
+      cooldownMs: AG_REFRESH_COOLDOWN_MS,
+      renderizar: true
+    });
+  }
 
   const syncInfo = agStatusSyncInfo();
   const pendentesSync = agPendentesSyncLista();
@@ -2104,6 +2204,18 @@ async function salvarAgendamento() {
 
 const salvarAgendamentoOriginal = salvarAgendamento;
 salvarAgendamento = async function salvarAgendamentoComTelefoneObrigatorio() {
+  const preenchimentoInput = document.getElementById('ma-preenchimento');
+  const dataInput = document.getElementById('ma-data');
+  if (preenchimentoInput && !agDataOperacionalValida(preenchimentoInput.value)) {
+    showToast('!', 'Informe uma data de preenchimento valida.');
+    preenchimentoInput.focus();
+    return;
+  }
+  if (dataInput && !agDataOperacionalValida(dataInput.value)) {
+    showToast('!', 'Informe uma data do compromisso valida.');
+    dataInput.focus();
+    return;
+  }
   const telefoneInput = document.getElementById('ma-telefone');
   if (telefoneInput) {
     telefoneInput.value = agFormatarTelefone(telefoneInput.value);

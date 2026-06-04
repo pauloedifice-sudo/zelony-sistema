@@ -83,6 +83,78 @@ function labelSituacaoCarteira(valor) {
   return mapa[valor] || 'Visão completa';
 }
 
+function descricaoSituacaoCarteira(valor) {
+  const mapa = {
+    todos: 'ReÃºne toda a carteira lanÃ§ada para leitura executiva do funil completo.',
+    ativas: 'Mostra apenas as vendas vivas, preservadas e ainda relevantes para retenÃ§Ã£o.',
+    concluidas: 'Foca apenas nas vendas jÃ¡ concluÃ­das dentro da carteira ativa.',
+    andamento: 'Isola o pipeline que ainda depende de produÃ§Ã£o operacional e acompanhamento.',
+    distratos: 'Exibe apenas as vendas perdidas para leitura de cancelamentos e impacto.'
+  };
+  return mapa[valor] || mapa.todos;
+}
+
+function resumoTabelaCarteira(situacao, visiveis, dados, analiseAtivas, analiseAndamento, analiseDistratos) {
+  const mapa = {
+    todos: {
+      kicker: 'Mapa executivo',
+      title: 'Tudo que entrou na carteira neste recorte',
+      copy: 'Mistura concluidas, pipeline e distratos na mesma leitura para acompanhar o que virou resultado, o que ainda depende do time e o que ja se perdeu.',
+      pills: [
+        { label: 'Recorte', value: `${visiveis.length} venda${visiveis.length !== 1 ? 's' : ''}` },
+        { label: 'Concluidas', value: `${dados.concluidas.length}` },
+        { label: 'Em andamento', value: `${dados.emAndamento.length}` },
+        { label: 'Distratos', value: `${dados.distratadas.length}` }
+      ]
+    },
+    ativas: {
+      kicker: 'Carteira viva',
+      title: 'Base preservada e ainda relevante para resultado',
+      copy: 'A tabela abaixo mantem o foco nas vendas nao distratadas para leitura de retencao, pipeline e receita ainda viva.',
+      pills: [
+        { label: 'Ativas', value: `${analiseAtivas.totalAtivas}` },
+        { label: 'Concluidas ativas', value: `${analiseAtivas.totalConcluidas}` },
+        { label: 'Pipeline', value: `${analiseAtivas.totalEmAndamento}` },
+        { label: 'Com. ativa', value: fmtK(analiseAtivas.comissaoAtiva) }
+      ]
+    },
+    concluidas: {
+      kicker: 'Base concluida',
+      title: 'Vendas fechadas dentro da carteira ativa',
+      copy: 'Leitura concentrada apenas nas vendas que ja chegaram em comissao recebida, preservando o historico comercial do recorte.',
+      pills: [
+        { label: 'Concluidas', value: `${dados.concluidas.length}` },
+        { label: 'Taxa ativa', value: fmtPctCarteira(analiseAtivas.taxaConclusaoAtiva) },
+        { label: 'Ciclo medio', value: carteiraFmtDias(analiseAtivas.diasMediosConclusao) },
+        { label: 'Lucro Zelony', value: fmtK(dados.zelony) }
+      ]
+    },
+    andamento: {
+      kicker: 'Base operacional',
+      title: 'Pipeline que ainda depende de acompanhamento',
+      copy: 'Aqui ficam apenas as vendas abertas, com foco em prazo, etapa e volume financeiro que ainda precisa rodar para virar caixa.',
+      pills: [
+        { label: 'Abertas', value: `${analiseAndamento.totalEmAndamento}` },
+        { label: 'Atrasadas', value: `${analiseAndamento.atrasadas}` },
+        { label: 'Pendencias', value: `${analiseAndamento.pendenciasAbertas}` },
+        { label: 'Com. potencial', value: fmtK(analiseAndamento.comissaoPotencial) }
+      ]
+    },
+    distratos: {
+      kicker: 'Base critica',
+      title: 'Vendas distratadas do recorte',
+      copy: 'Todas as linhas abaixo representam perdas confirmadas. A leitura agora prioriza impacto financeiro, etapa do cancelamento e sinais para correcao rapida.',
+      pills: [
+        { label: 'Distratos', value: `${analiseDistratos.totalDistratos}` },
+        { label: 'Taxa', value: fmtPctCarteira(analiseDistratos.taxaDistrato) },
+        { label: 'Com. perdida', value: fmtK(analiseDistratos.comissaoPerdida) },
+        { label: 'Lucro perdido', value: fmtK(analiseDistratos.lucroPerdido) }
+      ]
+    }
+  };
+  return mapa[situacao] || mapa.todos;
+}
+
 function fmtPctCarteira(valor) {
   return `${Number(valor || 0).toFixed(1).replace('.', ',')}%`;
 }
@@ -2687,7 +2759,7 @@ function renderCarteiraTabelaRows(lista, cols) {
         ? `<span class="cart-status-pill success">${zUiText('Concluída')}</span>`
         : `<span class="cart-status-pill warn">${zUiText('Pipeline')}</span>`;
 
-    return `<tr class="${v.distratada ? 'cart-row-distrato' : 'cart-row-normal'}" style="${v.distratada ? 'opacity:0.62;background:#FEF8F6;' : ''}">${cols.map(c => {
+    return `<tr class="${v.distratada ? 'cart-row-distrato' : 'cart-row-normal'}">${cols.map(c => {
       if (c === 'data') return `<td>${zUiText(v.data)}</td>`;
       if (c === 'cliente') return `<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${zUiText(clienteVendaTexto(v.cliente) || '—')}</td>`;
       if (c === 'produto') return `<td>${zUiText(v.produto)}</td>`;
@@ -2845,6 +2917,14 @@ function renderCarteira() {
             : 'Leitura por mês de lançamento. A barra acompanha a taxa de distrato da coorte.'
         })
       : '';
+    const tabelaResumo = resumoTabelaCarteira(
+      carteiraFiltros.situacao,
+      visiveis,
+      dados,
+      analiseAtivas,
+      analiseAndamento,
+      analiseDistratos
+    );
     const alertas = [];
 
     if (dados.distratadas.length) {
@@ -3014,12 +3094,22 @@ function renderCarteira() {
         </div>
       </div>
 
+      <div class="cart-quick-shell">
+        <div class="cart-quick-head">
+          <div class="cart-quick-head-copy">
+            <div class="cart-quick-kicker">${zUiText('Navegação da carteira')}</div>
+            <div class="cart-quick-current">${zUiText('Visão atual')}: <strong>${zUiText(labelSituacaoCarteira(carteiraFiltros.situacao))}</strong></div>
+            <div class="cart-quick-copy">${zUiText(descricaoSituacaoCarteira(carteiraFiltros.situacao))}</div>
+          </div>
+          <div class="cart-quick-badge">${zUiText(`${visiveis.length} venda${visiveis.length !== 1 ? 's' : ''}`)}</div>
+        </div>
       <div class="cart-quick">
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'todos' ? 'active' : ''}" onclick="setCarteiraSituacao('todos')">${zUiText('Todas')} <span>${baseSemSituacao.length}</span></button>
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'ativas' ? 'active' : ''}" onclick="setCarteiraSituacao('ativas')">${zUiText('Ativas')} <span>${chips.ativas.length}</span></button>
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'concluidas' ? 'active' : ''}" onclick="setCarteiraSituacao('concluidas')">${zUiText('Concluídas')} <span>${chips.concluidas.length}</span></button>
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'andamento' ? 'active' : ''}" onclick="setCarteiraSituacao('andamento')">${zUiText('Em andamento')} <span>${chips.emAndamento.length}</span></button>
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'distratos' ? 'active danger' : ''}" onclick="setCarteiraSituacao('distratos')">${zUiText('Distratos')} <span>${chips.distratadas.length}</span></button>
+      </div>
       </div>
 
       ${ativasBoard}
@@ -3169,11 +3259,22 @@ function renderCarteira() {
         ` : ''}
       </div>
 
-      <div class="ctbl cart-detail-table">
-        <div class="ctbl-h">
-          <span class="ctbl-t">${zUiText('Detalhe por venda')}</span>
+      <div class="ctbl cart-detail-table cart-detail-table--${carteiraFiltros.situacao}">
+        <div class="ctbl-h cart-table-head">
+          <div class="cart-table-context">
+            <div class="cart-table-kicker">${zUiText(tabelaResumo.kicker)}</div>
+            <span class="ctbl-t cart-table-title">${zUiText(tabelaResumo.title)}</span>
+            <div class="cart-table-copy">${zUiText(tabelaResumo.copy)}</div>
+          </div>
           <div class="cart-table-tools">
-            <span>${zUiText(`${visiveis.length} venda${visiveis.length !== 1 ? 's' : ''}`)}</span>
+            <div class="cart-table-pills">
+              ${tabelaResumo.pills.map(item => `
+                <span class="cart-table-pill">
+                  <small>${zUiText(item.label)}</small>
+                  <strong>${zUiText(item.value)}</strong>
+                </span>
+              `).join('')}
+            </div>
             <span>${zUiText(labelSituacaoCarteira(carteiraFiltros.situacao))}</span>
           </div>
         </div>
