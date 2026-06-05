@@ -29,7 +29,9 @@ let agPendenciaTimer = null;
 let agPendenciaEventosRegistrados = false;
 const AG_REFRESH_INTERVAL_MS = 60000;
 const AG_REFRESH_COOLDOWN_MS = 15000;
+const AG_TRATATIVA_BLOQUEIO_AVISO_MS = 45000;
 let agUltimaTentativaRecargaEm = 0;
+let agUltimoAvisoTratativaBloqueadaEm = 0;
 
 zSetState('state.ui.nextAgendamentoId', nextAgendamentoId);
 zSetState('state.ui.agMesRef', agMesRef);
@@ -296,9 +298,15 @@ function agMomentoLimiteTratativa(item) {
   return new Date(base.getTime() + (30 * 60 * 1000));
 }
 
+function agPodeReceberTratativaObrigatoria(item, usuario = usuarioLogado) {
+  if (!item || !usuario) return false;
+  if (!agendamentoVisivel(item)) return false;
+  if (agSituacao(item) !== AG_SITUACAO_AGENDADO) return false;
+  return agMesmoLancador(item, usuario);
+}
+
 function agTratativaPendente(item) {
-  if (!item || agSituacao(item) !== 'Agendado') return false;
-  if (!agMesmoLancador(item)) return false;
+  if (!agPodeReceberTratativaObrigatoria(item)) return false;
   const limite = agMomentoLimiteTratativa(item);
   if (!limite) return false;
   return Date.now() >= limite.getTime();
@@ -341,17 +349,17 @@ function agMesmoUsuario(alvo, usuario = usuarioLogado) {
 
 function agMesmoLancador(item, usuario = usuarioLogado) {
   if (!item || !usuario) return false;
-  const lancadorId = parseInt(item.criadoPorId, 10) || 0;
-  const usuarioId = parseInt(usuario.id, 10) || 0;
-  if (lancadorId && usuarioId && lancadorId === usuarioId) return true;
-
   const lancadorEmail = agTexto(item.criadoPorEmail).toLowerCase();
   const usuarioEmail = agTexto(usuario.email).toLowerCase();
-  if (lancadorEmail && usuarioEmail && lancadorEmail === usuarioEmail) return true;
+  if (lancadorEmail && usuarioEmail) return lancadorEmail === usuarioEmail;
 
   const lancadorNome = agNormalizarTexto(item.criadoPor);
   const usuarioNome = agNormalizarTexto(usuario.nome);
-  return !!(lancadorNome && usuarioNome && lancadorNome === usuarioNome);
+  if (lancadorNome && usuarioNome) return lancadorNome === usuarioNome;
+
+  const lancadorId = parseInt(item.criadoPorId, 10) || 0;
+  const usuarioId = parseInt(usuario.id, 10) || 0;
+  return !!(lancadorId && usuarioId && lancadorId === usuarioId);
 }
 
 function agPodeTratarManual(item, usuario = usuarioLogado) {
@@ -506,6 +514,17 @@ function agCompartilhamentoDisponivel() {
 
 function agMutacaoBloqueada() {
   return !agCompartilhamentoDisponivel();
+}
+
+function agAvisarTratativaBloqueada() {
+  const agora = Date.now();
+  if (agUltimoAvisoTratativaBloqueadaEm && (agora - agUltimoAvisoTratativaBloqueadaEm) < AG_TRATATIVA_BLOQUEIO_AVISO_MS) return;
+  agUltimoAvisoTratativaBloqueadaEm = agora;
+
+  const info = agStatusSyncInfo();
+  showToast('ALERTA', info.tabelaAusente
+    ? 'Existe uma tratativa pendente, mas a base compartilhada de agendamentos ainda nao esta disponivel. A navegacao foi liberada para nao prender voce nessa tela.'
+    : 'Existe uma tratativa pendente, mas a sincronizacao dos agendamentos esta indisponivel agora. A navegacao foi liberada para nao prender voce nessa tela.');
 }
 
 function agModuloVisivel() {
@@ -1258,6 +1277,10 @@ function renderTratativaAgendamentoModal() {
 
 function abrirTratativaAgendamentoModal(item, opcoes = {}) {
   if (!item) return;
+  if (opcoes.modo === 'obrigatoria' && agMutacaoBloqueada()) {
+    agAvisarTratativaBloqueada();
+    return;
+  }
   agAtualizarFilaTratativa();
   agTratativaModo = opcoes.modo === 'obrigatoria' ? 'obrigatoria' : 'manual';
   agTratativaAtualId = item.id;
@@ -1351,8 +1374,24 @@ function verificarPendenciasAgendamento(opcoes = {}) {
     return;
   }
 
+  if (agMutacaoBloqueada()) {
+    agTratativaAtualId = 0;
+    agTratativaSelecao = '';
+    agTratativaModo = '';
+    zSetState('state.ui.agTratativaAtualId', agTratativaAtualId);
+    zSetState('state.ui.agTratativaSelecao', agTratativaSelecao);
+    zSetState('state.ui.agTratativaModo', agTratativaModo);
+    fecharTratativaAgendamentoModal(true);
+    agAvisarTratativaBloqueada();
+    return;
+  }
+
   if (temTratativaAgendamentoObrigatoriaAberta() && !opcoes.forcar) return;
   const atual = (Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).find(item => item.id === fila[0]);
+  if (!atual || !agPodeReceberTratativaObrigatoria(atual)) {
+    fecharTratativaAgendamentoModal(true);
+    return;
+  }
   if (atual) abrirTratativaAgendamentoModal(atual, { modo: 'obrigatoria' });
 }
 
@@ -1394,6 +1433,7 @@ function encerrarMonitorTratativaAgendamento() {
     window.clearInterval(agPendenciaTimer);
     agPendenciaTimer = null;
   }
+  agUltimoAvisoTratativaBloqueadaEm = 0;
   agTratativaFila = [];
   agTratativaAtualId = 0;
   agTratativaSelecao = '';

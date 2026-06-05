@@ -67,6 +67,23 @@ function ocultarTelaLogin() {
   ls.classList.add('hidden');
 }
 
+function forcarDashboardInicial() {
+  curVId = null;
+  zSetState('state.ui.curVId', curVId);
+  const btnDashboard = document.getElementById('sb-dashboard');
+  if (typeof setMod === 'function') {
+    setMod('dashboard', btnDashboard || undefined);
+    return;
+  }
+  ['carteira','vendas','dashboard','agendamentos','trein','documentos','proc','usuarios','financeiro']
+    .forEach(x => document.getElementById('mod-' + x)?.classList.add('hidden'));
+  document.getElementById('mod-dashboard')?.classList.remove('hidden');
+  document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
+  if (btnDashboard) btnDashboard.classList.add('active');
+  const titulo = document.getElementById('pg-title');
+  if (titulo) titulo.textContent = zUiText('Dashboard');
+}
+
 function aplicarSessaoUsuario(usuario) {
   usuarioLogado = usuario;
   const rv = getPerfil(usuario.perfil);
@@ -149,8 +166,9 @@ function fazerLogin() {
       return showErr('Nao foi possivel carregar os dados do sistema. Tente novamente em instantes.');
     }
 
-    ocultarTelaLogin();
     if (typeof iniciarApp === 'function') iniciarApp();
+    forcarDashboardInicial();
+    ocultarTelaLogin();
     atualizarBadgeNotificacoes();
     if (typeof iniciarMonitorTratativaAgendamento === 'function') iniciarMonitorTratativaAgendamento();
     resetBtn();
@@ -169,6 +187,7 @@ function fazerLogout() {
   atualizarBadgeNotificacoes();
   if (typeof encerrarMonitorTratativaAgendamento === 'function') encerrarMonitorTratativaAgendamento();
   if (typeof limparDetalheVenda === 'function') limparDetalheVenda();
+  forcarDashboardInicial();
   mostrarTelaLogin();
   document.getElementById('lg-email').value = '';
   document.getElementById('lg-senha').value = '';
@@ -182,6 +201,7 @@ function restaurarSessao() {
   role = 'cor';
   zSetState('state.auth.role', role);
   zSetState('state.auth.usuarioLogado', usuarioLogado);
+  forcarDashboardInicial();
   return false;
 }
 
