@@ -1162,6 +1162,15 @@ async function confirmAv(){
     if(!document.getElementById('mod-carteira').classList.contains('hidden')) renderCarteira();
     if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
     showToast(zUiText('✅'),zUiText(`Etapa atualizada para ${ETAPAS[v.etapa]}.`));
+    if(typeof dispararNotificacaoEvolucaoVendaZapi==='function'){
+      dispararNotificacaoEvolucaoVendaZapi({
+        vendaId:v.id,
+        vendaRefLocal:v.refLocal||'',
+        etapaAnterior:original.etapa,
+        etapaNova:v.etapa,
+        responsavel:quemAvancou
+      },{avisar:true}).catch(err=>console.warn('Falha na notificacao Z-API da venda:',err));
+    }
   }catch(e){
     Object.assign(v,original);
     if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
