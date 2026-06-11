@@ -2,11 +2,11 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { createServiceClient } from "../_shared/supabase.ts";
 import {
   ETAPAS_VENDA,
-  buildStageMessage,
+  buildNotificationMessage,
   dedupeRecipients,
   namesMatch,
   normalizePhoneToZapi,
-  normalizeText,
+  resolveNotificationEventType,
   statusUsuarioAtivo,
 } from "../_shared/zapi.ts";
 
@@ -17,9 +17,22 @@ type VendaRecord = {
   produto?: string | null;
   unidade?: string | null;
   corretor?: string | null;
+  capitao?: string | null;
   gerente?: string | null;
   diretor?: string | null;
   diretor2?: string | null;
+  valor?: number | null;
+  pct?: number | null;
+  imp?: number | null;
+  pct_cor?: number | null;
+  pct_cap?: number | null;
+  pct_ger?: number | null;
+  pct_dir?: number | null;
+  pct_dir2?: number | null;
+  bonus?: number | null;
+  bonus_pct_dir?: number | null;
+  bonus_pct_ger?: number | null;
+  bonus_pct_cor?: number | null;
   etapa?: number | null;
   hist?: Array<Record<string, unknown>> | null;
   distratada?: boolean | null;
@@ -31,6 +44,15 @@ type UsuarioRecord = {
   perfil?: string | null;
   status?: string | null;
   tel?: string | null;
+};
+
+type RecipientCandidate = {
+  papel: string;
+  destinatario_usuario_id?: number | null;
+  destinatario_nome: string;
+  destinatario_perfil?: string | null;
+  telefone_bruto?: string | null;
+  status_usuario?: string | null;
 };
 
 function getEnvOrThrow(name: string) {
@@ -55,7 +77,7 @@ function findUserByName(users: UsuarioRecord[], name: unknown) {
 }
 
 function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
-  const recipients: Array<Record<string, unknown>> = [];
+  const recipients: RecipientCandidate[] = [];
   const corretorRefId = latestCorretorRefId(venda);
   const corretorUsuario = corretorRefId
     ? users.find((user) => Number(user.id) === corretorRefId) || null
@@ -68,6 +90,17 @@ function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
       destinatario_perfil: corretorUsuario.perfil || "",
       telefone_bruto: corretorUsuario.tel || "",
       status_usuario: corretorUsuario.status || "",
+    });
+  }
+  const capitaoUsuario = findUserByName(users, venda.capitao);
+  if (capitaoUsuario) {
+    recipients.push({
+      papel: "capitao",
+      destinatario_usuario_id: capitaoUsuario.id,
+      destinatario_nome: capitaoUsuario.nome,
+      destinatario_perfil: capitaoUsuario.perfil || "",
+      telefone_bruto: capitaoUsuario.tel || "",
+      status_usuario: capitaoUsuario.status || "",
     });
   }
   const gerenteUsuario = findUserByName(users, venda.gerente);
@@ -128,10 +161,11 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "etapaNova inválida." }, { status: 400 });
     }
 
+    const tipoEvento = resolveNotificationEventType(body?.tipoEvento, etapaNova);
     const supabase = createServiceClient();
     const { data: venda, error: vendaError } = await supabase
       .from("vendas")
-      .select("id,ref_local,cliente,produto,unidade,corretor,gerente,diretor,diretor2,etapa,hist,distratada")
+      .select("id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada")
       .eq("id", vendaId)
       .single();
 
@@ -158,9 +192,11 @@ Deno.serve(async (req) => {
     const apiBase = `https://api.z-api.io/instances/${instanceId}/token/${token}`;
 
     const etapaAnteriorFinal = Number.isFinite(etapaAnterior) ? etapaAnterior : Math.max(0, etapaNova - 1);
-    const etapaAnteriorNome = ETAPAS_VENDA[etapaAnteriorFinal] || `Etapa ${etapaAnteriorFinal}`;
+    const etapaAnteriorPersistida = tipoEvento === "cadastro_venda" ? null : etapaAnteriorFinal;
+    const etapaAnteriorNome = tipoEvento === "cadastro_venda"
+      ? "Cadastro"
+      : ETAPAS_VENDA[etapaAnteriorFinal] || `Etapa ${etapaAnteriorFinal}`;
     const etapaNovaNome = ETAPAS_VENDA[etapaNova] || `Etapa ${etapaNova}`;
-    const message = buildStageMessage(venda as unknown as Record<string, unknown>, etapaAnteriorFinal, etapaNova, responsavel);
 
     const rawRecipients = buildRecipientCandidates(venda, users as UsuarioRecord[]);
     const normalizedRecipients = rawRecipients.map((item) => ({
@@ -172,7 +208,8 @@ Deno.serve(async (req) => {
     const summary = {
       ok: true,
       vendaId,
-      etapaAnterior: etapaAnteriorFinal,
+      tipoEvento,
+      etapaAnterior: etapaAnteriorPersistida,
       etapaNova,
       etapaAnteriorNome,
       etapaNovaNome,
@@ -183,10 +220,19 @@ Deno.serve(async (req) => {
     };
 
     for (const item of normalizedRecipients.filter((entry) => !entry.phone)) {
+      const papeisItem = item.papel ? [item.papel] : [];
+      const message = buildNotificationMessage({
+        venda: venda as unknown as Record<string, unknown>,
+        recipient: item as unknown as Record<string, unknown>,
+        etapaAnterior: etapaAnteriorFinal,
+        etapaNova,
+        responsavel,
+        tipoEvento,
+      });
       await supabase.from("venda_notificacoes_zapi").insert({
         venda_id: venda.id,
         venda_ref_local: venda.ref_local || null,
-        etapa_anterior: etapaAnteriorFinal,
+        etapa_anterior: etapaAnteriorPersistida,
         etapa_anterior_nome: etapaAnteriorNome,
         etapa_nova: etapaNova,
         etapa_nova_nome: etapaNovaNome,
@@ -195,7 +241,7 @@ Deno.serve(async (req) => {
         destinatario_nome: item.destinatario_nome || "Responsável sem telefone",
         destinatario_perfil: item.destinatario_perfil || null,
         destinatario_papel: item.papel || "desconhecido",
-        destinatario_papeis: item.papeis || (item.papel ? [item.papel] : []),
+        destinatario_papeis: papeisItem,
         telefone_bruto: item.telefone_bruto || null,
         telefone_e164: null,
         mensagem: message,
@@ -209,13 +255,21 @@ Deno.serve(async (req) => {
     for (const recipient of recipients) {
       const active = statusUsuarioAtivo(recipient.status_usuario);
       const papelPrincipal = String(recipient.papeis?.[0] || recipient.papel || "responsavel");
-      const dedupeKey = `venda:${venda.id}|etapa:${etapaNova}|phone:${recipient.phone}`;
+      const dedupeKey = `venda:${venda.id}|evento:${tipoEvento}|etapa:${etapaNova}|phone:${recipient.phone}`;
+      const message = buildNotificationMessage({
+        venda: venda as unknown as Record<string, unknown>,
+        recipient: recipient as unknown as Record<string, unknown>,
+        etapaAnterior: etapaAnteriorFinal,
+        etapaNova,
+        responsavel,
+        tipoEvento,
+      });
 
       if (!active) {
         await supabase.from("venda_notificacoes_zapi").upsert({
           venda_id: venda.id,
           venda_ref_local: venda.ref_local || null,
-          etapa_anterior: etapaAnteriorFinal,
+          etapa_anterior: etapaAnteriorPersistida,
           etapa_anterior_nome: etapaAnteriorNome,
           etapa_nova: etapaNova,
           etapa_nova_nome: etapaNovaNome,
@@ -285,7 +339,7 @@ Deno.serve(async (req) => {
         await supabase.from("venda_notificacoes_zapi").insert({
           venda_id: venda.id,
           venda_ref_local: venda.ref_local || null,
-          etapa_anterior: etapaAnteriorFinal,
+          etapa_anterior: etapaAnteriorPersistida,
           etapa_anterior_nome: etapaAnteriorNome,
           etapa_nova: etapaNova,
           etapa_nova_nome: etapaNovaNome,
@@ -319,7 +373,7 @@ Deno.serve(async (req) => {
       await supabase.from("venda_notificacoes_zapi").insert({
         venda_id: venda.id,
         venda_ref_local: venda.ref_local || null,
-        etapa_anterior: etapaAnteriorFinal,
+        etapa_anterior: etapaAnteriorPersistida,
         etapa_anterior_nome: etapaAnteriorNome,
         etapa_nova: etapaNova,
         etapa_nova_nome: etapaNovaNome,

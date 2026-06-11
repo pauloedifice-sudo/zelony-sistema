@@ -391,7 +391,7 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M11 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg>
         Minha Carteira
       </button>
-      <button class="sb-item" onclick="setMod('vendas',this)">
+      <button class="sb-item" id="sb-vendas" onclick="setMod('vendas',this)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12l4-4 3 3 5-6"/><circle cx="14" cy="5" r="1.5" fill="currentColor" stroke="none"/></svg>
         Vendas / Comissão
       </button>
@@ -411,6 +411,10 @@
       </button>
     </div>
     <div class="sb-group">
+      <button class="sb-item" id="sb-envios" onclick="setMod('envios',this)" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 4.5h11a1 1 0 011 1v5a1 1 0 01-1 1h-11a1 1 0 01-1-1v-5a1 1 0 011-1z"/><path d="M3 6l5 3 5-3"/><path d="M11.5 2.5h2M12.5 1.5v2"/></svg>
+        Envios WhatsApp
+      </button>
       <button class="sb-item" onclick="setMod('usuarios',this)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-3 2-4.5 5-4.5s5 1.5 5 4.5"/><circle cx="12" cy="5" r="2"/><path d="M11.5 8.5c1.5 0 3 .8 3 3.5"/></svg>
         Usuários
@@ -1030,6 +1034,10 @@
       <div id="agendamentos-content" style="flex:1;display:flex;overflow:hidden;"></div>
     </div>
 
+    <div class="page hidden" id="mod-envios">
+      <div id="envios-content" style="flex:1;display:flex;overflow:hidden;"></div>
+    </div>
+
     <div class="page hidden" id="mod-documentos">
       <div class="docs-wrap" id="documentos-content"></div>
     </div>
@@ -1349,15 +1357,17 @@
 <script src="js/financeiro.js"></script>
 <!-- 7. Dashboard: resultado de vendas em tempo real -->
 <script src="js/dashboard.js"></script>
-<!-- 8. Treinamentos + Processos Operacionais -->
+<!-- 8. Envios WhatsApp: monitor da integracao Z-API -->
+<script src="js/envios.js"></script>
+<!-- 9. Treinamentos + Processos Operacionais -->
 <script src="js/treinamentos.js"></script>
-<!-- 9. Documentos: biblioteca de PDFs, visualizacao e download -->
+<!-- 10. Documentos: biblioteca de PDFs, visualizacao e download -->
 <script src="js/documentos.js"></script>
-<!-- 10. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
+<!-- 11. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
 <script src="js/usuarios.js"></script>
-<!-- 11. Agendamentos: agenda comercial por perfil -->
+<!-- 12. Agendamentos: agenda comercial por perfil -->
 <script src="js/agendamentos.js"></script>
-<!-- 12. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
+<!-- 13. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
 <script src="js/app.js"></script>
 
 <!-- â”€â”€â”€ INICIALIZAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->

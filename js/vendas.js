@@ -1798,6 +1798,15 @@ async function salvarVenda(){
     fecharMV(true);
     renderFiltros(); renderVList(); showVDetail(novaVenda.id);
     showToast(zUiText('✅'),zUiText(`Venda de ${cliente.split(' ')[0]} salva com sucesso!`));
+    if(typeof dispararNotificacaoCadastroVendaZapi==='function'){
+      dispararNotificacaoCadastroVendaZapi({
+        vendaId:novaVenda.id,
+        vendaRefLocal:novaVenda.refLocal||'',
+        etapaAnterior:novaVenda.etapa,
+        etapaNova:novaVenda.etapa,
+        responsavel:RD[role]?.nome||'Sistema'
+      },{avisar:true}).catch(err=>console.warn('Falha na notificacao Z-API do cadastro da venda:',err));
+    }
   }catch(e){
     console.error(e);
     showToast(zUiText('❌'),zUiText('Erro inesperado. Tente novamente.'));

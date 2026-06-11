@@ -212,6 +212,7 @@ function renderizarModulosBaseApp(){
   if(typeof renderProc==='function') renderProc();
   if(!document.getElementById('mod-documentos')?.classList.contains('hidden')&&typeof renderDocumentos==='function') renderDocumentos();
   if(!document.getElementById('mod-agendamentos')?.classList.contains('hidden')&&typeof renderAgendamentos==='function') renderAgendamentos();
+  if(!document.getElementById('mod-envios')?.classList.contains('hidden')&&typeof renderEnvios==='function') renderEnvios();
   if(!document.getElementById('mod-financeiro')?.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
   if(!document.getElementById('mod-dashboard')?.classList.contains('hidden')&&typeof renderDashboard==='function') renderDashboard();
   if(!document.getElementById('mod-usuarios')?.classList.contains('hidden')&&typeof renderUsuarios==='function') renderUsuarios();

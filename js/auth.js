@@ -75,7 +75,7 @@ function forcarDashboardInicial() {
     setMod('dashboard', btnDashboard || undefined);
     return;
   }
-  ['carteira','vendas','dashboard','agendamentos','trein','documentos','proc','usuarios','financeiro']
+  ['carteira','vendas','dashboard','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x)?.classList.add('hidden'));
   document.getElementById('mod-dashboard')?.classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -224,6 +224,8 @@ function atualizarTopbar(usuario, rv) {
   if (rv === 'dono') sel.value = rv;
   const sbFin = document.getElementById('sb-financeiro');
   if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(rv) ? 'flex' : 'none';
+  const sbEnvios = document.getElementById('sb-envios');
+  if (sbEnvios) sbEnvios.style.display = ['dono','dir','fin','rh','ger'].includes(rv) ? 'flex' : 'none';
   document.getElementById('sb-av').textContent    = ini(usuario.nome);
   document.getElementById('sb-uname').textContent = zUiText(nome);
   document.getElementById('sb-urole').textContent = zUiText(perfil);
@@ -236,6 +238,10 @@ function trocaRole() {
   document.getElementById('sb-av').textContent    = d.av;
   document.getElementById('sb-uname').textContent = zUiText(d.nome);
   document.getElementById('sb-urole').textContent = zUiText(d.role);
+  const sbFin = document.getElementById('sb-financeiro');
+  if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(role) ? 'flex' : 'none';
+  const sbEnvios = document.getElementById('sb-envios');
+  if (sbEnvios) sbEnvios.style.display = ['dono','dir','fin','rh','ger'].includes(role) ? 'flex' : 'none';
   if (!document.getElementById('mod-carteira').classList.contains('hidden')) renderCarteira();
   renderFiltros(); renderVList();
   if (curVId) showVDetail(curVId);
@@ -243,6 +249,7 @@ function trocaRole() {
   if (!document.getElementById('mod-trein').classList.contains('hidden')) renderTrein();
   if (!document.getElementById('mod-documentos').classList.contains('hidden')) renderDocumentos();
   if (!document.getElementById('mod-agendamentos').classList.contains('hidden')) renderAgendamentos();
+  if (!document.getElementById('mod-envios').classList.contains('hidden') && typeof renderEnvios === 'function') renderEnvios();
   if (!document.getElementById('mod-dashboard').classList.contains('hidden') && typeof renderDashboard === 'function') renderDashboard();
   if (!document.getElementById('mod-usuarios').classList.contains('hidden')) renderUsuarios();
   atualizarBadgeNotificacoes();
@@ -254,7 +261,7 @@ function trocaRole() {
 const modTitles = {
   carteira:'Minha Carteira', vendas:'Vendas e Comissão',
   dashboard:'Dashboard',
-  agendamentos:'Agendamentos', trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
+  agendamentos:'Agendamentos', envios:'Envios WhatsApp', trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
   usuarios:'Usuários', financeiro:'Financeiro'
 };
 
@@ -291,7 +298,7 @@ window.addEventListener('keydown', e => {
 });
 
 function setMod(m, el) {
-  ['carteira','vendas','dashboard','agendamentos','trein','documentos','proc','usuarios','financeiro']
+  ['carteira','vendas','dashboard','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
   document.getElementById('mod-' + m).classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -302,6 +309,7 @@ function setMod(m, el) {
   if (m === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
   if (m === 'trein')      renderTrein();
   if (m === 'agendamentos') renderAgendamentos();
+  if (m === 'envios' && typeof renderEnvios === 'function') renderEnvios();
   if (m === 'documentos') renderDocumentos();
   if (m === 'proc')       renderProc();
   if (m === 'vendas' && vtab === 'rel') renderRel();

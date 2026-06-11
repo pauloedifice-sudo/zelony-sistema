@@ -1,0 +1,5 @@
+[functions.zapi-webhook-delivery]
+verify_jwt = false
+
+[functions.zapi-webhook-status]
+verify_jwt = false
