@@ -3090,6 +3090,7 @@ function renderCarteira() {
         </div>
         <div class="cart-filter-actions">
           <span>${zUiText(`${visiveis.length} venda${visiveis.length !== 1 ? 's' : ''}`)}</span>
+          ${role === 'dono' && typeof ownerReportButtonHtml === 'function' ? ownerReportButtonHtml() : ''}
           ${filtrosAtivos ? `<button type="button" onclick="resetCarteiraFiltros()">${zUiText('Limpar filtros')}</button>` : ''}
         </div>
       </div>
