@@ -15,7 +15,10 @@ export const ETAPA_COMISSAO_RECEBIDA = ETAPAS_VENDA.length - 1;
 export type ZapiNotificationEventType =
   | "cadastro_venda"
   | "evolucao_etapa"
-  | "comissao_recebida";
+  | "comissao_recebida"
+  | "distrato_venda";
+
+type HistoryRecord = Record<string, unknown>;
 
 export function normalizeText(value: unknown) {
   return String(value || "")
@@ -67,6 +70,16 @@ export function formatMommentToIso(momment: unknown) {
   const value = Number(momment);
   if (!Number.isFinite(value) || value <= 0) return null;
   return new Date(value).toISOString();
+}
+
+export function formatDatePtBr(dateInput: Date | string | number) {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
 }
 
 export function formatDateTimePtBr(dateInput: Date | string | number) {
@@ -184,10 +197,62 @@ function buildGreeting(recipient: Record<string, unknown>) {
   return nome ? `Olá, ${nome}!` : "Olá!";
 }
 
+function parseHistoryMoment(hist: unknown, preferTs = true) {
+  if (!hist || typeof hist !== "object") return null;
+  const history = hist as HistoryRecord;
+  let infoTs: { date: Date; precision: "datetime" } | null = null;
+  let infoData: { date: Date; precision: "date" | "daymonth" } | null = null;
+
+  if (typeof history.ts === "string" && history.ts.trim()) {
+    const dateTs = new Date(history.ts);
+    if (!Number.isNaN(dateTs.getTime())) {
+      infoTs = { date: dateTs, precision: "datetime" };
+    }
+  }
+
+  const raw = typeof history.d === "string" ? history.d.trim() : "";
+  if (raw) {
+    const parts = raw.split("/");
+    if (parts.length >= 2) {
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      if (Number.isFinite(day) && Number.isFinite(month) && month >= 0 && month <= 11) {
+        if (parts.length >= 3) {
+          const year = parseInt(parts[2], 10);
+          if (Number.isFinite(year)) {
+            infoData = { date: new Date(year, month, day, 12, 0, 0, 0), precision: "date" };
+          }
+        } else {
+          const now = new Date();
+          infoData = {
+            date: new Date(now.getFullYear(), month, day, 12, 0, 0, 0),
+            precision: "daymonth",
+          };
+        }
+      }
+    }
+  }
+
+  return preferTs ? (infoTs || infoData) : (infoData || infoTs);
+}
+
+function formatHistoryMomentPtBr(hist: unknown) {
+  const info = parseHistoryMoment(hist, true);
+  if (!info) return formatDateTimePtBr(new Date());
+  if (info.precision === "datetime") return formatDateTimePtBr(info.date);
+  return formatDatePtBr(info.date);
+}
+
+function findLatestHistoryByType(venda: Record<string, unknown>, tipo: string) {
+  const hist = Array.isArray(venda.hist) ? [...venda.hist].reverse() : [];
+  return hist.find((item) => item && String((item as HistoryRecord).tipo || "").trim().toLowerCase() === tipo) || null;
+}
+
 export function resolveNotificationEventType(rawType: unknown, etapaNova: number): ZapiNotificationEventType {
   const value = String(rawType || "").trim().toLowerCase();
   if (value === "cadastro_venda") return "cadastro_venda";
   if (value === "comissao_recebida") return "comissao_recebida";
+  if (value === "distrato_venda") return "distrato_venda";
   if (value === "evolucao_etapa") return "evolucao_etapa";
   return etapaNova === ETAPA_COMISSAO_RECEBIDA ? "comissao_recebida" : "evolucao_etapa";
 }
@@ -245,6 +310,39 @@ function buildComissaoRecebidaMessage(
   ].join("\n");
 }
 
+function buildDistratoMessage(
+  venda: Record<string, unknown>,
+  recipient: Record<string, unknown>,
+  responsavel: string,
+) {
+  const cliente = String(venda.cliente || "").trim() || "Cliente não informado";
+  const produto = String(venda.produto || "").trim() || "Produto não informado";
+  const unidade = String(venda.unidade || "").trim() || "Unidade não informada";
+  const financials = recipientFinancials(venda, recipient);
+  const history = findLatestHistoryByType(venda, "distrato") as HistoryRecord | null;
+  const categoria = String(history?.categoriaDistrato || history?.categoria || "").trim() || "Sem categoria informada";
+  const observacao = String(history?.observacaoDistrato || history?.motivoDistrato || history?.o || "").trim() || "Sem observação informada";
+  const responsavelFinal = String(history?.u || responsavel || "Sistema").trim() || "Sistema";
+  const dataHora = history ? formatHistoryMomentPtBr(history) : formatDateTimePtBr(new Date());
+  return [
+    "Zelony | Distrato de venda",
+    "",
+    buildGreeting(recipient),
+    "",
+    `A venda de ${cliente} foi marcada como distratada.`,
+    "",
+    `Produto: ${produto}`,
+    `Unidade: ${unidade}`,
+    `Sua participação: ${recipientRoleText(recipient)}`,
+    `Impacto estimado na sua comissão: ${formatCurrencyPtBr(financials.commission)}`,
+    ...(financials.bonus > 0 ? [`Impacto estimado no bônus: ${formatCurrencyPtBr(financials.bonus)}`] : []),
+    `Categoria do distrato: ${categoria}`,
+    `Observação: ${observacao}`,
+    `Responsável pelo registro: ${responsavelFinal}`,
+    `Data da atualização: ${dataHora}`,
+  ].join("\n");
+}
+
 export function buildStageMessage(
   venda: Record<string, unknown>,
   etapaAnterior: number,
@@ -295,6 +393,9 @@ export function buildNotificationMessage(params: {
   }
   if (resolvedType === "comissao_recebida") {
     return buildComissaoRecebidaMessage(venda, recipient, responsavel);
+  }
+  if (resolvedType === "distrato_venda") {
+    return buildDistratoMessage(venda, recipient, responsavel);
   }
   return buildStageMessage(venda, etapaAnterior, etapaNova, responsavel, recipient);
 }

@@ -1448,6 +1448,15 @@ function confirmarDistrato(){
     renderFiltros(); renderVList(); showVDetail(v.id);
     atualizarBadgeNotificacoes();
     showToast(zUiText('⚠️'),zUiText('Distrato registrado no histórico.'));
+    if(typeof dispararNotificacaoDistratoVendaZapi==='function'){
+      dispararNotificacaoDistratoVendaZapi({
+        vendaId:v.id,
+        vendaRefLocal:v.refLocal||'',
+        etapaAnterior:v.etapa,
+        etapaNova:v.etapa,
+        responsavel:quem
+      },{avisar:true}).catch(err=>console.warn('Falha na notificacao Z-API do distrato:',err));
+    }
   }).catch(e=>{
     Object.assign(v, original);
     setDistratoLoading(false);

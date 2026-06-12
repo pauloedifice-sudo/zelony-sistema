@@ -36,8 +36,8 @@ function zapiAvisarFalhaPontual(mensagem) {
   if (zapiAvisoFalhaJaExibido || typeof showToast !== 'function') return;
   zapiAvisoFalhaJaExibido = true;
   showToast(
-    zUiText('âš ï¸'),
-    zUiText(mensagem || 'A atualização foi salva, mas a notificação do WhatsApp não conseguiu ser disparada.')
+    zUiText('⚠️'),
+    zUiText(mensagem || 'A atualizacao foi salva, mas a notificacao do WhatsApp nao conseguiu ser disparada.')
   );
 }
 
@@ -49,7 +49,7 @@ async function dispararNotificacaoVendaZapi(payload = {}, opcoes = {}) {
     console.warn('Falha ao disparar notificacao Z-API:', erro);
     if (opcoes.avisar !== false) {
       zapiAvisarFalhaPontual(
-        opcoes.mensagemFalha || 'A atualização foi salva, mas a notificação do WhatsApp ficou pendente. Confira a configuração da Z-API.'
+        opcoes.mensagemFalha || 'A atualizacao foi salva, mas a notificacao do WhatsApp ficou pendente. Confira a configuracao da Z-API.'
       );
     }
     throw erro;
@@ -66,16 +66,28 @@ async function dispararNotificacaoCadastroVendaZapi(payload = {}, opcoes = {}) {
     tipoEvento: 'cadastro_venda'
   }, {
     ...opcoes,
-    mensagemFalha: opcoes.mensagemFalha || 'A venda foi salva, mas a mensagem de WhatsApp do cadastro ficou pendente. Confira a configuração da Z-API.'
+    mensagemFalha: opcoes.mensagemFalha || 'A venda foi salva, mas a mensagem de WhatsApp do cadastro ficou pendente. Confira a configuracao da Z-API.'
+  });
+}
+
+async function dispararNotificacaoDistratoVendaZapi(payload = {}, opcoes = {}) {
+  return dispararNotificacaoVendaZapi({
+    ...payload,
+    tipoEvento: 'distrato_venda'
+  }, {
+    ...opcoes,
+    mensagemFalha: opcoes.mensagemFalha || 'O distrato foi salvo, mas a mensagem de WhatsApp do distrato ficou pendente. Confira a configuracao da Z-API.'
   });
 }
 
 window.dispararNotificacaoVendaZapi = dispararNotificacaoVendaZapi;
 window.dispararNotificacaoEvolucaoVendaZapi = dispararNotificacaoEvolucaoVendaZapi;
 window.dispararNotificacaoCadastroVendaZapi = dispararNotificacaoCadastroVendaZapi;
+window.dispararNotificacaoDistratoVendaZapi = dispararNotificacaoDistratoVendaZapi;
 
 zRegisterModule('zapi', {
   dispararNotificacaoVendaZapi,
   dispararNotificacaoCadastroVendaZapi,
+  dispararNotificacaoDistratoVendaZapi,
   dispararNotificacaoEvolucaoVendaZapi
 });

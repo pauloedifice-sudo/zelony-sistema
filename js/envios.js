@@ -31,6 +31,7 @@ const ENVIOS_STATUS_META = {
 };
 const ENVIOS_PAPEL_META = {
   corretor: { label: 'Corretor', color: '#1A56C4', bg: '#EEF4FE', bd: '#A6C2F0' },
+  capitao: { label: 'Capitao', color: '#7A5A24', bg: '#FBF6EA', bd: '#DEC896' },
   gerente: { label: 'Gerente', color: '#2E7E5E', bg: '#EDF8F1', bd: '#A9DDBE' },
   diretor: { label: 'Diretor', color: '#8C5A17', bg: '#FFF7E5', bd: '#E5D09A' },
   diretor2: { label: 'Diretor 2', color: '#7A4BA8', bg: '#F4EEFF', bd: '#D6C1F0' }
@@ -739,7 +740,7 @@ function renderEnvios() {
         <div class="envios-hero-copy">
           <div class="envios-eyebrow">${zUiText('Monitor Z-API')}</div>
           <h2>${zUiText('Acompanhe os envios de WhatsApp sem sair do sistema')}</h2>
-          <p>${zUiText('Aqui voce enxerga os ultimos disparos por etapa da venda, quem recebeu, em que status a mensagem ficou e qualquer alerta da integracao.')}</p>
+          <p>${zUiText('Aqui voce enxerga os ultimos disparos das vendas, quem recebeu, em que status a mensagem ficou e qualquer alerta da integracao.')}</p>
           <div class="envios-hero-note">
             <span class="envios-live-dot"></span>
             <strong>${zUiText('Ultimos registros carregados:')} ${enviosLista.length}</strong>

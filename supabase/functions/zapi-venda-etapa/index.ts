@@ -92,6 +92,7 @@ function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
       status_usuario: corretorUsuario.status || "",
     });
   }
+
   const capitaoUsuario = findUserByName(users, venda.capitao);
   if (capitaoUsuario) {
     recipients.push({
@@ -103,6 +104,7 @@ function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
       status_usuario: capitaoUsuario.status || "",
     });
   }
+
   const gerenteUsuario = findUserByName(users, venda.gerente);
   if (gerenteUsuario) {
     recipients.push({
@@ -114,6 +116,7 @@ function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
       status_usuario: gerenteUsuario.status || "",
     });
   }
+
   const diretorUsuario = findUserByName(users, venda.diretor);
   if (diretorUsuario) {
     recipients.push({
@@ -125,6 +128,7 @@ function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
       status_usuario: diretorUsuario.status || "",
     });
   }
+
   const diretor2Usuario = findUserByName(users, venda.diretor2);
   if (diretor2Usuario) {
     recipients.push({
@@ -136,13 +140,45 @@ function buildRecipientCandidates(venda: VendaRecord, users: UsuarioRecord[]) {
       status_usuario: diretor2Usuario.status || "",
     });
   }
+
   return recipients;
+}
+
+function buildEventStageMeta(tipoEvento: string, etapaAnterior: number, etapaNova: number) {
+  const etapaAnteriorNomePadrao = ETAPAS_VENDA[etapaAnterior] || `Etapa ${etapaAnterior}`;
+  const etapaNovaNomePadrao = ETAPAS_VENDA[etapaNova] || `Etapa ${etapaNova}`;
+
+  if (tipoEvento === "cadastro_venda") {
+    return {
+      etapaAnteriorPersistida: null,
+      etapaAnteriorNome: "Cadastro",
+      etapaNovaPersistida: etapaNova,
+      etapaNovaNome: etapaNovaNomePadrao,
+    };
+  }
+
+  if (tipoEvento === "distrato_venda") {
+    return {
+      etapaAnteriorPersistida: etapaAnterior,
+      etapaAnteriorNome: etapaAnteriorNomePadrao,
+      etapaNovaPersistida: etapaNova,
+      etapaNovaNome: "Distrato",
+    };
+  }
+
+  return {
+    etapaAnteriorPersistida: etapaAnterior,
+    etapaAnteriorNome: etapaAnteriorNomePadrao,
+    etapaNovaPersistida: etapaNova,
+    etapaNovaNome: etapaNovaNomePadrao,
+  };
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
   if (req.method !== "POST") {
     return jsonResponse({ error: "Method not allowed" }, { status: 405 });
   }
@@ -157,12 +193,14 @@ Deno.serve(async (req) => {
     if (!Number.isFinite(vendaId) || vendaId <= 0) {
       return jsonResponse({ error: "vendaId inválido." }, { status: 400 });
     }
+
     if (!Number.isFinite(etapaNova) || etapaNova < 0) {
       return jsonResponse({ error: "etapaNova inválida." }, { status: 400 });
     }
 
     const tipoEvento = resolveNotificationEventType(body?.tipoEvento, etapaNova);
     const supabase = createServiceClient();
+
     const { data: venda, error: vendaError } = await supabase
       .from("vendas")
       .select("id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada")
@@ -172,7 +210,8 @@ Deno.serve(async (req) => {
     if (vendaError || !venda) {
       return jsonResponse({ error: "Venda não encontrada no Supabase." }, { status: 404 });
     }
-    if (venda.distratada) {
+
+    if (venda.distratada && tipoEvento !== "distrato_venda") {
       return jsonResponse({ ok: true, skipped: true, reason: "Venda distratada." });
     }
 
@@ -192,11 +231,7 @@ Deno.serve(async (req) => {
     const apiBase = `https://api.z-api.io/instances/${instanceId}/token/${token}`;
 
     const etapaAnteriorFinal = Number.isFinite(etapaAnterior) ? etapaAnterior : Math.max(0, etapaNova - 1);
-    const etapaAnteriorPersistida = tipoEvento === "cadastro_venda" ? null : etapaAnteriorFinal;
-    const etapaAnteriorNome = tipoEvento === "cadastro_venda"
-      ? "Cadastro"
-      : ETAPAS_VENDA[etapaAnteriorFinal] || `Etapa ${etapaAnteriorFinal}`;
-    const etapaNovaNome = ETAPAS_VENDA[etapaNova] || `Etapa ${etapaNova}`;
+    const stageMeta = buildEventStageMeta(tipoEvento, etapaAnteriorFinal, etapaNova);
 
     const rawRecipients = buildRecipientCandidates(venda, users as UsuarioRecord[]);
     const normalizedRecipients = rawRecipients.map((item) => ({
@@ -209,10 +244,10 @@ Deno.serve(async (req) => {
       ok: true,
       vendaId,
       tipoEvento,
-      etapaAnterior: etapaAnteriorPersistida,
-      etapaNova,
-      etapaAnteriorNome,
-      etapaNovaNome,
+      etapaAnterior: stageMeta.etapaAnteriorPersistida,
+      etapaNova: stageMeta.etapaNovaPersistida,
+      etapaAnteriorNome: stageMeta.etapaAnteriorNome,
+      etapaNovaNome: stageMeta.etapaNovaNome,
       sent: 0,
       skipped: 0,
       failed: 0,
@@ -229,13 +264,14 @@ Deno.serve(async (req) => {
         responsavel,
         tipoEvento,
       });
+
       await supabase.from("venda_notificacoes_zapi").insert({
         venda_id: venda.id,
         venda_ref_local: venda.ref_local || null,
-        etapa_anterior: etapaAnteriorPersistida,
-        etapa_anterior_nome: etapaAnteriorNome,
-        etapa_nova: etapaNova,
-        etapa_nova_nome: etapaNovaNome,
+        etapa_anterior: stageMeta.etapaAnteriorPersistida,
+        etapa_anterior_nome: stageMeta.etapaAnteriorNome,
+        etapa_nova: stageMeta.etapaNovaPersistida,
+        etapa_nova_nome: stageMeta.etapaNovaNome,
         responsavel_avanco: responsavel,
         destinatario_usuario_id: item.destinatario_usuario_id || null,
         destinatario_nome: item.destinatario_nome || "Responsável sem telefone",
@@ -255,7 +291,7 @@ Deno.serve(async (req) => {
     for (const recipient of recipients) {
       const active = statusUsuarioAtivo(recipient.status_usuario);
       const papelPrincipal = String(recipient.papeis?.[0] || recipient.papel || "responsavel");
-      const dedupeKey = `venda:${venda.id}|evento:${tipoEvento}|etapa:${etapaNova}|phone:${recipient.phone}`;
+      const dedupeKey = `venda:${venda.id}|evento:${tipoEvento}|etapa:${stageMeta.etapaNovaPersistida}|phone:${recipient.phone}`;
       const message = buildNotificationMessage({
         venda: venda as unknown as Record<string, unknown>,
         recipient: recipient as unknown as Record<string, unknown>,
@@ -269,10 +305,10 @@ Deno.serve(async (req) => {
         await supabase.from("venda_notificacoes_zapi").upsert({
           venda_id: venda.id,
           venda_ref_local: venda.ref_local || null,
-          etapa_anterior: etapaAnteriorPersistida,
-          etapa_anterior_nome: etapaAnteriorNome,
-          etapa_nova: etapaNova,
-          etapa_nova_nome: etapaNovaNome,
+          etapa_anterior: stageMeta.etapaAnteriorPersistida,
+          etapa_anterior_nome: stageMeta.etapaAnteriorNome,
+          etapa_nova: stageMeta.etapaNovaPersistida,
+          etapa_nova_nome: stageMeta.etapaNovaNome,
           responsavel_avanco: responsavel,
           destinatario_usuario_id: recipient.destinatario_usuario_id || null,
           destinatario_nome: recipient.destinatario_nome || "Responsável inativo",
@@ -339,10 +375,10 @@ Deno.serve(async (req) => {
         await supabase.from("venda_notificacoes_zapi").insert({
           venda_id: venda.id,
           venda_ref_local: venda.ref_local || null,
-          etapa_anterior: etapaAnteriorPersistida,
-          etapa_anterior_nome: etapaAnteriorNome,
-          etapa_nova: etapaNova,
-          etapa_nova_nome: etapaNovaNome,
+          etapa_anterior: stageMeta.etapaAnteriorPersistida,
+          etapa_anterior_nome: stageMeta.etapaAnteriorNome,
+          etapa_nova: stageMeta.etapaNovaPersistida,
+          etapa_nova_nome: stageMeta.etapaNovaNome,
           responsavel_avanco: responsavel,
           destinatario_usuario_id: recipient.destinatario_usuario_id || null,
           destinatario_nome: recipient.destinatario_nome || "Responsável",
@@ -373,10 +409,10 @@ Deno.serve(async (req) => {
       await supabase.from("venda_notificacoes_zapi").insert({
         venda_id: venda.id,
         venda_ref_local: venda.ref_local || null,
-        etapa_anterior: etapaAnteriorPersistida,
-        etapa_anterior_nome: etapaAnteriorNome,
-        etapa_nova: etapaNova,
-        etapa_nova_nome: etapaNovaNome,
+        etapa_anterior: stageMeta.etapaAnteriorPersistida,
+        etapa_anterior_nome: stageMeta.etapaAnteriorNome,
+        etapa_nova: stageMeta.etapaNovaPersistida,
+        etapa_nova_nome: stageMeta.etapaNovaNome,
         responsavel_avanco: responsavel,
         destinatario_usuario_id: recipient.destinatario_usuario_id || null,
         destinatario_nome: recipient.destinatario_nome || "Responsável",
