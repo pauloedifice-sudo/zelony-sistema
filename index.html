@@ -672,6 +672,12 @@
                 <option value="com">Com pendência</option>
                 <option value="sem">Sem pendência</option>
               </select>
+              <select id="vf-bonus-status" onchange="renderFiltros();renderVList()">
+                <option value="">🎁 Status do bonus</option>
+                <option value="pendente">Pendente</option>
+                <option value="nota_gerada">Nota gerada</option>
+                <option value="pago">Pago</option>
+              </select>
               <select id="vf-origem" class="vf-field-wide" onchange="renderVList()">
                 <option value="">📌 Origem</option>
                 <option value="IndicaÃ§Ã£o">Indicação</option>
@@ -846,7 +852,7 @@
           </div>
           <div class="mv-divider"></div>
           <!-- Bônus -->
-          <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional)</span></div>
+          <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional • desconta imposto)</span></div>
           <div class="f-field"><label>Valor do bônus (R$)</label><input type="number" id="ev-bonus" min="0" placeholder="0"></div>
           <div class="pct-row">
             <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-bonus-dir" min="0" max="100" step="1" placeholder="0"></div>
@@ -870,6 +876,53 @@
         <div class="modal-foot">
           <button class="btn-c" id="ev-cancel-btn" onclick="fecharEditVenda()">Cancelar</button>
           <button class="btn-s" id="ev-save-btn" onclick="salvarEditVenda()">✓ Salvar alterações</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL GESTAO DO BONUS -->
+    <div class="modal-backdrop" id="m-bonus-gestao" onclick="if(event.target===this)fecharGestaoBonus()">
+      <div class="modal" style="max-width:520px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title" style="color:#2E7E5E;">🎁 Gestão do bonus</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="bg-subtitulo">Controle operacional do bonus desta venda</div>
+          </div>
+          <button class="mclose" id="bg-close-btn" onclick="fecharGestaoBonus()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <div style="background:#E8F5EE;border:1px solid #80C8A0;border-radius:8px;padding:12px;font-size:11px;color:#2E7E5E;">
+            Defina se o bonus sera pago antecipado ou junto com a comissao e acompanhe o status da nota/pagamento.
+          </div>
+          <div class="f-row">
+            <div class="f-field">
+              <label>Forma do bonus *</label>
+              <select id="bg-forma">
+                <option value="comissao">Junto com a comissao</option>
+                <option value="antecipado">Antecipado</option>
+              </select>
+            </div>
+            <div class="f-field">
+              <label>Status do bonus *</label>
+              <select id="bg-status">
+                <option value="pendente">Pendente</option>
+                <option value="nota_gerada">Nota gerada</option>
+                <option value="pago">Pago</option>
+              </select>
+            </div>
+          </div>
+          <div class="f-field">
+            <label>Observação / nota</label>
+            <textarea id="bg-obs" placeholder="Ex.: NF solicitada, pago antecipado, comprovante enviado..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:86px;"></textarea>
+          </div>
+        </div>
+        <div id="bg-status-wrap" style="display:none;padding:0 18px 12px;font-size:11px;color:var(--tm);align-items:center;gap:8px;">
+          <span style="font-size:13px;">⏳</span>
+          <span>Salvando gestão do bonus...</span>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" id="bg-cancel-btn" onclick="fecharGestaoBonus()">Cancelar</button>
+          <button class="btn-s" id="bg-save-btn" onclick="salvarGestaoBonus()">✓ Salvar gestão</button>
         </div>
       </div>
     </div>
@@ -981,7 +1034,8 @@
           </div>
           <!-- Preview bônus -->
           <div class="pct-preview" id="mv-bonus-preview" style="display:none;">
-            <div class="pct-prev-item"><div class="pct-prev-lbl">Total bônus</div><div class="pct-prev-val" id="pb-total">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Total líquido</div><div class="pct-prev-val" id="pb-total">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Imposto bônus</div><div class="pct-prev-val" id="pb-imp" style="color:#C06030;">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pb-dir">—</div></div>
             <div class="pct-prev-item" id="pb-dir2-wrap" style="display:none;"><div class="pct-prev-lbl">Diretor 2</div><div class="pct-prev-val" id="pb-dir2">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pb-ger">—</div></div>

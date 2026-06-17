@@ -365,12 +365,15 @@ function finMontarPartesRepasseComissaoVenda(venda) {
   if (!venda) return [];
   const alvo = typeof normalizarVendaNumeros === 'function' ? normalizarVendaNumeros(venda) : venda;
   const partes = [];
+  const incluirBonus = typeof bonusEntraNoRepasseComissao === 'function'
+    ? bonusEntraNoRepasseComissao(alvo)
+    : String(alvo && alvo.bonus_forma || '').trim().toLowerCase() !== 'antecipado';
   finAdicionarParteRepasseComissao(partes, {
     papel: 'corretor',
     papelLabel: 'CORRETOR',
     nome: alvo.corretor,
     valor: finValorComissaoCalculado(alvo, typeof comC === 'function' ? comC : null)
-      + finValorComissaoCalculado(alvo, typeof bonusCor === 'function' ? bonusCor : null)
+      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusCor === 'function' ? bonusCor : null) : 0)
   });
   finAdicionarParteRepasseComissao(partes, {
     papel: 'capitao',
@@ -383,21 +386,21 @@ function finMontarPartesRepasseComissaoVenda(venda) {
     papelLabel: 'GERENTE',
     nome: alvo.gerente,
     valor: finValorComissaoCalculado(alvo, typeof comG === 'function' ? comG : null)
-      + finValorComissaoCalculado(alvo, typeof bonusGer === 'function' ? bonusGer : null)
+      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusGer === 'function' ? bonusGer : null) : 0)
   });
   finAdicionarParteRepasseComissao(partes, {
     papel: 'diretor',
     papelLabel: 'DIRETOR',
     nome: alvo.diretor,
     valor: finValorComissaoCalculado(alvo, typeof comD === 'function' ? comD : null)
-      + finValorComissaoCalculado(alvo, typeof bonusDir === 'function' ? bonusDir : null)
+      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusDir === 'function' ? bonusDir : null) : 0)
   });
   finAdicionarParteRepasseComissao(partes, {
     papel: 'diretor_2',
     papelLabel: 'DIRETOR 2',
     nome: alvo.diretor2,
     valor: finValorComissaoCalculado(alvo, typeof comD2 === 'function' ? comD2 : null)
-      + finValorComissaoCalculado(alvo, typeof bonusDir2 === 'function' ? bonusDir2 : null)
+      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusDir2 === 'function' ? bonusDir2 : null) : 0)
   });
   return partes;
 }

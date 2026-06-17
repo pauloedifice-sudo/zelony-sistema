@@ -5,6 +5,15 @@
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
 const PRAZOS_ETAPA=[null,5,5,6,3,3,4,15,null];
 const ETAPA_NOTA_EMITIDA=ETAPAS.indexOf('Nota emitida');
+const BONUS_FORMAS={
+  comissao:'Junto com a comissao',
+  antecipado:'Antecipado'
+};
+const BONUS_STATUS={
+  pendente:'Pendente',
+  nota_gerada:'Nota gerada',
+  pago:'Pago'
+};
 const DISTRATO_CATEGORIAS_PADRAO=[
   'Cliente desistiu',
   'Crédito e financiamento',
@@ -47,6 +56,8 @@ let distratoCategoriaNovaValor='';
 let editVendaSalvando=false;
 let previsaoRecebVendaId=null;
 let previsaoRecebSalvando=false;
+let bonusGestaoVendaId=null;
+let bonusGestaoSalvando=false;
 let vendaSalvando=false;
 let novaVendaRefLocal='';
 zSetState('config.etapas', ETAPAS);
@@ -101,6 +112,7 @@ function histAfetaFluxo(h){
   return h.tipo!=='edicao'
     && h.tipo!=='distrato'
     && h.tipo!=='reversao'
+    && h.tipo!=='bonus_gestao'
     && h.tipo!=='obs'
     && h.tipo!=='pend_comercial'
     && h.tipo!=='pend_comercial_editada'
@@ -235,12 +247,30 @@ zSetState('state.ui.distratoSalvando', distratoSalvando);
 zSetState('state.ui.editVendaSalvando', editVendaSalvando);
 zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
 zSetState('state.ui.previsaoRecebSalvando', previsaoRecebSalvando);
+zSetState('state.ui.bonusGestaoVendaId', bonusGestaoVendaId);
+zSetState('state.ui.bonusGestaoSalvando', bonusGestaoSalvando);
 zSetState('state.ui.vendaSalvando', vendaSalvando);
 zSetState('state.ui.novaVendaRefLocal', novaVendaRefLocal);
 
 function numSeguro(valor,padrao=0){
   const n=Number(valor);
   return Number.isFinite(n)?n:padrao;
+}
+function normalizarBonusGestaoVenda(v){
+  if(!v||typeof v!=='object') return v;
+  const bonusTotal=numSeguro(v.bonus,0);
+  if(bonusTotal>0){
+    const forma=String(v.bonus_forma||v.bonusForma||'').trim().toLowerCase();
+    const status=String(v.bonus_status||v.bonusStatus||'').trim().toLowerCase();
+    v.bonus_forma=BONUS_FORMAS[forma]?forma:'comissao';
+    v.bonus_status=BONUS_STATUS[status]?status:'pendente';
+    v.bonus_obs=String(v.bonus_obs??v.bonusObs??'').trim();
+    return v;
+  }
+  v.bonus_forma='';
+  v.bonus_status='';
+  v.bonus_obs='';
+  return v;
 }
 function normalizarVendaNumeros(v){
   if(!v||typeof v!=='object') return v;
@@ -258,7 +288,81 @@ function normalizarVendaNumeros(v){
   v.bonus_pct_dir2=numSeguro(v.bonus_pct_dir2,0);
   v.bonus_pct_ger=numSeguro(v.bonus_pct_ger,0);
   v.bonus_pct_cor=numSeguro(v.bonus_pct_cor,0);
+  normalizarBonusGestaoVenda(v);
   return v;
+}
+function bonusTemGestao(v){
+  const venda=normalizarVendaNumeros(v);
+  return !!(venda&&venda.bonus>0);
+}
+function bonusFormaVenda(v){
+  const venda=normalizarVendaNumeros(v);
+  return bonusTemGestao(venda)?String(venda.bonus_forma||'comissao').trim().toLowerCase():'';
+}
+function bonusStatusVenda(v){
+  const venda=normalizarVendaNumeros(v);
+  return bonusTemGestao(venda)?String(venda.bonus_status||'pendente').trim().toLowerCase():'';
+}
+function bonusFormaLabel(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  return BONUS_FORMAS[chave]||'';
+}
+function bonusStatusLabel(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  return BONUS_STATUS[chave]||'';
+}
+function bonusStatusMeta(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  if(chave==='pago') return {label:bonusStatusLabel(chave),bg:'#E8F5EE',color:'#2E7E5E',border:'#80C8A0'};
+  if(chave==='nota_gerada') return {label:bonusStatusLabel(chave),bg:'#EEF4FE',color:'#3060B8',border:'#93B4F5'};
+  return {label:bonusStatusLabel(chave||'pendente')||'Pendente',bg:'#FFF8E8',color:'#C08020',border:'#E8C060'};
+}
+function bonusFormaMeta(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  if(chave==='antecipado') return {label:bonusFormaLabel(chave),bg:'#FEF0EC',color:'#C05030',border:'#E0A090'};
+  return {label:bonusFormaLabel('comissao'),bg:'#F3F0EA',color:'#7A6330',border:'#D8C090'};
+}
+function bonusEntraNoRepasseComissao(v){
+  const venda=normalizarVendaNumeros(v);
+  if(!bonusTemGestao(venda)) return false;
+  return bonusFormaVenda(venda)!=='antecipado';
+}
+function bonusUltimoHistorico(v){
+  if(!v||!Array.isArray(v.hist)) return null;
+  return [...v.hist].reverse().find(h=>h&&h.tipo==='bonus_gestao')||null;
+}
+function aplicarDefaultsBonusGestaoVenda(v,opcoes={}){
+  const venda=normalizarVendaNumeros(v);
+  if(!venda||typeof venda!=='object') return venda;
+  if(venda.bonus>0){
+    if(!BONUS_FORMAS[String(venda.bonus_forma||'').trim().toLowerCase()]) venda.bonus_forma='comissao';
+    if(!BONUS_STATUS[String(venda.bonus_status||'').trim().toLowerCase()]) venda.bonus_status='pendente';
+    venda.bonus_obs=String(venda.bonus_obs||'').trim();
+    return venda;
+  }
+  if(opcoes.limparZero!==false){
+    venda.bonus_forma='';
+    venda.bonus_status='';
+    venda.bonus_obs='';
+  }
+  return venda;
+}
+function criarHistoricoBonusGestao(v,config={}){
+  if(!v) return null;
+  aplicarDefaultsBonusGestaoVenda(v);
+  const observacao=String(config.obs!=null?config.obs:v.bonus_obs||'').trim();
+  const registro=criarRegistroHistorico({
+    e:numSeguro(v.etapa,0),
+    u:config.quem||'Sistema',
+    o:observacao,
+    tipo:'bonus_gestao',
+    bonusForma:config.forma||bonusFormaVenda(v),
+    bonusStatus:config.status||bonusStatusVenda(v),
+    bonusObs:observacao
+  },config.historico||{});
+  v.hist=v.hist||[];
+  v.hist.push(registro);
+  return registro;
 }
 
 function somaBonusPercentuais(v){
@@ -562,6 +666,27 @@ function impostoComissao(v){
   const venda=normalizarVendaNumeros(v);
   return comBruta(venda)*venda.imp;
 }
+function bonusBrutoTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.bonus||0;
+}
+function bonusLiquidoTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.bonus?(venda.bonus*(1-venda.imp)):0;
+}
+function impostoBonusTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return Math.max(bonusBrutoTotal(venda)-bonusLiquidoTotal(venda),0);
+}
+function bonusParteBruta(v,pct){
+  const venda=normalizarVendaNumeros(v);
+  const percentual=numSeguro(pct,0);
+  return venda.bonus?(venda.bonus*percentual/100):0;
+}
+function bonusParteLiquida(v,pct){
+  const venda=normalizarVendaNumeros(v);
+  return bonusParteBruta(venda,pct)*(1-venda.imp);
+}
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ CÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂLCULOS DE COMISSÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
 function com(v,p){
@@ -574,10 +699,10 @@ function comCap(v){ const venda=normalizarVendaNumeros(v); return com(venda,vend
 function comG(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_ger); }
 function comD(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_dir); }
 function comD2(v){ const venda=normalizarVendaNumeros(v); return venda.pct_dir2?com(venda,venda.pct_dir2):0; }
-function bonusDir(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_dir/100):0; }
-function bonusDir2(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_dir2/100):0; }
-function bonusGer(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_ger/100):0; }
-function bonusCor(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_cor/100):0; }
+function bonusDir(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_dir); }
+function bonusDir2(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_dir2); }
+function bonusGer(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_ger); }
+function bonusCor(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_cor); }
 function comRH(v){ const venda=normalizarVendaNumeros(v); return venda.pct_rh?com(venda,venda.pct_rh):0; }
 function pctZelony(v){
   const venda=normalizarVendaNumeros(v);
@@ -764,7 +889,7 @@ function toggleMaisFiltros(force){
 function atualizarBotaoMaisFiltros(){
   const btn=document.getElementById('vf-more-btn');
   if(!btn) return;
-  const ativos=['vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
+  const ativos=['vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-pend-comercial','vf-bonus-status','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
   btn.classList.toggle('active', maisFiltrosAbertos);
   btn.textContent=ativos?zUiText(`Mais filtros (${ativos})`):(maisFiltrosAbertos?zUiText('Ocultar filtros'):zUiText('Mais filtros'));
 }
@@ -798,7 +923,7 @@ function setFiltroPrazoRapido(valor){
   renderVList();
 }
 function limparTodosFiltrosVendas(){
-  const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem','vf-situacao','vf-pend-comercial'];
+  const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem','vf-situacao','vf-pend-comercial','vf-bonus-status'];
   ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   fEtapaModo='incluir';
   fEtapasSelecionadas=[];
@@ -936,6 +1061,7 @@ function atualizarTagsFiltros(){
   const vfOrigem=document.getElementById('vf-origem')?.value;
   const vfSituacao=document.getElementById('vf-situacao')?.value;
   const vfPend=document.getElementById('vf-pend-comercial')?.value;
+  const vfBonusStatus=document.getElementById('vf-bonus-status')?.value;
   if(busca) tags.push({label:zUiText(`🔎 ${busca}`),clear:()=>{document.getElementById('vsearch').value='';renderVList();}});
   if(vfMes) tags.push({label:zUiText(`📅 ${vfMes}`),clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
   if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
@@ -945,6 +1071,7 @@ function atualizarTagsFiltros(){
   if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
   if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
   if(vfPend) tags.push({label:zUiText(`🟠 ${vfPend==='com'?'Com pendência comercial':'Sem pendência comercial'}`),clear:()=>{document.getElementById('vf-pend-comercial').value='';renderFiltros();renderVList();}});
+  if(vfBonusStatus) tags.push({label:zUiText(`🎁 ${bonusStatusLabel(vfBonusStatus)}`),clear:()=>{document.getElementById('vf-bonus-status').value='';renderFiltros();renderVList();}});
   if(fEtapasSelecionadas.length){
     const prefixo=fEtapaModo==='excluir'
       ? `🧭 ${zUiText('Todas exceto')}`
@@ -1038,11 +1165,13 @@ function renderVList(){
   const vfCorretor=document.getElementById('vf-corretor')?.value;
   const vfCca=document.getElementById('vf-cca')?.value;
   const vfOrigem=document.getElementById('vf-origem')?.value;
+  const vfBonusStatus=document.getElementById('vf-bonus-status')?.value;
   if(vfMes) l=l.filter(v=>v.mes===vfMes);
   if(vfConst) l=l.filter(v=>v.construtora===vfConst);
   if(vfCorretor) l=l.filter(v=>v.corretor===vfCorretor);
   if(vfCca) l=l.filter(v=>v.cca===vfCca);
   if(vfOrigem) l=l.filter(v=>v.origem===vfOrigem);
+  if(vfBonusStatus) l=l.filter(v=>bonusTemGestao(v)&&bonusStatusVenda(v)===vfBonusStatus);
   if(vfEq) l=l.filter(v=>['corretor','gerente','diretor'].some(campo=>{const u=getUsuarioVendaPorCampo(v,campo,{permitirAproximado:campo!=='corretor'});return !!(u&&u.equipe===vfEq);}));
   if(fPrazo!=='all'){
     l=l.filter(v=>{
@@ -1072,6 +1201,10 @@ function renderVList(){
     const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">${zUiText(`📍 ${v.unidade}`)}</span>`:'';
     const statusBadge=`<span class="vstate ${v.distratada?'vstate-distrato':'vstate-ativa'}">${zUiText(v.distratada?'⚠ Distrato':'● Ativa')}</span>`;
     const pbadge=temPendenciaComercial(v)?`<span class="badge-pend-comercial">${zUiText('🟠 Pend. comercial')}</span>`:'';
+    const bonusStatus=bonusTemGestao(v)?bonusStatusMeta(bonusStatusVenda(v)):null;
+    const bonusForma=bonusTemGestao(v)?bonusFormaVenda(v):'';
+    const bbadge=bonusStatus?`<span style="font-size:9px;background:${bonusStatus.bg};color:${bonusStatus.color};border:1px solid ${bonusStatus.border};border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('🎁')} ${zUiText(bonusStatus.label)}</span>`:'';
+    const bformaBadge=bonusForma==='antecipado'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚡')} ${zUiText('Antecipado')}</span>`:'';
     const atraso=labelAtraso(v);
     const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('❗')} ${zUiText(atraso.label)}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚠️')} ${zUiText(atraso.label)}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('✓')} ${zUiText(atraso.label)}</span>`:'';
     const rowClass=[
@@ -1080,7 +1213,7 @@ function renderVList(){
       v.distratada?'vrow-distrato':'vrow-ativa',
       atraso&&atraso.tipo==='atrasada'?'vrow-atrasada':''
     ].filter(Boolean).join(' ');
-    return`<div class="${rowClass}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav ${v.distratada?'vav-distrato':'vav-ativa'}">${ini(v.cliente)}</div><div class="vmeta"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div class="vbadges">${statusBadge}<span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${pbadge}${abadge}</div></div></div>`;
+    return`<div class="${rowClass}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav ${v.distratada?'vav-distrato':'vav-ativa'}">${ini(v.cliente)}</div><div class="vmeta"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div class="vbadges">${statusBadge}<span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${pbadge}${bbadge}${bformaBadge}${abadge}</div></div></div>`;
   }).join('');
   if(typeof showVDetail==='function'&&curVId) showVDetail(curVId);
 }
@@ -1485,6 +1618,111 @@ function confirmarDistrato(){
 }
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ EDITAR VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function podeGerirBonusVenda(v){
+  return ['fin','dir','dono'].includes(role)&&!!v&&bonusTemGestao(v)&&!v.distratada;
+}
+function abrirGestaoBonus(id){
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v) return;
+  if(!podeGerirBonusVenda(v)){
+    showToast(zUiText('⚠️'),zUiText('O bônus desta venda não pode ser gerido neste perfil ou situação.'));
+    return;
+  }
+  aplicarDefaultsBonusGestaoVenda(v);
+  bonusGestaoVendaId=id;
+  zSetState('state.ui.bonusGestaoVendaId', bonusGestaoVendaId);
+  document.getElementById('bg-subtitulo').textContent=`${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${zUiText('Bonus liquido')} ${fmt(bonusLiquidoTotal(v))}`;
+  document.getElementById('bg-forma').value=bonusFormaVenda(v)||'comissao';
+  document.getElementById('bg-status').value=bonusStatusVenda(v)||'pendente';
+  document.getElementById('bg-obs').value=String(v.bonus_obs||'');
+  setGestaoBonusLoading(false);
+  document.getElementById('m-bonus-gestao').classList.add('show');
+  setTimeout(()=>document.getElementById('bg-status')?.focus(),80);
+}
+function setGestaoBonusLoading(loading){
+  bonusGestaoSalvando=!!loading;
+  zSetState('state.ui.bonusGestaoSalvando', bonusGestaoSalvando);
+  ['bg-forma','bg-status','bg-obs'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled=bonusGestaoSalvando;
+  });
+  const cancelar=document.getElementById('bg-cancel-btn');
+  const fechar=document.getElementById('bg-close-btn');
+  const salvar=document.getElementById('bg-save-btn');
+  const status=document.getElementById('bg-status-wrap');
+  if(cancelar) cancelar.disabled=bonusGestaoSalvando;
+  if(fechar) fechar.disabled=bonusGestaoSalvando;
+  if(salvar){
+    salvar.disabled=bonusGestaoSalvando;
+    salvar.textContent=bonusGestaoSalvando?zUiText('⏳ Salvando gestão...'):zUiText('✓ Salvar gestão');
+  }
+  if(status) status.style.display=bonusGestaoSalvando?'flex':'none';
+}
+function fecharGestaoBonus(){
+  if(bonusGestaoSalvando) return;
+  setGestaoBonusLoading(false);
+  document.getElementById('m-bonus-gestao').classList.remove('show');
+  bonusGestaoVendaId=null;
+  zSetState('state.ui.bonusGestaoVendaId', bonusGestaoVendaId);
+}
+async function salvarGestaoBonus(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A gestão do bônus está bloqueada no modo consulta.'})) return;
+  if(bonusGestaoSalvando) return;
+  const v=VENDAS.find(x=>x.id===bonusGestaoVendaId);
+  if(!v||!podeGerirBonusVenda(v)) return;
+  const forma=String(document.getElementById('bg-forma')?.value||'').trim().toLowerCase();
+  const status=String(document.getElementById('bg-status')?.value||'').trim().toLowerCase();
+  const obs=String(document.getElementById('bg-obs')?.value||'').trim();
+  if(!BONUS_FORMAS[forma]){
+    document.getElementById('bg-forma')?.focus();
+    showToast(zUiText('⚠️'),zUiText('Selecione como esse bônus será pago.'));
+    return;
+  }
+  if(!BONUS_STATUS[status]){
+    document.getElementById('bg-status')?.focus();
+    showToast(zUiText('⚠️'),zUiText('Selecione o status operacional do bônus.'));
+    return;
+  }
+  aplicarDefaultsBonusGestaoVenda(v);
+  const original={
+    bonus_forma:v.bonus_forma,
+    bonus_status:v.bonus_status,
+    bonus_obs:v.bonus_obs,
+    hist:JSON.parse(JSON.stringify(v.hist||[]))
+  };
+  if(original.bonus_forma===forma&&original.bonus_status===status&&String(original.bonus_obs||'')===obs){
+    showToast(zUiText('ℹ️'),zUiText('Nenhuma alteração na gestão do bônus.'));
+    return;
+  }
+  v.bonus_forma=forma;
+  v.bonus_status=status;
+  v.bonus_obs=obs;
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  criarHistoricoBonusGestao(v,{quem,forma,status,obs});
+  setGestaoBonusLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    setGestaoBonusLoading(false);
+    fecharGestaoBonus();
+    salvarLS();
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    showToast(zUiText('✅'),zUiText('Gestão do bônus atualizada com sucesso.'));
+  }catch(e){
+    v.bonus_forma=original.bonus_forma;
+    v.bonus_status=original.bonus_status;
+    v.bonus_obs=original.bonus_obs;
+    v.hist=original.hist;
+    setGestaoBonusLoading(false);
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    console.error('Erro ao salvar gestão do bônus:',e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar a gestão do bônus no banco. Tente novamente.'));
+  }
+}
+
 function preencherDiretor2Edit(valorAtual){
   const sel=document.getElementById('ev-diretor2');
   if(!sel) return;
@@ -1523,6 +1761,7 @@ function abrirEditVenda(id){
   const v=VENDAS.find(x=>x.id===id);
   if(!v)return;
   normalizarVendaNumeros(v);
+  aplicarDefaultsBonusGestaoVenda(v);
   editVendaId=id;
   zSetState('state.ui.editVendaId', editVendaId);
   document.getElementById('ev-subtitulo').textContent=`Editando: ${clienteVendaTexto(v.cliente) || 'Sem cliente'}`;
@@ -1624,6 +1863,7 @@ function salvarEditVenda(){
   v.bonus_pct_dir2=v.diretor2?lerNumeroInput('ev-bonus-dir2',0):0;
   v.bonus_pct_ger=lerNumeroInput('ev-bonus-ger',0);
   v.bonus_pct_cor=lerNumeroInput('ev-bonus-cor',0);
+  aplicarDefaultsBonusGestaoVenda(v);
   if(!validarSomaBonusVenda(v,'ev-bonus-dir')){ Object.assign(v, original); return; }
   normalizarVendaNumeros(v);
   v.cca=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(document.getElementById('ev-cca').value):document.getElementById('ev-cca').value.trim();
@@ -1823,6 +2063,9 @@ async function salvarVenda(){
     id:nextVendaId++,refLocal,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,
     bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,
+    bonus_forma:bonus>0?'comissao':'',
+    bonus_status:bonus>0?'pendente':'',
+    bonus_obs:'',
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
     hist:[criarRegistroHistorico({e:0,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.',corretorOrigem:corretorExterno?'externo':'usuario',corretorRefId:corretorExterno?null:(corretorUsuario&&corretorUsuario.id!=null?corretorUsuario.id:null)},{data:d})],
@@ -1832,6 +2075,7 @@ async function salvarVenda(){
     ]
   };
   normalizarVendaNumeros(novaVenda);
+  aplicarDefaultsBonusGestaoVenda(novaVenda);
   if(!validarSomaBonusVenda(novaVenda,'mv-bonus-dir')) return;
   zSetState('state.ui.nextVendaId', nextVendaId);
   setVendaModalLoading(true);
@@ -1896,10 +2140,16 @@ zRegisterModule('vendas', {
   salvarPrevisaoRecebimento,
   abrirDistrato,
   fecharDistrato,
+  abrirGestaoBonus,
+  fecharGestaoBonus,
+  salvarGestaoBonus,
   abrirEditVenda,
   fecharEditVenda,
   abrirModalVenda,
-  salvarVenda
+  salvarVenda,
+  bonusFormaVenda,
+  bonusStatusVenda,
+  bonusEntraNoRepasseComissao
 });
 
 // Preview de comissÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o no modal
@@ -1912,11 +2162,6 @@ function calcularPrevV(){
   const pct_ger=parseFloat(document.getElementById('mv-pct-ger')?.value)/100||0;
   const pct_dir=parseFloat(document.getElementById('mv-pct-dir')?.value)/100||0;
   const pct_dir2=parseFloat(document.getElementById('mv-pct-dir2')?.value)/100||0;
-  const bonus=parseFloat(document.getElementById('mv-bonus')?.value)||0;
-  const bonus_dir=parseFloat(document.getElementById('mv-bonus-dir')?.value)||0;
-  const bonus_dir2=parseFloat(document.getElementById('mv-bonus-dir2')?.value)||0;
-  const bonus_ger=parseFloat(document.getElementById('mv-bonus-ger')?.value)||0;
-  const bonus_cor=parseFloat(document.getElementById('mv-bonus-cor')?.value)||0;
   const comBruta=val*pct;
   const comLiq=comBruta*(1-imp);
   const calc=(p)=>(val*p)*(1-imp);
@@ -1927,6 +2172,7 @@ function calcularPrevV(){
   if(!pv)return;
   document.getElementById('pv-bruta').textContent=fmt(comBruta);
   document.getElementById('pv-liq').textContent=fmt(comLiq);
+  document.getElementById('pv-imp').textContent=fmt(comBruta*imp);
   document.getElementById('pv-cor').textContent=fmt(cCor);
   document.getElementById('pv-cap').textContent=fmt(cCap);
   document.getElementById('pv-ger').textContent=fmt(cGer);
@@ -1936,23 +2182,7 @@ function calcularPrevV(){
   const dir2val=document.getElementById('mv-diretor2')?.value;
   if(dir2wrap) dir2wrap.style.display=dir2val?'flex':'none';
   if(dir2val){const pd=document.getElementById('pv-dir2');if(pd)pd.textContent=fmt(cDir2);}
-  if(bonus>0){
-    const bwrap=document.getElementById('pv-bonus-wrap');
-    if(bwrap){
-      bwrap.style.display='block';
-      document.getElementById('pv-bonus-dir').textContent=fmt(bonus*bonus_dir/100);
-      const bonusDir2Wrap=document.getElementById('pb-dir2-wrap');
-      if(bonusDir2Wrap) bonusDir2Wrap.style.display=dir2val?'flex':'none';
-      if(document.getElementById('pb-dir2')) document.getElementById('pb-dir2').textContent=dir2val&&bonus_dir2?fmt(bonus*bonus_dir2/100):zUiText('—');
-      document.getElementById('pv-bonus-ger').textContent=fmt(bonus*bonus_ger/100);
-      document.getElementById('pv-bonus-cor').textContent=fmt(bonus*bonus_cor/100);
-    }
-  } else {
-    const bwrap=document.getElementById('pv-bonus-wrap');
-    if(bwrap) bwrap.style.display='none';
-    const bonusDir2Wrap=document.getElementById('pb-dir2-wrap');
-    if(bonusDir2Wrap) bonusDir2Wrap.style.display='none';
-  }
+  calcularPrevBonus();
 }
 // Upload de documentos no modal nova venda
 function handleDocUpload(input,tipo){
@@ -1998,6 +2228,7 @@ function irParaVenda(id){
 // Preview de bônus no modal nova venda (oninput em mv-bonus / mv-bonus-*)
 function calcularPrevBonus() {
   const bonus = parseFloat(document.getElementById('mv-bonus').value) || 0;
+  const imp   = parseFloat(document.getElementById('mv-imp')?.value) / 100 || 0.11;
   const pDir  = parseFloat(document.getElementById('mv-bonus-dir').value) || 0;
   const pDir2 = parseFloat(document.getElementById('mv-bonus-dir2')?.value) || 0;
   const pGer  = parseFloat(document.getElementById('mv-bonus-ger').value) || 0;
@@ -2006,14 +2237,18 @@ function calcularPrevBonus() {
   const temDir2 = !!document.getElementById('mv-diretor2')?.value;
   if (!bonus) { if (prev) prev.style.display = 'none'; return; }
   if (prev) prev.style.display = 'flex';
-  const vDir  = bonus * (pDir / 100);
-  const vDir2 = bonus * (pDir2 / 100);
-  const vGer  = bonus * (pGer / 100);
-  const vCor  = bonus * (pCor / 100);
+  const bonusLiquido = bonus * (1 - imp);
+  const impostoBonus = bonus - bonusLiquido;
+  const calcBonus = (p) => (bonus * (p / 100)) * (1 - imp);
+  const vDir  = calcBonus(pDir);
+  const vDir2 = calcBonus(pDir2);
+  const vGer  = calcBonus(pGer);
+  const vCor  = calcBonus(pCor);
   const total = pDir + pDir2 + pGer + pCor;
-  const resto = bonus - (vDir + vDir2 + vGer + vCor);
+  const resto = bonusLiquido - (vDir + vDir2 + vGer + vCor);
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  set('pb-total', fmt(bonus));
+  set('pb-total', fmt(bonusLiquido));
+  set('pb-imp', impostoBonus > 0 ? `- ${fmt(impostoBonus)}` : zUiText('—'));
   set('pb-dir',   pDir ? fmt(vDir) : zUiText('—'));
   const dir2Wrap=document.getElementById('pb-dir2-wrap');
   if (dir2Wrap) dir2Wrap.style.display = temDir2 ? 'flex' : 'none';

@@ -194,7 +194,9 @@ function resumoCarteira(lista) {
   const cDir = ativas.reduce((s, v) => s + comD(v) + comD2(v), 0);
   const cRH = ativas.reduce((s, v) => s + comRH(v), 0);
   const zelony = ativas.reduce((s, v) => s + comZ(v), 0);
-  const bonus = ativas.reduce((s, v) => s + (v.bonus || 0), 0);
+  const bonusBruto = ativas.reduce((s, v) => s + bonusBrutoTotal(v), 0);
+  const bonus = ativas.reduce((s, v) => s + bonusLiquidoTotal(v), 0);
+  const bonusImposto = bonusBruto - bonus;
   const ticket = ativas.length ? vgv / ativas.length : 0;
   const taxaDistrato = (ativas.length + distratadas.length) ? (distratadas.length / (ativas.length + distratadas.length)) * 100 : 0;
   const taxaConclusao = ativas.length ? (concluidas.length / ativas.length) * 100 : 0;
@@ -241,6 +243,8 @@ function resumoCarteira(lista) {
     cDir,
     cRH,
     zelony,
+    bonusBruto,
+    bonusImposto,
     bonus,
     ticket,
     taxaDistrato,
@@ -2797,7 +2801,7 @@ function renderCarteiraTabelaRows(lista, cols) {
         }
         return `<td class="pos" style="color:#2E9E6E;">${totalBonus > 0 ? fmt(totalBonus) : zUiText('—')}</td>`;
       }
-      if (c === 'bonus_total') return `<td class="pos" style="color:#2E9E6E;">${v.bonus > 0 ? fmt(v.bonus) : zUiText('—')}</td>`;
+      if (c === 'bonus_total') return `<td class="pos" style="color:#2E9E6E;">${v.bonus > 0 ? fmt(bonusLiquidoTotal(v)) : zUiText('—')}</td>`;
       if (c === 'etapa') {
         return `<td><div class="cart-stage-cell"><span class="spill${v.etapa === ETAPAS.length - 1 ? ' f' : ''}">${zUiText(ETAPAS[v.etapa])}</span>${statusPill}</div></td>`;
       }
@@ -2810,7 +2814,7 @@ function renderCarteira() {
   const lMinhas = vendasU(VENDAS, true);
   const calcSaldo = v => {
     if (role === 'fin') return comZ(v);
-    if (role === 'dono') return comTotal(v) + (v.bonus || 0);
+    if (role === 'dono') return comTotal(v) + bonusLiquidoTotal(v);
     if (role === 'rh') return comRH(v);
     if (!usuarioLogado) return 0;
     const matchNome = campo => {
@@ -2864,7 +2868,7 @@ function renderCarteira() {
     bonus_cor: '🎁 Bônus',
     bonus_ger: '🎁 Bônus',
     bonus_dir: '🎁 Bônus',
-    bonus_total: '🎁 Bônus total',
+    bonus_total: '🎁 Bônus líq.',
     etapa: 'Etapa'
   };
 
@@ -3136,9 +3140,10 @@ function renderCarteira() {
           <div class="cmc-s">${fmtK(dados.valorPerdidoDistrato)} ${zUiText('não recebidos')}</div>
         </button>
         <div class="cmc">
-          <div class="cmc-l">${zUiText('Bônus total')}</div>
+          <div class="cmc-l">${zUiText('Bônus líquido')}</div>
           <div class="cmc-v" style="color:#2E9E6E;">${fmtK(dados.bonus)}</div>
-          <div class="cmc-s">${zUiText('construtoras')}</div>
+          <div class="cmc-s">${zUiText('após imposto')}</div>
+          <div class="cmc-s">${zUiText('Bruto')} ${fmtK(dados.bonusBruto)} ${zUiText('· Imposto')} ${fmtK(dados.bonusImposto)}</div>
         </div>
       </div>
 
@@ -3254,7 +3259,7 @@ function renderCarteira() {
         </div>
         ${dados.bonus > 0 || dados.distratadas.length ? `
           <div class="cart-dist-footer">
-            ${dados.bonus > 0 ? `<span class="good">${zUiText(`🎁 Bônus de construtoras: ${fmt(dados.bonus)}`)}</span>` : ''}
+            ${dados.bonus > 0 ? `<span class="good">${zUiText(`🎁 Bônus líquidos de construtoras: ${fmt(dados.bonus)}`)}</span>` : ''}
             ${dados.distratadas.length ? `<span class="bad">${zUiText(`⚠ ${dados.distratadas.length} distrato${dados.distratadas.length > 1 ? 's' : ''} no recorte`)}${dados.impactoDistrato > 0 ? ` ${zUiText('• impacto Zelony')} ${fmt(dados.impactoDistrato)}` : ''}</span>` : ''}
           </div>
         ` : ''}

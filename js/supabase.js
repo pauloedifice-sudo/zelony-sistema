@@ -388,7 +388,7 @@ async function carregarTabelaSupabase(tabela, order='id'){
 }
 
 async function carregarVendasSupabase(){
-  const VENDAS_COLS_BASE='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+  const VENDAS_COLS_BASE='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,bonus_forma,bonus_status,bonus_obs,etapa,hist,distratada';
   let colunas=`${VENDAS_COLS_BASE},ref_local`;
   try{
     let todas=[]; let pagina=0; const LOTE=20;
@@ -402,9 +402,9 @@ async function carregarVendasSupabase(){
         pagina++;
       }catch(errorPagina){
         const colunaAusente=extrairColunaAusenteSupabase(errorPagina,'vendas');
-        if(colunaAusente==='ref_local'&&colunas.includes('ref_local')){
-          registrarColunaAusenteSupabase('vendas','ref_local');
-          colunas=VENDAS_COLS_BASE;
+        if(colunaAusente&&colunas.includes(colunaAusente)){
+          registrarColunaAusenteSupabase('vendas',colunaAusente);
+          colunas=colunas.split(',').map(item=>item.trim()).filter(item=>item&&item!==colunaAusente).join(',');
           todas=[];
           pagina=0;
           continue;
@@ -846,6 +846,9 @@ function mapVendaIn(v){
     bonus:parseFloat(v.bonus)||0,bonus_pct_dir:parseFloat(v.bonus_pct_dir)||0,
     bonus_pct_dir2:parseFloat(v.bonus_pct_dir2)||0,bonus_pct_ger:parseFloat(v.bonus_pct_ger)||0,
     bonus_pct_cor:parseFloat(v.bonus_pct_cor)||0,
+    bonus_forma:String(v.bonus_forma||'').trim(),
+    bonus_status:String(v.bonus_status||'').trim(),
+    bonus_obs:String(v.bonus_obs||'').trim(),
     etapa:parseInt(v.etapa)||0,
     hist:v.hist||[],
     distratada:!!v.distratada,
@@ -869,6 +872,9 @@ function mapVendaOut(v){
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
     bonus_pct_dir2:v.bonus_pct_dir2||0,bonus_pct_ger:v.bonus_pct_ger||0,
     bonus_pct_cor:v.bonus_pct_cor||0,
+    bonus_forma:v.bonus>0?(String(v.bonus_forma||'').trim()||'comissao'):null,
+    bonus_status:v.bonus>0?(String(v.bonus_status||'').trim()||'pendente'):null,
+    bonus_obs:v.bonus>0?String(v.bonus_obs||'').trim():null,
     etapa:v.etapa,hist:v.hist,
     ref_local:garantirRefLocalVenda(v,v&&v.id?'banco':'local')||null
     // anexos: omitido — salvo separadamente via dbSalvarAnexos
@@ -899,7 +905,10 @@ function reduzirPayloadVendaPorSchema(payload,colunaAusente=''){
     bonus_pct_dir:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
     bonus_pct_dir2:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
     bonus_pct_ger:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
-    bonus_pct_cor:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor']
+    bonus_pct_cor:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
+    bonus_forma:['bonus_forma'],
+    bonus_status:['bonus_status'],
+    bonus_obs:['bonus_obs']
   };
   const lista=grupos[colunaAusente]||[colunaAusente];
   lista.forEach(coluna=>delete reduzido[coluna]);

@@ -143,6 +143,12 @@ function calcCommission(venda: Record<string, unknown>, pct: number) {
   return (valor * pct) - (valor * pct * imposto);
 }
 
+function calcBonusNet(venda: Record<string, unknown>, pctPercent: number) {
+  const bonus = toNumber(venda.bonus, 0);
+  const imposto = toNumber(venda.imp, 0.11);
+  return (bonus * (pctPercent / 100)) * (1 - imposto);
+}
+
 function commissionByRole(venda: Record<string, unknown>, role: string) {
   switch (role) {
     case "corretor":
@@ -165,13 +171,13 @@ function bonusByRole(venda: Record<string, unknown>, role: string) {
   if (bonus <= 0) return 0;
   switch (role) {
     case "corretor":
-      return bonus * (toNumber(venda.bonus_pct_cor, 0) / 100);
+      return calcBonusNet(venda, toNumber(venda.bonus_pct_cor, 0));
     case "gerente":
-      return bonus * (toNumber(venda.bonus_pct_ger, 0) / 100);
+      return calcBonusNet(venda, toNumber(venda.bonus_pct_ger, 0));
     case "diretor":
-      return bonus * (toNumber(venda.bonus_pct_dir, 0) / 100);
+      return calcBonusNet(venda, toNumber(venda.bonus_pct_dir, 0));
     case "diretor2":
-      return bonus * (toNumber(venda.bonus_pct_dir2, 0) / 100);
+      return calcBonusNet(venda, toNumber(venda.bonus_pct_dir2, 0));
     default:
       return 0;
   }
@@ -280,7 +286,7 @@ function buildCadastroMessage(
     `Unidade: ${unidade}`,
     `Sua participação: ${recipientRoleText(recipient)}`,
     `Comissão estimada: ${formatCurrencyPtBr(financials.commission)}`,
-    ...(financials.bonus > 0 ? [`Bônus estimado nesta venda: ${formatCurrencyPtBr(financials.bonus)}`] : []),
+    ...(financials.bonus > 0 ? [`Bônus líquido estimado nesta venda: ${formatCurrencyPtBr(financials.bonus)}`] : []),
     `Responsável pelo cadastro: ${responsavel || "Sistema"}`,
     `Data do cadastro: ${dataHora}`,
   ].join("\n");
@@ -337,7 +343,7 @@ function buildDistratoMessage(
     `Unidade: ${unidade}`,
     `Sua participação: ${recipientRoleText(recipient)}`,
     `Impacto estimado na sua comissão: ${formatCurrencyPtBr(financials.commission)}`,
-    ...(financials.bonus > 0 ? [`Impacto estimado no bônus: ${formatCurrencyPtBr(financials.bonus)}`] : []),
+    ...(financials.bonus > 0 ? [`Impacto líquido estimado no bônus: ${formatCurrencyPtBr(financials.bonus)}`] : []),
     `Categoria do distrato: ${categoria}`,
     `Observação: ${observacao}`,
     `Responsável pelo registro: ${responsavelFinal}`,
