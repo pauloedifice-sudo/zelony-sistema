@@ -397,6 +397,7 @@ function finMontarPartesRepasseComissaoVenda(venda) {
     papelLabel: 'DIRETOR 2',
     nome: alvo.diretor2,
     valor: finValorComissaoCalculado(alvo, typeof comD2 === 'function' ? comD2 : null)
+      + finValorComissaoCalculado(alvo, typeof bonusDir2 === 'function' ? bonusDir2 : null)
   });
   return partes;
 }

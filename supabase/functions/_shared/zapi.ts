@@ -170,6 +170,8 @@ function bonusByRole(venda: Record<string, unknown>, role: string) {
       return bonus * (toNumber(venda.bonus_pct_ger, 0) / 100);
     case "diretor":
       return bonus * (toNumber(venda.bonus_pct_dir, 0) / 100);
+    case "diretor2":
+      return bonus * (toNumber(venda.bonus_pct_dir2, 0) / 100);
     default:
       return 0;
   }

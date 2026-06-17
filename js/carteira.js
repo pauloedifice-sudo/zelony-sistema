@@ -2789,11 +2789,11 @@ function renderCarteiraTabelaRows(lista, cols) {
           if (mn(v.corretor)) totalBonus += bonusCor(v);
           if (mn(v.gerente)) totalBonus += bonusGer(v);
           if (mn(v.diretor)) totalBonus += bonusDir(v);
-          if (mn(v.diretor2)) totalBonus += bonusDir(v);
+          if (mn(v.diretor2)) totalBonus += bonusDir2(v);
         } else {
           if (c === 'bonus_cor') totalBonus = bonusCor(v);
           if (c === 'bonus_ger') totalBonus = bonusGer(v);
-          if (c === 'bonus_dir') totalBonus = bonusDir(v);
+          if (c === 'bonus_dir') totalBonus = bonusDir(v) + bonusDir2(v);
         }
         return `<td class="pos" style="color:#2E9E6E;">${totalBonus > 0 ? fmt(totalBonus) : zUiText('—')}</td>`;
       }
@@ -2825,12 +2825,12 @@ function renderCarteira() {
     if (matchNome(v.capitao)) { total += comCap(v); }
     if (matchNome(v.gerente)) { total += comG(v); total += bonusGer(v); }
     if (matchNome(v.diretor)) { total += comD(v); total += bonusDir(v); }
-    if (matchNome(v.diretor2)) { total += comD2(v); }
+    if (matchNome(v.diretor2)) { total += comD2(v); total += bonusDir2(v); }
     if (total === 0) {
       if (role === 'cor') return comC(v) + bonusCor(v);
       if (role === 'cap') return comCap(v);
       if (role === 'ger') return comG(v) + bonusGer(v);
-      if (role === 'dir') return comD(v) + bonusDir(v);
+      if (role === 'dir') return comD(v) + comD2(v) + bonusDir(v) + bonusDir2(v);
     }
     return total;
   };

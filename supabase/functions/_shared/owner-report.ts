@@ -48,6 +48,7 @@ export type OwnerReportVenda = {
   pct_rh?: number | null;
   bonus?: number | null;
   bonus_pct_dir?: number | null;
+  bonus_pct_dir2?: number | null;
   bonus_pct_ger?: number | null;
   bonus_pct_cor?: number | null;
   etapa?: number | null;
@@ -118,6 +119,7 @@ function normalizeVenda(venda: OwnerReportVenda) {
     pct_rh: numberOrZero(venda.pct_rh),
     bonus: numberOrZero(venda.bonus),
     bonus_pct_dir: numberOrZero(venda.bonus_pct_dir),
+    bonus_pct_dir2: numberOrZero(venda.bonus_pct_dir2),
     bonus_pct_ger: numberOrZero(venda.bonus_pct_ger),
     bonus_pct_cor: numberOrZero(venda.bonus_pct_cor),
     etapa: Number.isFinite(Number(venda.etapa)) ? Number(venda.etapa) : 0,
@@ -183,6 +185,12 @@ function parseIsoDate(value: unknown) {
   const [year, month, day] = raw.split("-").map(Number);
   const date = new Date(year, month - 1, day, 12, 0, 0, 0);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function extractIsoDatePrefix(value: unknown) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : "";
 }
 
 function vendaDate(venda: OwnerReportVenda) {
@@ -439,6 +447,13 @@ function normalizePerfil(perfil: unknown) {
   return "cor";
 }
 
+function countsAsActiveManager(user: OwnerReportUsuario | null | undefined) {
+  if (!user || !statusUsuarioAtivo(user.status)) return false;
+  const perfil = normalizePerfil(user.perfil);
+  // The gerente field in sales can be assigned to any active leadership role.
+  return perfil === "ger" || perfil === "dir" || perfil === "cap" || perfil === "dono";
+}
+
 function findUserByName(users: OwnerReportUsuario[], name: unknown) {
   const target = String(name || "").trim();
   if (!target) return null;
@@ -569,11 +584,15 @@ function computeDashboard(vendas: OwnerReportVenda[], users: OwnerReportUsuario[
 }
 
 function agendamentoDate(item: OwnerReportAgendamento) {
-  return parseIsoDate(item.data_agendamento || item.dataAgendamento || "");
+  const prefix = extractIsoDatePrefix(item.data_agendamento || item.dataAgendamento || "");
+  return prefix ? parseIsoDate(prefix) : null;
 }
 
 function agendamentoTipo(item: OwnerReportAgendamento) {
-  return String(item.tipo_visita || item.tipoVisita || "Primeiro atendimento").trim();
+  const tipo = normalizeText(item.tipo_visita || item.tipoVisita || "Primeiro atendimento");
+  if (tipo === "FECHAMENTO") return "Fechamento";
+  if (tipo === "ENVIO DE DOCUMENTACAO ONLINE") return "Envio de documentacao online";
+  return "Primeiro atendimento";
 }
 
 function agendamentoSituacao(item: OwnerReportAgendamento) {
@@ -589,6 +608,15 @@ function agendamentoTipoKey(item: OwnerReportAgendamento) {
   if (tipo === "Fechamento") return "closing";
   if (tipo === "Envio de documentacao online") return "documentation";
   return "visit";
+}
+
+function agendamentoNoMes(item: OwnerReportAgendamento, month: number, year: number) {
+  const prefix = extractIsoDatePrefix(item.data_agendamento || item.dataAgendamento || "");
+  if (prefix) {
+    const expectedPrefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+    return prefix.startsWith(expectedPrefix);
+  }
+  return sameMonth(agendamentoDate(item), month, year);
 }
 
 function emptyAppointmentStats() {
@@ -636,7 +664,7 @@ function weightedConversion(team: Record<string, unknown>) {
 
 function computeAppointments(agendamentos: OwnerReportAgendamento[], now: Date) {
   const { month, year } = monthRange(now);
-  const list = agendamentos.filter((item) => sameMonth(agendamentoDate(item), month, year));
+  const list = agendamentos.filter((item) => agendamentoNoMes(item, month, year));
   const visit = emptyAppointmentStats();
   const documentation = emptyAppointmentStats();
   const closing = emptyAppointmentStats();
@@ -723,6 +751,7 @@ function computeAppointments(agendamentos: OwnerReportAgendamento[], now: Date) 
   }
 
   return {
+    total_appointments_in_month: list.length,
     visit,
     documentation,
     closing,
@@ -1014,14 +1043,16 @@ function computeWallet(vendas: OwnerReportVenda[], now: Date) {
 
 function computeDistratos(vendas: OwnerReportVenda[], users: OwnerReportUsuario[], now: Date) {
   const { month, year } = monthRange(now);
-  const currentMonthSales = vendas.map(normalizeVenda).filter((venda) => saleInCurrentMonth(venda, month, year));
+  const allSales = vendas.map(normalizeVenda);
+  const currentMonthSales = allSales.filter((venda) => saleInCurrentMonth(venda, month, year));
+  const allDistratos = allSales.filter((venda) => venda.distratada);
   const monthDistratos = currentMonthSales.filter((venda) => venda.distratada);
   const groupBy = <T extends { nome: string; total: number; distratos: number; perdido: number }>(
     keyFn: (venda: OwnerReportVenda) => string,
     baseFilter?: (venda: OwnerReportVenda) => boolean,
   ) => {
     const map = new Map<string, T>();
-    currentMonthSales.filter((venda) => (baseFilter ? baseFilter(venda) : true)).forEach((venda) => {
+    allSales.filter((venda) => (baseFilter ? baseFilter(venda) : true)).forEach((venda) => {
       const name = keyFn(venda) || "Nao informado";
       if (!map.has(name)) {
         map.set(name, { nome: name, total: 0, distratos: 0, perdido: 0 } as T);
@@ -1043,32 +1074,34 @@ function computeDistratos(vendas: OwnerReportVenda[], users: OwnerReportUsuario[
     (venda) => String(venda.gerente || "").trim() || "Nao informado",
     (venda) => {
       const manager = findUserByName(users, venda.gerente);
-      return !!manager && statusUsuarioAtivo(manager.status) && normalizePerfil(manager.perfil) === "ger";
+      return countsAsActiveManager(manager);
     },
   );
   const units = groupBy((venda) => String(venda.unidade || "").trim() || "Nao informada");
   const reasonsMap = new Map<string, number>();
-  monthDistratos.forEach((venda) => {
+  allDistratos.forEach((venda) => {
     const reason = categoriaDistrato(venda);
     reasonsMap.set(reason, (reasonsMap.get(reason) || 0) + 1);
   });
   const topReasonEntry = Array.from(reasonsMap.entries()).sort((a, b) => b[1] - a[1])[0] || null;
-  const ignoredInactiveManagers = monthDistratos.filter((venda) => {
+  const ignoredInactiveManagers = allDistratos.filter((venda) => {
     const manager = findUserByName(users, venda.gerente);
-    return !!manager && !statusUsuarioAtivo(manager.status);
+    return !countsAsActiveManager(manager);
   }).length;
 
   const eligibleUnit = units.filter((item) => item.total >= DISTRATO_RANKING_MIN_BASE)[0] || units[0] || null;
   const eligibleManager = activeManagers.filter((item) => item.total >= DISTRATO_RANKING_MIN_BASE)[0] || activeManagers[0] || null;
 
-  const generalRate = currentMonthSales.length ? (monthDistratos.length / currentMonthSales.length) * 100 : 0;
+  const generalRate = allSales.length ? (allDistratos.length / allSales.length) * 100 : 0;
   let status = "yellow";
   if (generalRate >= 12 || numberOrZero(eligibleUnit?.rate_pct) >= 15 || numberOrZero(eligibleManager?.rate_pct) >= 15) status = "red";
   else if (generalRate < 5 && numberOrZero(eligibleUnit?.rate_pct) < 8 && numberOrZero(eligibleManager?.rate_pct) < 8) status = "green";
 
   return {
-    month_total_sales: currentMonthSales.length,
-    month_total_distratos: monthDistratos.length,
+    historical_total_sales: allSales.length,
+    historical_total_distratos: allDistratos.length,
+    current_month_sales: currentMonthSales.length,
+    current_month_distratos: monthDistratos.length,
     general_rate_pct: generalRate,
     worst_unit: eligibleUnit ? {
       name: eligibleUnit.nome,
@@ -1112,7 +1145,7 @@ function buildPositiveBullets(snapshot: Record<string, unknown>) {
     });
   }
 
-  if (numberOrZero(distratos.general_rate_pct) < 5 && numberOrZero(distratos.month_total_sales) > 0) {
+  if (numberOrZero(distratos.general_rate_pct) < 5 && numberOrZero(distratos.historical_total_sales) > 0) {
     positives.push({
       area: "distratos",
       text: `A taxa geral de distrato esta controlada em ${formatPercent(numberOrZero(distratos.general_rate_pct))}.`,
@@ -1163,7 +1196,7 @@ function buildExecutiveInputs(snapshot: Record<string, unknown>) {
 
   const priorities = [];
   if (numberOrZero(wallet.stalled_sales_count) > 0) priorities.push("cobrar evolucao das vendas travadas ha mais tempo");
-  if (numberOrZero(distratos.month_total_distratos) > 0) priorities.push("atacar a origem dos distratos da unidade e do gerente mais criticos");
+  if (numberOrZero(distratos.historical_total_distratos) > 0) priorities.push("atacar a origem dos distratos da unidade e da lideranca mais critica");
   const criticalAccountsData = finance.critical_accounts as Record<string, unknown> | null;
   const criticalItems = Array.isArray(criticalAccountsData?.items) ? criticalAccountsData.items : [];
   if (criticalItems.length) priorities.push("resolver as contas mais criticas do caixa");
@@ -1357,15 +1390,16 @@ export function buildOwnerReportBaseMessage(snapshot: OwnerReportSnapshot) {
     stalledLines,
     "",
     "2. Distratos",
-    `A taxa geral de distrato esta em ${formatPercent(numberOrZero(distratos.general_rate_pct))}, com ${numberOrZero(distratos.month_total_distratos)} distrato(s) em ${numberOrZero(distratos.month_total_sales)} venda(s).`,
+    `A taxa geral historica de distrato esta em ${formatPercent(numberOrZero(distratos.general_rate_pct))}, com ${numberOrZero(distratos.historical_total_distratos)} distrato(s) em ${numberOrZero(distratos.historical_total_sales)} venda(s) na base acumulada.`,
+    `No mes atual, tivemos ${numberOrZero(distratos.current_month_distratos)} distrato(s) em ${numberOrZero(distratos.current_month_sales)} venda(s).`,
     worstUnit
       ? `A unidade com maior preocupacao hoje e ${String(worstUnit.name || "Sem unidade")}, com ${formatPercent(numberOrZero(worstUnit.rate_pct))}.`
       : "Ainda nao existe base suficiente para apontar a unidade mais critica do recorte.",
     worstManager
-      ? `O gerente ativo com numero mais preocupante e ${String(worstManager.name || "Sem gerente")}, com ${formatPercent(numberOrZero(worstManager.rate_pct))}.`
-      : "Ainda nao existe base suficiente para ranquear gerentes ativos com justica neste recorte.",
+      ? `A lideranca ativa com numero mais preocupante e ${String(worstManager.name || "Sem gestor")}, com ${formatPercent(numberOrZero(worstManager.rate_pct))}.`
+      : "Ainda nao existe base suficiente para ranquear liderancas ativas com justica neste recorte.",
     numberOrZero(distratos.ignored_inactive_managers) > 0
-      ? `Ha ${numberOrZero(distratos.ignored_inactive_managers)} caso(s) ligados a gestores inativos, fora do ranking atual.`
+      ? `Ha ${numberOrZero(distratos.ignored_inactive_managers)} caso(s) ligados a liderancas fora da base ativa, fora do ranking atual.`
       : "Isso indica necessidade de atuacao direta sobre qualidade da venda, alinhamento comercial e acompanhamento do cliente no pos-venda.",
     "",
     "3. Financeiro",

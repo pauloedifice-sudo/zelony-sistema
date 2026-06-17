@@ -850,6 +850,7 @@
           <div class="f-field"><label>Valor do bônus (R$)</label><input type="number" id="ev-bonus" min="0" placeholder="0"></div>
           <div class="pct-row">
             <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-bonus-dir" min="0" max="100" step="1" placeholder="0"></div>
+            <div class="pct-field" id="ev-bonus-dir2-field" style="display:none;"><label>Diretor 2 %</label><input type="number" id="ev-bonus-dir2" min="0" max="100" step="1" placeholder="0"></div>
             <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-bonus-ger" min="0" max="100" step="1" placeholder="0"></div>
             <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-bonus-cor" min="0" max="100" step="1" placeholder="0"></div>
           </div>
@@ -935,10 +936,6 @@
             <div class="f-field"><label>Diretor 2 <span style="font-size:9px;color:var(--tm);">(opcional)</span></label>
               <select id="mv-diretor2"><option value="">Nenhum</option></select>
             </div>
-            <div class="f-field" id="mv-dir2-pct-field" style="display:none;">
-              <label>Diretor 2 %</label>
-              <input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()">
-            </div>
           </div>
           <div class="f-field"><label>CCA Responsável *</label><input type="text" id="mv-cca" placeholder="Nome do CCA responsável"></div>
           <div class="mv-divider"></div>
@@ -955,7 +952,7 @@
             <div class="pct-field"><label>Capitão %</label><input type="number" id="mv-pct-cap" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
             <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-pct-ger" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
             <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-pct-dir" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
-            <div class="pct-field"><label>Diretor 2 %</label><input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field" id="mv-dir2-pct-field" style="display:none;"><label>Diretor 2 %</label><input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
           </div>
           <!-- Preview comissões -->
           <div class="pct-preview" id="mv-preview" style="display:none;">
@@ -978,6 +975,7 @@
           <div class="mv-section" style="margin-top:8px;font-size:9px;">Distribuição do bônus (%)</div>
           <div class="pct-row">
             <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-bonus-dir" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field" id="mv-bonus-dir2-field" style="display:none;"><label>Diretor 2 %</label><input type="number" id="mv-bonus-dir2" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
             <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-bonus-ger" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
             <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-bonus-cor" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
           </div>
@@ -985,6 +983,7 @@
           <div class="pct-preview" id="mv-bonus-preview" style="display:none;">
             <div class="pct-prev-item"><div class="pct-prev-lbl">Total bônus</div><div class="pct-prev-val" id="pb-total">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Diretor</div><div class="pct-prev-val" id="pb-dir">—</div></div>
+            <div class="pct-prev-item" id="pb-dir2-wrap" style="display:none;"><div class="pct-prev-lbl">Diretor 2</div><div class="pct-prev-val" id="pb-dir2">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Gerente</div><div class="pct-prev-val" id="pb-ger">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Corretor</div><div class="pct-prev-val" id="pb-cor">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl" id="pb-resto-lbl">Restante</div><div class="pct-prev-val" id="pb-resto" style="color:#C06030;">—</div></div>

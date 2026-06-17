@@ -9,7 +9,7 @@ let dashPollTimer = null;
 let dashAtualizando = false;
 let dashUltimaAtualizacao = '';
 
-const DASH_VENDAS_COLS = 'id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+const DASH_VENDAS_COLS = 'id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
 
 function dashSyncState() {
   zSetState('state.ui.dashboard', {

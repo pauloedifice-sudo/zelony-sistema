@@ -31,6 +31,7 @@ type VendaRecord = {
   pct_dir2?: number | null;
   bonus?: number | null;
   bonus_pct_dir?: number | null;
+  bonus_pct_dir2?: number | null;
   bonus_pct_ger?: number | null;
   bonus_pct_cor?: number | null;
   etapa?: number | null;
@@ -203,7 +204,7 @@ Deno.serve(async (req) => {
 
     const { data: venda, error: vendaError } = await supabase
       .from("vendas")
-      .select("id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada")
+      .select("id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada")
       .eq("id", vendaId)
       .single();
 

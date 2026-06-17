@@ -15,6 +15,32 @@ function getEnv(name: string, fallback = "") {
   return Deno.env.get(name) || fallback;
 }
 
+function extractErrorMessage(error: unknown) {
+  if (error instanceof Error && error.message) return error.message;
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    if (typeof record.message === "string" && record.message.trim()) return record.message;
+    if (record.error && typeof record.error === "object") {
+      const nested = record.error as Record<string, unknown>;
+      if (typeof nested.message === "string" && nested.message.trim()) return nested.message;
+    }
+    try {
+      return JSON.stringify(record);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
+}
+
+function monthWindowIso(now: Date) {
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+  const monthEnd = `${year}-${String(month + 1).padStart(2, "0")}-${String(new Date(year, month + 1, 0).getDate()).padStart(2, "0")}`;
+  return { monthStart, monthEnd };
+}
+
 function normalizePerfil(perfil: unknown) {
   const value = normalizeText(perfil);
   if (value === "DONO") return "dono";
@@ -76,6 +102,7 @@ Deno.serve(async (req) => {
     const requestedByUserId = Number(body?.requestedByUserId);
     const requestedByName = String(body?.requestedByName || "Sistema").trim() || "Sistema";
     const now = new Date();
+    const { monthStart, monthEnd } = monthWindowIso(now);
     const supabase = createServiceClient();
 
     await ensureReportsTable(supabase);
@@ -86,9 +113,15 @@ Deno.serve(async (req) => {
       agendamentosResp,
       financeiroResp,
     ] = await Promise.all([
-      supabase.from("vendas").select("id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada"),
+      supabase.from("vendas").select("id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada"),
       supabase.from("usuarios").select("id,nome,perfil,status,tel,equipe"),
-      supabase.from("agendamentos").select("*").order("data_agendamento", { ascending: true }).order("horario_agendamento", { ascending: true }),
+      supabase
+        .from("agendamentos")
+        .select("id,unidade,equipe,corretor,cliente,data_agendamento,horario_agendamento,tipo_visita,situacao")
+        .gte("data_agendamento", monthStart)
+        .lte("data_agendamento", monthEnd)
+        .order("data_agendamento", { ascending: true })
+        .order("horario_agendamento", { ascending: true }),
       supabase.from("financeiro_lancamentos").select("*"),
     ]);
 
@@ -250,7 +283,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("owner-daily-summary", error);
     return jsonResponse({
-      error: error instanceof Error ? error.message : String(error),
+      error: extractErrorMessage(error),
     }, { status: 500 });
   }
 });

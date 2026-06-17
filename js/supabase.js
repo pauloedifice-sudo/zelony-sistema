@@ -93,6 +93,11 @@ let AGENDAMENTOS=[];
 const FINANCEIRO_LANCAMENTOS=[];
 const FINANCEIRO_COMPROVANTE_DB='zel_financeiro_comprovantes';
 const FINANCEIRO_COMPROVANTE_STORE='arquivos';
+const FINANCEIRO_TESTES_LEGADOS_BLOQUEADOS=[
+  {descricao:'DEEP SALES',valor:3000},
+  {descricao:'TESTE EXEMPLO',valor:4500},
+  {descricao:'LEADS',valor:3000}
+];
 const USUARIOS_PADRAO=[
   {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
   {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
@@ -130,6 +135,29 @@ let cargaModulosPromise=null;
 let cargaModulosConcluida=false;
 let recargaAgendamentosPromise=null;
 const SUPABASE_SCHEMA_AUSENCIAS={};
+
+function textoFinanceiroTesteLegado(valor){
+  return String(valor||'').trim().replace(/\s+/g,' ').toUpperCase();
+}
+
+function ehLancamentoFinanceiroTesteLegado(item){
+  const descricao=textoFinanceiroTesteLegado(item&&(item.descricao||''));
+  const valor=parseFloat(item&&item.valor)||0;
+  return FINANCEIRO_TESTES_LEGADOS_BLOQUEADOS.some(meta=>
+    meta.descricao===descricao&&Math.abs((parseFloat(meta.valor)||0)-valor)<0.0001
+  );
+}
+
+function removerLancamentosFinanceirosTesteLegado(lista){
+  const base=Array.isArray(lista)?lista:[];
+  const removidos=[];
+  for(let i=base.length-1;i>=0;i--){
+    if(!ehLancamentoFinanceiroTesteLegado(base[i])) continue;
+    removidos.push(base[i]);
+    base.splice(i,1);
+  }
+  return removidos;
+}
 function setBootStage(etapa){
   const texto=String(etapa||'').trim()||'inicializando';
   SUPABASE_BOOT_STATUS.etapa=texto;
@@ -360,7 +388,7 @@ async function carregarTabelaSupabase(tabela, order='id'){
 }
 
 async function carregarVendasSupabase(){
-  const VENDAS_COLS_BASE='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+  const VENDAS_COLS_BASE='id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
   let colunas=`${VENDAS_COLS_BASE},ref_local`;
   try{
     let todas=[]; let pagina=0; const LOTE=20;
@@ -816,7 +844,8 @@ function mapVendaIn(v){
     pct_ger:parseFloat(v.pct_ger)||0,pct_dir:parseFloat(v.pct_dir)||0,
     pct_dir2:parseFloat(v.pct_dir2)||0,pct_rh:parseFloat(v.pct_rh)||0,
     bonus:parseFloat(v.bonus)||0,bonus_pct_dir:parseFloat(v.bonus_pct_dir)||0,
-    bonus_pct_ger:parseFloat(v.bonus_pct_ger)||0,bonus_pct_cor:parseFloat(v.bonus_pct_cor)||0,
+    bonus_pct_dir2:parseFloat(v.bonus_pct_dir2)||0,bonus_pct_ger:parseFloat(v.bonus_pct_ger)||0,
+    bonus_pct_cor:parseFloat(v.bonus_pct_cor)||0,
     etapa:parseInt(v.etapa)||0,
     hist:v.hist||[],
     distratada:!!v.distratada,
@@ -838,7 +867,8 @@ function mapVendaOut(v){
     diretor2:normalizarCampoSistema(v.diretor2||'')||null,pct_dir2:v.pct_dir2||0,
     cca:normalizarCampoSistema(v.cca||''),distratada:v.distratada||false,
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
-    bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
+    bonus_pct_dir2:v.bonus_pct_dir2||0,bonus_pct_ger:v.bonus_pct_ger||0,
+    bonus_pct_cor:v.bonus_pct_cor||0,
     etapa:v.etapa,hist:v.hist,
     ref_local:garantirRefLocalVenda(v,v&&v.id?'banco':'local')||null
     // anexos: omitido — salvo separadamente via dbSalvarAnexos
@@ -865,10 +895,11 @@ function reduzirPayloadVendaPorSchema(payload,colunaAusente=''){
     diretor2:['diretor2','pct_dir2'],
     pct_dir2:['diretor2','pct_dir2'],
     pct_rh:['pct_rh'],
-    bonus:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor'],
-    bonus_pct_dir:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor'],
-    bonus_pct_ger:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor'],
-    bonus_pct_cor:['bonus','bonus_pct_dir','bonus_pct_ger','bonus_pct_cor']
+    bonus:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_dir:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_dir2:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_ger:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor'],
+    bonus_pct_cor:['bonus','bonus_pct_dir','bonus_pct_dir2','bonus_pct_ger','bonus_pct_cor']
   };
   const lista=grupos[colunaAusente]||[colunaAusente];
   lista.forEach(coluna=>delete reduzido[coluna]);
@@ -1414,7 +1445,9 @@ function carregarFinanceiroLancamentosLS(){
   try{
     const raw=localStorage.getItem('zel_financeiro_lancamentos');
     const lista=raw?JSON.parse(raw):[];
-    return Array.isArray(lista)?lista.map(mapLancamentoFinanceiroIn):[];
+    return Array.isArray(lista)
+      ? lista.map(mapLancamentoFinanceiroIn).filter(item=>!ehLancamentoFinanceiroTesteLegado(item))
+      : [];
   }catch(e){
     return [];
   }
@@ -1426,12 +1459,14 @@ function mesclarFinanceiroLancamentosBancoComLocal(bancoLista, localLista){
   const bancoMap=new Map();
   (Array.isArray(localLista)?localLista:[]).forEach(item=>{
     const mapped=mapLancamentoFinanceiroIn(item);
+    if(ehLancamentoFinanceiroTesteLegado(mapped)) return;
     const chave=getFinanceiroLancamentoMergeKey(mapped);
     localMap.set(chave,mapped);
     mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
   });
   (Array.isArray(bancoLista)?bancoLista:[]).forEach(item=>{
     const mapped=mapLancamentoFinanceiroIn(item);
+    if(ehLancamentoFinanceiroTesteLegado(mapped)) return;
     const chave=getFinanceiroLancamentoMergeKey(mapped);
     bancoMap.set(chave,mapped);
     mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
@@ -1661,7 +1696,8 @@ async function dbAtualizarVenda(v){
     pct_cor:v.pct_cor||0,pct_cap:v.pct_cap||0,pct_ger:v.pct_ger||0,
     pct_dir:v.pct_dir||0,pct_dir2:v.pct_dir2||0,
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
-    bonus_pct_ger:v.bonus_pct_ger||0,bonus_pct_cor:v.bonus_pct_cor||0,
+    bonus_pct_dir2:v.bonus_pct_dir2||0,bonus_pct_ger:v.bonus_pct_ger||0,
+    bonus_pct_cor:v.bonus_pct_cor||0,
     cca:normalizarCampoSistema(v.cca)||'',
     anexos:(v.anexos||[]).map(a=>({nome:a.nome,tipo:a.tipo,tamanho:a.tamanho,data:a.data,por:a.por,mime:a.mime,dataUrl:a.dataUrl||''}))
   }).eq('id',v.id);
@@ -1900,6 +1936,14 @@ async function dbExcluirAgendamento(agOuId){
 
 async function dbSalvarLancamentoFinanceiro(lancamento, id){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para o financeiro.'});
+  if(ehLancamentoFinanceiroTesteLegado(lancamento)){
+    removerLancamentosFinanceirosTesteLegado(FINANCEIRO_LANCAMENTOS);
+    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+    if(typeof salvarLS==='function') salvarLS();
+    lancamento.syncPendente=false;
+    lancamento.syncErro='';
+    return lancamento;
+  }
   garantirRefLocalFinanceiro(lancamento);
   if(!lancamento.atualizadoEm) lancamento.atualizadoEm=new Date().toISOString();
   const payloadOriginal=mapLancamentoFinanceiroOut(lancamento);
@@ -1992,6 +2036,11 @@ function lancamentoFinanceiroTemSyncPendente(item){
 }
 
 async function sincronizarFinanceiroPendentes(opcoes={}){
+  const removidosLegado=removerLancamentosFinanceirosTesteLegado(FINANCEIRO_LANCAMENTOS);
+  if(removidosLegado.length){
+    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+    salvarLS();
+  }
   const pendentes=(Array.isArray(FINANCEIRO_LANCAMENTOS)?FINANCEIRO_LANCAMENTOS:[]).filter(lancamentoFinanceiroTemSyncPendente);
   if(!pendentes.length) return {pendentes:0,sincronizados:0,falhas:0};
   let sincronizados=0;

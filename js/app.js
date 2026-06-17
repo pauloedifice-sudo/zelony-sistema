@@ -266,7 +266,14 @@ function showVDetail(id){
     if(!v.bonus||v.bonus<=0) return [];
     if(role==='cor') return [{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
     if(role==='ger') return [{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
-    if(['dir','fin','dono'].includes(role)) return [{n:v.diretor,c:'Diretor',val:bonusDir(v),pct:v.bonus_pct_dir},{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
+    if(['dir','fin','dono'].includes(role)){
+      const itens=[
+        {n:v.diretor,c:'Diretor',val:bonusDir(v),pct:v.bonus_pct_dir}
+      ];
+      if(v.diretor2) itens.push({n:v.diretor2,c:'Diretor 2',val:bonusDir2(v),pct:v.bonus_pct_dir2});
+      itens.push({n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor});
+      return itens;
+    }
     return [];
   })().filter(b=>b.pct>0);
   const bonusH=bonusDist.length?`<div class="sec"><div class="sec-h" style="color:#2E7E5E;">${zUiText('🎁 Bônus da construtora')}</div><div class="sec-b"><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;"><span class="zbg" style="background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;font-size:12px;font-weight:600;">${fmt(v.bonus)} ${zUiText('total')}</span></div>${bonusDist.map(b=>`<div class="eq-row"><div class="eav">${ini(b.n)}</div><div style="flex:1;min-width:0;"><div style="font-size:12px;font-weight:500;">${zUiText(b.n)}</div><div style="font-size:9px;color:var(--tm);">${zUiText(b.c)} ${zUiText('·')} ${b.pct}% ${zUiText('do bônus')}</div></div><span style="font-size:13px;font-weight:600;color:#2E7E5E;">${fmt(b.val)}</span></div>`).join('')}</div></div>`:'';

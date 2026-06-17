@@ -255,9 +255,26 @@ function normalizarVendaNumeros(v){
   v.pct_rh=numSeguro(v.pct_rh,0);
   v.bonus=numSeguro(v.bonus,0);
   v.bonus_pct_dir=numSeguro(v.bonus_pct_dir,0);
+  v.bonus_pct_dir2=numSeguro(v.bonus_pct_dir2,0);
   v.bonus_pct_ger=numSeguro(v.bonus_pct_ger,0);
   v.bonus_pct_cor=numSeguro(v.bonus_pct_cor,0);
   return v;
+}
+
+function somaBonusPercentuais(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.bonus_pct_dir+venda.bonus_pct_dir2+venda.bonus_pct_ger+venda.bonus_pct_cor;
+}
+
+function validarSomaBonusVenda(v, campoFocus=''){
+  const total=somaBonusPercentuais(v);
+  if(total<=100.0001) return true;
+  if(campoFocus){
+    const el=document.getElementById(campoFocus);
+    if(el) el.focus();
+  }
+  showToast(zUiText('⚠️'),zUiText('A soma dos percentuais de bônus não pode passar de 100%.'));
+  return false;
 }
 function pctSeguro(valor,casas=2){
   return `${(numSeguro(valor,0)*100).toFixed(casas)}%`;
@@ -558,6 +575,7 @@ function comG(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.
 function comD(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_dir); }
 function comD2(v){ const venda=normalizarVendaNumeros(v); return venda.pct_dir2?com(venda,venda.pct_dir2):0; }
 function bonusDir(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_dir/100):0; }
+function bonusDir2(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_dir2/100):0; }
 function bonusGer(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_ger/100):0; }
 function bonusCor(v){ const venda=normalizarVendaNumeros(v); return venda.bonus?(venda.bonus*venda.bonus_pct_cor/100):0; }
 function comRH(v){ const venda=normalizarVendaNumeros(v); return venda.pct_rh?com(venda,venda.pct_rh):0; }
@@ -1493,9 +1511,13 @@ function toggleDiretor2EditPct(limpar){
   const sel=document.getElementById('ev-diretor2');
   const wrap=document.getElementById('ev-dir2-pct-field');
   const pct=document.getElementById('ev-pct-dir2');
+  const bonusWrap=document.getElementById('ev-bonus-dir2-field');
+  const bonusPct=document.getElementById('ev-bonus-dir2');
   const ativo=!!(sel&&sel.value);
   if(wrap) wrap.style.display=ativo?'block':'none';
+  if(bonusWrap) bonusWrap.style.display=ativo?'block':'none';
   if(!ativo&&limpar&&pct) pct.value='0.00';
+  if(!ativo&&limpar&&bonusPct) bonusPct.value='0';
 }
 function abrirEditVenda(id){
   const v=VENDAS.find(x=>x.id===id);
@@ -1525,6 +1547,7 @@ function abrirEditVenda(id){
   document.getElementById('ev-unidade').onchange=function(){preencherDiretor2Edit();};
   document.getElementById('ev-bonus').value=v.bonus||0;
   document.getElementById('ev-bonus-dir').value=v.bonus_pct_dir||0;
+  document.getElementById('ev-bonus-dir2').value=v.bonus_pct_dir2||0;
   document.getElementById('ev-bonus-ger').value=v.bonus_pct_ger||0;
   document.getElementById('ev-bonus-cor').value=v.bonus_pct_cor||0;
   document.getElementById('ev-cca').value=v.cca||'';
@@ -1536,7 +1559,7 @@ function abrirEditVenda(id){
 function setEditVendaLoading(loading){
   editVendaSalvando=loading;
   zSetState('state.ui.editVendaSalvando', editVendaSalvando);
-  ['ev-cliente','ev-data','ev-produto','ev-construtora','ev-origem','ev-unidade','ev-diretor2','ev-valor','ev-pct','ev-imp','ev-pct-cor','ev-pct-cap','ev-pct-ger','ev-pct-dir','ev-pct-dir2','ev-bonus','ev-bonus-dir','ev-bonus-ger','ev-bonus-cor','ev-cca','ev-motivo']
+  ['ev-cliente','ev-data','ev-produto','ev-construtora','ev-origem','ev-unidade','ev-diretor2','ev-valor','ev-pct','ev-imp','ev-pct-cor','ev-pct-cap','ev-pct-ger','ev-pct-dir','ev-pct-dir2','ev-bonus','ev-bonus-dir','ev-bonus-dir2','ev-bonus-ger','ev-bonus-cor','ev-cca','ev-motivo']
     .forEach(id=>{
       const el=document.getElementById(id);
       if(el) el.disabled=loading;
@@ -1598,8 +1621,10 @@ function salvarEditVenda(){
   }
   v.bonus=lerNumeroInput('ev-bonus',0);
   v.bonus_pct_dir=lerNumeroInput('ev-bonus-dir',0);
+  v.bonus_pct_dir2=v.diretor2?lerNumeroInput('ev-bonus-dir2',0):0;
   v.bonus_pct_ger=lerNumeroInput('ev-bonus-ger',0);
   v.bonus_pct_cor=lerNumeroInput('ev-bonus-cor',0);
+  if(!validarSomaBonusVenda(v,'ev-bonus-dir')){ Object.assign(v, original); return; }
   normalizarVendaNumeros(v);
   v.cca=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(document.getElementById('ev-cca').value):document.getElementById('ev-cca').value.trim();
   const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
@@ -1683,9 +1708,17 @@ function abrirModalVenda(){
   document.getElementById('mv-diretor2').onchange=function(){
     const temDir2=!!this.value;
     const f=document.getElementById('mv-dir2-pct-field');
+    const bonusField=document.getElementById('mv-bonus-dir2-field');
     if(f) f.style.display=temDir2?'block':'none';
-    if(!temDir2){const d2=document.getElementById('mv-pct-dir2');if(d2) d2.value='';}
+    if(bonusField) bonusField.style.display=temDir2?'block':'none';
+    if(!temDir2){
+      const d2=document.getElementById('mv-pct-dir2');
+      const b2=document.getElementById('mv-bonus-dir2');
+      if(d2) d2.value='';
+      if(b2) b2.value='';
+    }
     calcularPrevV();
+    calcularPrevBonus();
   };
   document.getElementById('mv-corretor').onchange=function(){
     const extField=document.getElementById('mv-corretor-ext-wrap');
@@ -1693,11 +1726,15 @@ function abrirModalVenda(){
     else{extField.style.display='none';document.getElementById('mv-corretor-ext').value='';}
     calcularPrevV();
   };
-  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-ger','mv-bonus-cor','mv-corretor-ext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-dir2','mv-bonus-ger','mv-bonus-cor','mv-corretor-ext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const f=document.getElementById('mv-dir2-pct-field');
   if(f) f.style.display='none';
+  const bonusDir2Field=document.getElementById('mv-bonus-dir2-field');
+  if(bonusDir2Field) bonusDir2Field.style.display='none';
   const pw=document.getElementById('pv-dir2-wrap');
   if(pw) pw.style.display='none';
+  const pbw=document.getElementById('pb-dir2-wrap');
+  if(pbw) pbw.style.display='none';
   const extWrap=document.getElementById('mv-corretor-ext-wrap');
   if(extWrap) extWrap.style.display='none';
   document.getElementById('mv-imp').value='11';
@@ -1753,6 +1790,7 @@ async function salvarVenda(){
   const pct_dir2=diretor2?lerPercentualInput('mv-pct-dir2',0):0;
   const bonus=lerNumeroInput('mv-bonus',0);
   const bonus_pct_dir=lerNumeroInput('mv-bonus-dir',0);
+  const bonus_pct_dir2=diretor2?lerNumeroInput('mv-bonus-dir2',0):0;
   const bonus_pct_ger=lerNumeroInput('mv-bonus-ger',0);
   const bonus_pct_cor=lerNumeroInput('mv-bonus-cor',0);
   if(!cliente){document.getElementById('mv-cliente').focus();showToast(zUiText('⚠️'),zUiText('Informe o nome do cliente.'));return;}
@@ -1784,7 +1822,7 @@ async function salvarVenda(){
   const novaVenda={
     id:nextVendaId++,refLocal,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,
-    bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,
+    bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,
     valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
     etapa:0,
     hist:[criarRegistroHistorico({e:0,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.',corretorOrigem:corretorExterno?'externo':'usuario',corretorRefId:corretorExterno?null:(corretorUsuario&&corretorUsuario.id!=null?corretorUsuario.id:null)},{data:d})],
@@ -1794,6 +1832,7 @@ async function salvarVenda(){
     ]
   };
   normalizarVendaNumeros(novaVenda);
+  if(!validarSomaBonusVenda(novaVenda,'mv-bonus-dir')) return;
   zSetState('state.ui.nextVendaId', nextVendaId);
   setVendaModalLoading(true);
   showToast(zUiText('💾'),zUiText('Salvando venda no banco...'));
@@ -1875,6 +1914,7 @@ function calcularPrevV(){
   const pct_dir2=parseFloat(document.getElementById('mv-pct-dir2')?.value)/100||0;
   const bonus=parseFloat(document.getElementById('mv-bonus')?.value)||0;
   const bonus_dir=parseFloat(document.getElementById('mv-bonus-dir')?.value)||0;
+  const bonus_dir2=parseFloat(document.getElementById('mv-bonus-dir2')?.value)||0;
   const bonus_ger=parseFloat(document.getElementById('mv-bonus-ger')?.value)||0;
   const bonus_cor=parseFloat(document.getElementById('mv-bonus-cor')?.value)||0;
   const comBruta=val*pct;
@@ -1901,12 +1941,17 @@ function calcularPrevV(){
     if(bwrap){
       bwrap.style.display='block';
       document.getElementById('pv-bonus-dir').textContent=fmt(bonus*bonus_dir/100);
+      const bonusDir2Wrap=document.getElementById('pb-dir2-wrap');
+      if(bonusDir2Wrap) bonusDir2Wrap.style.display=dir2val?'flex':'none';
+      if(document.getElementById('pb-dir2')) document.getElementById('pb-dir2').textContent=dir2val&&bonus_dir2?fmt(bonus*bonus_dir2/100):zUiText('—');
       document.getElementById('pv-bonus-ger').textContent=fmt(bonus*bonus_ger/100);
       document.getElementById('pv-bonus-cor').textContent=fmt(bonus*bonus_cor/100);
     }
   } else {
     const bwrap=document.getElementById('pv-bonus-wrap');
     if(bwrap) bwrap.style.display='none';
+    const bonusDir2Wrap=document.getElementById('pb-dir2-wrap');
+    if(bonusDir2Wrap) bonusDir2Wrap.style.display='none';
   }
 }
 // Upload de documentos no modal nova venda
@@ -1954,19 +1999,25 @@ function irParaVenda(id){
 function calcularPrevBonus() {
   const bonus = parseFloat(document.getElementById('mv-bonus').value) || 0;
   const pDir  = parseFloat(document.getElementById('mv-bonus-dir').value) || 0;
+  const pDir2 = parseFloat(document.getElementById('mv-bonus-dir2')?.value) || 0;
   const pGer  = parseFloat(document.getElementById('mv-bonus-ger').value) || 0;
   const pCor  = parseFloat(document.getElementById('mv-bonus-cor').value) || 0;
   const prev  = document.getElementById('mv-bonus-preview');
+  const temDir2 = !!document.getElementById('mv-diretor2')?.value;
   if (!bonus) { if (prev) prev.style.display = 'none'; return; }
   if (prev) prev.style.display = 'flex';
   const vDir  = bonus * (pDir / 100);
+  const vDir2 = bonus * (pDir2 / 100);
   const vGer  = bonus * (pGer / 100);
   const vCor  = bonus * (pCor / 100);
-  const total = pDir + pGer + pCor;
-  const resto = bonus - (vDir + vGer + vCor);
+  const total = pDir + pDir2 + pGer + pCor;
+  const resto = bonus - (vDir + vDir2 + vGer + vCor);
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
   set('pb-total', fmt(bonus));
   set('pb-dir',   pDir ? fmt(vDir) : zUiText('—'));
+  const dir2Wrap=document.getElementById('pb-dir2-wrap');
+  if (dir2Wrap) dir2Wrap.style.display = temDir2 ? 'flex' : 'none';
+  set('pb-dir2', temDir2 && pDir2 ? fmt(vDir2) : zUiText('—'));
   set('pb-ger',   pGer ? fmt(vGer) : zUiText('—'));
   set('pb-cor',   pCor ? fmt(vCor) : zUiText('—'));
   const restoEl  = document.getElementById('pb-resto');

@@ -20,9 +20,16 @@ async function ownerReportInvoke(payload) {
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    const message = data && (data.error || data.message)
-      ? String(data.error || data.message)
-      : `HTTP ${response.status}`;
+    let message = `HTTP ${response.status}`;
+    if (data && typeof data === "object") {
+      if (typeof data.message === "string" && data.message.trim()) {
+        message = data.message;
+      } else if (typeof data.error === "string" && data.error.trim()) {
+        message = data.error;
+      } else if (data.error && typeof data.error === "object" && typeof data.error.message === "string" && data.error.message.trim()) {
+        message = data.error.message;
+      }
+    }
     throw new Error(message);
   }
   return data || {};
