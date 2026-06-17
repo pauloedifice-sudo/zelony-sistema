@@ -54,6 +54,78 @@ function getCols() {
   return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_bruta', 'com_total', 'com_cor', 'com_cap', 'com_ger', 'com_dir', 'com_zel', 'bonus_total', 'etapa'];
 }
 
+function carteiraMatchUsuarioCampo(campo) {
+  if (!usuarioLogado || !campo) return false;
+  const valor = String(campo || '').toLowerCase().trim();
+  const nomeCompleto = String(usuarioLogado.nome || '').toLowerCase().trim();
+  const primeiroNome = nomeCompleto.split(' ')[0] || '';
+  return valor === nomeCompleto || (primeiroNome.length >= 3 && valor === primeiroNome);
+}
+
+function carteiraBonusFoiPago(v) {
+  if (!v || !v.bonus || v.bonus <= 0) return false;
+  if (typeof bonusStatusVenda === 'function') return bonusStatusVenda(v) === 'pago';
+  return String(v.bonus_status || '').trim().toLowerCase() === 'pago';
+}
+
+function carteiraMinhaComissaoValor(v) {
+  if (!v) return 0;
+  if (role === 'fin') return comZ(v);
+  if (role === 'dono') return comTotal(v);
+  if (role === 'rh') return comRH(v);
+  if (!usuarioLogado) {
+    if (role === 'cor') return comC(v);
+    if (role === 'cap') return comCap(v);
+    if (role === 'ger') return comG(v);
+    if (role === 'dir') return comD(v) + comD2(v);
+    return 0;
+  }
+  let total = 0;
+  if (carteiraMatchUsuarioCampo(v.corretor)) total += comC(v);
+  if (carteiraMatchUsuarioCampo(v.capitao)) total += comCap(v);
+  if (carteiraMatchUsuarioCampo(v.gerente)) total += comG(v);
+  if (carteiraMatchUsuarioCampo(v.diretor)) total += comD(v);
+  if (carteiraMatchUsuarioCampo(v.diretor2)) total += comD2(v);
+  if (total === 0) {
+    if (role === 'cor') return comC(v);
+    if (role === 'cap') return comCap(v);
+    if (role === 'ger') return comG(v);
+    if (role === 'dir') return comD(v) + comD2(v);
+  }
+  return total;
+}
+
+function carteiraMeuBonusValor(v) {
+  if (!v || !v.bonus || v.bonus <= 0) return 0;
+  if (role === 'dono') return bonusLiquidoTotal(v);
+  if (role === 'fin' || role === 'rh' || role === 'cap') return 0;
+  if (!usuarioLogado) {
+    if (role === 'cor') return bonusCor(v);
+    if (role === 'ger') return bonusGer(v);
+    if (role === 'dir') return bonusDir(v) + bonusDir2(v);
+    return 0;
+  }
+  let total = 0;
+  if (carteiraMatchUsuarioCampo(v.corretor)) total += bonusCor(v);
+  if (carteiraMatchUsuarioCampo(v.gerente)) total += bonusGer(v);
+  if (carteiraMatchUsuarioCampo(v.diretor)) total += bonusDir(v);
+  if (carteiraMatchUsuarioCampo(v.diretor2)) total += bonusDir2(v);
+  if (total === 0) {
+    if (role === 'cor') return bonusCor(v);
+    if (role === 'ger') return bonusGer(v);
+    if (role === 'dir') return bonusDir(v) + bonusDir2(v);
+  }
+  return total;
+}
+
+function carteiraMeuBonusRecebido(v) {
+  return carteiraBonusFoiPago(v) ? carteiraMeuBonusValor(v) : 0;
+}
+
+function carteiraMeuBonusPendente(v) {
+  return carteiraBonusFoiPago(v) ? 0 : carteiraMeuBonusValor(v);
+}
+
 function setCarteiraFiltro(chave, valor) {
   carteiraFiltros[chave] = valor;
   renderCarteira();
@@ -2812,41 +2884,28 @@ function renderCarteiraTabelaRows(lista, cols) {
 
 function renderCarteira() {
   const lMinhas = vendasU(VENDAS, true);
-  const calcSaldo = v => {
-    if (role === 'fin') return comZ(v);
-    if (role === 'dono') return comTotal(v) + bonusLiquidoTotal(v);
-    if (role === 'rh') return comRH(v);
-    if (!usuarioLogado) return 0;
-    const matchNome = campo => {
-      if (!campo) return false;
-      const c = campo.toLowerCase().trim();
-      const nomeCompleto = usuarioLogado.nome.toLowerCase().trim();
-      const primeiroNome = nomeCompleto.split(' ')[0];
-      return c === nomeCompleto || (primeiroNome.length >= 3 && c === primeiroNome);
-    };
-    let total = 0;
-    if (matchNome(v.corretor)) { total += comC(v); total += bonusCor(v); }
-    if (matchNome(v.capitao)) { total += comCap(v); }
-    if (matchNome(v.gerente)) { total += comG(v); total += bonusGer(v); }
-    if (matchNome(v.diretor)) { total += comD(v); total += bonusDir(v); }
-    if (matchNome(v.diretor2)) { total += comD2(v); total += bonusDir2(v); }
-    if (total === 0) {
-      if (role === 'cor') return comC(v) + bonusCor(v);
-      if (role === 'cap') return comCap(v);
-      if (role === 'ger') return comG(v) + bonusGer(v);
-      if (role === 'dir') return comD(v) + comD2(v) + bonusDir(v) + bonusDir2(v);
-    }
-    return total;
-  };
+  const etapaFinal = ETAPAS.length - 1;
+  const calcComissao = v => carteiraMinhaComissaoValor(v);
+  const calcBonusTotal = v => carteiraMeuBonusValor(v);
+  const calcSaldo = v => calcComissao(v) + calcBonusTotal(v);
 
   const saldo = lMinhas.filter(v => !v.distratada).reduce((s, v) => s + calcSaldo(v), 0);
-  const pend = lMinhas.filter(v => !v.distratada && v.etapa < ETAPAS.length - 1).reduce((s, v) => s + calcSaldo(v), 0);
-  const rec = lMinhas.filter(v => !v.distratada && v.etapa === ETAPAS.length - 1).reduce((s, v) => s + calcSaldo(v), 0);
+  const pend = lMinhas.filter(v => !v.distratada).reduce((s, v) => {
+    const comissaoPendente = v.etapa < etapaFinal ? calcComissao(v) : 0;
+    return s + comissaoPendente + carteiraMeuBonusPendente(v);
+  }, 0);
+  const rec = lMinhas.filter(v => !v.distratada).reduce((s, v) => {
+    const comissaoRecebida = v.etapa === etapaFinal ? calcComissao(v) : 0;
+    return s + comissaoRecebida + carteiraMeuBonusRecebido(v);
+  }, 0);
   const distratas = lMinhas.filter(v => v.distratada);
-  const perdido = distratas.reduce((s, v) => s + calcSaldo(v), 0);
+  const perdido = distratas.reduce((s, v) => {
+    const comissaoPerdida = v.etapa < etapaFinal ? calcComissao(v) : 0;
+    return s + comissaoPerdida + carteiraMeuBonusPendente(v);
+  }, 0);
   const rd = RD[role];
   const saldoLabel = 'Saldo a receber';
-  const saldoSub = zUiText(`Minha comissão - ${rd.nome} · ${rd.role}`);
+  const saldoSub = zUiText(`Minha comissão + bônus - ${rd.nome} · ${rd.role}`);
   const cols = getCols();
 
   const hdrMap = {
@@ -3299,8 +3358,8 @@ function renderCarteira() {
     <div class="ch"><div class="ch-lbl">${zUiText(saldoLabel)}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> ${zUiText('Atualizado agora')}</div></div>
     <div class="c3">
       <div class="cmc a"><div class="cmc-l">${zUiText('Minhas vendas')}</div><div class="cmc-v go">${lMinhas.filter(v => !v.distratada).length}</div><div class="cmc-s">${zUiText(`${lMinhas.filter(v => !v.distratada && v.etapa === ETAPAS.length - 1).length} concluídas`)}</div></div>
-      <div class="cmc g"><div class="cmc-l">${zUiText('Já recebido')}</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">${zUiText('comissão recebida')}</div></div>
-      <div class="cmc r"><div class="cmc-l">${zUiText('A receber')}</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">${zUiText('em andamento')}</div></div>
+      <div class="cmc g"><div class="cmc-l">${zUiText('Já recebido')}</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">${zUiText('comissões e bônus pagos')}</div></div>
+      <div class="cmc r"><div class="cmc-l">${zUiText('A receber')}</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">${zUiText('comissões e bônus pendentes')}</div></div>
     </div>
     ${perdido > 0 ? `<div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#C05030;font-weight:700;margin-bottom:2px;">${zUiText(`⚠ Perdido com distrato${distratas.length > 1 ? 's' : ''}`)}</div><div style="font-size:11px;color:#C05030;opacity:0.8;">${zUiText(`${distratas.length} venda${distratas.length > 1 ? 's' : ''} distratada${distratas.length > 1 ? 's' : ''}`)}</div></div><div style="font-size:22px;font-weight:700;color:#C05030;font-family:'Playfair Display',serif;">- ${fmt(perdido)}</div></div>` : ''}
     <div class="ctbl cart-detail-table"><div class="ctbl-h"><span class="ctbl-t">${zUiText('Detalhe por venda')}</span><span style="font-size:10px;color:var(--tm);">${zUiText(`${lMinhas.length} venda${lMinhas.length !== 1 ? 's' : ''}`)}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c => `<th>${zUiText(hdrMap[c] || c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;

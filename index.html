@@ -839,26 +839,26 @@
           <div class="mv-section">Valores e Comissões</div>
           <div class="f-row">
             <div class="f-field"><label>Valor de venda (R$)</label><input type="number" id="ev-valor" min="0"></div>
-            <div class="f-field"><label>% Comissão total</label><input type="number" id="ev-pct" min="0" max="100" step="0.01"></div>
+            <div class="f-field"><label>% Comissão total</label><input type="text" id="ev-pct" inputmode="decimal" placeholder="0,00"></div>
           </div>
-          <div class="f-field"><label>Imposto (%)</label><input type="number" id="ev-imp" min="0" max="100" step="0.1"></div>
+          <div class="f-field"><label>Imposto (%)</label><input type="text" id="ev-imp" inputmode="decimal" placeholder="11"></div>
           <div class="mv-section" style="margin-top:4px;">Distribuição por membro (%)</div>
           <div class="pct-row">
-            <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-pct-cor" min="0" step="0.01"></div>
-            <div class="pct-field"><label>Capitão %</label><input type="number" id="ev-pct-cap" min="0" step="0.01"></div>
-            <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-pct-ger" min="0" step="0.01"></div>
-            <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-pct-dir" min="0" step="0.01"></div>
-            <div class="pct-field" id="ev-dir2-pct-field"><label>Diretor 2 %</label><input type="number" id="ev-pct-dir2" min="0" step="0.01"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="text" id="ev-pct-cor" inputmode="decimal" placeholder="0,00"></div>
+            <div class="pct-field"><label>Capitão %</label><input type="text" id="ev-pct-cap" inputmode="decimal" placeholder="0,00"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="text" id="ev-pct-ger" inputmode="decimal" placeholder="0,00"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="text" id="ev-pct-dir" inputmode="decimal" placeholder="0,00"></div>
+            <div class="pct-field" id="ev-dir2-pct-field"><label>Diretor 2 %</label><input type="text" id="ev-pct-dir2" inputmode="decimal" placeholder="0,00"></div>
           </div>
           <div class="mv-divider"></div>
           <!-- Bônus -->
           <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional • desconta imposto)</span></div>
           <div class="f-field"><label>Valor do bônus (R$)</label><input type="number" id="ev-bonus" min="0" placeholder="0"></div>
           <div class="pct-row">
-            <div class="pct-field"><label>Diretor %</label><input type="number" id="ev-bonus-dir" min="0" max="100" step="1" placeholder="0"></div>
-            <div class="pct-field" id="ev-bonus-dir2-field" style="display:none;"><label>Diretor 2 %</label><input type="number" id="ev-bonus-dir2" min="0" max="100" step="1" placeholder="0"></div>
-            <div class="pct-field"><label>Gerente %</label><input type="number" id="ev-bonus-ger" min="0" max="100" step="1" placeholder="0"></div>
-            <div class="pct-field"><label>Corretor %</label><input type="number" id="ev-bonus-cor" min="0" max="100" step="1" placeholder="0"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="text" id="ev-bonus-dir" inputmode="decimal" placeholder="0"></div>
+            <div class="pct-field" id="ev-bonus-dir2-field" style="display:none;"><label>Diretor 2 %</label><input type="text" id="ev-bonus-dir2" inputmode="decimal" placeholder="0"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="text" id="ev-bonus-ger" inputmode="decimal" placeholder="0"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="text" id="ev-bonus-cor" inputmode="decimal" placeholder="0"></div>
           </div>
           <div class="mv-divider"></div>
           <!-- CCA -->
@@ -996,20 +996,21 @@
           <div class="mv-section">Valores e Comissões</div>
           <div class="f-row">
             <div class="f-field"><label>Valor de venda (R$) *</label><input type="number" id="mv-valor" placeholder="Ex: 248000" min="0" oninput="calcularPrevV()"></div>
-            <div class="f-field"><label>% Comissão total *</label><input type="number" id="mv-pct" placeholder="Ex: 5" min="0" max="100" step="0.1" oninput="calcularPrevV()"></div>
+            <div class="f-field"><label>% Comissão total *</label><input type="text" id="mv-pct" inputmode="decimal" placeholder="Ex: 5" oninput="calcularPrevV()"></div>
           </div>
-          <div class="f-field"><label>Imposto (%) — padrão 11%</label><input type="number" id="mv-imp" value="11" min="0" max="100" step="0.1" oninput="calcularPrevV()"></div>
+          <div class="f-field"><label>Imposto (%) — padrão 11%</label><input type="text" id="mv-imp" value="11" inputmode="decimal" oninput="calcularPrevV()"></div>
           <div class="mv-section" style="margin-top:8px;">Distribuição por membro (%)</div>
           <div class="pct-row">
-            <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-pct-cor" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
-            <div class="pct-field"><label>Capitão %</label><input type="number" id="mv-pct-cap" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
-            <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-pct-ger" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
-            <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-pct-dir" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
-            <div class="pct-field" id="mv-dir2-pct-field" style="display:none;"><label>Diretor 2 %</label><input type="number" id="mv-pct-dir2" placeholder="0" min="0" step="0.01" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="text" id="mv-pct-cor" inputmode="decimal" placeholder="0,00" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Capitão %</label><input type="text" id="mv-pct-cap" inputmode="decimal" placeholder="0,00" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="text" id="mv-pct-ger" inputmode="decimal" placeholder="0,00" oninput="calcularPrevV()"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="text" id="mv-pct-dir" inputmode="decimal" placeholder="0,00" oninput="calcularPrevV()"></div>
+            <div class="pct-field" id="mv-dir2-pct-field" style="display:none;"><label>Diretor 2 %</label><input type="text" id="mv-pct-dir2" inputmode="decimal" placeholder="0,00" oninput="calcularPrevV()"></div>
           </div>
           <!-- Preview comissões -->
           <div class="pct-preview" id="mv-preview" style="display:none;">
             <div class="pct-prev-item"><div class="pct-prev-lbl">Com. bruta</div><div class="pct-prev-val" id="pv-bruta">—</div></div>
+            <div class="pct-prev-item"><div class="pct-prev-lbl">Com. líquida</div><div class="pct-prev-val" id="pv-liq">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Imposto</div><div class="pct-prev-val" style="color:#C06030;" id="pv-imp">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Corretor</div><div class="pct-prev-val" id="pv-cor">—</div></div>
             <div class="pct-prev-item"><div class="pct-prev-lbl">Capitão</div><div class="pct-prev-val" id="pv-cap">—</div></div>
@@ -1027,10 +1028,10 @@
           </div>
           <div class="mv-section" style="margin-top:8px;font-size:9px;">Distribuição do bônus (%)</div>
           <div class="pct-row">
-            <div class="pct-field"><label>Diretor %</label><input type="number" id="mv-bonus-dir" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
-            <div class="pct-field" id="mv-bonus-dir2-field" style="display:none;"><label>Diretor 2 %</label><input type="number" id="mv-bonus-dir2" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
-            <div class="pct-field"><label>Gerente %</label><input type="number" id="mv-bonus-ger" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
-            <div class="pct-field"><label>Corretor %</label><input type="number" id="mv-bonus-cor" placeholder="0" min="0" max="100" step="1" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Diretor %</label><input type="text" id="mv-bonus-dir" inputmode="decimal" placeholder="0" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field" id="mv-bonus-dir2-field" style="display:none;"><label>Diretor 2 %</label><input type="text" id="mv-bonus-dir2" inputmode="decimal" placeholder="0" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Gerente %</label><input type="text" id="mv-bonus-ger" inputmode="decimal" placeholder="0" oninput="calcularPrevBonus()"></div>
+            <div class="pct-field"><label>Corretor %</label><input type="text" id="mv-bonus-cor" inputmode="decimal" placeholder="0" oninput="calcularPrevBonus()"></div>
           </div>
           <!-- Preview bônus -->
           <div class="pct-preview" id="mv-bonus-preview" style="display:none;">

@@ -256,6 +256,37 @@ function numSeguro(valor,padrao=0){
   const n=Number(valor);
   return Number.isFinite(n)?n:padrao;
 }
+function normalizarTextoNumeroInput(valor){
+  if(typeof valor==='number') return Number.isFinite(valor)?String(valor):'';
+  let texto=String(valor==null?'':valor).trim();
+  if(!texto) return '';
+  texto=texto
+    .replace(/\s+/g,'')
+    .replace(/^R\$/i,'')
+    .replace(/[^0-9,.\-]/g,'');
+  if(!texto||texto==='-'||texto===','||texto==='.') return '';
+  if(/^-?\d{1,3}(\.\d{3})+$/.test(texto)) return texto.replace(/\./g,'');
+  if(/^-?\d{1,3}(,\d{3})+$/.test(texto)) return texto.replace(/,/g,'');
+  const ultimoPonto=texto.lastIndexOf('.');
+  const ultimaVirgula=texto.lastIndexOf(',');
+  if(ultimoPonto>=0&&ultimaVirgula>=0){
+    if(ultimaVirgula>ultimoPonto) return texto.replace(/\./g,'').replace(/,/g,'.');
+    return texto.replace(/,/g,'');
+  }
+  if(ultimaVirgula>=0) return texto.replace(/\./g,'').replace(/,/g,'.');
+  return texto;
+}
+function lerNumeroTexto(valor,padrao=0){
+  const normalizado=normalizarTextoNumeroInput(valor);
+  if(!normalizado) return padrao;
+  return numSeguro(Number(normalizado),padrao);
+}
+function lerPercentualTexto(valor,padrao=0){
+  return lerNumeroTexto(valor,padrao*100)/100;
+}
+function formatarNumeroInput(valor,casas=2){
+  return numSeguro(valor,0).toFixed(casas).replace('.',',');
+}
 function normalizarBonusGestaoVenda(v){
   if(!v||typeof v!=='object') return v;
   const bonusTotal=numSeguro(v.bonus,0);
@@ -653,10 +684,10 @@ async function reconciliarPctRhVendas(opcoes={}){
   return sincronizarPctRhVendas(VENDAS,opcoes);
 }
 function lerNumeroInput(id,padrao=0){
-  return numSeguro(parseFloat(document.getElementById(id)?.value),padrao);
+  return lerNumeroTexto(document.getElementById(id)?.value,padrao);
 }
 function lerPercentualInput(id,padrao=0){
-  return numSeguro(parseFloat(document.getElementById(id)?.value)/100,padrao);
+  return lerPercentualTexto(document.getElementById(id)?.value,padrao);
 }
 function comBruta(v){
   const venda=normalizarVendaNumeros(v);
@@ -1754,8 +1785,8 @@ function toggleDiretor2EditPct(limpar){
   const ativo=!!(sel&&sel.value);
   if(wrap) wrap.style.display=ativo?'block':'none';
   if(bonusWrap) bonusWrap.style.display=ativo?'block':'none';
-  if(!ativo&&limpar&&pct) pct.value='0.00';
-  if(!ativo&&limpar&&bonusPct) bonusPct.value='0';
+  if(!ativo&&limpar&&pct) pct.value='';
+  if(!ativo&&limpar&&bonusPct) bonusPct.value='';
 }
 function abrirEditVenda(id){
   const v=VENDAS.find(x=>x.id===id);
@@ -1773,22 +1804,22 @@ function abrirEditVenda(id){
   document.getElementById('ev-origem').value=v.origem||'IndicaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o';
   document.getElementById('ev-unidade').value=v.unidade||'Centro';
   document.getElementById('ev-valor').value=v.valor;
-  document.getElementById('ev-pct').value=(v.pct*100).toFixed(2);
-  document.getElementById('ev-imp').value=((v.imp||0.11)*100).toFixed(1);
-  document.getElementById('ev-pct-cor').value=((v.pct_cor||0)*100).toFixed(2);
-  document.getElementById('ev-pct-cap').value=((v.pct_cap||0)*100).toFixed(2);
-  document.getElementById('ev-pct-ger').value=((v.pct_ger||0)*100).toFixed(2);
-  document.getElementById('ev-pct-dir').value=((v.pct_dir||0)*100).toFixed(2);
-  document.getElementById('ev-pct-dir2').value=((v.pct_dir2||0)*100).toFixed(2);
+  document.getElementById('ev-pct').value=formatarNumeroInput(v.pct*100,2);
+  document.getElementById('ev-imp').value=formatarNumeroInput((v.imp||0.11)*100,1);
+  document.getElementById('ev-pct-cor').value=formatarNumeroInput((v.pct_cor||0)*100,2);
+  document.getElementById('ev-pct-cap').value=formatarNumeroInput((v.pct_cap||0)*100,2);
+  document.getElementById('ev-pct-ger').value=formatarNumeroInput((v.pct_ger||0)*100,2);
+  document.getElementById('ev-pct-dir').value=formatarNumeroInput((v.pct_dir||0)*100,2);
+  document.getElementById('ev-pct-dir2').value=formatarNumeroInput((v.pct_dir2||0)*100,2);
   document.getElementById('ev-diretor2').dataset.currentDiretor=v.diretor||'';
   preencherDiretor2Edit(v.diretor2||'');
   document.getElementById('ev-diretor2').onchange=function(){toggleDiretor2EditPct(true);};
   document.getElementById('ev-unidade').onchange=function(){preencherDiretor2Edit();};
   document.getElementById('ev-bonus').value=v.bonus||0;
-  document.getElementById('ev-bonus-dir').value=v.bonus_pct_dir||0;
-  document.getElementById('ev-bonus-dir2').value=v.bonus_pct_dir2||0;
-  document.getElementById('ev-bonus-ger').value=v.bonus_pct_ger||0;
-  document.getElementById('ev-bonus-cor').value=v.bonus_pct_cor||0;
+  document.getElementById('ev-bonus-dir').value=formatarNumeroInput(v.bonus_pct_dir||0,0);
+  document.getElementById('ev-bonus-dir2').value=formatarNumeroInput(v.bonus_pct_dir2||0,0);
+  document.getElementById('ev-bonus-ger').value=formatarNumeroInput(v.bonus_pct_ger||0,0);
+  document.getElementById('ev-bonus-cor').value=formatarNumeroInput(v.bonus_pct_cor||0,0);
   document.getElementById('ev-cca').value=v.cca||'';
   document.getElementById('ev-motivo').value='';
   setEditVendaLoading(false);
@@ -2154,24 +2185,31 @@ zRegisterModule('vendas', {
 
 // Preview de comissÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o no modal
 function calcularPrevV(){
-  const val=parseFloat(document.getElementById('mv-valor')?.value)||0;
-  const pct=parseFloat(document.getElementById('mv-pct')?.value)/100||0;
-  const imp=parseFloat(document.getElementById('mv-imp')?.value)/100||0.11;
-  const pct_cor=parseFloat(document.getElementById('mv-pct-cor')?.value)/100||0;
-  const pct_cap=parseFloat(document.getElementById('mv-pct-cap')?.value)/100||0;
-  const pct_ger=parseFloat(document.getElementById('mv-pct-ger')?.value)/100||0;
-  const pct_dir=parseFloat(document.getElementById('mv-pct-dir')?.value)/100||0;
-  const pct_dir2=parseFloat(document.getElementById('mv-pct-dir2')?.value)/100||0;
+  const val=lerNumeroInput('mv-valor',0);
+  const pct=lerPercentualInput('mv-pct',0);
+  const imp=lerPercentualInput('mv-imp',0.11);
+  const pct_cor=lerPercentualInput('mv-pct-cor',0);
+  const pct_cap=lerPercentualInput('mv-pct-cap',0);
+  const pct_ger=lerPercentualInput('mv-pct-ger',0);
+  const pct_dir=lerPercentualInput('mv-pct-dir',0);
+  const pct_dir2=lerPercentualInput('mv-pct-dir2',0);
   const comBruta=val*pct;
   const comLiq=comBruta*(1-imp);
   const calc=(p)=>(val*p)*(1-imp);
   const cCor=calc(pct_cor),cCap=calc(pct_cap),cGer=calc(pct_ger),cDir=calc(pct_dir),cDir2=calc(pct_dir2);
   const pctRHNum=0;
   const cZelony=Math.max(comLiq-cCor-cCap-cGer-cDir-cDir2,0);
-  const pv=document.getElementById('prev-vals');
+  const pv=document.getElementById('mv-preview');
   if(!pv)return;
+  const temValores=val>0||pct>0||pct_cor>0||pct_cap>0||pct_ger>0||pct_dir>0||pct_dir2>0;
+  pv.style.display=temValores?'flex':'none';
+  if(!temValores){
+    calcularPrevBonus();
+    return;
+  }
   document.getElementById('pv-bruta').textContent=fmt(comBruta);
-  document.getElementById('pv-liq').textContent=fmt(comLiq);
+  const liqEl=document.getElementById('pv-liq');
+  if(liqEl) liqEl.textContent=fmt(comLiq);
   document.getElementById('pv-imp').textContent=fmt(comBruta*imp);
   document.getElementById('pv-cor').textContent=fmt(cCor);
   document.getElementById('pv-cap').textContent=fmt(cCap);
@@ -2227,12 +2265,12 @@ function irParaVenda(id){
 }
 // Preview de bônus no modal nova venda (oninput em mv-bonus / mv-bonus-*)
 function calcularPrevBonus() {
-  const bonus = parseFloat(document.getElementById('mv-bonus').value) || 0;
-  const imp   = parseFloat(document.getElementById('mv-imp')?.value) / 100 || 0.11;
-  const pDir  = parseFloat(document.getElementById('mv-bonus-dir').value) || 0;
-  const pDir2 = parseFloat(document.getElementById('mv-bonus-dir2')?.value) || 0;
-  const pGer  = parseFloat(document.getElementById('mv-bonus-ger').value) || 0;
-  const pCor  = parseFloat(document.getElementById('mv-bonus-cor').value) || 0;
+  const bonus=lerNumeroInput('mv-bonus',0);
+  const imp=lerPercentualInput('mv-imp',0.11);
+  const pDir=lerNumeroInput('mv-bonus-dir',0);
+  const pDir2=lerNumeroInput('mv-bonus-dir2',0);
+  const pGer=lerNumeroInput('mv-bonus-ger',0);
+  const pCor=lerNumeroInput('mv-bonus-cor',0);
   const prev  = document.getElementById('mv-bonus-preview');
   const temDir2 = !!document.getElementById('mv-diretor2')?.value;
   if (!bonus) { if (prev) prev.style.display = 'none'; return; }
