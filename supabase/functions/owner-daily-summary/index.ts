@@ -11,6 +11,12 @@ import {
 } from "../_shared/owner-report.ts";
 import { normalizePhoneToZapi, normalizeText, statusUsuarioAtivo } from "../_shared/zapi.ts";
 
+const OWNER_REPORT_VENDAS_SELECT_ATUAL =
+  "id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada";
+
+const OWNER_REPORT_VENDAS_SELECT_LEGADO =
+  "id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada";
+
 function getEnv(name: string, fallback = "") {
   return Deno.env.get(name) || fallback;
 }
@@ -31,6 +37,34 @@ function extractErrorMessage(error: unknown) {
     }
   }
   return String(error);
+}
+
+function errorHasMissingColumn(error: unknown, columnName: string) {
+  const text = String(
+    (error as { message?: string; details?: string; hint?: string })?.message ||
+      (error as { details?: string })?.details ||
+      (error as { hint?: string })?.hint ||
+      "",
+  ).toLowerCase();
+  return text.includes(`column vendas.${String(columnName || "").trim().toLowerCase()}`);
+}
+
+async function fetchVendasForOwnerReport(supabase: ReturnType<typeof createServiceClient>) {
+  const query = (select: string) => supabase.from("vendas").select(select);
+
+  const primary = await query(OWNER_REPORT_VENDAS_SELECT_ATUAL);
+  if (!primary.error) return primary;
+  if (!errorHasMissingColumn(primary.error, "bonus_pct_dir2")) return primary;
+
+  const legacy = await query(OWNER_REPORT_VENDAS_SELECT_LEGADO);
+  if (legacy.error || !Array.isArray(legacy.data)) return legacy;
+  return {
+    ...legacy,
+    data: legacy.data.map((item) => ({
+      ...item,
+      bonus_pct_dir2: 0,
+    })),
+  };
 }
 
 function monthWindowIso(now: Date) {
@@ -113,7 +147,7 @@ Deno.serve(async (req) => {
       agendamentosResp,
       financeiroResp,
     ] = await Promise.all([
-      supabase.from("vendas").select("id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada"),
+      fetchVendasForOwnerReport(supabase),
       supabase.from("usuarios").select("id,nome,perfil,status,tel,equipe"),
       supabase
         .from("agendamentos")

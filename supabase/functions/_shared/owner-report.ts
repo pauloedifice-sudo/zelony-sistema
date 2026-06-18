@@ -242,7 +242,10 @@ function formatPercent(value: number) {
 }
 
 function formatDatePtBr(dateInput: Date | string | number) {
-  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  const raw = typeof dateInput === "string" ? dateInput.trim() : "";
+  const date = raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)
+    ? new Date(`${raw}T12:00:00`)
+    : (dateInput instanceof Date ? dateInput : new Date(dateInput));
   return new Intl.DateTimeFormat("pt-BR", {
     timeZone: "America/Sao_Paulo",
     day: "2-digit",
@@ -261,6 +264,20 @@ function formatDateTimePtBr(dateInput: Date | string | number) {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatIsoDateSaoPaulo(dateInput: Date | string | number) {
+  const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const year = parts.find((item) => item.type === "year")?.value || "0000";
+  const month = parts.find((item) => item.type === "month")?.value || "01";
+  const day = parts.find((item) => item.type === "day")?.value || "01";
+  return `${year}-${month}-${day}`;
 }
 
 function firstName(name: unknown) {
@@ -896,7 +913,7 @@ function criticalAccounts(financeiro: OwnerReportFinanceiro[], now: Date) {
         description: String(item.descricao || "").trim() || "Conta sem descricao",
         category: String(item.categoria || "").trim() || "OUTRAS SAIDAS",
         amount: Math.abs(numberOrZero(item.valor)),
-        due_date: dueDate.toISOString().slice(0, 10),
+        due_date: formatIsoDateSaoPaulo(dueDate),
         days_overdue: diffDays > 0 ? diffDays : null,
         days_to_due: diffDays < 0 ? Math.abs(diffDays) : diffDays === 0 ? 0 : null,
         priority_reason: previousMonthOpen ? "open_from_previous_month" : (diffDays > 0 ? "overdue_current_month" : "upcoming"),
@@ -1305,15 +1322,15 @@ export function buildOwnerReportSnapshot(params: {
   const executiveInputs = buildExecutiveInputs({ dashboard, appointments, finance, wallet, distratos });
 
   return {
-    report_date: now.toISOString().slice(0, 10),
+    report_date: formatIsoDateSaoPaulo(now),
     executed_at: now.toISOString(),
     timezone: "America/Sao_Paulo",
     owner_count: params.owners.length,
     period: {
       month: MONTH_NAMES[month],
       year,
-      month_start: monthStart.toISOString().slice(0, 10),
-      month_end: monthEnd.toISOString().slice(0, 10),
+      month_start: formatIsoDateSaoPaulo(monthStart),
+      month_end: formatIsoDateSaoPaulo(monthEnd),
       day_of_month: dayOfMonth,
       days_in_month: daysInMonth,
     },
@@ -1380,7 +1397,7 @@ export function buildOwnerReportBaseMessage(snapshot: OwnerReportSnapshot) {
     : "- Cobrar evolucao das vendas travadas ha mais tempo.";
 
   return [
-    `${greeting}. Segue o resumo diario da operacao Zelony de ${formatDatePtBr(String(snapshot.report_date || now.toISOString().slice(0, 10)))}, com base em Dashboard, Agendamentos, Financeiro e Minha Carteira.`,
+    `${greeting}. Segue o resumo diario da operacao Zelony de ${formatDatePtBr(String(snapshot.report_date || formatIsoDateSaoPaulo(now)))}, com base em Dashboard, Agendamentos, Financeiro e Minha Carteira.`,
     "",
     "URGENTE",
     "",

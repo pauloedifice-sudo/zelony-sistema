@@ -56,10 +56,49 @@ type RecipientCandidate = {
   status_usuario?: string | null;
 };
 
+const VENDA_SELECT_ATUAL =
+  "id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada";
+
+const VENDA_SELECT_LEGADO =
+  "id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada";
+
 function getEnvOrThrow(name: string) {
   const value = Deno.env.get(name);
   if (!value) throw new Error(`Missing environment variable: ${name}`);
   return value;
+}
+
+function errorHasMissingColumn(error: unknown, columnName: string) {
+  const text = String(
+    (error as { message?: string; details?: string; hint?: string })?.message ||
+      (error as { details?: string })?.details ||
+      (error as { hint?: string })?.hint ||
+      "",
+  ).toLowerCase();
+  return text.includes(`column vendas.${String(columnName || "").trim().toLowerCase()}`);
+}
+
+async function fetchVendaRecord(supabase: ReturnType<typeof createServiceClient>, vendaId: number) {
+  const query = (select: string) =>
+    supabase
+      .from("vendas")
+      .select(select)
+      .eq("id", vendaId)
+      .single();
+
+  const primary = await query(VENDA_SELECT_ATUAL);
+  if (!primary.error) return primary;
+  if (!errorHasMissingColumn(primary.error, "bonus_pct_dir2")) return primary;
+
+  const legacy = await query(VENDA_SELECT_LEGADO);
+  if (legacy.error || !legacy.data) return legacy;
+  return {
+    ...legacy,
+    data: {
+      ...legacy.data,
+      bonus_pct_dir2: 0,
+    },
+  };
 }
 
 function latestCorretorRefId(venda: VendaRecord) {
@@ -202,11 +241,7 @@ Deno.serve(async (req) => {
     const tipoEvento = resolveNotificationEventType(body?.tipoEvento, etapaNova);
     const supabase = createServiceClient();
 
-    const { data: venda, error: vendaError } = await supabase
-      .from("vendas")
-      .select("id,ref_local,cliente,produto,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada")
-      .eq("id", vendaId)
-      .single();
+    const { data: venda, error: vendaError } = await fetchVendaRecord(supabase, vendaId);
 
     if (vendaError || !venda) {
       return jsonResponse({ error: "Venda não encontrada no Supabase." }, { status: 404 });

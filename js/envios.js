@@ -18,8 +18,12 @@ const ENVIOS_CACHE_KEY = 'zel_envios_zapi_cache';
 const ENVIOS_EVENTOS_CACHE_KEY = 'zel_envios_zapi_eventos_cache';
 const ENVIOS_SYNC_CACHE_KEY = 'zel_envios_zapi_sync';
 const ENVIOS_ROLES_ACESSO = ['dono', 'dir', 'fin', 'rh', 'ger'];
+const ENVIOS_MAX_VENDAS_SEM_DISPARO = 24;
+const ENVIOS_JANELA_VENDAS_SEM_DISPARO_DIAS = 14;
 const ENVIOS_STATUS_META = {
   pendente: { label: 'Pendente', color: '#8A6A25', bg: '#FFF7E3', bd: '#E8D39B' },
+  pendente_local: { label: 'Pendente local', color: '#B15B1F', bg: '#FFF3E3', bd: '#E8C49B' },
+  nao_disparado: { label: 'Sem disparo', color: '#C05030', bg: '#FFF1EB', bd: '#E7B4A5' },
   sem_telefone: { label: 'Sem telefone', color: '#B15B1F', bg: '#FFF1E7', bd: '#EAB89A' },
   usuario_inativo: { label: 'Usuario inativo', color: '#A25A3C', bg: '#FFF0EB', bd: '#E5B2A2' },
   ignorado: { label: 'Ignorado', color: '#6E6E6E', bg: '#F4F4F4', bd: '#D9D9D9' },
@@ -34,7 +38,8 @@ const ENVIOS_PAPEL_META = {
   capitao: { label: 'Capitao', color: '#7A5A24', bg: '#FBF6EA', bd: '#DEC896' },
   gerente: { label: 'Gerente', color: '#2E7E5E', bg: '#EDF8F1', bd: '#A9DDBE' },
   diretor: { label: 'Diretor', color: '#8C5A17', bg: '#FFF7E5', bd: '#E5D09A' },
-  diretor2: { label: 'Diretor 2', color: '#7A4BA8', bg: '#F4EEFF', bd: '#D6C1F0' }
+  diretor2: { label: 'Diretor 2', color: '#7A4BA8', bg: '#F4EEFF', bd: '#D6C1F0' },
+  sistema: { label: 'Sistema', color: '#B15B1F', bg: '#FFF3E3', bd: '#E8C49B' }
 };
 
 function enviosSyncState() {
@@ -147,6 +152,232 @@ function enviosSort(a, b) {
   const dataB = Date.parse(b && (b.criado_em || b.atualizado_em) || '') || 0;
   if (dataA !== dataB) return dataB - dataA;
   return (parseInt(b && b.id, 10) || 0) - (parseInt(a && a.id, 10) || 0);
+}
+
+function enviosVendaCriadaEm(venda) {
+  if (!venda) return '';
+  const hist = Array.isArray(venda.hist) ? venda.hist : [];
+  const primeiro = hist[0] || null;
+  const info = typeof obterMomentoHistorico === 'function' ? obterMomentoHistorico(primeiro) : null;
+  return info && info.date && !Number.isNaN(info.date.getTime()) ? info.date.toISOString() : '';
+}
+
+function enviosVendaResponsavelCadastro(venda) {
+  const hist = Array.isArray(venda && venda.hist) ? venda.hist : [];
+  const primeiro = hist[0] || {};
+  return enviosTexto(primeiro && primeiro.u, 'Sistema');
+}
+
+function enviosPendenciasLocais() {
+  if (typeof zapiListarPendenciasLocal !== 'function') return [];
+  const lista = zapiListarPendenciasLocal();
+  return Array.isArray(lista) ? lista : [];
+}
+
+function enviosMapaPendenciasPorVenda() {
+  const mapa = new Map();
+  enviosPendenciasLocais().forEach(item => {
+    const vendaId = parseInt(item && item.vendaId, 10) || 0;
+    if (!vendaId) return;
+    mapa.set(String(vendaId), item);
+  });
+  return mapa;
+}
+
+function enviosJanelaRecenteLimite() {
+  const data = new Date();
+  data.setDate(data.getDate() - ENVIOS_JANELA_VENDAS_SEM_DISPARO_DIAS);
+  return data.getTime();
+}
+
+function enviosVendaCandidataSemDisparo(venda) {
+  if (!venda || !venda.id || venda.distratada) return false;
+  const criadoEm = enviosVendaCriadaEm(venda);
+  if (!criadoEm) return false;
+  return (Date.parse(criadoEm) || 0) >= enviosJanelaRecenteLimite();
+}
+
+function enviosItensSemRegistro() {
+  const idsComEnvio = new Set((Array.isArray(enviosLista) ? enviosLista : []).map(item => String(item && item.venda_id || '').trim()).filter(Boolean));
+  const pendenciasMap = enviosMapaPendenciasPorVenda();
+  const vendasRecentes = (Array.isArray(VENDAS) ? VENDAS : [])
+    .filter(enviosVendaCandidataSemDisparo)
+    .slice()
+    .sort((a, b) => {
+      const dataA = Date.parse(enviosVendaCriadaEm(a)) || 0;
+      const dataB = Date.parse(enviosVendaCriadaEm(b)) || 0;
+      if (dataA !== dataB) return dataB - dataA;
+      return (parseInt(b && b.id, 10) || 0) - (parseInt(a && a.id, 10) || 0);
+    })
+    .slice(0, ENVIOS_MAX_VENDAS_SEM_DISPARO);
+
+  return vendasRecentes
+    .filter(venda => !idsComEnvio.has(String(venda.id)))
+    .map(venda => {
+      const pendenciaLocal = pendenciasMap.get(String(venda.id)) || null;
+      const criadoEm = enviosVendaCriadaEm(venda) || new Date().toISOString();
+      const etapaAtual = parseInt(venda && venda.etapa, 10) || 0;
+      const etapaAtualNome = typeof ETAPAS !== 'undefined' && Array.isArray(ETAPAS)
+        ? enviosTexto(ETAPAS[etapaAtual], 'Cadastro')
+        : 'Cadastro';
+      return {
+        id: `missing-${venda.id}`,
+        venda_id: venda.id,
+        venda_ref_local: venda.refLocal || venda.ref_local || '',
+        etapa_anterior: null,
+        etapa_anterior_nome: 'Cadastro',
+        etapa_nova: 0,
+        etapa_nova_nome: 'Cadastro',
+        etapa_atual: etapaAtual,
+        etapa_atual_nome: etapaAtualNome,
+        responsavel_avanco: pendenciaLocal && pendenciaLocal.payload && pendenciaLocal.payload.responsavel
+          ? pendenciaLocal.payload.responsavel
+          : enviosVendaResponsavelCadastro(venda),
+        destinatario_usuario_id: null,
+        destinatario_nome: pendenciaLocal ? 'Reenvio aguardando navegador' : 'Cadastro sem disparo',
+        destinatario_perfil: 'Sistema',
+        destinatario_papel: 'sistema',
+        destinatario_papeis: ['sistema'],
+        telefone_bruto: null,
+        telefone_e164: null,
+        mensagem: '',
+        canal: 'whatsapp',
+        status: pendenciaLocal ? 'pendente_local' : 'nao_disparado',
+        tentativas: pendenciaLocal ? (parseInt(pendenciaLocal.tentativas, 10) || 0) : 0,
+        dedupe_key: '',
+        zapi_instance_id: null,
+        zapi_zaap_id: null,
+        zapi_message_id: null,
+        erro: pendenciaLocal
+          ? 'A tentativa de envio falhou neste navegador e entrou na fila local de reenvio automático.'
+          : 'Nenhum registro de notificação foi criado para esta venda. O disparo de cadastro não chegou ao backend da Z-API.',
+        enviado_em: null,
+        recebido_em: null,
+        lido_em: null,
+        criado_em: criadoEm,
+        atualizado_em: pendenciaLocal && pendenciaLocal.atualizadaEm ? pendenciaLocal.atualizadaEm : criadoEm,
+        sintetico: true,
+        pendencia_local: pendenciaLocal
+      };
+    })
+    .sort(enviosSort);
+}
+
+function enviosListaMonitorada() {
+  return [...enviosItensSemRegistro(), ...(Array.isArray(enviosLista) ? enviosLista : [])].sort(enviosSort);
+}
+
+function enviosStatusChave(status) {
+  return String(status || '').trim().toLowerCase();
+}
+
+function enviosStatusTemRetorno(status) {
+  return ['enviada', 'recebida', 'lida'].includes(enviosStatusChave(status));
+}
+
+function enviosStatusAguardando(status) {
+  return ['pendente', 'enfileirada', 'pendente_local'].includes(enviosStatusChave(status));
+}
+
+function enviosStatusTemAlerta(status) {
+  return ['falha', 'sem_telefone', 'usuario_inativo', 'nao_disparado'].includes(enviosStatusChave(status));
+}
+
+function enviosTextoFluxo(item) {
+  const etapaNova = enviosTexto(item && item.etapa_nova_nome, `Etapa ${item && item.etapa_nova != null ? item.etapa_nova : '-'}`);
+  const etapaAnterior = enviosTexto(item && item.etapa_anterior_nome, '');
+  return etapaAnterior ? `${etapaAnterior} -> ${etapaNova}` : etapaNova;
+}
+
+function enviosAlertaPrincipal(item) {
+  const status = enviosStatusChave(item && item.status);
+  if (status === 'pendente_local') {
+    return zUiText('A notificacao falhou neste navegador e ficou guardada na fila local para novo envio.');
+  }
+  if (status === 'nao_disparado') {
+    return zUiText('Esta venda nao criou nenhum registro de envio na Z-API. O disparo de cadastro nao chegou ao backend.');
+  }
+  if (status === 'sem_telefone') {
+    return zUiText('O destinatario nao possui telefone valido para WhatsApp.');
+  }
+  if (status === 'usuario_inativo') {
+    return zUiText('O destinatario vinculado a esta venda esta inativo.');
+  }
+  if (status === 'falha') {
+    return enviosTexto(item && item.erro, zUiText('A Z-API retornou falha neste envio.'));
+  }
+  return enviosTexto(item && item.erro, '');
+}
+
+function enviosMensagemPrincipal(item) {
+  const mensagem = enviosTexto(item && item.mensagem, '');
+  if (mensagem) return enviosResumoMensagem(mensagem);
+  const alerta = enviosAlertaPrincipal(item);
+  if (alerta) return alerta;
+  return zUiText('Sem mensagem registrada.');
+}
+
+function enviosPayloadCadastro(venda) {
+  return {
+    vendaId: parseInt(venda && venda.id, 10) || 0,
+    vendaRefLocal: venda && (venda.refLocal || venda.ref_local || '') || '',
+    etapaAnterior: 0,
+    etapaNova: 0,
+    responsavel: enviosVendaResponsavelCadastro(venda) || 'Sistema'
+  };
+}
+
+async function enviosReprocessarFilaLocal() {
+  if (typeof zapiTentarReprocessarPendencias !== 'function') {
+    if (typeof showToast === 'function') showToast('!', zUiText('A fila local da Z-API nao esta disponivel neste navegador.'));
+    return;
+  }
+  const total = typeof zapiContarPendenciasLocal === 'function' ? zapiContarPendenciasLocal() : 0;
+  if (!total) {
+    if (typeof showToast === 'function') showToast('i', zUiText('Nao ha pendencias locais da Z-API neste navegador.'));
+    return;
+  }
+  try {
+    await zapiTentarReprocessarPendencias({ silencioso: false });
+  } catch (erro) {
+    console.warn('Falha ao reprocessar fila local da Z-API:', erro);
+  } finally {
+    enviosSyncState();
+    if (enviosModuloVisivel()) renderEnvios();
+    void enviosCarregar({ silencioso: true, force: true });
+  }
+}
+
+async function enviosReenviarCadastro(vendaId, opcoes = {}) {
+  const venda = Array.isArray(VENDAS)
+    ? VENDAS.find(item => String(item && item.id) === String(vendaId || '')) || null
+    : null;
+  if (!venda) {
+    if (typeof showToast === 'function') showToast('!', zUiText('Nao foi possivel localizar a venda para reenviar o cadastro.'));
+    return;
+  }
+  if (!opcoes.ignorarConfirmacao && !window.confirm(zUiText(`Reenviar agora a notificacao de cadastro da venda #${venda.id}?`))) {
+    return;
+  }
+  if (typeof dispararNotificacaoCadastroVendaZapi !== 'function') {
+    if (typeof showToast === 'function') showToast('!', zUiText('A integracao de cadastro da Z-API nao esta disponivel neste navegador.'));
+    return;
+  }
+  if (typeof showToast === 'function') {
+    showToast('...', zUiText('Tentando reenviar o cadastro desta venda para a Z-API...'));
+  }
+  try {
+    await dispararNotificacaoCadastroVendaZapi(enviosPayloadCadastro(venda), { avisar: true });
+    if (typeof showToast === 'function') {
+      showToast('OK', zUiText('Reenvio solicitado com sucesso. O monitor sera atualizado agora.'));
+    }
+  } catch (erro) {
+    console.warn('Falha ao reenviar cadastro da venda para a Z-API:', erro);
+  } finally {
+    enviosSyncState();
+    if (enviosModuloVisivel()) renderEnvios();
+    void enviosCarregar({ silencioso: true, force: true });
+  }
 }
 
 function enviosSalvarCache() {
@@ -291,8 +522,8 @@ function enviosLimparFiltros() {
 
 function enviosListaFiltrada() {
   const busca = enviosNorm(enviosBusca);
-  return enviosLista.filter(item => {
-    const status = String(item && item.status || '').trim().toLowerCase();
+  return enviosListaMonitorada().filter(item => {
+    const status = enviosStatusChave(item && item.status);
     const papel = String(item && item.destinatario_papel || '').trim().toLowerCase();
     if (enviosStatus !== 'todos' && status !== enviosStatus) return false;
     if (enviosPapel !== 'todos' && papel !== enviosPapel) return false;
@@ -306,8 +537,10 @@ function enviosListaFiltrada() {
       item && item.telefone_e164,
       item && item.mensagem,
       item && item.erro,
+      enviosAlertaPrincipal(item),
       item && item.etapa_nova_nome,
       item && item.etapa_anterior_nome,
+      item && item.etapa_atual_nome,
       item && item.venda_id,
       item && item.venda_ref_local,
       venda && venda.cliente,
@@ -387,21 +620,25 @@ function enviosEventosRelacionados(item) {
 }
 
 function enviosResumoStats() {
-  const total = enviosLista.length;
-  const comRetorno = enviosLista.filter(item => ['enviada', 'recebida', 'lida'].includes(String(item.status || '').toLowerCase())).length;
-  const alertas = enviosLista.filter(item => ['falha', 'sem_telefone', 'usuario_inativo'].includes(String(item.status || '').toLowerCase())).length;
-  const aguardando = enviosLista.filter(item => ['pendente', 'enfileirada'].includes(String(item.status || '').toLowerCase())).length;
-  return { total, comRetorno, alertas, aguardando };
+  const lista = enviosListaMonitorada();
+  const total = lista.length;
+  const sincronizados = enviosLista.length;
+  const comRetorno = lista.filter(item => enviosStatusTemRetorno(item && item.status)).length;
+  const alertas = lista.filter(item => enviosStatusTemAlerta(item && item.status)).length;
+  const aguardando = lista.filter(item => enviosStatusAguardando(item && item.status)).length;
+  const pendenciasLocais = lista.filter(item => enviosStatusChave(item && item.status) === 'pendente_local').length;
+  const semDisparo = lista.filter(item => enviosStatusChave(item && item.status) === 'nao_disparado').length;
+  return { total, sincronizados, comRetorno, alertas, aguardando, pendenciasLocais, semDisparo };
 }
 
 function enviosStatusOptions() {
-  const usados = new Set(enviosLista.map(item => String(item && item.status || '').trim().toLowerCase()).filter(Boolean));
+  const usados = new Set(enviosListaMonitorada().map(item => String(item && item.status || '').trim().toLowerCase()).filter(Boolean));
   const base = ['todos', ...Object.keys(ENVIOS_STATUS_META).filter(chave => usados.has(chave) || chave === enviosStatus)];
   return Array.from(new Set(base));
 }
 
 function enviosPapelOptions() {
-  const usados = new Set(enviosLista.map(item => String(item && item.destinatario_papel || '').trim().toLowerCase()).filter(Boolean));
+  const usados = new Set(enviosListaMonitorada().map(item => String(item && item.destinatario_papel || '').trim().toLowerCase()).filter(Boolean));
   const base = ['todos', ...Object.keys(ENVIOS_PAPEL_META).filter(chave => usados.has(chave) || chave === enviosPapel)];
   return Array.from(new Set(base));
 }
@@ -434,6 +671,43 @@ function enviosRenderCard(item, ativo) {
         <strong>${enviosEsc(telefone)}</strong>
       </div>
       <div class="envios-card-msg">${enviosEsc(enviosResumoMensagem(item && item.mensagem))}</div>
+      <div class="envios-card-foot">
+        <span>${enviosEsc(enviosFmtData(item && item.criado_em))}</span>
+        <span>${enviosEsc(item && item.venda_id != null ? `Venda #${item.venda_id}` : 'Sem venda')}</span>
+      </div>
+    </button>
+  `;
+}
+
+function enviosRenderCardAtualizado(item, ativo) {
+  const vendaTitulo = enviosTituloVenda(item);
+  const vendaResumo = enviosResumoVenda(item);
+  const etapaTexto = enviosTextoFluxo(item);
+  const telefone = enviosTelefoneExibicao(item);
+  const status = enviosStatusChip(item && item.status);
+  const papel = enviosPapelChip(item && item.destinatario_papel);
+  const alerta = enviosAlertaPrincipal(item);
+  const mensagemPrincipal = enviosMensagemPrincipal(item);
+
+  return `
+    <button type="button" class="envios-card ${ativo ? 'active' : ''}" onclick="enviosSelecionar('${enviosAttr(enviosIdToken(item))}')">
+      <div class="envios-card-top">
+        <div class="envios-card-main">
+          <div class="envios-card-kicker">${enviosEsc(vendaTitulo)}</div>
+          <div class="envios-card-dest">${enviosEsc(enviosTexto(item && item.destinatario_nome, 'Destinatario sem nome'))}</div>
+          <div class="envios-card-sub">${enviosEsc(vendaResumo)}</div>
+        </div>
+        <div class="envios-card-tags">
+          ${status}
+          ${papel}
+        </div>
+      </div>
+      <div class="envios-card-line">
+        <span>${enviosEsc(etapaTexto)}</span>
+        <strong>${enviosEsc(telefone)}</strong>
+      </div>
+      ${alerta ? `<div class="envios-card-alert">${enviosEsc(alerta)}</div>` : ''}
+      <div class="envios-card-msg">${enviosEsc(mensagemPrincipal)}</div>
       <div class="envios-card-foot">
         <span>${enviosEsc(enviosFmtData(item && item.criado_em))}</span>
         <span>${enviosEsc(item && item.venda_id != null ? `Venda #${item.venda_id}` : 'Sem venda')}</span>
@@ -583,6 +857,110 @@ function enviosRenderDetalhe(item) {
   `;
 }
 
+function enviosRenderDetalheAtualizado(item) {
+  if (!item) return enviosRenderDetalhe(item);
+
+  if (!item.sintetico) return enviosRenderDetalhe(item);
+
+  const venda = enviosBuscarVenda(item);
+  const alerta = enviosAlertaPrincipal(item);
+  const etapaAtual = enviosTexto(item && item.etapa_atual_nome, venda && venda.etapa != null && typeof ETAPAS !== 'undefined' && Array.isArray(ETAPAS)
+    ? ETAPAS[parseInt(venda.etapa, 10) || 0]
+    : 'Cadastro');
+  const responsavel = enviosTexto(item && item.responsavel_avanco, 'Sistema');
+  const pendenciaLocal = item && item.pendencia_local ? item.pendencia_local : null;
+  const podeCopiarRef = enviosTexto(item && item.venda_ref_local, '');
+  const refCopy = encodeURIComponent(String(item && item.venda_ref_local || ''));
+
+  return `
+    <div class="envios-detail-panel">
+      <div class="envios-detail-hero">
+        <div>
+          <div class="envios-detail-kicker">${enviosEsc(enviosTituloVenda(item))}</div>
+          <h3>${enviosEsc(enviosTexto(item && item.destinatario_nome, 'Pendencia operacional'))}</h3>
+          <p>${enviosEsc(enviosResumoVenda(item))}</p>
+        </div>
+        <div class="envios-detail-tags">
+          ${enviosStatusChip(item.status)}
+          ${enviosPapelChip(item.destinatario_papel)}
+        </div>
+      </div>
+
+      <div class="envios-detail-actions">
+        ${item.venda_id != null ? `<button class="btn-s" type="button" onclick="enviosAbrirVenda(${parseInt(item.venda_id, 10) || 0})">${zUiText('Abrir venda')}</button>` : ''}
+        ${pendenciaLocal
+          ? `<button class="btn-c" type="button" onclick="enviosReprocessarFilaLocal()">${zUiText('Reprocessar fila local')}</button>`
+          : `<button class="btn-c" type="button" onclick="enviosReenviarCadastro(${parseInt(item.venda_id, 10) || 0})">${zUiText('Reenviar cadastro')}</button>`}
+        <button class="btn-c" type="button" onclick="enviosCarregar({ force:true })">${zUiText('Atualizar agora')}</button>
+      </div>
+
+      <div class="envios-detail-block envios-alert">
+        <div class="envios-detail-title">${zUiText('O que aconteceu')}</div>
+        <div class="envios-alert-copy">${enviosEsc(alerta || zUiText('Este envio precisa de analise manual.'))}</div>
+      </div>
+
+      <div class="envios-detail-grid">
+        <div class="envios-detail-block">
+          <div class="envios-detail-title">${zUiText('Resumo operacional')}</div>
+          <div class="envios-meta-list">
+            <div><span>${zUiText('Fluxo esperado')}</span><strong>${enviosEsc(enviosTextoFluxo(item))}</strong></div>
+            <div><span>${zUiText('Etapa atual da venda')}</span><strong>${enviosEsc(etapaAtual)}</strong></div>
+            <div><span>${zUiText('Responsavel pelo cadastro')}</span><strong>${enviosEsc(responsavel)}</strong></div>
+            <div><span>${zUiText('Fila local')}</span><strong>${enviosEsc(pendenciaLocal ? 'Sim' : 'Nao')}</strong></div>
+            ${venda ? `<div><span>${zUiText('Corretor da venda')}</span><strong>${enviosEsc(enviosTexto(venda.corretor, '-'))}</strong></div>` : ''}
+            ${venda ? `<div><span>${zUiText('Gerente da venda')}</span><strong>${enviosEsc(enviosTexto(venda.gerente, '-'))}</strong></div>` : ''}
+          </div>
+        </div>
+
+        <div class="envios-detail-block">
+          <div class="envios-detail-title">${zUiText('Linha do tempo')}</div>
+          <div class="envios-meta-list">
+            <div><span>${zUiText('Criado')}</span><strong>${enviosEsc(enviosFmtData(item.criado_em))}</strong></div>
+            <div><span>${zUiText('Atualizado')}</span><strong>${enviosEsc(enviosFmtData(item.atualizado_em))}</strong></div>
+            <div><span>${zUiText('Tentativas locais')}</span><strong>${enviosEsc(String(item.tentativas || 0))}</strong></div>
+            <div><span>${zUiText('Status monitorado')}</span><strong>${enviosEsc(enviosStatusInfo(item.status).label)}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="envios-detail-block">
+        <div class="envios-detail-title">${zUiText('Mensagem esperada')}</div>
+        <div class="envios-message-box">${enviosEsc(zUiText('Nenhuma mensagem foi confirmada pela Z-API para esta venda ainda. Use o reenvio manual ou reprocese a fila local para tentar novamente.'))}</div>
+      </div>
+
+      <div class="envios-detail-block">
+        <div class="envios-detail-title">${zUiText('Identificadores tecnicos')}</div>
+        <div class="envios-id-grid">
+          <div class="envios-id-card">
+            <span>${zUiText('Registro monitor')}</span>
+            <strong>${enviosEsc(String(item.id || ''))}</strong>
+          </div>
+          <div class="envios-id-card">
+            <span>${zUiText('Venda')}</span>
+            <strong>${enviosEsc(item.venda_id != null ? `#${item.venda_id}` : '-')}</strong>
+          </div>
+          <div class="envios-id-card">
+            <span>${zUiText('Referencia local')}</span>
+            <strong>${enviosEsc(enviosTexto(item.venda_ref_local, '-'))}</strong>
+            ${podeCopiarRef ? `<button type="button" class="copy-chip-btn" onclick="copiarTexto(decodeURIComponent('${refCopy}'),'Referencia local')">${zUiText('Copiar')}</button>` : ''}
+          </div>
+          <div class="envios-id-card">
+            <span>${zUiText('Origem')}</span>
+            <strong>${enviosEsc(pendenciaLocal ? 'Fila local do navegador' : 'Venda sem registro no backend')}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="envios-detail-block">
+        <div class="envios-detail-title">${zUiText('Proxima acao sugerida')}</div>
+        <div class="envios-alert-copy">${enviosEsc(pendenciaLocal
+          ? zUiText('Esta pendencia nasceu no navegador. Se a internet ou a funcao da Z-API falhou no momento do cadastro, use "Reprocessar fila local" para reenviar agora.')
+          : zUiText('Como nao existe nenhum registro no backend, o caminho mais seguro e usar "Reenviar cadastro" para recriar o disparo da venda.'))}</div>
+      </div>
+    </div>
+  `;
+}
+
 function enviosRenderLocked() {
   return `
     <div class="envios-locked">
@@ -679,6 +1057,22 @@ function enviosGarantirStyles() {
     .envios-empty-copy,.envios-empty-mini{font-size:12px;line-height:1.6;color:var(--tm);max-width:520px;}
     .envios-detail-empty{min-height:100%;}
     .envios-empty-mini{padding:6px 0 2px;}
+    .envios-card-alert{font-size:11px;line-height:1.55;padding:10px 11px;border-radius:12px;background:rgba(180,87,52,.12);border:1px solid rgba(231,180,165,.32);color:#F6CDBF;}
+    .envios-hero-side,.envios-kpi,.envios-toolbar,.envios-list-panel,.envios-detail-panel,.envios-list-empty,.envios-detail-empty,.envios-locked,.envios-detail-block,.envios-id-card,.envios-event-item{background:#17120D!important;border-color:rgba(196,160,94,.18)!important;}
+    .envios-toolbar,.envios-list-panel,.envios-detail-panel,.envios-list-empty,.envios-detail-empty,.envios-locked{box-shadow:0 18px 36px rgba(0,0,0,.24);}
+    .envios-hero-side{background:linear-gradient(180deg,rgba(27,20,13,.96) 0%,rgba(17,13,9,.96) 100%)!important;}
+    .envios-kpi{background:linear-gradient(180deg,rgba(30,23,15,.96) 0%,rgba(18,14,10,.96) 100%)!important;}
+    .envios-toolbar{background:linear-gradient(180deg,rgba(24,18,12,.96) 0%,rgba(16,12,9,.96) 100%)!important;}
+    .envios-search input,.envios-select,.envios-card-msg,.envios-message-box{background:#0F0C09!important;color:#F4E7D4!important;border-color:rgba(196,160,94,.22)!important;}
+    .envios-search input::placeholder{color:#9D8B72;}
+    .envios-list-title,.envios-card-dest,.envios-card-line,.envios-detail-hero h3,.envios-meta-list strong,.envios-id-card strong,.envios-event-item strong,.envios-empty-title{color:#F5E7D2!important;}
+    .envios-list-sub,.envios-card-sub,.envios-card-foot,.envios-side-copy,.envios-counter,.envios-meta-list span,.envios-event-item span,.envios-event-item div:last-child,.envios-empty-copy,.envios-empty-mini,.envios-detail-hero p{color:#BBA88D!important;}
+    .envios-detail-hero{background:linear-gradient(135deg,rgba(55,39,18,.85) 0%,rgba(31,23,16,.98) 100%)!important;border-color:rgba(196,160,94,.22)!important;}
+    .envios-card{background:linear-gradient(180deg,rgba(28,21,14,.98) 0%,rgba(19,15,11,.98) 100%)!important;border-color:rgba(196,160,94,.18)!important;}
+    .envios-card:hover{box-shadow:0 16px 32px rgba(0,0,0,.26)!important;border-color:rgba(214,178,108,.30)!important;}
+    .envios-card.active{border-color:rgba(232,201,117,.52)!important;box-shadow:0 18px 34px rgba(0,0,0,.34)!important;}
+    .envios-alert{background:rgba(87,34,25,.38)!important;border-color:rgba(201,118,89,.34)!important;}
+    .envios-alert-copy{color:#F5C6B7!important;}
     @media (max-width:1120px){
       .envios-hero{grid-template-columns:1fr;}
       .envios-shell{grid-template-columns:1fr;}
@@ -705,6 +1099,10 @@ function enviosGarantirStyles() {
 function renderEnvios() {
   const cont = document.getElementById('envios-content');
   if (!cont) return;
+  const buscaAnterior = document.getElementById('envios-busca');
+  const buscaAtiva = !!(buscaAnterior && document.activeElement === buscaAnterior);
+  const buscaInicio = buscaAtiva ? buscaAnterior.selectionStart : null;
+  const buscaFim = buscaAtiva ? buscaAnterior.selectionEnd : null;
 
   enviosGarantirStyles();
   enviosIniciarAutoRefresh();
@@ -725,6 +1123,7 @@ function renderEnvios() {
   const stats = enviosResumoStats();
   const statusOptions = enviosStatusOptions();
   const papelOptions = enviosPapelOptions();
+  const totalMonitorado = stats.total;
   const atualizacaoTxt = enviosUltimaAtualizacao
     ? `${zUiText('Atualizado às')} ${enviosFmtHoraCurta(enviosUltimaAtualizacao)}`
     : zUiText('Aguardando primeira sincronização');
@@ -732,7 +1131,11 @@ function renderEnvios() {
     ? zUiText('Atualizando...')
     : enviosErro
       ? zUiText('Com alerta')
-      : zUiText('Sincronizado');
+      : stats.pendenciasLocais
+        ? zUiText('Pendencia local')
+        : stats.semDisparo
+          ? zUiText('Sem disparo')
+          : zUiText('Sincronizado');
 
   cont.innerHTML = `
     <div class="envios-wrap">
@@ -740,10 +1143,10 @@ function renderEnvios() {
         <div class="envios-hero-copy">
           <div class="envios-eyebrow">${zUiText('Monitor Z-API')}</div>
           <h2>${zUiText('Acompanhe os envios de WhatsApp sem sair do sistema')}</h2>
-          <p>${zUiText('Aqui voce enxerga os ultimos disparos das vendas, quem recebeu, em que status a mensagem ficou e qualquer alerta da integracao.')}</p>
+          <p>${zUiText('Aqui voce enxerga os disparos reais, as pendencias locais do navegador e tambem as vendas que nem chegaram a criar registro na Z-API.')}</p>
           <div class="envios-hero-note">
             <span class="envios-live-dot"></span>
-            <strong>${zUiText('Ultimos registros carregados:')} ${enviosLista.length}</strong>
+            <strong>${zUiText('Registros monitorados:')} ${totalMonitorado}</strong>
             <span>${enviosEsc(atualizacaoTxt)}</span>
           </div>
         </div>
@@ -752,15 +1155,15 @@ function renderEnvios() {
           <div class="envios-side-top">
             <div>
               <div class="envios-side-title">${zUiText('Visao operacional')}</div>
-              <div class="envios-side-copy">${zUiText('Use os filtros para localizar falhas, usuarios sem telefone ou acompanhar a leitura das mensagens por etapa.')}</div>
+              <div class="envios-side-copy">${zUiText('Use os filtros para localizar falhas, pendencias locais, vendas sem disparo e acompanhar a leitura das mensagens por etapa.')}</div>
             </div>
             <div class="envios-side-status">${enviosEsc(syncBadge)}</div>
           </div>
           <div class="envios-kpis">
-            <div class="envios-kpi"><strong>${enviosEsc(String(stats.total))}</strong><span>${zUiText('Registros carregados')}</span></div>
+            <div class="envios-kpi"><strong>${enviosEsc(String(stats.total))}</strong><span>${zUiText('Monitorados')}</span></div>
+            <div class="envios-kpi"><strong>${enviosEsc(String(stats.sincronizados))}</strong><span>${zUiText('Sincronizados')}</span></div>
             <div class="envios-kpi"><strong>${enviosEsc(String(stats.comRetorno))}</strong><span>${zUiText('Com retorno')}</span></div>
-            <div class="envios-kpi"><strong>${enviosEsc(String(stats.alertas))}</strong><span>${zUiText('Alertas')}</span></div>
-            <div class="envios-kpi"><strong>${enviosEsc(String(stats.aguardando))}</strong><span>${zUiText('Aguardando retorno')}</span></div>
+            <div class="envios-kpi"><strong>${enviosEsc(String(stats.alertas + stats.aguardando))}</strong><span>${zUiText('Alertas e pendentes')}</span></div>
           </div>
         </div>
       </div>
@@ -768,7 +1171,7 @@ function renderEnvios() {
       <div class="envios-toolbar">
         <div class="envios-search">
           <span>🔎</span>
-          <input type="text" value="${enviosAttr(enviosBusca)}" placeholder="${enviosAttr(zUiText('Buscar por venda, destinatario, telefone ou erro...'))}" oninput="enviosSetBusca(this.value)">
+          <input id="envios-busca" type="text" value="${enviosAttr(enviosBusca)}" placeholder="${enviosAttr(zUiText('Buscar por venda, destinatario, telefone ou erro...'))}" oninput="enviosSetBusca(this.value)">
         </div>
         <select class="envios-select" onchange="enviosSetStatus(this.value)">
           ${statusOptions.map(opcao => {
@@ -783,7 +1186,7 @@ function renderEnvios() {
           }).join('')}
         </select>
         <div class="envios-toolbar-actions">
-          <span class="envios-counter">${enviosEsc(`${lista.length} de ${enviosLista.length} registros`)}</span>
+          <span class="envios-counter">${enviosEsc(`${lista.length} de ${totalMonitorado} registros`)}</span>
           ${(enviosBusca || enviosStatus !== 'todos' || enviosPapel !== 'todos') ? `<button class="btn-c" type="button" onclick="enviosLimparFiltros()">${zUiText('Limpar filtros')}</button>` : ''}
           <button class="btn-s" type="button" onclick="enviosCarregar({ force:true })">${zUiText('Atualizar agora')}</button>
         </div>
@@ -796,19 +1199,19 @@ function renderEnvios() {
               <div class="envios-list-head">
                 <div>
                   <div class="envios-list-title">${zUiText('Ultimos envios')}</div>
-                  <div class="envios-list-sub">${zUiText(`Exibindo os ultimos ${ENVIOS_LIMIT} registros sincronizados`)}</div>
+                  <div class="envios-list-sub">${zUiText(`Registros reais e alertas sem disparo das ultimas ${ENVIOS_JANELA_VENDAS_SEM_DISPARO_DIAS} dias`)}</div>
                 </div>
                 ${enviosErro ? `<span class="envios-chip" style="color:#B65239;background:#FFF2EE;border-color:#E8B1A1;">${enviosEsc(zUiText('Cache em uso'))}</span>` : ''}
               </div>
               <div class="envios-list-body">
-                ${lista.map(item => enviosRenderCard(item, selecionado && enviosIdToken(item) === enviosIdToken(selecionado))).join('')}
+                ${lista.map(item => enviosRenderCardAtualizado(item, selecionado && enviosIdToken(item) === enviosIdToken(selecionado))).join('')}
               </div>
             </div>
           ` : `
             <div class="envios-list-empty">
               <div class="envios-empty-icon">📭</div>
               <div class="envios-empty-title">${zUiText('Nenhum envio encontrado')}</div>
-              <div class="envios-empty-copy">${zUiText(enviosErro ? 'O monitor nao conseguiu atualizar agora. Se necessario, confira os filtros ou tente sincronizar novamente.' : (enviosLista.length ? 'Os filtros atuais nao retornaram resultados. Tente limpar os filtros.' : 'Assim que as vendas avancarem de etapa, os registros aparecerao aqui automaticamente.'))}</div>
+              <div class="envios-empty-copy">${zUiText(enviosErro ? 'O monitor nao conseguiu atualizar agora. Se necessario, confira os filtros ou tente sincronizar novamente.' : (totalMonitorado ? 'Os filtros atuais nao retornaram resultados. Tente limpar os filtros.' : 'Assim que houver notificacoes ou vendas sem disparo identificado, os registros aparecerao aqui automaticamente.'))}</div>
             </div>
           `}
         </div>
@@ -819,10 +1222,20 @@ function renderEnvios() {
       </div>
     </div>
   `;
+
+  if (buscaAtiva) {
+    const buscaAtual = document.getElementById('envios-busca');
+    if (buscaAtual) {
+      buscaAtual.focus();
+      if (typeof buscaInicio === 'number' && typeof buscaFim === 'number') {
+        buscaAtual.setSelectionRange(buscaInicio, buscaFim);
+      }
+    }
+  }
 }
 
 function renderEnviosDetalheComErro(item) {
-  const detalhe = enviosRenderDetalhe(item);
+  const detalhe = enviosRenderDetalheAtualizado(item);
   if (!enviosErro) return detalhe;
   return `
     <div style="display:flex;flex-direction:column;gap:16px;height:100%;">
@@ -838,8 +1251,18 @@ function renderEnviosDetalheComErro(item) {
 enviosCarregarCache();
 enviosSyncState();
 
+window.enviosReprocessarFilaLocal = enviosReprocessarFilaLocal;
+window.enviosReenviarCadastro = enviosReenviarCadastro;
+
+window.addEventListener('zapi-pendencias-changed', () => {
+  enviosSyncState();
+  if (enviosModuloVisivel()) renderEnvios();
+});
+
 zRegisterModule('envios', {
   renderEnvios,
   enviosCarregar,
-  enviosAbrirVenda
+  enviosAbrirVenda,
+  enviosReprocessarFilaLocal,
+  enviosReenviarCadastro
 });
