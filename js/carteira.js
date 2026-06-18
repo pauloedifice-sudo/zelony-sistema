@@ -62,10 +62,26 @@ function carteiraMatchUsuarioCampo(campo) {
   return valor === nomeCompleto || (primeiroNome.length >= 3 && valor === primeiroNome);
 }
 
+const carteiraMoedaFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+function fmtCarteiraValor(valor) {
+  const numero = Number(valor || 0);
+  return carteiraMoedaFormatter.format(Number.isFinite(numero) ? numero : 0);
+}
+
+function carteiraBonusStatusAtual(v) {
+  if (!v || !v.bonus || v.bonus <= 0) return '';
+  if (typeof bonusStatusVenda === 'function') return bonusStatusVenda(v);
+  return String(v.bonus_status || '').trim().toLowerCase();
+}
+
 function carteiraBonusFoiPago(v) {
-  if (!v || !v.bonus || v.bonus <= 0) return false;
-  if (typeof bonusStatusVenda === 'function') return bonusStatusVenda(v) === 'pago';
-  return String(v.bonus_status || '').trim().toLowerCase() === 'pago';
+  return carteiraBonusStatusAtual(v) === 'pago';
 }
 
 function carteiraMinhaComissaoValor(v) {
@@ -122,7 +138,16 @@ function carteiraMeuBonusRecebido(v) {
   return carteiraBonusFoiPago(v) ? carteiraMeuBonusValor(v) : 0;
 }
 
+function carteiraMeuBonusNotaGerada(v) {
+  return carteiraBonusStatusAtual(v) === 'nota_gerada' ? carteiraMeuBonusValor(v) : 0;
+}
+
 function carteiraMeuBonusPendente(v) {
+  const status = carteiraBonusStatusAtual(v);
+  return (!status || status === 'pendente') ? carteiraMeuBonusValor(v) : 0;
+}
+
+function carteiraMeuBonusNaoPago(v) {
   return carteiraBonusFoiPago(v) ? 0 : carteiraMeuBonusValor(v);
 }
 
@@ -229,6 +254,31 @@ function resumoTabelaCarteira(situacao, visiveis, dados, analiseAtivas, analiseA
 
 function fmtPctCarteira(valor) {
   return `${Number(valor || 0).toFixed(1).replace('.', ',')}%`;
+}
+
+function carteiraHeaderMap() {
+  return {
+    data: 'Data',
+    cliente: 'Cliente',
+    produto: 'Produto',
+    corretor: 'Corretor',
+    capitao: 'Capitão',
+    gerente: 'Gerente',
+    vgv: 'Valor venda',
+    com_bruta: 'Com. bruta',
+    com_total: 'Com. líquida',
+    com_cor: 'Corretor',
+    com_cap: 'Capitão',
+    com_ger: 'Gerente',
+    com_dir: role === 'dir' ? 'Minha comissão' : 'Diretor',
+    com_zel: 'Zelony',
+    minha: typeof lblCom === 'function' ? lblCom() : 'Minha comissão',
+    bonus_cor: '🎁 Meu bônus',
+    bonus_ger: '🎁 Meu bônus',
+    bonus_dir: '🎁 Meu bônus',
+    bonus_total: '🎁 Bônus líq.',
+    etapa: 'Etapa'
+  };
 }
 
 function carteiraOpcoes(lista, campo) {
@@ -2842,15 +2892,18 @@ function renderCarteiraTabelaRows(lista, cols) {
       if (c === 'corretor') return `<td>${zUiText(v.corretor)}</td>`;
       if (c === 'capitao') return `<td>${zUiText(v.capitao || '—')}</td>`;
       if (c === 'gerente') return `<td>${zUiText(v.gerente || '—')}</td>`;
-      if (c === 'com_cor') return `<td class="pos">${fmt(comC(v))}</td>`;
-      if (c === 'com_cap') return `<td class="pos">${fmt(comCap(v))}</td>`;
-      if (c === 'com_ger') return `<td class="pos">${fmt(comG(v))}</td>`;
-      if (c === 'com_dir') return `<td class="pos">${fmt(comD(v))}</td>`;
-      if (c === 'com_zel') return `<td class="pos">${fmt(comZ(v))}</td>`;
-      if (c === 'vgv') return `<td class="pos">${fmt(v.valor)}</td>`;
-      if (c === 'com_bruta') return `<td class="pos">${fmt(comBruta(v))}</td>`;
-      if (c === 'com_total') return `<td class="pos">${fmt(comTotal(v))}</td>`;
-      if (c === 'minha') return `<td class="pos">${fmt(comVis(v))}</td>`;
+      if (c === 'com_cor') return `<td class="pos">${fmtCarteiraValor(comC(v))}</td>`;
+      if (c === 'com_cap') return `<td class="pos">${fmtCarteiraValor(comCap(v))}</td>`;
+      if (c === 'com_ger') return `<td class="pos">${fmtCarteiraValor(comG(v))}</td>`;
+      if (c === 'com_dir') {
+        const valorDiretor = role === 'dir' ? carteiraMinhaComissaoValor(v) : (comD(v) + comD2(v));
+        return `<td class="pos">${fmtCarteiraValor(valorDiretor)}</td>`;
+      }
+      if (c === 'com_zel') return `<td class="pos">${fmtCarteiraValor(comZ(v))}</td>`;
+      if (c === 'vgv') return `<td class="pos">${fmtCarteiraValor(v.valor)}</td>`;
+      if (c === 'com_bruta') return `<td class="pos">${fmtCarteiraValor(comBruta(v))}</td>`;
+      if (c === 'com_total') return `<td class="pos">${fmtCarteiraValor(comTotal(v))}</td>`;
+      if (c === 'minha') return `<td class="pos">${fmtCarteiraValor(comVis(v))}</td>`;
       if (c === 'bonus_cor' || c === 'bonus_ger' || c === 'bonus_dir') {
         if (!v.bonus || v.bonus <= 0) return `<td class="pos" style="color:#2E9E6E;">${zUiText('—')}</td>`;
         let totalBonus = 0;
@@ -2871,9 +2924,9 @@ function renderCarteiraTabelaRows(lista, cols) {
           if (c === 'bonus_ger') totalBonus = bonusGer(v);
           if (c === 'bonus_dir') totalBonus = bonusDir(v) + bonusDir2(v);
         }
-        return `<td class="pos" style="color:#2E9E6E;">${totalBonus > 0 ? fmt(totalBonus) : zUiText('—')}</td>`;
+        return `<td class="pos" style="color:#2E9E6E;">${totalBonus > 0 ? fmtCarteiraValor(totalBonus) : zUiText('—')}</td>`;
       }
-      if (c === 'bonus_total') return `<td class="pos" style="color:#2E9E6E;">${v.bonus > 0 ? fmt(bonusLiquidoTotal(v)) : zUiText('—')}</td>`;
+      if (c === 'bonus_total') return `<td class="pos" style="color:#2E9E6E;">${v.bonus > 0 ? fmtCarteiraValor(bonusLiquidoTotal(v)) : zUiText('—')}</td>`;
       if (c === 'etapa') {
         return `<td><div class="cart-stage-cell"><span class="spill${v.etapa === ETAPAS.length - 1 ? ' f' : ''}">${zUiText(ETAPAS[v.etapa])}</span>${statusPill}</div></td>`;
       }
@@ -2886,50 +2939,27 @@ function renderCarteira() {
   const lMinhas = vendasU(VENDAS, true);
   const etapaFinal = ETAPAS.length - 1;
   const calcComissao = v => carteiraMinhaComissaoValor(v);
-  const calcBonusTotal = v => carteiraMeuBonusValor(v);
-  const calcSaldo = v => calcComissao(v) + calcBonusTotal(v);
 
-  const saldo = lMinhas.filter(v => !v.distratada).reduce((s, v) => s + calcSaldo(v), 0);
   const pend = lMinhas.filter(v => !v.distratada).reduce((s, v) => {
     const comissaoPendente = v.etapa < etapaFinal ? calcComissao(v) : 0;
     return s + comissaoPendente + carteiraMeuBonusPendente(v);
   }, 0);
+  const nota = lMinhas.filter(v => !v.distratada).reduce((s, v) => s + carteiraMeuBonusNotaGerada(v), 0);
   const rec = lMinhas.filter(v => !v.distratada).reduce((s, v) => {
     const comissaoRecebida = v.etapa === etapaFinal ? calcComissao(v) : 0;
     return s + comissaoRecebida + carteiraMeuBonusRecebido(v);
   }, 0);
+  const saldo = rec + nota + pend;
   const distratas = lMinhas.filter(v => v.distratada);
   const perdido = distratas.reduce((s, v) => {
     const comissaoPerdida = v.etapa < etapaFinal ? calcComissao(v) : 0;
-    return s + comissaoPerdida + carteiraMeuBonusPendente(v);
+    return s + comissaoPerdida + carteiraMeuBonusNaoPago(v);
   }, 0);
   const rd = RD[role];
-  const saldoLabel = 'Saldo a receber';
-  const saldoSub = zUiText(`Minha comissão + bônus - ${rd.nome} · ${rd.role}`);
+  const saldoLabel = 'Total líquido da carteira ativa';
+  const saldoSub = zUiText(`${nota > 0 ? 'já recebido + nota gerada + em aberto' : 'já recebido + em aberto'} · ${rd.nome} · ${rd.role}`);
   const cols = getCols();
-
-  const hdrMap = {
-    data: 'Data',
-    cliente: 'Cliente',
-    produto: 'Produto',
-    corretor: 'Corretor',
-    capitao: 'Capitão',
-    gerente: 'Gerente',
-    vgv: 'Valor venda',
-    com_bruta: 'Com. bruta',
-    com_total: 'Com. líquida',
-    com_cor: 'Corretor',
-    com_cap: 'Capitão',
-    com_ger: 'Gerente',
-    com_dir: 'Minha comissão',
-    com_zel: 'Zelony',
-    minha: 'Minha comissão',
-    bonus_cor: '🎁 Bônus',
-    bonus_ger: '🎁 Bônus',
-    bonus_dir: '🎁 Bônus',
-    bonus_total: '🎁 Bônus líq.',
-    etapa: 'Etapa'
-  };
+  const headerMap = carteiraHeaderMap();
 
   if (role === 'dono' || role === 'fin') {
     const visiveis = aplicarFiltrosCarteira(lMinhas);
@@ -3345,7 +3375,7 @@ function renderCarteira() {
         </div>
         <div class="tscroll">
           <table>
-            <thead><tr>${cols.map(c => `<th>${zUiText(hdrMap[c] || c)}</th>`).join('')}</tr></thead>
+            <thead><tr>${cols.map(c => `<th>${zUiText(headerMap[c] || c)}</th>`).join('')}</tr></thead>
             <tbody>${rows}</tbody>
           </table>
         </div>
@@ -3355,14 +3385,15 @@ function renderCarteira() {
 
   const rows = renderCarteiraTabelaRows(lMinhas, cols);
   document.getElementById('carteira-content').innerHTML = `
-    <div class="ch"><div class="ch-lbl">${zUiText(saldoLabel)}</div><div class="ch-val">${fmt(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> ${zUiText('Atualizado agora')}</div></div>
+    <div class="ch"><div class="ch-lbl">${zUiText(saldoLabel)}</div><div class="ch-val">${fmtCarteiraValor(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> ${zUiText('Atualizado agora')}</div></div>
     <div class="c3">
       <div class="cmc a"><div class="cmc-l">${zUiText('Minhas vendas')}</div><div class="cmc-v go">${lMinhas.filter(v => !v.distratada).length}</div><div class="cmc-s">${zUiText(`${lMinhas.filter(v => !v.distratada && v.etapa === ETAPAS.length - 1).length} concluídas`)}</div></div>
-      <div class="cmc g"><div class="cmc-l">${zUiText('Já recebido')}</div><div class="cmc-v gr">${fmt(rec)}</div><div class="cmc-s">${zUiText('comissões e bônus pagos')}</div></div>
-      <div class="cmc r"><div class="cmc-l">${zUiText('A receber')}</div><div class="cmc-v" style="color:#C06030;">${fmt(pend)}</div><div class="cmc-s">${zUiText('comissões e bônus pendentes')}</div></div>
+      <div class="cmc g"><div class="cmc-l">${zUiText('Já recebido')}</div><div class="cmc-v gr">${fmtCarteiraValor(rec)}</div><div class="cmc-s">${zUiText('comissões recebidas + bônus pagos')}</div></div>
+      <div class="cmc n"><div class="cmc-l">${zUiText('Nota gerada')}</div><div class="cmc-v nt">${fmtCarteiraValor(nota)}</div><div class="cmc-s">${zUiText(nota > 0 ? 'bônus faturados aguardando pagamento' : 'sem bônus com nota gerada')}</div></div>
+      <div class="cmc r"><div class="cmc-l">${zUiText('A receber')}</div><div class="cmc-v" style="color:#C06030;">${fmtCarteiraValor(pend)}</div><div class="cmc-s">${zUiText('comissões pendentes + bônus sem nota')}</div></div>
     </div>
-    ${perdido > 0 ? `<div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#C05030;font-weight:700;margin-bottom:2px;">${zUiText(`⚠ Perdido com distrato${distratas.length > 1 ? 's' : ''}`)}</div><div style="font-size:11px;color:#C05030;opacity:0.8;">${zUiText(`${distratas.length} venda${distratas.length > 1 ? 's' : ''} distratada${distratas.length > 1 ? 's' : ''}`)}</div></div><div style="font-size:22px;font-weight:700;color:#C05030;font-family:'Playfair Display',serif;">- ${fmt(perdido)}</div></div>` : ''}
-    <div class="ctbl cart-detail-table"><div class="ctbl-h"><span class="ctbl-t">${zUiText('Detalhe por venda')}</span><span style="font-size:10px;color:var(--tm);">${zUiText(`${lMinhas.length} venda${lMinhas.length !== 1 ? 's' : ''}`)}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c => `<th>${zUiText(hdrMap[c] || c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    ${perdido > 0 ? `<div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#C05030;font-weight:700;margin-bottom:2px;">${zUiText(`⚠ Perdido com distrato${distratas.length > 1 ? 's' : ''}`)}</div><div style="font-size:11px;color:#C05030;opacity:0.8;">${zUiText(`${distratas.length} venda${distratas.length > 1 ? 's' : ''} distratada${distratas.length > 1 ? 's' : ''}`)}</div></div><div style="font-size:22px;font-weight:700;color:#C05030;font-family:'Playfair Display',serif;">- ${fmtCarteiraValor(perdido)}</div></div>` : ''}
+    <div class="ctbl cart-detail-table"><div class="ctbl-h"><span class="ctbl-t">${zUiText('Detalhe por venda')}</span><span style="font-size:10px;color:var(--tm);">${zUiText(`${lMinhas.length} venda${lMinhas.length !== 1 ? 's' : ''}`)}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c => `<th>${zUiText(headerMap[c] || c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 zRegisterModule('carteira', {
