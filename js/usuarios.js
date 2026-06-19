@@ -46,19 +46,86 @@ function gerarToken() {
   return 'ZEL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
 }
 
+function conviteEncodePayload(dados) {
+  const bruto = btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
+  return bruto.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+
+function conviteDecodePayload(token) {
+  const bruto = String(token || '').trim();
+  if (!bruto) return null;
+  const normalizado = bruto.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = normalizado.length % 4 ? '='.repeat(4 - (normalizado.length % 4)) : '';
+  try {
+    return JSON.parse(decodeURIComponent(escape(atob(normalizado + padding))));
+  } catch (e) {
+    try {
+      return JSON.parse(decodeURIComponent(escape(atob(bruto))));
+    } catch (erroLegado) {
+      return null;
+    }
+  }
+}
+
 function gerarLinkConvite(nome, email, perfil, equipe, rhContratacao, unidade) {
   const dados = { nome, email, perfil, equipe, rhContratacao, unidade, ts: Date.now() };
-  const b64   = btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
-  const base  = window.location.origin + window.location.pathname;
-  return base + '?c=' + b64;
+  const token = conviteEncodePayload(dados);
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('c', token);
+  return url.toString();
 }
 
 function lerConviteURL() {
   const params = new URLSearchParams(window.location.search);
   const c = params.get('c');
   if (!c) return null;
-  try { return JSON.parse(decodeURIComponent(escape(atob(c)))); }
-  catch (e) { return null; }
+  return conviteDecodePayload(c);
+}
+
+function montarPayloadEmailConvite({ nome, email, perfil, equipe, rhContratacao, unidade, link, diretor }) {
+  const primeiroNome = String(nome || '').trim().split(' ')[0] || '';
+  const remetente = usuarioLogado ? String(usuarioLogado.email || '').trim().toLowerCase() : '';
+  const mensagem = [
+    `Olá, ${primeiroNome || nome}!`,
+    'Seu acesso ao sistema Zelony foi liberado.',
+    `Perfil: ${perfil}`,
+    unidade ? `Unidade: ${unidade}` : '',
+    equipe ? `Equipe: ${equipe}` : '',
+    rhContratacao ? 'Origem: RH' : '',
+    '',
+    'Use o link abaixo para concluir seu cadastro:',
+    link
+  ].filter(Boolean).join('\n');
+
+  return {
+    nome,
+    name: nome,
+    nome_completo: nome,
+    to_name: primeiroNome || nome,
+    primeiro_nome: primeiroNome || nome,
+    email,
+    email_para: email,
+    to_email: email,
+    user_email: email,
+    destinatario_email: email,
+    cargo: perfil,
+    perfil,
+    equipe,
+    unidade,
+    rh: rhContratacao ? 'Sim' : 'Nao',
+    diretor,
+    from_name: 'Zelony Imóveis',
+    reply_to: remetente,
+    link,
+    invite_link: link,
+    convite_link: link,
+    onboarding_link: link,
+    assunto: 'Convite para acesso ao sistema Zelony',
+    subject: 'Convite para acesso ao sistema Zelony',
+    mensagem
+  };
 }
 
 function _buildUserCard(u, idx) {
@@ -620,7 +687,7 @@ function toggleInvRH() {
   }
 }
 
-function enviarConvite() {
+async function enviarConvite() {
   const nome          = document.getElementById('inv-nome').value.trim().toUpperCase();
   const email         = document.getElementById('inv-email').value.trim().toLowerCase();
   const perfil        = document.getElementById('inv-perfil').value;
@@ -641,16 +708,22 @@ function enviarConvite() {
 
   const btn  = document.getElementById('inv-btn');
   const link = gerarLinkConvite(nome, email, perfil, equipe, rhContratacao, unidade);
+  const diretor = usuarioLogado ? usuarioLogado.nome : 'Diretor Zelony';
   btn.textContent = zUiText('Enviando...'); btn.disabled = true;
 
-  emailjs.init(EJS_PUBKEY);
-  emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
-    nome,
-    email_para: email,
-    cargo:      perfil,
-    diretor:    usuarioLogado ? usuarioLogado.nome : 'Diretor Zelony',
-    link
-  }).then(async () => {
+  if (!window.emailjs || typeof emailjs.init !== 'function' || typeof emailjs.send !== 'function') {
+    btn.textContent = zUiText('✉️ Enviar convite');
+    btn.disabled = false;
+    erro('O serviço de e-mail não carregou nesta página. Recarregue o sistema e tente novamente.');
+    return;
+  }
+
+  try {
+    emailjs.init(EJS_PUBKEY);
+    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, montarPayloadEmailConvite({
+      nome, email, perfil, equipe, rhContratacao, unidade, link, diretor
+    }));
+
     const novoU = {
       id: nextUserId, nome, email, tel: '', perfil, status: 'Pendente',
       banco:'', agencia:'', conta:'', tipoConta:'', pixTipo:'', pix:'',
@@ -672,11 +745,14 @@ function enviarConvite() {
     salvarLS();
     fecharConvite(); renderUsuarios();
     showToast(zUiText('✅'), zUiText(`Convite enviado para ${nome}!`));
-  }).catch(err => {
+  } catch (err) {
     console.error('EmailJS:', err);
-    btn.textContent = zUiText('✉️ Enviar convite'); btn.disabled = false;
-    erro('Erro ao enviar e-mail. Verifique a configuraÃ§Ã£o do EmailJS.');
-  });
+    await copiarTexto(link, 'Link do convite').catch(()=>false);
+    erro('Erro ao enviar e-mail. O link do convite foi copiado para envio manual enquanto o EmailJS é verificado.');
+  } finally {
+    btn.textContent = zUiText('✉️ Enviar convite');
+    btn.disabled = false;
+  }
 }
 
 function verificarConviteURL() {
