@@ -976,7 +976,7 @@ function enviosGarantirStyles() {
   const style = document.createElement('style');
   style.id = 'envios-monitor-style';
   style.textContent = `
-    .envios-wrap{display:flex;flex-direction:column;gap:16px;width:100%;}
+    .envios-wrap{display:flex;flex:1;min-height:0;flex-direction:column;gap:16px;width:100%;overflow-y:auto;padding:18px;box-sizing:border-box;}
     .envios-hero{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(320px,0.95fr);gap:16px;padding:20px;border:1px solid var(--bd);border-radius:20px;background:
       radial-gradient(circle at top left,rgba(184,144,42,0.16),transparent 36%),
       linear-gradient(135deg,#120D03 0%,#20170B 36%,#FAF7F1 190%);}
@@ -1003,9 +1003,9 @@ function enviosGarantirStyles() {
     .envios-select{background:#fff;border:1px solid rgba(184,144,42,.18);border-radius:12px;padding:11px 12px;font-size:12px;color:var(--ts);outline:none;font-family:'Inter',sans-serif;min-width:168px;}
     .envios-toolbar-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
     .envios-counter{font-size:11px;color:var(--tm);white-space:nowrap;}
-    .envios-shell{display:grid;grid-template-columns:minmax(0,0.95fr) minmax(320px,1.05fr);gap:16px;min-height:540px;}
-    .envios-list-col,.envios-detail-col{min-width:0;}
-    .envios-list-panel,.envios-detail-panel,.envios-list-empty,.envios-detail-empty,.envios-locked{height:100%;border:1px solid var(--bd);border-radius:18px;background:#fff;}
+    .envios-shell{display:grid;grid-template-columns:minmax(0,0.95fr) minmax(320px,1.05fr);gap:16px;min-height:540px;min-width:0;flex:1;}
+    .envios-list-col,.envios-detail-col{min-width:0;min-height:0;display:flex;}
+    .envios-list-panel,.envios-detail-panel,.envios-list-empty,.envios-detail-empty,.envios-locked{flex:1;min-height:0;border:1px solid var(--bd);border-radius:18px;background:#fff;}
     .envios-list-panel{display:flex;flex-direction:column;overflow:hidden;}
     .envios-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px;border-bottom:1px solid var(--bd);}
     .envios-list-title{font-family:'Playfair Display',serif;font-size:19px;color:var(--ts);}
@@ -1079,6 +1079,7 @@ function enviosGarantirStyles() {
       .envios-detail-grid,.envios-id-grid{grid-template-columns:1fr;}
     }
     @media (max-width:760px){
+      .envios-wrap{padding:14px 12px 18px;}
       .envios-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
       .envios-toolbar{padding:12px;}
       .envios-select{min-width:100%;width:100%;}
