@@ -76,6 +76,80 @@ create unique index if not exists idx_agendamentos_ref_local
   on public.agendamentos (ref_local)
   where ref_local is not null;
 
+create or replace function public.agendamentos_normalizar_telefone(valor text)
+returns text
+language sql
+immutable
+as $$
+  with base as (
+    select regexp_replace(coalesce(valor, ''), '\D', '', 'g') as digitos
+  )
+  select left(
+    case
+      when length(digitos) in (12, 13) and left(digitos, 2) = '55' then substr(digitos, 3)
+      else digitos
+    end,
+    11
+  )
+  from base;
+$$;
+
+create index if not exists idx_agendamentos_telefone_ativo
+  on public.agendamentos (public.agendamentos_normalizar_telefone(telefone))
+  where coalesce(situacao, 'Agendado') = 'Agendado';
+
+create or replace function public.agendamentos_bloquear_telefone_duplicado()
+returns trigger
+language plpgsql
+as $$
+declare
+  telefone_normalizado text;
+  conflito record;
+begin
+  if coalesce(new.situacao, 'Agendado') <> 'Agendado' then
+    return new;
+  end if;
+
+  telefone_normalizado := public.agendamentos_normalizar_telefone(new.telefone);
+  if telefone_normalizado = '' then
+    return new;
+  end if;
+
+  select
+    a.id,
+    a.cliente,
+    a.corretor,
+    a.data_agendamento,
+    a.horario_agendamento
+  into conflito
+  from public.agendamentos a
+  where coalesce(a.situacao, 'Agendado') = 'Agendado'
+    and public.agendamentos_normalizar_telefone(a.telefone) = telefone_normalizado
+    and (tg_op <> 'UPDATE' or a.id <> new.id)
+  order by a.data_agendamento asc, a.horario_agendamento asc, a.id asc
+  limit 1;
+
+  if found then
+    raise exception
+      'AGENDAMENTO_TELEFONE_DUPLICADO: Ja existe um compromisso em aberto para este telefone. Cliente: %, corretor: %, data: %, horario: %.',
+      coalesce(conflito.cliente, 'Sem cliente'),
+      coalesce(conflito.corretor, 'Sem corretor'),
+      conflito.data_agendamento,
+      conflito.horario_agendamento
+      using errcode = 'P0001';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_agendamentos_bloquear_telefone_duplicado on public.agendamentos;
+create trigger trg_agendamentos_bloquear_telefone_duplicado
+before insert or update of telefone, situacao
+on public.agendamentos
+for each row
+execute function public.agendamentos_bloquear_telefone_duplicado();
+
 alter table public.agendamentos enable row level security;
 
 drop policy if exists "Agendamentos select" on public.agendamentos;

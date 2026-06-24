@@ -252,6 +252,8 @@ window.getAppConectividadeStatus=getAppConectividadeStatus;
 window.appPodePersistirNoSupabase=appPodePersistirNoSupabase;
 window.appModoSomenteLeituraAtivo=appModoSomenteLeituraAtivo;
 window.atualizarBannerConectividadeApp=atualizarBannerConectividadeApp;
+window.erroAgendamentoTelefoneDuplicado=erroAgendamentoTelefoneDuplicado;
+window.mensagemErroAgendamentoTelefoneDuplicado=mensagemErroAgendamentoTelefoneDuplicado;
 setAppConectividadeStatus();
 function setTreinamentosCompatStatus(parcial={}){
   Object.assign(TREINAMENTOS_COMPAT_STATUS,parcial||{});
@@ -311,6 +313,14 @@ function mensagemErroSyncAgendamentos(erro){
 function erroTabelaAgendamentosAusente(erro){
   const msg=mensagemErroSyncAgendamentos(erro);
   return /PGRST205/i.test(msg)||/Could not find the table ['"]?public\.agendamentos/i.test(msg);
+}
+function erroAgendamentoTelefoneDuplicado(erro){
+  const msg=mensagemErroSyncAgendamentos(erro);
+  return /AGENDAMENTO_TELEFONE_DUPLICADO/i.test(msg);
+}
+function mensagemErroAgendamentoTelefoneDuplicado(erro){
+  const msg=mensagemErroSyncAgendamentos(erro).replace(/^AGENDAMENTO_TELEFONE_DUPLICADO:\s*/i,'').trim();
+  return msg||'Ja existe um compromisso em aberto para este telefone.';
 }
 function gerarRefLocalAgendamento(){
   if(typeof crypto!=='undefined'&&crypto&&typeof crypto.randomUUID==='function'){
@@ -2096,6 +2106,9 @@ async function sincronizarFinanceiroPendentes(opcoes={}){
     else if(sincronizados&&falhas) showToast('âš ï¸',`${sincronizados} lancamento${sincronizados>1?'s':''} financeiro${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''}, mas ${falhas} ainda pendente${falhas>1?'s':''}.`);
     else if(falhas) showToast('âš ï¸','Nao foi possivel sincronizar os lancamentos pendentes do financeiro agora.');
   }
+  /*
+    showToast('âš ï¸',`${descartados} agendamento${descartados>1?'s foram':' foi'} removido${descartados>1?'s':''} por telefone ja cadastrado em outro compromisso aberto.`);
+  */
   return {pendentes:pendentes.length,sincronizados,falhas};
 }
 
@@ -2115,11 +2128,18 @@ async function sincronizarAgendamentosPendentes(opcoes={}){
   });
   let sincronizados=0;
   let falhas=0;
+  let descartados=0;
   for(const item of pendentes){
     try{
       await dbSalvarAgendamento(item,0);
       sincronizados++;
     }catch(e){
+      if(erroAgendamentoTelefoneDuplicado(e)){
+        const idx=AGENDAMENTOS.findIndex(atual=>atual&&getAgendamentoMergeKey(atual)===getAgendamentoMergeKey(item));
+        if(idx>=0) AGENDAMENTOS.splice(idx,1);
+        descartados++;
+        continue;
+      }
       falhas++;
     }
   }
@@ -2139,7 +2159,10 @@ async function sincronizarAgendamentosPendentes(opcoes={}){
     else if(sincronizados&&falhas) showToast('⚠️',`${sincronizados} agendamento${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''}, mas ${falhas} ainda pendente${falhas>1?'s':''}.`);
     else if(falhas) showToast('⚠️','Não foi possível sincronizar os agendamentos pendentes agora.');
   }
-  return {pendentes:pendentes.length,sincronizados,falhas};
+  if(opcoes.silencioso!==true&&typeof showToast==='function'&&!sincronizados&&!falhas&&descartados){
+    showToast('âš ï¸',`${descartados} agendamento${descartados>1?'s foram':' foi'} removido${descartados>1?'s':''} por telefone ja cadastrado em outro compromisso aberto.`);
+  }
+  return {pendentes:pendentes.length,sincronizados,falhas,descartados};
 }
 
 // ── LOCAL STORAGE (fallback offline) ─────────────────────────────────────────
