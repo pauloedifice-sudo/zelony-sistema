@@ -90,6 +90,33 @@ function agFormatarTelefone(valor) {
   return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
 }
 
+function agEncontrarConflitoTelefoneAgendamento(telefone, opcoes = {}) {
+  const telefoneChave = agTelefoneDigitos(telefone);
+  if (!telefoneChave) return null;
+  const ignorarId = parseInt(opcoes.ignorarId, 10) || 0;
+  const ignorarRefLocal = agTexto(opcoes.ignorarRefLocal || '');
+  return (Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).find(item => {
+    if (!item) return false;
+    if (agSituacao(item) !== AG_SITUACAO_AGENDADO) return false;
+    if (agTelefoneDigitos(item.telefone) !== telefoneChave) return false;
+    if (ignorarId && (parseInt(item.id, 10) || 0) === ignorarId) return false;
+    if (ignorarRefLocal && agTexto(item.refLocal || item.ref_local) === ignorarRefLocal) return false;
+    return true;
+  }) || null;
+}
+
+function agMensagemConflitoTelefoneAgendamento(item) {
+  const cliente = agTexto(item && item.cliente || 'este cliente');
+  const corretor = agTexto(item && item.corretor || '');
+  const data = agDataValidaIso(item && item.dataAgendamento) ? agFormatoDataCurta(item.dataAgendamento) : '';
+  const hora = agHoraNormalizada(item && item.horarioAgendamento || '');
+  let msg = `Ja existe um compromisso em aberto para ${cliente}`;
+  if (corretor) msg += ` com ${corretor}`;
+  if (data) msg += ` em ${data}`;
+  if (hora) msg += ` as ${hora}`;
+  return `${msg}. Finalize ou reagende o agendamento atual antes de criar outro.`;
+}
+
 function formatarTelefoneAgendamento(input) {
   if (!input) return;
   input.value = agFormatarTelefone(input.value);
@@ -1486,6 +1513,15 @@ async function confirmarTratativaAgendamento() {
       return;
     }
 
+    const conflitoTelefone = agEncontrarConflitoTelefoneAgendamento(atual.telefone, {
+      ignorarId: atual.id,
+      ignorarRefLocal: atual.refLocal || atual.ref_local || ''
+    });
+    if (conflitoTelefone) {
+      showToast('âš ï¸', agMensagemConflitoTelefoneAgendamento(conflitoTelefone));
+      return;
+    }
+
     const novoAgendamento = {
       id: nextAgendamentoId++,
       preenchidoEm: agHojeIso(),
@@ -1566,6 +1602,23 @@ async function confirmarTratativaAgendamento() {
     salvarLS();
     showToast('✅', modoTratativa === 'obrigatoria' ? 'Tratativa registrada com sucesso.' : 'Atualização registrada com sucesso.');
   } catch (erro) {
+    if (typeof erroAgendamentoTelefoneDuplicado === 'function' && erroAgendamentoTelefoneDuplicado(erro)) {
+      const refsNovas = novosAgendamentos
+        .map(item => agTexto(item && (item.refLocal || item.ref_local || '')))
+        .filter(Boolean);
+      for (let i = AGENDAMENTOS.length - 1; i >= 0; i--) {
+        const refItem = agTexto(AGENDAMENTOS[i] && (AGENDAMENTOS[i].refLocal || AGENDAMENTOS[i].ref_local || ''));
+        if (refsNovas.includes(refItem)) AGENDAMENTOS.splice(i, 1);
+      }
+      atual.novoAgendamentoId = 0;
+      zSetState('state.data.agendamentos', AGENDAMENTOS);
+      salvarLS();
+      agAtualizarDadosCompartilhadosEmSegundoPlano({ forcar: true });
+      showToast('âš ï¸', typeof mensagemErroAgendamentoTelefoneDuplicado === 'function'
+        ? mensagemErroAgendamentoTelefoneDuplicado(erro)
+        : 'Ja existe um compromisso em aberto para este telefone.');
+      return;
+    }
     console.warn('Falha ao sincronizar tratativa do agendamento:', erro && erro.message ? erro.message : erro);
     salvarLS();
     showToast('⚠️', 'A tratativa não foi sincronizada com o Supabase. Este ajuste ficou pendente apenas neste navegador.');
@@ -2166,6 +2219,13 @@ async function salvarAgendamento() {
   if (!AG_TIPOS_VISITA.includes(tipoVisita)) { showToast('⚠️', 'Selecione o tipo de compromisso.'); return; }
   if (!AG_CANAIS_AGENDAMENTO.includes(canalSelecionado || canalAgendamento)) { showToast('⚠️', 'Selecione o canal do compromisso.'); return; }
 
+  const conflitoTelefone = agEncontrarConflitoTelefoneAgendamento(telefone);
+  if (conflitoTelefone) {
+    if (telefoneInput) telefoneInput.focus();
+    showToast('âš ï¸', agMensagemConflitoTelefoneAgendamento(conflitoTelefone));
+    return;
+  }
+
   const novo = {
     id: nextAgendamentoId++,
     preenchidoEm,
@@ -2230,6 +2290,23 @@ async function salvarAgendamento() {
     renderAgendamentos();
     showToast('✅', 'Compromisso salvo com sucesso.');
   } catch (erro) {
+    if (typeof erroAgendamentoTelefoneDuplicado === 'function' && erroAgendamentoTelefoneDuplicado(erro)) {
+      const refLocalNovo = agTexto(novo.refLocal || novo.ref_local || '');
+      const indiceLocal = AGENDAMENTOS.findIndex(item => item && (
+        item === novo
+        || (refLocalNovo && agTexto(item.refLocal || item.ref_local || '') === refLocalNovo)
+      ));
+      if (indiceLocal >= 0) AGENDAMENTOS.splice(indiceLocal, 1);
+      zSetState('state.data.agendamentos', AGENDAMENTOS);
+      salvarLS();
+      renderAgendamentos();
+      agAtualizarDadosCompartilhadosEmSegundoPlano({ forcar: true });
+      if (telefoneInput) telefoneInput.focus();
+      showToast('âš ï¸', typeof mensagemErroAgendamentoTelefoneDuplicado === 'function'
+        ? mensagemErroAgendamentoTelefoneDuplicado(erro)
+        : 'Ja existe um compromisso em aberto para este telefone.');
+      return;
+    }
     console.warn('Falha ao sincronizar agendamento no banco:', erro && erro.message ? erro.message : erro);
     salvarLS();
     renderAgendamentos();

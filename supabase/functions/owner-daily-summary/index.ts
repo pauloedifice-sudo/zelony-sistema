@@ -9,13 +9,15 @@ import {
   type OwnerReportUsuario,
   type OwnerReportVenda,
 } from "../_shared/owner-report.ts";
-import { normalizePhoneToZapi, normalizeText, statusUsuarioAtivo } from "../_shared/zapi.ts";
+import { namesMatch, normalizePhoneToZapi, normalizeText, statusUsuarioAtivo } from "../_shared/zapi.ts";
 
 const OWNER_REPORT_VENDAS_SELECT_ATUAL =
   "id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada";
 
 const OWNER_REPORT_VENDAS_SELECT_LEGADO =
   "id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada";
+
+const OWNER_REPORT_MESSAGE_EXCLUDED_NAMES = ["CESAR"];
 
 function getEnv(name: string, fallback = "") {
   return Deno.env.get(name) || fallback;
@@ -115,6 +117,31 @@ function reportStatusSummary(items: Array<Record<string, unknown>>) {
   };
 }
 
+function shouldExcludeFromOwnerReportMessage(name: unknown) {
+  return OWNER_REPORT_MESSAGE_EXCLUDED_NAMES.some((excludedName) => namesMatch(name, excludedName));
+}
+
+function filterOwnerReportInputsForMessage(params: {
+  vendas: OwnerReportVenda[];
+  usuarios: OwnerReportUsuario[];
+  agendamentos: OwnerReportAgendamento[];
+}) {
+  const usuarios = params.usuarios.filter((user) => !shouldExcludeFromOwnerReportMessage(user?.nome));
+  const vendas = params.vendas.filter((venda) =>
+    ![
+      venda?.corretor,
+      venda?.capitao,
+      venda?.gerente,
+      venda?.diretor,
+      venda?.diretor2,
+    ].some((name) => shouldExcludeFromOwnerReportMessage(name))
+  );
+  const agendamentos = params.agendamentos.filter((agendamento) =>
+    !shouldExcludeFromOwnerReportMessage(agendamento?.corretor)
+  );
+  return { vendas, usuarios, agendamentos };
+}
+
 async function ensureReportsTable(supabase: ReturnType<typeof createServiceClient>) {
   const probe = await supabase.from("owner_daily_reports").select("id").limit(1);
   if (!probe.error) return;
@@ -192,11 +219,24 @@ Deno.serve(async (req) => {
       owners,
       now,
     });
-    const messageBase = buildOwnerReportBaseMessage(snapshot);
+    const messageInputs = filterOwnerReportInputsForMessage({
+      vendas,
+      usuarios,
+      agendamentos,
+    });
+    const messageSnapshot = buildOwnerReportSnapshot({
+      vendas: messageInputs.vendas,
+      usuarios: messageInputs.usuarios,
+      agendamentos: messageInputs.agendamentos,
+      financeiro,
+      owners,
+      now,
+    });
+    const messageBase = buildOwnerReportBaseMessage(messageSnapshot);
     const aiResult = await rewriteOwnerReportWithAi({
       apiKey: getEnv("OPENAI_API_KEY"),
       model: getEnv("OPENAI_MODEL", "gpt-4.1-mini"),
-      snapshot,
+      snapshot: messageSnapshot,
       baseMessage: messageBase,
     });
     const messageFinal = aiResult.message || messageBase;
