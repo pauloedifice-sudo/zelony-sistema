@@ -1805,7 +1805,7 @@ function abrirEditVenda(id){
   document.getElementById('ev-unidade').value=v.unidade||'Centro';
   document.getElementById('ev-valor').value=v.valor;
   document.getElementById('ev-pct').value=formatarNumeroInput(v.pct*100,2);
-  document.getElementById('ev-imp').value=formatarNumeroInput((v.imp||0.11)*100,1);
+  document.getElementById('ev-imp').value=formatarNumeroInput((v.imp??0.11)*100,1);
   document.getElementById('ev-pct-cor').value=formatarNumeroInput((v.pct_cor||0)*100,2);
   document.getElementById('ev-pct-cap').value=formatarNumeroInput((v.pct_cap||0)*100,2);
   document.getElementById('ev-pct-ger').value=formatarNumeroInput((v.pct_ger||0)*100,2);

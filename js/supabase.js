@@ -844,12 +844,13 @@ function garantirRefLocalVenda(item,origem='local'){
 }
 
 function mapVendaIn(v){
+  const imposto=parseFloat(v.imp);
   const venda={
     id:v.id,data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
     construtora:normalizarCampoSistema(v.construtora),origem:normalizarCampoSistema(v.origem),unidade:normalizarCampoSistema(v.unidade),
     corretor:normalizarCampoSistema(v.corretor),capitao:normalizarCampoSistema(v.capitao),gerente:normalizarCampoSistema(v.gerente),diretor:normalizarCampoSistema(v.diretor),
     diretor2:normalizarCampoSistema(v.diretor2||''),cca:normalizarCampoSistema(v.cca||''),
-    valor:parseFloat(v.valor)||0,pct:parseFloat(v.pct)||0,imp:parseFloat(v.imp)||0.11,
+    valor:parseFloat(v.valor)||0,pct:parseFloat(v.pct)||0,imp:Number.isFinite(imposto)?imposto:0.11,
     pct_cor:parseFloat(v.pct_cor)||0,pct_cap:parseFloat(v.pct_cap)||0,
     pct_ger:parseFloat(v.pct_ger)||0,pct_dir:parseFloat(v.pct_dir)||0,
     pct_dir2:parseFloat(v.pct_dir2)||0,pct_rh:parseFloat(v.pct_rh)||0,
@@ -1707,11 +1708,12 @@ async function dbSalvarVenda(v, tentativa=1){
 
 async function dbAtualizarVenda(v){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para vendas.'});
+  const imposto=Number(v.imp);
   await sb.from('vendas').update({
     etapa:v.etapa,hist:v.hist,distratada:v.distratada||false,
     cliente:v.cliente,produto:v.produto,construtora:v.construtora,
     origem:v.origem||'Indicação',unidade:v.unidade||'',
-    valor:v.valor,pct:v.pct,imp:v.imp||0.11,
+    valor:v.valor,pct:v.pct,imp:Number.isFinite(imposto)?imposto:0.11,
     pct_cor:v.pct_cor||0,pct_cap:v.pct_cap||0,pct_ger:v.pct_ger||0,
     pct_dir:v.pct_dir||0,pct_dir2:v.pct_dir2||0,
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,

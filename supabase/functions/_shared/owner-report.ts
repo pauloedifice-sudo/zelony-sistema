@@ -106,11 +106,12 @@ function numberOrZero(value: unknown) {
 }
 
 function normalizeVenda(venda: OwnerReportVenda) {
+  const imposto = Number(venda.imp);
   return {
     ...venda,
     valor: numberOrZero(venda.valor),
     pct: numberOrZero(venda.pct),
-    imp: numberOrZero(venda.imp || 0.11),
+    imp: Number.isFinite(imposto) ? imposto : 0.11,
     pct_cor: numberOrZero(venda.pct_cor),
     pct_cap: numberOrZero(venda.pct_cap),
     pct_ger: numberOrZero(venda.pct_ger),
