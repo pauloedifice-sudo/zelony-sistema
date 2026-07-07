@@ -5,6 +5,7 @@ let USUARIOS = [...USUARIOS_PADRAO];
 let editUserIdx = -1;
 let pixSel = '';
 let nextUserId = 3;
+let modalUsuarioModo = 'admin';
 const PERFIL_TAG  = { Dono:'tag-dono', Corretor:'tag-cor', Capitao:'tag-cap', Capitão:'tag-cap', Gerente:'tag-ger', Diretor:'tag-dir', Financeiro:'tag-fin', RH:'tag-rh' };
 const PERFIL_ICON = { Dono:'👑', Corretor:'👤', Capitao:'⭐', Capitão:'⭐', Gerente:'🏆', Diretor:'💼', Financeiro:'💰', RH:'🤝' };
 let uBusca = '', uFiltroUnidade = '', uFiltroEquipe = '', uFiltroPerfil = '';
@@ -23,6 +24,7 @@ zSetState('state.data.usuarios', USUARIOS);
 zSetState('state.ui.editUserIdx', editUserIdx);
 zSetState('state.ui.pixSel', pixSel);
 zSetState('state.ui.nextUserId', nextUserId);
+zSetState('state.ui.modalUsuarioModo', modalUsuarioModo);
 zSetState('state.ui.uBusca', uBusca);
 zSetState('state.ui.uFiltroUnidade', uFiltroUnidade);
 zSetState('state.ui.uFiltroEquipe', uFiltroEquipe);
@@ -201,11 +203,189 @@ function _buildUserCard(u, idx) {
   </div>`;
 }
 
-function renderUsuarios() {
-  const isAdmin = ['dir','dono','fin','rh'].includes(role);
+function usuarioPodeGerirEquipe() {
+  return ['dir','dono','fin','rh'].includes(String(role || '').toLowerCase());
+}
+
+function obterIndiceUsuarioLogado() {
+  const emailLogado = usuarioLogado ? zUiText(usuarioLogado.email).trim().toLowerCase() : '';
+  if (!emailLogado) return -1;
+  return USUARIOS.findIndex(u => zUiText(u.email).trim().toLowerCase() === emailLogado);
+}
+
+function obterUsuarioLogadoCadastro() {
+  const idx = obterIndiceUsuarioLogado();
+  return idx >= 0 ? USUARIOS[idx] : null;
+}
+
+function definirModoModalUsuario(modo) {
+  modalUsuarioModo = modo === 'self' ? 'self' : 'admin';
+  zSetState('state.ui.modalUsuarioModo', modalUsuarioModo);
+}
+
+function definirCampoModalUsuarioBloqueado(id, bloqueado) {
+  const campo = document.getElementById(id);
+  if (!campo) return;
+  if ('readOnly' in campo) campo.readOnly = !!bloqueado;
+  campo.disabled = !!bloqueado;
+}
+
+function atualizarModoModalUsuario() {
+  const autoAtendimento = modalUsuarioModo === 'self';
+  const title = document.getElementById('mu-title');
+  const subtitle = document.getElementById('mu-subtitle');
+  const btnSave = document.getElementById('mu-save-btn');
+  const rhField = document.getElementById('rh-field');
+
+  if (title) {
+    title.textContent = zUiText(
+      autoAtendimento
+        ? 'Meus dados de recebimento'
+        : editUserIdx >= 0
+          ? 'Editar Usuário'
+          : 'Novo Usuário'
+    );
+  }
+  if (subtitle) {
+    subtitle.textContent = zUiText(
+      autoAtendimento
+        ? 'Atualize apenas seu telefone e seus dados de recebimento.'
+        : 'Preencha todos os campos obrigatórios *'
+    );
+  }
+  if (btnSave) {
+    btnSave.textContent = zUiText(
+      autoAtendimento
+        ? '✓ Salvar meus dados'
+        : editUserIdx >= 0
+          ? '✓ Salvar alterações'
+          : '✓ Cadastrar usuário'
+    );
+  }
+
+  ['mu-nome','mu-email','mu-perfil','mu-status','mu-unidade','mu-equipe','mu-rh'].forEach(id => {
+    definirCampoModalUsuarioBloqueado(id, autoAtendimento);
+  });
+  ['mu-tel','mu-banco','mu-agencia','mu-conta','mu-tipo-conta','mu-pix'].forEach(id => {
+    definirCampoModalUsuarioBloqueado(id, false);
+  });
+
+  if (rhField) rhField.style.display = autoAtendimento ? 'none' : 'block';
+}
+
+function preencherFormularioUsuario(u) {
+  document.getElementById('mu-nome').value       = u.nome;
+  document.getElementById('mu-email').value      = u.email;
+  document.getElementById('mu-tel').value        = u.tel || '';
+  document.getElementById('mu-perfil').value     = u.perfil;
+  document.getElementById('mu-status').value     = u.status;
+  document.getElementById('mu-banco').value      = u.banco || '';
+  document.getElementById('mu-agencia').value    = u.agencia || '';
+  document.getElementById('mu-conta').value      = u.conta || '';
+  document.getElementById('mu-tipo-conta').value = u.tipoConta || '';
+  document.getElementById('mu-rh').checked       = u.rhContratacao || false;
+  document.getElementById('mu-unidade').value    = u.unidade || '';
+  document.getElementById('mu-equipe').value     = u.equipe || '';
+  pixSel = u.pixTipo || '';
+  zSetState('state.ui.pixSel', pixSel);
+  document.getElementById('mu-pix').value = u.pix || '';
+  document.querySelectorAll('.pix-type').forEach(b => {
+    b.classList.toggle('sel', zUiText(b.textContent.trim()) === zUiText(pixSel));
+  });
+  toggleRHField();
+}
+
+function _buildMeuCadastroCard(u) {
+  const perfilMeta = PERFIL_META[perfilRoleUsuario(u)] || PERFIL_META.cor;
+  const avatarColor = perfilMeta.color;
+  const statusAtual = typeof usuarioStatusNormalizado === 'function'
+    ? usuarioStatusNormalizado(u)
+    : zUiText(u.status || 'Ativo');
+  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
+  const equipeBadge = u.equipe ? `<span class="user-team-badge">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
+  const pixCopyArg = encodeURIComponent(String(u.pix || ''));
+  const bancoLabel = u.banco
+    ? `${zUiText(u.banco)} ${zUiText('·')} ${zUiText(u.tipoConta || 'Conta não informada')}`
+    : zUiText('Dados bancários não informados');
+  const pixLabel = u.pixTipo
+    ? `${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`
+    : zUiText('Chave Pix não informada');
+
+  return `<div class="user-card">
+    <div class="user-card-top">
+      <div class="user-card-top-main">
+        <div class="user-av" style="background:${avatarColor};">${iniUser(u.nome)}</div>
+        <div class="user-head-copy">
+          <div class="user-name">${zUiText(u.nome)}</div>
+          <div class="user-chip-row">
+            <span class="user-role-tag ${perfilMeta.tag}">${zUiText(perfilMeta.icon)} ${zUiText(perfilMeta.label)}</span>
+            ${unidBadge}
+            ${equipeBadge}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="user-card-body">
+      <div class="user-info-item">
+        <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 5l6 5 6-5"/></svg><span>${zUiText('E-mail')}</span></div>
+        <div class="user-info-value">${zUiText(u.email)}</div>
+      </div>
+      <div class="user-info-item">
+        <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${zUiText('Telefone')}</span></div>
+        <div class="user-info-value">${zUiText(u.tel || 'Não informado')}</div>
+      </div>
+      <div class="user-info-item">
+        <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${zUiText('Conta')}</span></div>
+        <div class="user-info-value">${bancoLabel}</div>
+      </div>
+      <div class="user-info-item user-info-item--pix">
+        <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M5 5h4.5a2.5 2.5 0 010 5H5m0-5V2m0 8v4"/></svg><span>${zUiText('Pix')}</span></div>
+        <div class="user-info-value-wrap">
+          <div class="user-info-value">${pixLabel}</div>
+          ${u.pix ? `<button class="copy-chip-btn" type="button" onmousedown="event.preventDefault()" onclick="event.preventDefault();event.stopPropagation();copiarTexto(decodeURIComponent('${pixCopyArg}'),'Chave Pix');return false;">${zUiText('📋')} ${zUiText('Copiar')}</button>` : ''}
+        </div>
+      </div>
+    </div>
+    <div class="user-card-foot">
+      <div class="user-status">
+        <div class="user-status-dot ${statusAtual==='Ativo'?'':statusAtual==='Pendente'?'pendente':'inativo'}"></div>
+        <span style="color:${statusAtual==='Ativo'?'#2E9E6E':statusAtual==='Pendente'?'#C08020':'#C05030'}">${zUiText(statusAtual)}</span>
+      </div>
+      <div class="user-actions">
+        <button class="btn-user-edit" onclick="abrirMeuCadastroUsuario()">${zUiText('✏️ Atualizar meus dados')}</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderMeuCadastroUsuario() {
   const cont = document.getElementById('usuarios-content');
+  const usuario = obterUsuarioLogadoCadastro();
+  if (!cont) return;
+  if (!usuario) {
+    cont.innerHTML = `<div class="usuarios-locked"><div class="locked-icon">${zUiText('⚠️')}</div><div class="locked-title">${zUiText('Cadastro não encontrado')}</div><div class="locked-sub">${zUiText('Não foi possível localizar seu cadastro de usuário para atualizar os dados de recebimento.')}</div></div>`;
+    return;
+  }
+
+  cont.innerHTML = `<div class="usuarios-wrap">
+    <div class="usuarios-top">
+      <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${zUiText('Meus dados')}</div>
+    </div>
+    <div style="font-size:12px;color:var(--tm);margin:-2px 0 18px;">
+      ${zUiText('Aqui você pode manter seu telefone, seus dados bancários e sua chave Pix sempre atualizados para recebimento.')}
+    </div>
+    <div class="users-grid" style="grid-template-columns:minmax(0,1fr);max-width:880px;">
+      ${_buildMeuCadastroCard(usuario)}
+    </div>
+  </div>`;
+}
+
+function renderUsuarios() {
+  const isAdmin = usuarioPodeGerirEquipe();
+  const cont = document.getElementById('usuarios-content');
+  if (!cont) return;
   if (!isAdmin) {
-    cont.innerHTML = `<div class="usuarios-locked"><div class="locked-icon">${zUiText('🔒')}</div><div class="locked-title">${zUiText('Acesso restrito')}</div><div class="locked-sub">${zUiText('Apenas o')} <strong>${zUiText('Diretor')}</strong> ${zUiText('tem acesso ao módulo de usuários para proteger os dados pessoais e bancários da equipe.')}</div></div>`;
+    renderMeuCadastroUsuario();
     return;
   }
   const equipes = [...new Set(USUARIOS.map(u => u.equipe||'').filter(Boolean))].sort();
@@ -305,11 +485,14 @@ function toggleRHField() {
 }
 
 function abrirModalUser() {
+  if (!usuarioPodeGerirEquipe()) {
+    showToast(zUiText('🔒'), zUiText('Você pode editar apenas seus próprios dados de recebimento.'));
+    return;
+  }
+  definirModoModalUsuario('admin');
   editUserIdx = -1; pixSel = '';
   zSetState('state.ui.editUserIdx', editUserIdx);
   zSetState('state.ui.pixSel', pixSel);
-  document.getElementById('mu-title').textContent    = zUiText('Novo UsuÃ¡rio');
-  document.getElementById('mu-save-btn').textContent = zUiText('✓ Cadastrar usuário');
   ['mu-nome','mu-email','mu-tel','mu-banco','mu-agencia','mu-conta','mu-pix'].forEach(id => {
     document.getElementById(id).value = '';
   });
@@ -321,37 +504,49 @@ function abrirModalUser() {
   document.getElementById('mu-equipe').value    = '';
   document.querySelectorAll('.pix-type').forEach(b => b.classList.remove('sel'));
   toggleRHField();
+  atualizarModoModalUsuario();
   document.getElementById('muser').classList.add('show');
   setTimeout(() => document.getElementById('mu-nome').focus(), 100);
 }
 
 function editarUsuario(idx) {
+  if (!usuarioPodeGerirEquipe()) {
+    const idxLogado = obterIndiceUsuarioLogado();
+    if (idx === idxLogado) {
+      abrirMeuCadastroUsuario();
+    } else {
+      showToast(zUiText('🔒'), zUiText('Você pode editar apenas seus próprios dados de recebimento.'));
+    }
+    return;
+  }
+  definirModoModalUsuario('admin');
   const u = USUARIOS[idx]; editUserIdx = idx;
   zSetState('state.ui.editUserIdx', editUserIdx);
-  document.getElementById('mu-title').textContent    = zUiText('Editar UsuÃ¡rio');
-  document.getElementById('mu-save-btn').textContent = zUiText('✓ Salvar alterações');
-  document.getElementById('mu-nome').value       = u.nome;
-  document.getElementById('mu-email').value      = u.email;
-  document.getElementById('mu-tel').value        = u.tel||'';
-  document.getElementById('mu-perfil').value     = u.perfil;
-  document.getElementById('mu-status').value     = u.status;
-  document.getElementById('mu-banco').value      = u.banco||'';
-  document.getElementById('mu-agencia').value    = u.agencia||'';
-  document.getElementById('mu-conta').value      = u.conta||'';
-  document.getElementById('mu-tipo-conta').value = u.tipoConta||'';
-  document.getElementById('mu-rh').checked       = u.rhContratacao||false;
-  document.getElementById('mu-unidade').value    = u.unidade||'';
-  document.getElementById('mu-equipe').value     = u.equipe||'';
-  pixSel = u.pixTipo||'';
-  document.getElementById('mu-pix').value = u.pix||'';
-  document.querySelectorAll('.pix-type').forEach(b => {
-    b.classList.toggle('sel', zUiText(b.textContent.trim()) === zUiText(pixSel));
-  });
-  toggleRHField();
+  preencherFormularioUsuario(u);
+  atualizarModoModalUsuario();
   document.getElementById('muser').classList.add('show');
 }
 
+function abrirMeuCadastroUsuario() {
+  const idx = obterIndiceUsuarioLogado();
+  if (idx < 0) {
+    showToast(zUiText('⚠️'), zUiText('Não encontramos seu cadastro de usuário para edição.'));
+    return;
+  }
+  definirModoModalUsuario('self');
+  editUserIdx = idx;
+  zSetState('state.ui.editUserIdx', editUserIdx);
+  preencherFormularioUsuario(USUARIOS[idx]);
+  atualizarModoModalUsuario();
+  document.getElementById('muser').classList.add('show');
+  setTimeout(() => document.getElementById('mu-tel').focus(), 100);
+}
+
 async function alternarStatusUsuario(idx) {
+  if (!usuarioPodeGerirEquipe()) {
+    showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem alterar status de usuários.'));
+    return;
+  }
   const u = USUARIOS[idx];
   if (!u) return;
   const statusAtual = typeof usuarioStatusNormalizado === 'function'
@@ -414,6 +609,10 @@ async function alternarStatusUsuario(idx) {
 }
 
 async function excluirUsuario(idx) {
+  if (!usuarioPodeGerirEquipe()) {
+    showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem excluir usuários.'));
+    return;
+  }
   if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os usuários estão em modo consulta.'})) return;
   const u = USUARIOS[idx];
   const emailKey = (u.email || '').toLowerCase();
@@ -451,11 +650,35 @@ function selPix(tipo, el) {
   document.getElementById('mu-pix').focus();
 }
 
-function fecharMU() { document.getElementById('muser').classList.remove('show'); editUserIdx = -1; pixSel = ''; zSetState('state.ui.editUserIdx', editUserIdx); zSetState('state.ui.pixSel', pixSel); }
+function fecharMU() {
+  document.getElementById('muser').classList.remove('show');
+  editUserIdx = -1;
+  pixSel = '';
+  definirModoModalUsuario('admin');
+  zSetState('state.ui.editUserIdx', editUserIdx);
+  zSetState('state.ui.pixSel', pixSel);
+}
 function handleBackdropU(e) { if (e.target === document.getElementById('muser')) fecharMU(); }
+
+function sincronizarSessaoUsuarioAtualizada(usuarioAtualizado) {
+  if (!usuarioLogado || !usuarioAtualizado) return;
+  const emailAtual = zUiText(usuarioLogado.email).trim().toLowerCase();
+  const emailSalvo = zUiText(usuarioAtualizado.email).trim().toLowerCase();
+  if (!emailAtual || emailAtual !== emailSalvo) return;
+  usuarioLogado = { ...usuarioLogado, ...usuarioAtualizado };
+  zSetState('state.auth.usuarioLogado', usuarioLogado);
+  if (typeof atualizarTopbar === 'function') {
+    atualizarTopbar(usuarioLogado, getPerfil(usuarioLogado.perfil));
+  }
+}
 
 async function salvarUsuario() {
   if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Os usuários estão em modo consulta.'})) return;
+  const autoAtendimento = modalUsuarioModo === 'self';
+  if (!usuarioPodeGerirEquipe() && !autoAtendimento) {
+    showToast(zUiText('🔒'), zUiText('Você pode editar apenas seus próprios dados de recebimento.'));
+    return;
+  }
   const nome      = document.getElementById('mu-nome').value.trim().toUpperCase();
   const email     = document.getElementById('mu-email').value.trim();
   const tel       = document.getElementById('mu-tel').value.trim();
@@ -470,38 +693,97 @@ async function salvarUsuario() {
   const unidade   = document.getElementById('mu-unidade').value;
   const equipe    = document.getElementById('mu-equipe').value.trim();
 
-  if (!nome)                 { document.getElementById('mu-nome').focus();  showToast(zUiText('⚠️'),zUiText('Informe o nome completo.')); return; }
-  if (!email||!email.includes('@')) { document.getElementById('mu-email').focus(); showToast(zUiText('⚠️'),zUiText('Informe um e-mail válido.')); return; }
   if (!tel)                  { document.getElementById('mu-tel').focus();   showToast(zUiText('⚠️'),zUiText('Informe o telefone.')); return; }
-  if (!perfil)               { showToast(zUiText('⚠️'),zUiText('Selecione o perfil de acesso.')); return; }
-  if (!unidade)              { showToast(zUiText('⚠️'),zUiText('Selecione a unidade.')); return; }
   if (!banco)                { document.getElementById('mu-banco').focus(); showToast(zUiText('⚠️'),zUiText('Informe o banco.')); return; }
   if (!conta)                { document.getElementById('mu-conta').focus(); showToast(zUiText('⚠️'),zUiText('Informe a conta bancária.')); return; }
   if (!tipoConta)            { showToast(zUiText('⚠️'),zUiText('Selecione o tipo de conta.')); return; }
   if (!pixSel)               { showToast(zUiText('⚠️'),zUiText('Selecione o tipo de chave Pix.')); return; }
   if (!pix)                  { document.getElementById('mu-pix').focus();   showToast(zUiText('⚠️'),zUiText('Informe a chave Pix.')); return; }
+  if (!autoAtendimento && !nome)                 { document.getElementById('mu-nome').focus();  showToast(zUiText('⚠️'),zUiText('Informe o nome completo.')); return; }
+  if (!autoAtendimento && (!email||!email.includes('@'))) { document.getElementById('mu-email').focus(); showToast(zUiText('⚠️'),zUiText('Informe um e-mail válido.')); return; }
+  if (!autoAtendimento && !perfil)               { showToast(zUiText('⚠️'),zUiText('Selecione o perfil de acesso.')); return; }
+  if (!autoAtendimento && !unidade)              { showToast(zUiText('⚠️'),zUiText('Selecione a unidade.')); return; }
 
-  const emEdicao = editUserIdx >= 0;
+  let idxAlvo = editUserIdx;
+  let cadastroBase = idxAlvo >= 0 ? USUARIOS[idxAlvo] : null;
+  if (autoAtendimento) {
+    idxAlvo = obterIndiceUsuarioLogado();
+    cadastroBase = idxAlvo >= 0 ? USUARIOS[idxAlvo] : null;
+    if (idxAlvo < 0 || !cadastroBase) {
+      showToast(zUiText('⚠️'), zUiText('Não foi possível localizar seu cadastro para salvar os dados.'));
+      return;
+    }
+  }
+
+  const emEdicao = autoAtendimento || idxAlvo >= 0;
   const btnSalvar = document.getElementById('mu-save-btn');
   const labelOriginalBtn = btnSalvar ? btnSalvar.textContent : '';
   if (btnSalvar) {
     btnSalvar.disabled = true;
-    btnSalvar.textContent = zUiText(emEdicao ? '✓ Salvando alterações...' : '✓ Cadastrando usuário...');
+    btnSalvar.textContent = zUiText(
+      autoAtendimento
+        ? '✓ Salvando meus dados...'
+        : emEdicao
+          ? '✓ Salvando alterações...'
+          : '✓ Cadastrando usuário...'
+    );
   }
 
   const nomeNormalizado = typeof zNormalizarCampoTexto === 'function' ? zNormalizarCampoTexto(nome) : nome;
-  const dados = { nome: nomeNormalizado, email, tel, perfil, status, banco, agencia, conta, tipoConta, pixTipo:pixSel, pix, rhContratacao:rhContr, unidade, equipe };
+  const dados = autoAtendimento
+    ? {
+        tel,
+        banco,
+        agencia,
+        conta,
+        tipoConta,
+        pixTipo: pixSel,
+        pix
+      }
+    : {
+        nome: nomeNormalizado,
+        email,
+        tel,
+        perfil,
+        status,
+        banco,
+        agencia,
+        conta,
+        tipoConta,
+        pixTipo: pixSel,
+        pix,
+        rhContratacao: rhContr,
+        unidade,
+        equipe
+      };
   const nextUserIdAnterior = nextUserId;
-  const idxAnterior = editUserIdx;
-  const usuarioAnterior = emEdicao ? { ...USUARIOS[editUserIdx] } : null;
+  const idxAnterior = idxAlvo;
+  const usuarioAnterior = emEdicao ? { ...USUARIOS[idxAlvo] } : null;
   let usuarioSalvo = null;
 
   try {
     if (emEdicao) {
-      const uid = USUARIOS[editUserIdx].id;
-      USUARIOS[editUserIdx] = { ...USUARIOS[editUserIdx], ...dados };
-      usuarioSalvo = USUARIOS[editUserIdx];
-      await dbSalvarUsuario(usuarioSalvo, uid);
+      const uid = USUARIOS[idxAlvo].id;
+      USUARIOS[idxAlvo] = { ...USUARIOS[idxAlvo], ...dados };
+      usuarioSalvo = USUARIOS[idxAlvo];
+      if (autoAtendimento) {
+        const emailSessao = String(email || '').trim().toLowerCase();
+        const senhaFallback = emailSessao
+          ? String((typeof SENHAS_INDIVIDUAIS !== 'undefined' && SENHAS_INDIVIDUAIS[emailSessao]) || (typeof SENHA_PADRAO !== 'undefined' ? SENHA_PADRAO : '') || '')
+          : '';
+        if (typeof usuarioSelfServiceAtualizarMe !== 'function') {
+          throw new Error('Autoatendimento protegido indisponível no momento.');
+        }
+        const respostaAutoatendimento = typeof usuarioSelfServiceAtualizarMe === 'function'
+          ? await usuarioSelfServiceAtualizarMe(dados, { email: emailSessao, senhaFallback })
+          : null;
+        if (respostaAutoatendimento && respostaAutoatendimento.usuario) {
+          usuarioSalvo = { ...USUARIOS[idxAlvo], ...respostaAutoatendimento.usuario };
+          USUARIOS[idxAlvo] = usuarioSalvo;
+        }
+      } else {
+        await dbSalvarUsuario(usuarioSalvo, uid);
+      }
     } else {
       usuarioSalvo = { id: nextUserId++, ...dados };
       USUARIOS.push(usuarioSalvo);
@@ -523,10 +805,16 @@ async function salvarUsuario() {
       ? await sincronizarRhContratacaoUsuario(usuarioSalvo, usuarioAnterior, { renderizar:false })
       : {alteradas:0,persistidas:0,falhas:0};
     zSetState('state.data.usuarios', USUARIOS);
+    sincronizarSessaoUsuarioAtualizada(usuarioSalvo);
     salvarLS();
     fecharMU();
     renderUsuarios();
     if (syncResumo.alteradas > 0) atualizarViewsPosSyncRh();
+
+    if (autoAtendimento) {
+      showToast(zUiText('✅'), zUiText('Seus dados de recebimento foram atualizados com sucesso!'));
+      return;
+    }
 
     const acao = emEdicao ? 'atualizado' : 'cadastrado';
     let mensagem = `Usuário "${nomeNormalizado}" ${acao}!`;
@@ -646,6 +934,10 @@ function salvarNovaSenha() {
 const confirmarTrocaSenha = salvarNovaSenha;
 
 function abrirConvite() {
+  if (!usuarioPodeGerirEquipe()) {
+    showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem enviar convites.'));
+    return;
+  }
   ['inv-nome','inv-email','inv-equipe'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -688,6 +980,10 @@ function toggleInvRH() {
 }
 
 async function enviarConvite() {
+  if (!usuarioPodeGerirEquipe()) {
+    showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem enviar convites.'));
+    return;
+  }
   const nome          = document.getElementById('inv-nome').value.trim().toUpperCase();
   const email         = document.getElementById('inv-email').value.trim().toLowerCase();
   const perfil        = document.getElementById('inv-perfil').value;
@@ -860,7 +1156,9 @@ function irParaLogin() {
 zRegisterModule('usuarios', {
   renderUsuarios,
   filtrarUsuarios,
+  renderMeuCadastroUsuario,
   abrirModalUser,
+  abrirMeuCadastroUsuario,
   editarUsuario,
   alternarStatusUsuario,
   excluirUsuario,

@@ -11,6 +11,7 @@ export const ETAPAS_VENDA = [
 ];
 
 export const ETAPA_COMISSAO_RECEBIDA = ETAPAS_VENDA.length - 1;
+export const ETAPA_NOTA_EMITIDA = ETAPAS_VENDA.indexOf("Nota emitida");
 
 export type ZapiNotificationEventType =
   | "cadastro_venda"
@@ -103,8 +104,9 @@ function formatCurrencyPtBr(value: unknown) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(Math.round(toNumber(value, 0)));
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(toNumber(value, 0));
 }
 
 function firstName(name: unknown) {
@@ -351,6 +353,55 @@ function buildDistratoMessage(
   ].join("\n");
 }
 
+function buildNotaEmitidaMessage(
+  venda: Record<string, unknown>,
+  recipient: Record<string, unknown>,
+) {
+  const produto = String(venda.produto || "").trim() || "Produto nÃ£o informado";
+  const unidade = String(venda.unidade || "").trim() || "Unidade nÃ£o informada";
+  const financials = recipientFinancials(venda, recipient);
+  return [
+    "Zelony | SolicitaÃ§Ã£o de Nota Fiscal",
+    "",
+    buildGreeting(recipient),
+    "",
+    'Sua venda evoluiu para "Nota emitida".',
+    `Para receber sua comissÃ£o assim que a construtora realizar o repasse, emita sua nota fiscal no valor lÃ­quido de ${formatCurrencyPtBr(financials.commission)} e encaminhe a NF para o e-mail contato@zelonyimoveis.com.`,
+    "",
+    `Produto: ${produto}`,
+    `Unidade: ${unidade}`,
+    `Sua participaÃ§Ã£o: ${recipientRoleText(recipient)}`,
+  ].join("\n");
+}
+
+function buildNotaEmitidaMessageAscii(
+  venda: Record<string, unknown>,
+  recipient: Record<string, unknown>,
+) {
+  const cliente = String(venda.cliente || "").trim() || "Cliente n\u00e3o informado";
+  const produto = String(venda.produto || "").trim() || "Produto n\u00e3o informado";
+  const unidade = String(venda.unidade || "").trim() || "Unidade n\u00e3o informada";
+  const financials = recipientFinancials(venda, recipient);
+  return [
+    "Zelony | Solicita\u00e7\u00e3o de Nota Fiscal",
+    "",
+    buildGreeting(recipient),
+    "",
+    'Sua venda evoluiu para "Nota emitida".',
+    `Para receber sua comiss\u00e3o assim que a construtora realizar o repasse, emita sua nota fiscal no valor l\u00edquido de ${formatCurrencyPtBr(financials.commission)} e encaminhe a NF para o e-mail contato@zelonyimoveis.com.`,
+    "*Tomador da NF: CNPJ: 59.761.935/0001-33*",
+    "",
+    "Envio do e-mail:",
+    `T\u00edtulo do e-mail: *FINANCEIRO - ${cliente}*`,
+    `*Descri\u00e7\u00e3o: Segue nota fiscal referente a venda do cliente: ${cliente}*`,
+    "",
+    `Cliente: ${cliente}`,
+    `Produto: ${produto}`,
+    `Unidade: ${unidade}`,
+    `Sua participa\u00e7\u00e3o: ${recipientRoleText(recipient)}`,
+  ].join("\n");
+}
+
 export function buildStageMessage(
   venda: Record<string, unknown>,
   etapaAnterior: number,
@@ -364,6 +415,9 @@ export function buildStageMessage(
   const etapaAnteriorNome = ETAPAS_VENDA[etapaAnterior] || `Etapa ${etapaAnterior}`;
   const etapaNovaNome = ETAPAS_VENDA[etapaNova] || `Etapa ${etapaNova}`;
   const dataHora = formatDateTimePtBr(new Date());
+  if (etapaNova === ETAPA_NOTA_EMITIDA) {
+    return buildNotaEmitidaMessageAscii(venda, recipient);
+  }
   return [
     "Zelony | Evolução de venda",
     "",

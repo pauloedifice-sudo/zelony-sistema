@@ -30,6 +30,9 @@ const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 const SB_DOCS_BUCKET='documentos';
 const SB_FETCH_TIMEOUT_MS=8000;
 const SB_WRITE_TIMEOUT_MS=20000;
+const USER_SELF_SERVICE_FUNCTION_NAME='usuario-self-service';
+let usuarioSessaoAutoatendimentoToken='';
+let usuarioSessaoAutoatendimentoExpiraEm='';
 
 async function sbFetchComTimeout(resource, init={}){
   if(typeof fetch!=='function') throw new Error('Fetch indisponivel no ambiente atual.');
@@ -382,11 +385,148 @@ zSetState('state.data.agendamentos', AGENDAMENTOS);
 zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
 zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
+zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
+zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
+
+function usuarioSelfServiceBuildFunctionUrl(){
+  return `${SB_URL}/functions/v1/${USER_SELF_SERVICE_FUNCTION_NAME}`;
+}
+
+function usuarioSelfServiceSessaoValida(){
+  if(!usuarioSessaoAutoatendimentoToken||!usuarioSessaoAutoatendimentoExpiraEm) return false;
+  const expira=Date.parse(usuarioSessaoAutoatendimentoExpiraEm);
+  if(!Number.isFinite(expira)) return false;
+  return expira>(Date.now()+60*1000);
+}
+
+function usuarioSelfServiceRegistrarSessao(token='',expiraEm=''){
+  usuarioSessaoAutoatendimentoToken=String(token||'').trim();
+  usuarioSessaoAutoatendimentoExpiraEm=String(expiraEm||'').trim();
+  zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
+  zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
+  return usuarioSelfServiceSessaoValida();
+}
+
+function usuarioSelfServiceLimparSessao(){
+  usuarioSessaoAutoatendimentoToken='';
+  usuarioSessaoAutoatendimentoExpiraEm='';
+  zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
+  zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
+}
+
+async function usuarioSelfServiceInvocar(action,payload={}){
+  const response=await fetch(usuarioSelfServiceBuildFunctionUrl(),{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      apikey:SB_KEY,
+      Authorization:`Bearer ${SB_KEY}`
+    },
+    body:JSON.stringify({
+      action:String(action||'').trim(),
+      ...(payload||{})
+    })
+  });
+  let data=null;
+  try{
+    data=await response.json();
+  }catch(_e){
+    data=null;
+  }
+  if(!response.ok){
+    const mensagem=data&&(data.error||data.message)
+      ? String(data.error||data.message)
+      : `HTTP ${response.status}`;
+    throw new Error(mensagem);
+  }
+  return data||{};
+}
+
+async function usuarioSelfServiceEmitirSessao(email='',senha=''){
+  const data=await usuarioSelfServiceInvocar('issue_session',{
+    email:String(email||'').trim().toLowerCase(),
+    senha:String(senha||'')
+  });
+  usuarioSelfServiceRegistrarSessao(data&&data.sessionToken||'',data&&data.sessionExpiresAt||'');
+  return data||{};
+}
+
+async function usuarioSelfServiceGarantirSessao(email='',senhaFallback=''){
+  if(usuarioSelfServiceSessaoValida()) return usuarioSessaoAutoatendimentoToken;
+  const senha=String(senhaFallback||'');
+  if(!email||!senha){
+    throw new Error('Sessão protegida indisponível. Entre novamente para atualizar seus dados.');
+  }
+  const data=await usuarioSelfServiceEmitirSessao(email,senha);
+  if(!usuarioSelfServiceSessaoValida()) throw new Error('Não foi possível proteger a sessão de autoatendimento agora.');
+  return String(data&&data.sessionToken||usuarioSessaoAutoatendimentoToken||'').trim();
+}
+
+function usuarioSelfServiceMapUsuario(usuario){
+  if(!usuario||typeof usuario!=='object') return null;
+  return{
+    id:usuario.id,
+    nome:normalizarCampoSistema(usuario.nome),
+    email:usuario.email,
+    tel:usuario.tel||'',
+    perfil:usuario.perfil||'',
+    status:usuario.status||'Ativo',
+    unidade:usuario.unidade||'',
+    equipe:usuario.equipe||'',
+    banco:usuario.banco||'',
+    agencia:usuario.agencia||'',
+    conta:usuario.conta||'',
+    tipoConta:usuario.tipoConta||usuario.tipo_conta||'',
+    pixTipo:usuario.pixTipo||usuario.pix_tipo||'',
+    pix:usuario.pix||'',
+    cpf:usuario.cpf||'',
+    nasc:usuario.nasc||'',
+    cep:usuario.cep||'',
+    end:usuario.end||usuario.endereco||'',
+    cidade:usuario.cidade||'',
+    estado:usuario.estado||'',
+    rhContratacao:!!(usuario.rhContratacao||usuario.rh_contratacao)
+  };
+}
+
+async function usuarioSelfServiceAtualizarMe(dados={},opcoes={}){
+  const email=String(opcoes&&opcoes.email||((typeof usuarioLogado!=='undefined'&&usuarioLogado&&usuarioLogado.email)||'')).trim().toLowerCase();
+  const senhaFallback=String(opcoes&&opcoes.senhaFallback||'');
+  const tentativa=Number(opcoes&&opcoes._tentativa||0);
+  try{
+    const sessionToken=await usuarioSelfServiceGarantirSessao(email,senhaFallback);
+    const data=await usuarioSelfServiceInvocar('update_self',{
+      sessionToken,
+      updates:{
+        tel:String(dados&&dados.tel||'').trim(),
+        banco:String(dados&&dados.banco||'').trim(),
+        agencia:String(dados&&dados.agencia||'').trim(),
+        conta:String(dados&&dados.conta||'').trim(),
+        tipoConta:String(dados&&dados.tipoConta||'').trim(),
+        pixTipo:String(dados&&dados.pixTipo||'').trim(),
+        pix:String(dados&&dados.pix||'').trim()
+      }
+    });
+    return{
+      ...(data||{}),
+      usuario:usuarioSelfServiceMapUsuario(data&&data.usuario)
+    };
+  }catch(e){
+    const msg=String(e&&e.message||e||'');
+    const expirou=/sess[aã]o|session|token/i.test(msg);
+    if(expirou&&tentativa<1&&senhaFallback){
+      usuarioSelfServiceLimparSessao();
+      return usuarioSelfServiceAtualizarMe(dados,{...(opcoes||{}),_tentativa:tentativa+1});
+    }
+    throw e;
+  }
+}
 
 // ── CARREGAR DO BANCO ─────────────────────────────────────────────────────────
 async function carregarTabelaSupabase(tabela, order='id'){
   try{
-    const q=sbLong.from(tabela).select('*');
+    const selectUsuarios='id,nome,email,tel,perfil,status,unidade,equipe,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao';
+    const q=sbLong.from(tabela).select(tabela==='usuarios'?selectUsuarios:'*');
     if(order) q.order(order);
     const {data,error}=await q;
     if(error) throw error;
@@ -2451,6 +2591,10 @@ zRegisterModule('supabase', {
   dbExcluirAgendamento,
   dbSalvarLancamentoFinanceiro,
   dbExcluirLancamentoFinanceiro,
+  usuarioSelfServiceEmitirSessao,
+  usuarioSelfServiceGarantirSessao,
+  usuarioSelfServiceAtualizarMe,
+  usuarioSelfServiceLimparSessao,
   recarregarAgendamentosCompartilhados,
   sincronizarAgendamentosPendentes,
   sincronizarFinanceiroPendentes,

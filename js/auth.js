@@ -167,6 +167,11 @@ function fazerLogin() {
     }
 
     if (typeof iniciarApp === 'function') iniciarApp();
+    if (typeof usuarioSelfServiceEmitirSessao === 'function') {
+      usuarioSelfServiceEmitirSessao(email, senha).catch(erro => {
+        console.warn('Sessão protegida do autoatendimento não foi emitida no login:', erro && (erro.message || erro) || erro);
+      });
+    }
     forcarDashboardInicial();
     ocultarTelaLogin();
     atualizarBadgeNotificacoes();
@@ -183,6 +188,7 @@ function fazerLogout() {
   zSetState('state.auth.role', role);
   zSetState('state.ui.curVId', curVId);
   zSetState('state.auth.usuarioLogado', usuarioLogado);
+  if (typeof usuarioSelfServiceLimparSessao === 'function') usuarioSelfServiceLimparSessao();
   localStorage.removeItem('zel_sessao');
   atualizarBadgeNotificacoes();
   if (typeof encerrarMonitorTratativaAgendamento === 'function') encerrarMonitorTratativaAgendamento();
@@ -201,6 +207,7 @@ function restaurarSessao() {
   role = 'cor';
   zSetState('state.auth.role', role);
   zSetState('state.auth.usuarioLogado', usuarioLogado);
+  if (typeof usuarioSelfServiceLimparSessao === 'function') usuarioSelfServiceLimparSessao();
   forcarDashboardInicial();
   return false;
 }
