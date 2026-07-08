@@ -377,6 +377,10 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 11V8M8 11V5M11 11V7"/></svg>
         Dashboard
       </button>
+      <button class="sb-item" id="sb-rh" onclick="setMod('rh',this)" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 13V4.5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1V13"/><path d="M5.5 6.5h5M5.5 9h5"/><path d="M2 13h12"/><circle cx="8" cy="2.5" r="1.5"/></svg>
+        Dash RH
+      </button>
       <button class="sb-item" onclick="setMod('agendamentos',this)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 1.5v3M11 1.5v3M2 6.5h12"/><path d="M5 9h2v2H5z" fill="currentColor" stroke="none"/></svg>
         Agendamentos
@@ -613,6 +617,7 @@
     <div class="page hidden" id="mod-financeiro"><div class="carteira-wrap" id="financeiro-content"></div></div>
     <div class="page hidden" id="mod-carteira"><div class="carteira-wrap" id="carteira-content"></div></div>
     <div class="page" id="mod-dashboard"><div class="dash-wrap" id="dashboard-content"></div></div>
+    <div class="page hidden" id="mod-rh"><div class="rh-wrap" id="rh-dashboard-content"></div></div>
 
     <div class="page hidden" id="mod-vendas">
       <div class="v-toolbar">
@@ -1413,6 +1418,8 @@
 <script src="js/financeiro.js"></script>
 <!-- 7. Dashboard: resultado de vendas em tempo real -->
 <script src="js/dashboard.js"></script>
+<!-- 7.1. Dash RH: estrutura de usuarios, equipes e unidades -->
+<script src="js/rh.js"></script>
 <!-- 8. Envios WhatsApp: monitor da integracao Z-API -->
 <script src="js/envios.js"></script>
 <!-- 9. Treinamentos + Processos Operacionais -->

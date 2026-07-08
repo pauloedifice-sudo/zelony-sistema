@@ -75,7 +75,7 @@ function forcarDashboardInicial() {
     setMod('dashboard', btnDashboard || undefined);
     return;
   }
-  ['carteira','vendas','dashboard','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
+  ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x)?.classList.add('hidden'));
   document.getElementById('mod-dashboard')?.classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -231,6 +231,8 @@ function atualizarTopbar(usuario, rv) {
   if (rv === 'dono') sel.value = rv;
   const sbFin = document.getElementById('sb-financeiro');
   if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(rv) ? 'flex' : 'none';
+  const sbRh = document.getElementById('sb-rh');
+  if (sbRh) sbRh.style.display = ['dono','dir','fin','rh'].includes(rv) ? 'flex' : 'none';
   const sbEnvios = document.getElementById('sb-envios');
   if (sbEnvios) sbEnvios.style.display = ['dono','dir','fin','rh','ger'].includes(rv) ? 'flex' : 'none';
   document.getElementById('sb-av').textContent    = ini(usuario.nome);
@@ -247,8 +249,14 @@ function trocaRole() {
   document.getElementById('sb-urole').textContent = zUiText(d.role);
   const sbFin = document.getElementById('sb-financeiro');
   if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(role) ? 'flex' : 'none';
+  const sbRh = document.getElementById('sb-rh');
+  if (sbRh) sbRh.style.display = ['dono','dir','fin','rh'].includes(role) ? 'flex' : 'none';
   const sbEnvios = document.getElementById('sb-envios');
   if (sbEnvios) sbEnvios.style.display = ['dono','dir','fin','rh','ger'].includes(role) ? 'flex' : 'none';
+  if (!['dono','dir','fin','rh'].includes(role) && !document.getElementById('mod-rh').classList.contains('hidden')) {
+    const btnDashboard = document.getElementById('sb-dashboard');
+    setMod('dashboard', btnDashboard || undefined);
+  }
   if (!document.getElementById('mod-carteira').classList.contains('hidden')) renderCarteira();
   renderFiltros(); renderVList();
   if (curVId) showVDetail(curVId);
@@ -258,6 +266,7 @@ function trocaRole() {
   if (!document.getElementById('mod-agendamentos').classList.contains('hidden')) renderAgendamentos();
   if (!document.getElementById('mod-envios').classList.contains('hidden') && typeof renderEnvios === 'function') renderEnvios();
   if (!document.getElementById('mod-dashboard').classList.contains('hidden') && typeof renderDashboard === 'function') renderDashboard();
+  if (!document.getElementById('mod-rh').classList.contains('hidden') && typeof renderRhDashboard === 'function') renderRhDashboard();
   if (!document.getElementById('mod-usuarios').classList.contains('hidden')) renderUsuarios();
   atualizarBadgeNotificacoes();
   if (!document.getElementById('npanel').classList.contains('hidden')) renderNots();
@@ -268,6 +277,7 @@ function trocaRole() {
 const modTitles = {
   carteira:'Minha Carteira', vendas:'Vendas e Comissão',
   dashboard:'Dashboard',
+  rh:'Dash RH',
   agendamentos:'Agendamentos', envios:'Envios WhatsApp', trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
   usuarios:'Usuários', financeiro:'Financeiro'
 };
@@ -305,7 +315,11 @@ window.addEventListener('keydown', e => {
 });
 
 function setMod(m, el) {
-  ['carteira','vendas','dashboard','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
+  if (m === 'rh' && !['dono','dir','fin','rh'].includes(role)) {
+    showToast(zUiText('🔒'), zUiText('Somente RH, Dono, Diretor ou Financeiro podem acessar o Dash RH.'));
+    return;
+  }
+  ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
   document.getElementById('mod-' + m).classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -314,6 +328,7 @@ function setMod(m, el) {
   fecharMenuMobile();
   if (m === 'carteira')   renderCarteira();
   if (m === 'dashboard' && typeof renderDashboard === 'function') renderDashboard();
+  if (m === 'rh' && typeof renderRhDashboard === 'function') renderRhDashboard();
   if (m === 'trein')      renderTrein();
   if (m === 'agendamentos') renderAgendamentos();
   if (m === 'envios' && typeof renderEnvios === 'function') renderEnvios();

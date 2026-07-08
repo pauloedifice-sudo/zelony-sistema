@@ -9,7 +9,7 @@ let dashPollTimer = null;
 let dashAtualizando = false;
 let dashUltimaAtualizacao = '';
 
-const DASH_VENDAS_COLS = 'id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,etapa,hist,distratada';
+const DASH_VENDAS_COLS = 'id,data,mes,cliente,produto,construtora,origem,unidade,corretor,capitao,gerente,diretor,diretor2,cca,valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,bonus_forma,bonus_status,bonus_obs,etapa,hist,distratada,ref_local';
 
 function dashSyncState() {
   zSetState('state.ui.dashboard', {
@@ -302,8 +302,10 @@ function dashRenderSeVisivel() {
 
 function dashMesclarVenda(row) {
   if (!row || row.id == null || !Array.isArray(VENDAS)) return;
-  const venda = typeof mapVendaIn === 'function' ? mapVendaIn(row) : { ...row, valor: parseFloat(row.valor) || 0, distratada: !!row.distratada };
-  const idx = VENDAS.findIndex(v => String(v.id) === String(venda.id));
+  const idx = VENDAS.findIndex(v => String(v.id) === String(row.id));
+  const atual = idx >= 0 ? VENDAS[idx] : null;
+  const fonte = atual ? { ...atual, ...row } : row;
+  const venda = typeof mapVendaIn === 'function' ? mapVendaIn(fonte) : { ...fonte, valor: parseFloat(fonte.valor) || 0, distratada: !!fonte.distratada };
   if (idx >= 0) {
     venda.anexos = Array.isArray(VENDAS[idx].anexos) ? VENDAS[idx].anexos : [];
     venda.anexosCarregados = !!VENDAS[idx].anexosCarregados;

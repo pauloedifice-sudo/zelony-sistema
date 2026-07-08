@@ -246,6 +246,7 @@ function renderizarModulosBaseApp(){
   if(!document.getElementById('mod-envios')?.classList.contains('hidden')&&typeof renderEnvios==='function') renderEnvios();
   if(!document.getElementById('mod-financeiro')?.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
   if(!document.getElementById('mod-dashboard')?.classList.contains('hidden')&&typeof renderDashboard==='function') renderDashboard();
+  if(!document.getElementById('mod-rh')?.classList.contains('hidden')&&typeof renderRhDashboard==='function') renderRhDashboard();
   if(!document.getElementById('mod-usuarios')?.classList.contains('hidden')&&typeof renderUsuarios==='function') renderUsuarios();
   if(typeof renderBtnNovaVenda==='function') renderBtnNovaVenda();
   if(typeof atualizarBadgeNotificacoes==='function') atualizarBadgeNotificacoes();
@@ -983,8 +984,23 @@ function garantirRefLocalVenda(item,origem='local'){
   return item.refLocal;
 }
 
+function extrairUltimaGestaoBonusHistorico(hist){
+  const itens=Array.isArray(hist)?hist:[];
+  for(let i=itens.length-1;i>=0;i--){
+    const item=itens[i];
+    if(!item||String(item.tipo||'').trim().toLowerCase()!=='bonus_gestao') continue;
+    return{
+      forma:String(item.bonusForma||'').trim().toLowerCase(),
+      status:String(item.bonusStatus||'').trim().toLowerCase(),
+      obs:String(item.bonusObs||'').trim()
+    };
+  }
+  return null;
+}
+
 function mapVendaIn(v){
   const imposto=parseFloat(v.imp);
+  const bonusHist=extrairUltimaGestaoBonusHistorico(v&&v.hist);
   const venda={
     id:v.id,data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
     construtora:normalizarCampoSistema(v.construtora),origem:normalizarCampoSistema(v.origem),unidade:normalizarCampoSistema(v.unidade),
@@ -997,9 +1013,9 @@ function mapVendaIn(v){
     bonus:parseFloat(v.bonus)||0,bonus_pct_dir:parseFloat(v.bonus_pct_dir)||0,
     bonus_pct_dir2:parseFloat(v.bonus_pct_dir2)||0,bonus_pct_ger:parseFloat(v.bonus_pct_ger)||0,
     bonus_pct_cor:parseFloat(v.bonus_pct_cor)||0,
-    bonus_forma:String(v.bonus_forma||'').trim(),
-    bonus_status:String(v.bonus_status||'').trim(),
-    bonus_obs:String(v.bonus_obs||'').trim(),
+    bonus_forma:String(v.bonus_forma||v.bonusForma||(bonusHist&&bonusHist.forma)||'').trim(),
+    bonus_status:String(v.bonus_status||v.bonusStatus||(bonusHist&&bonusHist.status)||'').trim(),
+    bonus_obs:String(v.bonus_obs||v.bonusObs||'').trim(),
     etapa:parseInt(v.etapa)||0,
     hist:v.hist||[],
     distratada:!!v.distratada,
@@ -1012,6 +1028,9 @@ function mapVendaIn(v){
 }
 
 function mapVendaOut(v){
+  const bonusHist=extrairUltimaGestaoBonusHistorico(v&&v.hist);
+  const bonusForma=String(v.bonus_forma||v.bonusForma||(bonusHist&&bonusHist.forma)||'').trim();
+  const bonusStatus=String(v.bonus_status||v.bonusStatus||(bonusHist&&bonusHist.status)||'').trim();
   return{
     data:v.data,mes:normalizarMesVenda(v.mes),cliente:v.cliente,produto:v.produto,
     construtora:normalizarCampoSistema(v.construtora),origem:normalizarCampoSistema(v.origem),unidade:normalizarCampoSistema(v.unidade),
@@ -1023,8 +1042,8 @@ function mapVendaOut(v){
     bonus:v.bonus||0,bonus_pct_dir:v.bonus_pct_dir||0,
     bonus_pct_dir2:v.bonus_pct_dir2||0,bonus_pct_ger:v.bonus_pct_ger||0,
     bonus_pct_cor:v.bonus_pct_cor||0,
-    bonus_forma:v.bonus>0?(String(v.bonus_forma||'').trim()||'comissao'):null,
-    bonus_status:v.bonus>0?(String(v.bonus_status||'').trim()||'pendente'):null,
+    bonus_forma:v.bonus>0?(bonusForma||'comissao'):null,
+    bonus_status:v.bonus>0?(bonusStatus||'pendente'):null,
     bonus_obs:v.bonus>0?String(v.bonus_obs||'').trim():null,
     etapa:v.etapa,hist:v.hist,
     ref_local:garantirRefLocalVenda(v,v&&v.id?'banco':'local')||null
@@ -2328,6 +2347,9 @@ function salvarLS(){
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
     if(typeof renderDashboard==='function'&&!document.getElementById('mod-dashboard')?.classList.contains('hidden')){
       renderDashboard();
+    }
+    if(typeof renderRhDashboard==='function'&&!document.getElementById('mod-rh')?.classList.contains('hidden')){
+      renderRhDashboard();
     }
     return true;
   }catch(e){

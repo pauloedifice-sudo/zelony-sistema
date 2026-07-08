@@ -8,7 +8,7 @@ let nextUserId = 3;
 let modalUsuarioModo = 'admin';
 const PERFIL_TAG  = { Dono:'tag-dono', Corretor:'tag-cor', Capitao:'tag-cap', Capitão:'tag-cap', Gerente:'tag-ger', Diretor:'tag-dir', Financeiro:'tag-fin', RH:'tag-rh' };
 const PERFIL_ICON = { Dono:'👑', Corretor:'👤', Capitao:'⭐', Capitão:'⭐', Gerente:'🏆', Diretor:'💼', Financeiro:'💰', RH:'🤝' };
-let uBusca = '', uFiltroUnidade = '', uFiltroEquipe = '', uFiltroPerfil = '';
+let uBusca = '', uFiltroUnidade = '', uFiltroEquipe = '', uFiltroPerfil = '', uFiltroStatus = '';
 function iniUser(n) { return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function perfilRoleUsuario(u) { return typeof getPerfil==='function' ? getPerfil(u && u.perfil) : String((u && u.perfil) || '').toLowerCase(); }
 const PERFIL_META = {
@@ -29,6 +29,7 @@ zSetState('state.ui.uBusca', uBusca);
 zSetState('state.ui.uFiltroUnidade', uFiltroUnidade);
 zSetState('state.ui.uFiltroEquipe', uFiltroEquipe);
 zSetState('state.ui.uFiltroPerfil', uFiltroPerfil);
+zSetState('state.ui.uFiltroStatus', uFiltroStatus);
 
 const EJS_SERVICE  = 'service_wirqv1v';
 const EJS_TEMPLATE = 'template_ylfp3ad';
@@ -391,7 +392,15 @@ function renderUsuarios() {
   const equipes = [...new Set(USUARIOS.map(u => u.equipe||'').filter(Boolean))].sort();
   const lista   = _filtrarUsuarios();
   const total   = USUARIOS.length;
-  const ativos  = USUARIOS.filter(u => typeof usuarioEstaAtivo === 'function' ? usuarioEstaAtivo(u) : u.status === 'Ativo').length;
+  const ativos = USUARIOS.filter(u => typeof usuarioStatusNormalizado === 'function'
+    ? usuarioStatusNormalizado(u) === 'Ativo'
+    : zUiText(u.status || 'Ativo') === 'Ativo').length;
+  const pendentes = USUARIOS.filter(u => typeof usuarioStatusNormalizado === 'function'
+    ? usuarioStatusNormalizado(u) === 'Pendente'
+    : zUiText(u.status || 'Ativo') === 'Pendente').length;
+  const inativos = USUARIOS.filter(u => typeof usuarioStatusNormalizado === 'function'
+    ? usuarioStatusNormalizado(u) === 'Inativo'
+    : zUiText(u.status || 'Ativo') === 'Inativo').length;
   const cards   = lista.map(u => _buildUserCard(u, USUARIOS.indexOf(u))).join('');
 
   cont.innerHTML = `<div class="usuarios-wrap">
@@ -424,24 +433,32 @@ function renderUsuarios() {
         <option value="fin"  ${uFiltroPerfil==='fin'?'selected':''}>${zUiText('💰 Financeiro')}</option>
         <option value="rh"   ${uFiltroPerfil==='rh'?'selected':''}>${zUiText('🤝 RH')}</option>
       </select>
+      <select class="u-filter-sel" onchange="uFiltroStatus=this.value;renderUsuarios()">
+        <option value="">${zUiText('Todos os status')}</option>
+        <option value="Ativo" ${uFiltroStatus==='Ativo'?'selected':''}>${zUiText('🟢 Ativos')}</option>
+        <option value="Pendente" ${uFiltroStatus==='Pendente'?'selected':''}>${zUiText('🟡 Pendentes')}</option>
+        <option value="Inativo" ${uFiltroStatus==='Inativo'?'selected':''}>${zUiText('🔴 Inativos')}</option>
+      </select>
       <select class="u-filter-sel" onchange="uFiltroUnidade=this.value;renderUsuarios()">
         <option value="">${zUiText('Todas as unidades')}</option>
         <option value="Centro"    ${uFiltroUnidade==='Centro'?'selected':''}>${zUiText('🟠 Centro')}</option>
         <option value="Cristo Rei"${uFiltroUnidade==='Cristo Rei'?'selected':''}>${zUiText('🟢 Cristo Rei')}</option>
       </select>
-      ${equipes.length ? `<select class="u-filter-sel" onchange="uFiltroEquipe=this.value;renderUsuarios()">
+      <select class="u-filter-sel" onchange="uFiltroEquipe=this.value;renderUsuarios()">
         <option value="">${zUiText('Todas as equipes')}</option>
+        <option value="__sem_equipe__" ${uFiltroEquipe==='__sem_equipe__'?'selected':''}>${zUiText('Sem equipe')}</option>
         ${equipes.map(e=>`<option value="${e}" ${uFiltroEquipe===e?'selected':''}>${zUiText(e)}</option>`).join('')}
-      </select>` : ''}
+      </select>
       <span class="u-count">${lista.length} ${zUiText('de')} ${total} ${zUiText(`usuÃ¡rio${total!==1?'s':''}`)}</span>
-      ${(uBusca||uFiltroUnidade||uFiltroEquipe||uFiltroPerfil) ?
-        `<button onclick="uBusca='';uFiltroUnidade='';uFiltroEquipe='';uFiltroPerfil='';renderUsuarios();"
+      ${(uBusca||uFiltroUnidade||uFiltroEquipe||uFiltroPerfil||uFiltroStatus) ?
+        `<button onclick="uBusca='';uFiltroUnidade='';uFiltroEquipe='';uFiltroPerfil='';uFiltroStatus='';renderUsuarios();"
           style="font-size:10px;background:none;border:1px solid var(--bd);border-radius:5px;padding:4px 8px;cursor:pointer;color:var(--tm);font-family:'Inter',sans-serif;">${zUiText('✕ Limpar')}</button>` : ''}
     </div>
     <div class="usuarios-stats">
       <div class="mc a"><div class="mc-l">${zUiText('Total cadastrados')}</div><div class="mc-v" style="color:var(--gold);">${total}</div></div>
       <div class="mc" style="border-top-color:#2E9E6E;"><div class="mc-l">${zUiText('Ativos')}</div><div class="mc-v" style="color:#2E9E6E;">${ativos}</div></div>
-      <div class="mc" style="border-top-color:#C06030;"><div class="mc-l">${zUiText('Inativos')}</div><div class="mc-v" style="color:#C06030;">${total-ativos}</div></div>
+      <div class="mc" style="border-top-color:#C08020;"><div class="mc-l">${zUiText('Pendentes')}</div><div class="mc-v" style="color:#C08020;">${pendentes}</div></div>
+      <div class="mc" style="border-top-color:#C06030;"><div class="mc-l">${zUiText('Inativos')}</div><div class="mc-v" style="color:#C06030;">${inativos}</div></div>
       <div class="mc"><div class="mc-l">${zUiText('Mostrando')}</div><div class="mc-v" id="u-mostrando">${lista.length}</div></div>
     </div>
     <div class="user-grid" id="u-cards-grid">
@@ -453,10 +470,15 @@ function renderUsuarios() {
 function _filtrarUsuarios() {
   return USUARIOS.filter(u => {
     const q = uBusca.toLowerCase();
+    const statusAtual = typeof usuarioStatusNormalizado === 'function'
+      ? usuarioStatusNormalizado(u)
+      : zUiText(u.status || 'Ativo');
+    const equipeAtual = zUiText(u.equipe || '').trim();
     return (!q || (u.nome||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q) || (u.equipe||'').toLowerCase().includes(q))
       && (!uFiltroUnidade || u.unidade===uFiltroUnidade || u.unidade==='Ambas')
-      && (!uFiltroEquipe  || (u.equipe||'')===uFiltroEquipe)
-      && (!uFiltroPerfil  || perfilRoleUsuario(u)===uFiltroPerfil);
+      && (!uFiltroEquipe  || (uFiltroEquipe === '__sem_equipe__' ? !equipeAtual : equipeAtual===uFiltroEquipe))
+      && (!uFiltroPerfil  || perfilRoleUsuario(u)===uFiltroPerfil)
+      && (!uFiltroStatus  || statusAtual===uFiltroStatus);
   });
 }
 
