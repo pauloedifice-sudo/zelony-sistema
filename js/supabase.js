@@ -102,8 +102,8 @@ const FINANCEIRO_TESTES_LEGADOS_BLOQUEADOS=[
   {descricao:'LEADS',valor:3000}
 ];
 const USUARIOS_PADRAO=[
-  {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
-  {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false},
+  {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false,dataAtivacao:'',dataInativacao:'',historicoStatus:[]},
+  {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false,dataAtivacao:'',dataInativacao:'',historicoStatus:[]},
 ];
 const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyimoveis.com':'Mudar@123'};
 const AGENDAMENTOS_SYNC_STATUS={
@@ -486,7 +486,10 @@ function usuarioSelfServiceMapUsuario(usuario){
     end:usuario.end||usuario.endereco||'',
     cidade:usuario.cidade||'',
     estado:usuario.estado||'',
-    rhContratacao:!!(usuario.rhContratacao||usuario.rh_contratacao)
+    rhContratacao:!!(usuario.rhContratacao||usuario.rh_contratacao),
+    dataAtivacao:normalizarDataUsuarioCampo(usuario.dataAtivacao||usuario.data_ativacao||''),
+    dataInativacao:normalizarDataUsuarioCampo(usuario.dataInativacao||usuario.data_inativacao||''),
+    historicoStatus:normalizarUsuarioHistoricoStatus(usuario.historicoStatus||usuario.historico_status||[])
   };
 }
 
@@ -526,8 +529,28 @@ async function usuarioSelfServiceAtualizarMe(dados={},opcoes={}){
 // ── CARREGAR DO BANCO ─────────────────────────────────────────────────────────
 async function carregarTabelaSupabase(tabela, order='id'){
   try{
-    const selectUsuarios='id,nome,email,tel,perfil,status,unidade,equipe,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao';
-    const q=sbLong.from(tabela).select(tabela==='usuarios'?selectUsuarios:'*');
+    if(tabela==='usuarios'){
+      const baseCols='id,nome,email,tel,perfil,status,unidade,equipe,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao';
+      let colunas=`${baseCols},data_ativacao,data_inativacao,historico_status`;
+      while(true){
+        try{
+          const q=sbLong.from(tabela).select(colunas);
+          if(order) q.order(order);
+          const {data,error}=await q;
+          if(error) throw error;
+          return data||[];
+        }catch(errorUsuarios){
+          const colunaAusente=extrairColunaAusenteSupabase(errorUsuarios,'usuarios');
+          if(colunaAusente&&colunas.includes(colunaAusente)){
+            registrarColunaAusenteSupabase('usuarios',colunaAusente);
+            colunas=colunas.split(',').map(item=>item.trim()).filter(item=>item&&item!==colunaAusente).join(',');
+            continue;
+          }
+          throw errorUsuarios;
+        }
+      }
+    }
+    const q=sbLong.from(tabela).select('*');
     if(order) q.order(order);
     const {data,error}=await q;
     if(error) throw error;
@@ -919,6 +942,9 @@ function mapUsuarioIn(u){
     cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',
     end:u.end||u.endereco||'',cidade:u.cidade||'',estado:u.estado||'',
     rhContratacao:!!(u.rhContratacao||u.rh_contratacao),
+    dataAtivacao:normalizarDataUsuarioCampo(u.dataAtivacao||u.data_ativacao||''),
+    dataInativacao:normalizarDataUsuarioCampo(u.dataInativacao||u.data_inativacao||''),
+    historicoStatus:normalizarUsuarioHistoricoStatus(u.historicoStatus||u.historico_status||[]),
     token:u.token||null
   };
 }
@@ -931,8 +957,51 @@ function mapUsuarioOut(u){
     tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',
     cpf:u.cpf||'',nasc:u.nasc||'',cep:u.cep||'',
     endereco:u.end||'',cidade:u.cidade||'',estado:u.estado||'',
-    rh_contratacao:!!u.rhContratacao
+    rh_contratacao:!!u.rhContratacao,
+    data_ativacao:normalizarDataUsuarioCampo(u.dataAtivacao||'')||null,
+    data_inativacao:normalizarDataUsuarioCampo(u.dataInativacao||'')||null,
+    historico_status:normalizarUsuarioHistoricoStatus(u.historicoStatus||[])
   };
+}
+
+function normalizarDataUsuarioCampo(valor){
+  const bruto=String(valor||'').trim();
+  if(!bruto) return '';
+  const matchIso=bruto.match(/^(\d{4}-\d{2}-\d{2})/);
+  if(matchIso) return matchIso[1];
+  if(typeof obterMomentoHistorico==='function'){
+    const info=obterMomentoHistorico({d:bruto},{preferTs:false});
+    if(info&&info.date){
+      const ano=info.date.getFullYear();
+      const mes=String(info.date.getMonth()+1).padStart(2,'0');
+      const dia=String(info.date.getDate()).padStart(2,'0');
+      return `${ano}-${mes}-${dia}`;
+    }
+  }
+  return '';
+}
+
+function normalizarUsuarioHistoricoStatus(valor){
+  let bruto=valor;
+  if(typeof bruto==='string'&&bruto.trim()){
+    try{
+      bruto=JSON.parse(bruto);
+    }catch(_e){
+      bruto=[];
+    }
+  }
+  if(!Array.isArray(bruto)) return [];
+  return bruto.filter(item=>item&&typeof item==='object').map(item=>({
+    tipo:String(item.tipo||'').trim(),
+    data:String(item.data||item.d||'').trim(),
+    ts:String(item.ts||'').trim(),
+    por:String(item.por||item.u||'').trim(),
+    statusAnterior:String(item.statusAnterior||'').trim(),
+    statusNovo:String(item.statusNovo||'').trim(),
+    origem:String(item.origem||'').trim(),
+    equipeAnterior:String(item.equipeAnterior||'').trim(),
+    equipeNova:String(item.equipeNova||'').trim()
+  }));
 }
 
 function normalizarMesVenda(mes){
@@ -1083,6 +1152,42 @@ function reduzirPayloadVendaPorSchema(payload,colunaAusente=''){
   const lista=grupos[colunaAusente]||[colunaAusente];
   lista.forEach(coluna=>delete reduzido[coluna]);
   return reduzido;
+}
+
+function reduzirPayloadUsuarioPorSchema(payload,colunaAusente=''){
+  const reduzido={...(payload||{})};
+  const grupos={
+    data_ativacao:['data_ativacao'],
+    data_inativacao:['data_inativacao'],
+    historico_status:['historico_status']
+  };
+  const lista=grupos[colunaAusente]||[colunaAusente];
+  lista.forEach(coluna=>{ if(coluna) delete reduzido[coluna]; });
+  return reduzido;
+}
+
+async function salvarUsuarioComFallbackSchema(payload,modo='update',usuarioId=null){
+  let payloadAtual={...(payload||{})};
+  while(true){
+    try{
+      if(modo==='insert'){
+        const {data,error}=await sb.from('usuarios').insert(payloadAtual).select().single();
+        if(error) throw error;
+        return data||null;
+      }
+      const {data,error}=await sb.from('usuarios').update(payloadAtual).eq('id',usuarioId).select().single();
+      if(error) throw error;
+      return data||null;
+    }catch(errorUsuario){
+      const colunaAusente=extrairColunaAusenteSupabase(errorUsuario,'usuarios');
+      if(colunaAusente&&Object.prototype.hasOwnProperty.call(payloadAtual,colunaAusente)){
+        registrarColunaAusenteSupabase('usuarios',colunaAusente);
+        payloadAtual=reduzirPayloadUsuarioPorSchema(payloadAtual,colunaAusente);
+        continue;
+      }
+      throw errorUsuario;
+    }
+  }
 }
 
 async function salvarVendaComFallbackSchema(payload,modo='update',vendaId=null){
@@ -1945,12 +2050,10 @@ async function dbSalvarUsuario(u, id){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para usuários.'});
   const dados=mapUsuarioOut(u);
   if(id){
-    const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
-    if(error) throw error;
+    const data=await salvarUsuarioComFallbackSchema(dados,'update',id);
     if(data&&data.id) u.id=data.id;
   } else {
-    const {data,error}=await sb.from('usuarios').insert(dados).select().single();
-    if(error) throw error;
+    const data=await salvarUsuarioComFallbackSchema(dados,'insert',null);
     if(!data) throw new Error('Usuário não retornado pelo banco.');
     if(data) u.id=data.id;
   }
@@ -1973,12 +2076,10 @@ async function dbSalvarUsuario(u, id){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para usuários.'});
   const dados=mapUsuarioOut(u);
   if(id){
-    const {data,error}=await sb.from('usuarios').update(dados).eq('id',id).select().single();
-    if(error) throw error;
+    const data=await salvarUsuarioComFallbackSchema(dados,'update',id);
     if(data&&data.id) u.id=data.id;
   } else {
-    const {data,error}=await sb.from('usuarios').insert(dados).select().single();
-    if(error) throw error;
+    const data=await salvarUsuarioComFallbackSchema(dados,'insert',null);
     if(!data) throw new Error('Usuário não retornado pelo banco.');
     if(data&&data.id) u.id=data.id;
   }

@@ -6,6 +6,7 @@ let editUserIdx = -1;
 let pixSel = '';
 let nextUserId = 3;
 let modalUsuarioModo = 'admin';
+const USUARIO_ATIVACAO_LEGADO_BASE_ISO = '2026-07-01';
 const PERFIL_TAG  = { Dono:'tag-dono', Corretor:'tag-cor', Capitao:'tag-cap', Capitão:'tag-cap', Gerente:'tag-ger', Diretor:'tag-dir', Financeiro:'tag-fin', RH:'tag-rh' };
 const PERFIL_ICON = { Dono:'👑', Corretor:'👤', Capitao:'⭐', Capitão:'⭐', Gerente:'🏆', Diretor:'💼', Financeiro:'💰', RH:'🤝' };
 let uBusca = '', uFiltroUnidade = '', uFiltroEquipe = '', uFiltroPerfil = '', uFiltroStatus = '';
@@ -217,6 +218,300 @@ function obterIndiceUsuarioLogado() {
 function obterUsuarioLogadoCadastro() {
   const idx = obterIndiceUsuarioLogado();
   return idx >= 0 ? USUARIOS[idx] : null;
+}
+
+function usuarioStatusPadrao(status) {
+  const bruto = zUiText(String(status || 'Ativo')).trim().toLowerCase();
+  if (bruto === 'inativo') return 'Inativo';
+  if (bruto === 'pendente') return 'Pendente';
+  return 'Ativo';
+}
+
+function usuarioHojeIso() {
+  const agora = new Date();
+  const ano = agora.getFullYear();
+  const mes = String(agora.getMonth() + 1).padStart(2, '0');
+  const dia = String(agora.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+function usuarioDataIsoParaBr(dataIso) {
+  const bruto = String(dataIso || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(bruto)) return '';
+  const [ano, mes, dia] = bruto.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function usuarioDataIsoValida(valor) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(valor || '').trim());
+}
+
+function usuarioNormalizarDataIso(valor) {
+  const bruto = String(valor || '').trim();
+  if (!bruto) return '';
+  if (typeof normalizarDataUsuarioCampo === 'function') return normalizarDataUsuarioCampo(bruto);
+  if (usuarioDataIsoValida(bruto)) return bruto;
+  if (typeof obterMomentoHistorico === 'function') {
+    const info = obterMomentoHistorico({ d: bruto }, { preferTs: false });
+    if (info && info.date) {
+      const ano = info.date.getFullYear();
+      const mes = String(info.date.getMonth() + 1).padStart(2, '0');
+      const dia = String(info.date.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+  }
+  return '';
+}
+
+function usuarioDataIsoParaDate(dataIso) {
+  const bruto = usuarioNormalizarDataIso(dataIso);
+  if (!usuarioDataIsoValida(bruto)) return null;
+  const [ano, mes, dia] = bruto.split('-').map(Number);
+  const data = new Date(ano, mes - 1, dia, 12, 0, 0, 0);
+  return Number.isNaN(data.getTime()) ? null : data;
+}
+
+function usuarioDateParaIso(data) {
+  if (!(data instanceof Date) || Number.isNaN(data.getTime())) return '';
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+}
+
+function usuarioStatusEhEventoAtivacao(tipo) {
+  const valor = String(tipo || '').trim().toLowerCase();
+  return valor === 'ativado' || valor === 'reativado';
+}
+
+function usuarioVendaData(venda) {
+  if (!venda || typeof venda !== 'object') return null;
+  const historico = Array.isArray(venda.hist) ? venda.hist : [];
+  const base = historico.find(item => item && (typeof histAfetaFluxo !== 'function' || histAfetaFluxo(item))) || historico[0] || null;
+  const infoHist = base && typeof obterMomentoHistorico === 'function'
+    ? (obterMomentoHistorico(base, { preferTs: false }) || obterMomentoHistorico(base))
+    : null;
+  if (infoHist && infoHist.date) {
+    return new Date(infoHist.date.getFullYear(), infoHist.date.getMonth(), infoHist.date.getDate(), 12, 0, 0, 0);
+  }
+  const bruto = String(venda.data || '').trim();
+  if (!bruto || typeof obterMomentoHistorico !== 'function') return null;
+  const infoData = obterMomentoHistorico({ d: bruto }, { preferTs: false });
+  return infoData && infoData.date
+    ? new Date(infoData.date.getFullYear(), infoData.date.getMonth(), infoData.date.getDate(), 12, 0, 0, 0)
+    : null;
+}
+
+function usuarioHistoricoStatusLista(valor) {
+  let lista = valor;
+  if (typeof lista === 'string' && lista.trim()) {
+    try {
+      lista = JSON.parse(lista);
+    } catch (_e) {
+      lista = [];
+    }
+  }
+  if (!Array.isArray(lista)) return [];
+  return lista.filter(item => item && typeof item === 'object').map(item => ({
+    tipo: String(item.tipo || '').trim(),
+    data: String(item.data || item.d || '').trim(),
+    ts: String(item.ts || '').trim(),
+    por: String(item.por || item.u || '').trim(),
+    statusAnterior: String(item.statusAnterior || '').trim(),
+    statusNovo: String(item.statusNovo || '').trim(),
+    origem: String(item.origem || '').trim(),
+    equipeAnterior: String(item.equipeAnterior || '').trim(),
+    equipeNova: String(item.equipeNova || '').trim()
+  }));
+}
+
+function usuarioPrimeiraAtivacaoHistoricoIso(usuario) {
+  let primeiraData = null;
+  usuarioHistoricoStatusLista(usuario && usuario.historicoStatus).forEach(item => {
+    if (!usuarioStatusEhEventoAtivacao(item && item.tipo)) return;
+    const data = item && item.ts ? new Date(item.ts) : usuarioDataIsoParaDate(item && item.data);
+    if (!(data instanceof Date) || Number.isNaN(data.getTime())) return;
+    const dataNormalizada = new Date(data.getFullYear(), data.getMonth(), data.getDate(), 12, 0, 0, 0);
+    if (!primeiraData || dataNormalizada.getTime() < primeiraData.getTime()) primeiraData = dataNormalizada;
+  });
+  return primeiraData ? usuarioDateParaIso(primeiraData) : '';
+}
+
+function usuarioPrimeiraVendaIso(usuario) {
+  if (!usuario || usuario.id == null || !Array.isArray(VENDAS)) return '';
+  let primeiraData = null;
+  VENDAS.forEach(venda => {
+    if (!venda || venda.distratada) return;
+    let usuarioVenda = null;
+    if (typeof getUsuarioCorretorDaVenda === 'function') {
+      usuarioVenda = getUsuarioCorretorDaVenda(venda, { permitirAproximado: true });
+    }
+    const mesmoUsuario = !!(
+      usuarioVenda && usuarioVenda.id != null
+        ? String(usuarioVenda.id) === String(usuario.id)
+        : typeof campoVendaBatePessoa === 'function' && campoVendaBatePessoa(venda && venda.corretor, usuario)
+    );
+    if (!mesmoUsuario) return;
+    const dataVenda = usuarioVendaData(venda);
+    if (!(dataVenda instanceof Date) || Number.isNaN(dataVenda.getTime())) return;
+    if (!primeiraData || dataVenda.getTime() < primeiraData.getTime()) primeiraData = dataVenda;
+  });
+  return primeiraData ? usuarioDateParaIso(primeiraData) : '';
+}
+
+function usuarioInferirDataAtivacaoLegadoIso(usuario) {
+  if (!usuario) return '';
+  const explicita = usuarioNormalizarDataIso(usuario.dataAtivacao || usuario.data_ativacao || '');
+  if (explicita) return explicita;
+  const historico = usuarioPrimeiraAtivacaoHistoricoIso(usuario);
+  if (historico) return historico;
+  if (usuarioStatusPadrao(usuario.status) === 'Pendente') return '';
+  const primeiraVendaIso = usuarioPrimeiraVendaIso(usuario);
+  const dataBase = usuarioDataIsoParaDate(USUARIO_ATIVACAO_LEGADO_BASE_ISO);
+  const dataPrimeiraVenda = usuarioDataIsoParaDate(primeiraVendaIso);
+  if (dataBase && dataPrimeiraVenda && dataPrimeiraVenda.getTime() < dataBase.getTime()) return primeiraVendaIso;
+  return USUARIO_ATIVACAO_LEGADO_BASE_ISO;
+}
+
+function usuarioGarantirDataAtivacaoLegado(usuario) {
+  if (!usuario) return '';
+  const atual = usuarioNormalizarDataIso(usuario.dataAtivacao || usuario.data_ativacao || '');
+  if (atual) {
+    usuario.dataAtivacao = atual;
+    return atual;
+  }
+  const inferida = usuarioInferirDataAtivacaoLegadoIso(usuario);
+  if (inferida) usuario.dataAtivacao = inferida;
+  return inferida;
+}
+
+function usuarioHistoricoOrigemCadastral(origem) {
+  const valor = String(origem || '').trim().toLowerCase();
+  return valor === 'cadastro' || valor === 'cadastro_admin' || valor === 'convite';
+}
+
+function usuarioDeveAplicarAtivacaoLegado(usuario, statusAnterior, statusAtual, historico) {
+  if (!usuario || !statusAnterior || statusAtual !== 'Ativo') return false;
+  if (usuarioNormalizarDataIso(usuario.dataAtivacao || usuario.data_ativacao || '')) return false;
+  if (usuarioPrimeiraAtivacaoHistoricoIso(usuario)) return false;
+  if (statusAnterior === 'Pendente') return false;
+  const lista = Array.isArray(historico) ? historico : usuarioHistoricoStatusLista(usuario && usuario.historicoStatus);
+  const possuiHistoricoCadastral = lista.some(item => usuarioHistoricoOrigemCadastral(item && item.origem));
+  const possuiSomenteInativacaoInicial = !!(
+    lista.length
+    && possuiHistoricoCadastral
+    && lista.every(item => String(item && item.tipo || '').trim().toLowerCase() === 'inativado')
+  );
+  return !possuiSomenteInativacaoInicial;
+}
+
+function usuarioRegistrarEventoStatus(usuario, tipo, opcoes = {}) {
+  if (!usuario || !tipo) return usuario;
+  const dataIso = String(opcoes.dataIso || usuarioHojeIso()).trim() || usuarioHojeIso();
+  const evento = {
+    tipo,
+    data: usuarioDataIsoParaBr(dataIso),
+    ts: typeof opcoes.ts === 'string' && opcoes.ts.trim() ? opcoes.ts.trim() : new Date().toISOString(),
+    por: String(opcoes.por || 'Sistema').trim() || 'Sistema',
+    statusAnterior: String(opcoes.statusAnterior || '').trim(),
+    statusNovo: String(opcoes.statusNovo || '').trim(),
+    origem: String(opcoes.origem || '').trim(),
+    equipeAnterior: String(opcoes.equipeAnterior || '').trim(),
+    equipeNova: String(opcoes.equipeNova || '').trim()
+  };
+  usuario.historicoStatus = usuarioHistoricoStatusLista(usuario.historicoStatus);
+  const ultimo = usuario.historicoStatus[usuario.historicoStatus.length - 1];
+  const repetido = ultimo
+    && String(ultimo.tipo || '').trim() === evento.tipo
+    && String(ultimo.data || '').trim() === evento.data
+    && String(ultimo.statusNovo || '').trim() === evento.statusNovo
+    && String(ultimo.equipeAnterior || '').trim() === evento.equipeAnterior
+    && String(ultimo.equipeNova || '').trim() === evento.equipeNova;
+  if (!repetido) usuario.historicoStatus.push(evento);
+  return usuario;
+}
+
+function usuarioRegistrarMudancaEquipe(usuario, equipeAnterior, equipeNova, opcoes = {}) {
+  const anterior = String(equipeAnterior || '').trim();
+  const nova = String(equipeNova || '').trim();
+  if (!usuario || anterior === nova) return usuario;
+  return usuarioRegistrarEventoStatus(usuario, 'equipe_alterada', {
+    ...opcoes,
+    equipeAnterior: anterior,
+    equipeNova: nova
+  });
+}
+
+function usuarioAplicarMudancaStatus(usuario, statusAnteriorBruto, statusAtualBruto, opcoes = {}) {
+  if (!usuario) return usuario;
+  const statusAnterior = usuarioStatusPadrao(statusAnteriorBruto);
+  const statusAtual = usuarioStatusPadrao(statusAtualBruto);
+  const dataIso = String(opcoes.dataIso || usuarioHojeIso()).trim() || usuarioHojeIso();
+  const por = String(opcoes.por || (usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Sistema')).trim() || 'Sistema';
+  const origem = String(opcoes.origem || '').trim();
+  const historico = usuarioHistoricoStatusLista(usuario.historicoStatus);
+  if (usuarioDeveAplicarAtivacaoLegado(usuario, statusAnterior, statusAtual, historico)) {
+    usuarioGarantirDataAtivacaoLegado(usuario);
+  }
+  const jaTeveInativacao = historico.some(item => String(item.tipo || '').trim().toLowerCase() === 'inativado')
+    || !!String(usuario.dataInativacao || '').trim()
+    || statusAnterior === 'Inativo';
+
+  usuario.status = statusAtual;
+  usuario.historicoStatus = historico;
+
+  if (!statusAnterior) {
+    if (statusAtual === 'Ativo') {
+      if (!usuario.dataAtivacao) usuario.dataAtivacao = dataIso;
+      usuario.dataInativacao = '';
+      if (opcoes.registrarEventoInicial !== false) {
+        usuarioRegistrarEventoStatus(usuario, 'ativado', {
+          dataIso,
+          por,
+          origem: origem || 'cadastro',
+          statusAnterior: '',
+          statusNovo: statusAtual
+        });
+      }
+    } else if (statusAtual === 'Inativo') {
+      usuario.dataInativacao = dataIso;
+      if (opcoes.registrarEventoInicial !== false) {
+        usuarioRegistrarEventoStatus(usuario, 'inativado', {
+          dataIso,
+          por,
+          origem: origem || 'cadastro',
+          statusAnterior: '',
+          statusNovo: statusAtual
+        });
+      }
+    }
+    return usuario;
+  }
+
+  if (statusAnterior === statusAtual) return usuario;
+
+  if (statusAtual === 'Ativo') {
+    if (!usuario.dataAtivacao) usuario.dataAtivacao = dataIso;
+    usuario.dataInativacao = '';
+    usuarioRegistrarEventoStatus(usuario, jaTeveInativacao ? 'reativado' : 'ativado', {
+      dataIso,
+      por,
+      origem: origem || 'status',
+      statusAnterior,
+      statusNovo: statusAtual
+    });
+    return usuario;
+  }
+
+  if (statusAtual === 'Inativo') {
+    usuario.dataInativacao = dataIso;
+    usuarioRegistrarEventoStatus(usuario, 'inativado', {
+      dataIso,
+      por,
+      origem: origem || 'status',
+      statusAnterior,
+      statusNovo: statusAtual
+    });
+  }
+
+  return usuario;
 }
 
 function definirModoModalUsuario(modo) {
@@ -591,13 +886,16 @@ async function alternarStatusUsuario(idx) {
     return;
   }
 
-  const original = { ...u };
+  const original = JSON.parse(JSON.stringify(u));
   STATUS_PENDENTES_USUARIOS[emailKey] = proximoStatus;
   zSetState('state.ui.statusPendentesUsuarios', STATUS_PENDENTES_USUARIOS);
   renderUsuarios();
 
   try {
-    u.status = proximoStatus;
+    usuarioAplicarMudancaStatus(u, statusAtual, proximoStatus, {
+      por: usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Sistema',
+      origem: 'acao_rapida'
+    });
     await dbSalvarUsuario(u, u.id);
     zSetState('state.data.usuarios', USUARIOS);
     salvarLS();
@@ -780,14 +1078,26 @@ async function salvarUsuario() {
       };
   const nextUserIdAnterior = nextUserId;
   const idxAnterior = idxAlvo;
-  const usuarioAnterior = emEdicao ? { ...USUARIOS[idxAlvo] } : null;
+  const usuarioAnterior = emEdicao ? JSON.parse(JSON.stringify(USUARIOS[idxAlvo])) : null;
   let usuarioSalvo = null;
+  const responsavelStatus = usuarioLogado ? usuarioLogado.nome.split(' ')[0] : 'Sistema';
 
   try {
     if (emEdicao) {
       const uid = USUARIOS[idxAlvo].id;
       USUARIOS[idxAlvo] = { ...USUARIOS[idxAlvo], ...dados };
       usuarioSalvo = USUARIOS[idxAlvo];
+      if (!autoAtendimento) {
+        usuarioAplicarMudancaStatus(usuarioSalvo, usuarioAnterior && usuarioAnterior.status, usuarioSalvo.status, {
+          por: responsavelStatus,
+          origem: 'modal_admin',
+          registrarEventoInicial: false
+        });
+        usuarioRegistrarMudancaEquipe(usuarioSalvo, usuarioAnterior && usuarioAnterior.equipe, usuarioSalvo.equipe, {
+          por: responsavelStatus,
+          origem: 'modal_admin'
+        });
+      }
       if (autoAtendimento) {
         const emailSessao = String(email || '').trim().toLowerCase();
         const senhaFallback = emailSessao
@@ -808,6 +1118,10 @@ async function salvarUsuario() {
       }
     } else {
       usuarioSalvo = { id: nextUserId++, ...dados };
+      usuarioAplicarMudancaStatus(usuarioSalvo, '', usuarioSalvo.status, {
+        por: responsavelStatus,
+        origem: 'cadastro_admin'
+      });
       USUARIOS.push(usuarioSalvo);
       zSetState('state.ui.nextUserId', nextUserId);
       await dbSalvarUsuario(usuarioSalvo, null);
@@ -1045,7 +1359,8 @@ async function enviarConvite() {
     const novoU = {
       id: nextUserId, nome, email, tel: '', perfil, status: 'Pendente',
       banco:'', agencia:'', conta:'', tipoConta:'', pixTipo:'', pix:'',
-      rhContratacao, equipe, unidade, cpf:'', nasc:'', cep:'', end:'', cidade:'', estado:''
+      rhContratacao, equipe, unidade, cpf:'', nasc:'', cep:'', end:'', cidade:'', estado:'',
+      dataAtivacao:'', dataInativacao:'', historicoStatus:[]
     };
     try {
       await dbSalvarUsuario(novoU, null);
@@ -1150,10 +1465,28 @@ function concluirCadastro() {
   const dados = { nome, tel, status:'Ativo', banco, agencia, conta, tipoConta, pixTipo:pixSelCV, pix, cpf, nasc, cep, end, cidade, estado, token:null, unidade:conviteAtivo.unidade||'' };
   const idx   = USUARIOS.findIndex(u => u.email.toLowerCase() === conviteAtivo.email.toLowerCase());
   if (idx >= 0) {
+    const statusAnterior = USUARIOS[idx].status;
     USUARIOS[idx] = { ...USUARIOS[idx], ...dados };
+    usuarioAplicarMudancaStatus(USUARIOS[idx], statusAnterior, USUARIOS[idx].status, {
+      por: 'Onboarding',
+      origem: 'convite'
+    });
     dbSalvarUsuario(USUARIOS[idx], USUARIOS[idx].id).catch(e => console.error(e));
   } else {
-    const novoU = { id: nextUserId++, email: conviteAtivo.email, perfil: conviteAtivo.perfil, rhContratacao: conviteAtivo.rhContratacao, ...dados };
+    const novoU = {
+      id: nextUserId++,
+      email: conviteAtivo.email,
+      perfil: conviteAtivo.perfil,
+      rhContratacao: conviteAtivo.rhContratacao,
+      dataAtivacao: '',
+      dataInativacao: '',
+      historicoStatus: [],
+      ...dados
+    };
+    usuarioAplicarMudancaStatus(novoU, '', novoU.status, {
+      por: 'Onboarding',
+      origem: 'convite'
+    });
     USUARIOS.push(novoU);
     zSetState('state.ui.nextUserId', nextUserId);
     dbSalvarUsuario(novoU, null).catch(e => console.error(e));
