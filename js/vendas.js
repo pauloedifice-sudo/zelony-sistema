@@ -507,6 +507,8 @@ function campoVendaBatePessoa(campo,nomeOuUsuario,opcoes={}){
   if(!nomeCompleto) return false;
   if(alvo===nomeCompleto) return true;
   if(opcoes.exato) return false;
+  const partesAlvo=alvo.split(' ').filter(Boolean);
+  if(partesAlvo.length<2) return false;
   const chaves=chavesNomePessoa(nomeBase);
   if(chaves.some(chave=>chave!==nomeCompleto&&chave===alvo)) return true;
   return chaves.some(chave=>chave.includes(' ')&&(alvo.startsWith(chave+' ')||chave.startsWith(alvo+' ')));

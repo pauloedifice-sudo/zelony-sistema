@@ -50,6 +50,8 @@ export function namesMatch(storedName: unknown, userName: unknown) {
   const candidate = normalizeText(userName);
   if (!target || !candidate) return false;
   if (target === candidate) return true;
+  const targetParts = target.split(" ").filter(Boolean);
+  if (targetParts.length < 2) return false;
   const keys = buildNameKeys(userName);
   if (keys.some((key) => key !== candidate && key === target)) return true;
   return keys.some((key) => key.includes(" ") && (target.startsWith(`${key} `) || key.startsWith(`${target} `)));
