@@ -149,6 +149,11 @@ function rhUsuarioEhCorretor(usuario) {
   return rhPerfilChave(usuario) === 'cor';
 }
 
+function rhUsuarioEntraNaProducao(usuario) {
+  const perfil = rhPerfilChave(usuario);
+  return perfil === 'cor' || perfil === 'cap';
+}
+
 function rhUsuarioTemTelefone(usuario) {
   return !!String(usuario && usuario.tel || '').trim();
 }
@@ -1248,7 +1253,7 @@ function rhMediaNumero(valor, divisor) {
 }
 
 function rhMontarDadosProducao(baseUsuarios, vendasIndexadas, primeiraVendaMap) {
-  const corretores = (baseUsuarios || []).filter(rhUsuarioEhCorretor);
+  const operadores = (baseUsuarios || []).filter(rhUsuarioEntraNaProducao);
   const recorte = rhRecortePeriodo();
   const vendasPorUsuario = new Map();
   (vendasIndexadas || []).forEach(item => {
@@ -1259,7 +1264,7 @@ function rhMontarDadosProducao(baseUsuarios, vendasIndexadas, primeiraVendaMap) 
   });
 
   const mesesVisiveis = new Set();
-  const linhas = corretores.map(usuario => {
+  const linhas = operadores.map(usuario => {
     const chave = String(usuario.id);
     const periodos = rhUsuarioPeriodosAtivos(usuario, primeiraVendaMap);
     const mesesAtivos = rhMesesDosPeriodos(periodos, recorte);
@@ -1335,20 +1340,24 @@ function rhMontarDadosProducao(baseUsuarios, vendasIndexadas, primeiraVendaMap) 
 
   const totalVendas = linhas.reduce((soma, linha) => soma + linha.totalVendas, 0);
   const totalVgv = linhas.reduce((soma, linha) => soma + linha.vgv, 0);
-  const corretoresSemVenda = linhas.filter(linha => !linha.totalVendas).length;
-  const mediaMensalCorretores = linhas.length
+  const operadoresSemVenda = linhas.filter(linha => !linha.totalVendas).length;
+  const mediaMensalOperadores = linhas.length
     ? Number((linhas.reduce((soma, linha) => soma + linha.mediaMensal, 0) / linhas.length).toFixed(1))
     : 0;
 
   return {
-    corretores,
+    operadores,
+    corretores: operadores,
     linhas,
     equipes,
     meses: [...mesesVisiveis].sort(),
     totalVendas,
     totalVgv,
-    corretoresSemVenda,
-    mediaMensalCorretores,
+    operadoresSemVenda,
+    corretoresSemVenda: operadoresSemVenda,
+    mediaMensalOperadores,
+    mediaMensalCorretores: mediaMensalOperadores,
+    topOperador: linhas[0] || null,
     topCorretor: linhas[0] || null,
     topEquipe: equipes[0] || null
   };
@@ -1502,12 +1511,12 @@ function rhHeroResumoHtml(resumo, producao, historicoStatus) {
   ];
 
   if (rhAbaAtiva === 'producao') {
-    titulo = 'Producao liquida por corretor e por equipe';
+    titulo = 'Producao liquida por corretor, capitao e equipe';
     texto = 'As vendas contam no mes do cadastro e saem da metrificacao quando viram distrato.';
     chips = [
       { label: 'Vendas validas', valor: rhNumero(producao.totalVendas) },
-      { label: 'Media mensal/corretor', valor: String(producao.mediaMensalCorretores).replace('.', ',') },
-      { label: 'Corretores sem venda', valor: rhNumero(producao.corretoresSemVenda) },
+      { label: 'Media mensal/operador', valor: String(producao.mediaMensalOperadores).replace('.', ',') },
+      { label: 'Operadores sem venda', valor: rhNumero(producao.operadoresSemVenda) },
       { label: 'Equipe lider', valor: producao.topEquipe ? rhTexto(producao.topEquipe.nome, 'Sem equipe') : 'Sem base' }
     ];
   } else if (rhAbaAtiva === 'historico_status') {
@@ -1623,13 +1632,13 @@ function rhTabelaProducao(producao) {
       <section class="rh-panel rh-panel-wide">
         <div class="rh-panel-head">
           <div>
-            <h3>${zUiText('Matriz mensal por corretor')}</h3>
-            <p>${zUiText('Sem corretores ativos com vendas validas para montar a serie do recorte atual.')}</p>
+            <h3>${zUiText('Matriz mensal por corretor e capitao')}</h3>
+            <p>${zUiText('Sem corretores ou capitoes ativos com vendas validas para montar a serie do recorte atual.')}</p>
           </div>
         </div>
         <div class="rh-empty">
           <strong>${zUiText('Nenhuma linha para exibir')}</strong>
-          <span>${zUiText('A matriz mostra apenas corretores ativos com vendas mensais desde a ativacao.')}</span>
+          <span>${zUiText('A matriz mostra corretores e capitoes ativos com vendas mensais desde a ativacao.')}</span>
         </div>
       </section>
     `;
@@ -1639,8 +1648,8 @@ function rhTabelaProducao(producao) {
     <section class="rh-panel rh-panel-wide">
       <div class="rh-panel-head">
         <div>
-          <h3>${zUiText('Matriz mensal por corretor')}</h3>
-          <p>${zUiText('A media mensal considera apenas os meses em que o corretor esteve ativo na operacao. Esta tabela mostra somente corretores ativos.')}</p>
+          <h3>${zUiText('Matriz mensal por corretor e capitao')}</h3>
+          <p>${zUiText('A media mensal considera apenas os meses em que o profissional esteve ativo na operacao. Esta tabela mostra corretores e capitoes ativos.')}</p>
         </div>
         <div class="rh-panel-count">${rhNumero(linhasAtivas.length)}</div>
       </div>
@@ -1648,7 +1657,7 @@ function rhTabelaProducao(producao) {
         <table class="rh-table rh-table-matrix">
           <thead>
             <tr>
-              <th>${zUiText('Corretor')}</th>
+              <th>${zUiText('Profissional')}</th>
               <th>${zUiText('Equipe')}</th>
               <th>${zUiText('Status')}</th>
               <th>${zUiText('Ativacao')}</th>
@@ -1744,9 +1753,9 @@ function rhConteudoVisaoGeral(resumo, origemRhAtiva, producao) {
       ${rhCardKpi('Corretores totais', rhNumero(resumo.corretores.length), zUiText('Base comercial no recorte atual'))}
       ${rhCardKpi('Origem RH ativa', rhNumero(origemRhAtiva), zUiText('Usuarios ativos marcados como entrada via RH'), true)}
       ${rhCardKpi('Vendas validas no periodo', rhNumero(producao.totalVendas), zUiText('Producao liquida sem distratos'))}
-      ${rhCardKpi('Media mensal/corretor', String(producao.mediaMensalCorretores).replace('.', ','), zUiText('Media de vendas por corretor no recorte'))}
+      ${rhCardKpi('Media mensal/operador', String(producao.mediaMensalOperadores).replace('.', ','), zUiText('Media de vendas por corretor ou capitao no recorte'))}
       ${rhCardKpi('Equipe lider', zUiText(equipeLider), zUiText('Equipe com maior volume de vendas validas'))}
-      ${rhCardKpi('Corretores sem venda', rhNumero(producao.corretoresSemVenda), zUiText('Corretores sem venda valida no recorte'))}
+      ${rhCardKpi('Operadores sem venda', rhNumero(producao.operadoresSemVenda), zUiText('Corretores e capitoes sem venda valida no recorte'))}
       ${rhCardKpi('Prontos para recebimento', rhNumero(resumo.prontos.length), zUiText(`${cardProntos} dos ativos com telefone, banco/conta e Pix`))}
     </div>
 
@@ -1755,13 +1764,13 @@ function rhConteudoVisaoGeral(resumo, origemRhAtiva, producao) {
       ${rhPanelRanking('Quadro por unidade', 'Leitura consolidada da estrutura por unidade', resumo.porUnidade, { mostrarMeta: false, limite: 6 })}
       ${rhPanelRanking('Quadro por equipe', 'Onde o quadro esta concentrado hoje', resumo.porEquipe, { metaPrefix: 'Unidade: ', limite: 8, className: 'rh-panel-wide' })}
       ${rhPanelSaude(resumo.alertas, resumo.ativos.length)}
-      ${rhPanelProducaoRanking('Corretores com mais producao', 'Volume liquido de vendas no recorte atual', producao.linhas, {
+      ${rhPanelProducaoRanking('Operadores com mais producao', 'Volume liquido de vendas no recorte atual', producao.linhas, {
         limite: 6,
         meta: item => `${item.equipe} · ${rhIsoParaBr(item.ativacaoIso)}`
       })}
       ${rhPanelProducaoRanking('Equipes com mais producao', 'Resumo por equipe da base filtrada', producao.equipes, {
         limite: 6,
-        meta: item => `${rhNumero(item.corretores)} corretor(es) · ${rhNumero(item.semVenda)} sem venda`
+        meta: item => `${rhNumero(item.corretores)} operador(es) · ${rhNumero(item.semVenda)} sem venda`
       })}
     </div>
 
@@ -1771,26 +1780,26 @@ function rhConteudoVisaoGeral(resumo, origemRhAtiva, producao) {
 }
 
 function rhConteudoProducao(producao) {
-  const topCorretor = producao.topCorretor ? producao.topCorretor.usuario.nome : 'Sem base';
+  const topOperador = producao.topOperador ? producao.topOperador.usuario.nome : 'Sem base';
   const topEquipe = producao.topEquipe ? producao.topEquipe.nome : 'Sem base';
   return `
     <div class="rh-kpis rh-kpis-compact">
       ${rhCardKpi('Vendas validas', rhNumero(producao.totalVendas), zUiText('Conta no cadastro e sai da base se virar distrato'), true)}
       ${rhCardKpi('VGV valido', fmtK(producao.totalVgv), zUiText('Soma dos valores das vendas validas'))}
-      ${rhCardKpi('Media mensal/corretor', String(producao.mediaMensalCorretores).replace('.', ','), zUiText('Media individual dentro da janela ativa'))}
-      ${rhCardKpi('Top corretor', zUiText(topCorretor), zUiText('Maior volume de vendas validas no recorte'))}
+      ${rhCardKpi('Media mensal/operador', String(producao.mediaMensalOperadores).replace('.', ','), zUiText('Media individual de corretor ou capitao dentro da janela ativa'))}
+      ${rhCardKpi('Top operador', zUiText(topOperador), zUiText('Maior volume de vendas validas no recorte'))}
       ${rhCardKpi('Top equipe', zUiText(topEquipe), zUiText('Equipe lider em vendas validas no recorte'))}
-      ${rhCardKpi('Corretores sem venda', rhNumero(producao.corretoresSemVenda), zUiText('Corretores do filtro com zero venda valida'))}
+      ${rhCardKpi('Operadores sem venda', rhNumero(producao.operadoresSemVenda), zUiText('Corretores e capitoes do filtro com zero venda valida'))}
     </div>
 
     <div class="rh-grid rh-grid-heroic">
-      ${rhPanelProducaoRanking('Ranking de corretores', 'Quem mais vendeu no recorte atual', producao.linhas, {
+      ${rhPanelProducaoRanking('Ranking de operadores', 'Quem mais vendeu no recorte atual', producao.linhas, {
         limite: 8,
         meta: item => `${item.equipe} · ${item.status}`
       })}
       ${rhPanelProducaoRanking('Ranking de equipes', 'Consolidado da producao por equipe', producao.equipes, {
         limite: 8,
-        meta: item => `${rhNumero(item.corretores)} corretor(es) · ${rhNumero(item.corretoresAtivos)} ativo(s)`
+        meta: item => `${rhNumero(item.corretores)} operador(es) · ${rhNumero(item.corretoresAtivos)} ativo(s)`
       })}
     </div>
 

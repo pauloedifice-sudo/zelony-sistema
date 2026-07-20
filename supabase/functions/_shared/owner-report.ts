@@ -1370,6 +1370,7 @@ export function buildOwnerReportBaseMessage(snapshot: OwnerReportSnapshot) {
 
   const worstUnit = distratos.worst_unit as Record<string, unknown> | null;
   const worstManager = distratos.worst_active_manager as Record<string, unknown> | null;
+  const topReason = distratos.top_reason as Record<string, unknown> | null;
   const reserve = finance.reserve_goal as Record<string, unknown>;
   const criticalAccountsData = finance.critical_accounts as Record<string, unknown> | null;
   const criticalItems = Array.isArray(criticalAccountsData?.items) ? criticalAccountsData.items as Array<Record<string, unknown>> : [];
@@ -1409,7 +1410,9 @@ export function buildOwnerReportBaseMessage(snapshot: OwnerReportSnapshot) {
     "",
     "2. Distratos",
     `A taxa geral historica de distrato esta em ${formatPercent(numberOrZero(distratos.general_rate_pct))}, com ${numberOrZero(distratos.historical_total_distratos)} distrato(s) em ${numberOrZero(distratos.historical_total_sales)} venda(s) na base acumulada.`,
-    `No mes atual, tivemos ${numberOrZero(distratos.current_month_distratos)} distrato(s) em ${numberOrZero(distratos.current_month_sales)} venda(s).`,
+    topReason
+      ? `No periodo inteiro analisado, o motivo mais recorrente foi ${String(topReason.name || "Nao informado")}, com ${numberOrZero(topReason.count)} caso(s).`
+      : "No periodo inteiro analisado, ainda nao existe motivo dominante registrado para os distratos.",
     worstUnit
       ? `A unidade com maior preocupacao hoje e ${String(worstUnit.name || "Sem unidade")}, com ${formatPercent(numberOrZero(worstUnit.rate_pct))}.`
       : "Ainda nao existe base suficiente para apontar a unidade mais critica do recorte.",

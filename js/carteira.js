@@ -47,7 +47,7 @@ function ordemMesCarteira(valor) {
 
 function getCols() {
   if (role === 'cor') return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_cor', 'minha', 'bonus_cor', 'etapa'];
-  if (role === 'cap') return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_cor', 'com_cap', 'minha', 'etapa'];
+  if (role === 'cap') return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_cor', 'com_cap', 'minha', 'bonus_cor', 'etapa'];
   if (role === 'ger') return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_cor', 'com_cap', 'com_ger', 'minha', 'bonus_ger', 'etapa'];
   if (role === 'dir') return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_bruta', 'com_total', 'com_cor', 'com_cap', 'com_ger', 'com_dir', 'bonus_dir', 'etapa'];
   if (role === 'dono') return ['data', 'cliente', 'produto', 'corretor', 'gerente', 'vgv', 'com_bruta', 'com_total', 'com_cor', 'com_cap', 'com_ger', 'com_dir', 'com_zel', 'bonus_total', 'etapa'];
@@ -60,6 +60,14 @@ function carteiraMatchUsuarioCampo(campo) {
   const nomeCompleto = String(usuarioLogado.nome || '').toLowerCase().trim();
   const primeiroNome = nomeCompleto.split(' ')[0] || '';
   return valor === nomeCompleto || (primeiroNome.length >= 3 && valor === primeiroNome);
+}
+
+function carteiraUsuarioEhCorretorVenda(v) {
+  if (!usuarioLogado || !v) return false;
+  if (typeof corretorVendaPertenceAoUsuario === 'function') {
+    return corretorVendaPertenceAoUsuario(v, usuarioLogado);
+  }
+  return carteiraMatchUsuarioCampo(v.corretor);
 }
 
 const carteiraMoedaFormatter = new Intl.NumberFormat('pt-BR', {
@@ -97,7 +105,7 @@ function carteiraMinhaComissaoValor(v) {
     return 0;
   }
   let total = 0;
-  if (carteiraMatchUsuarioCampo(v.corretor)) total += comC(v);
+  if (carteiraUsuarioEhCorretorVenda(v)) total += comC(v);
   if (carteiraMatchUsuarioCampo(v.capitao)) total += comCap(v);
   if (carteiraMatchUsuarioCampo(v.gerente)) total += comG(v);
   if (carteiraMatchUsuarioCampo(v.diretor)) total += comD(v);
@@ -114,7 +122,7 @@ function carteiraMinhaComissaoValor(v) {
 function carteiraMeuBonusValor(v) {
   if (!v || !v.bonus || v.bonus <= 0) return 0;
   if (role === 'dono') return bonusLiquidoTotal(v);
-  if (role === 'fin' || role === 'rh' || role === 'cap') return 0;
+  if (role === 'fin' || role === 'rh') return 0;
   if (!usuarioLogado) {
     if (role === 'cor') return bonusCor(v);
     if (role === 'ger') return bonusGer(v);
@@ -122,7 +130,7 @@ function carteiraMeuBonusValor(v) {
     return 0;
   }
   let total = 0;
-  if (carteiraMatchUsuarioCampo(v.corretor)) total += bonusCor(v);
+  if (carteiraUsuarioEhCorretorVenda(v)) total += bonusCor(v);
   if (carteiraMatchUsuarioCampo(v.gerente)) total += bonusGer(v);
   if (carteiraMatchUsuarioCampo(v.diretor)) total += bonusDir(v);
   if (carteiraMatchUsuarioCampo(v.diretor2)) total += bonusDir2(v);
@@ -2915,7 +2923,7 @@ function renderCarteiraTabelaRows(lista, cols) {
             const pn = nc.split(' ')[0];
             return c2 === nc || (pn.length >= 3 && c2 === pn);
           };
-          if (mn(v.corretor)) totalBonus += bonusCor(v);
+          if (carteiraUsuarioEhCorretorVenda(v)) totalBonus += bonusCor(v);
           if (mn(v.gerente)) totalBonus += bonusGer(v);
           if (mn(v.diretor)) totalBonus += bonusDir(v);
           if (mn(v.diretor2)) totalBonus += bonusDir2(v);

@@ -278,6 +278,10 @@ function showVDetail(id){
   const bonusDist=(()=>{
     if(!v.bonus||v.bonus<=0) return [];
     if(role==='cor') return [{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
+    if(role==='cap'){
+      const atuaComoCorretor=!!usuarioLogado&&typeof corretorVendaPertenceAoUsuario==='function'&&corretorVendaPertenceAoUsuario(v,usuarioLogado);
+      return atuaComoCorretor?[{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}]:[];
+    }
     if(role==='ger') return [{n:v.gerente,c:'Gerente',val:bonusGer(v),pct:v.bonus_pct_ger},{n:v.corretor,c:'Corretor',val:bonusCor(v),pct:v.bonus_pct_cor}];
     if(['dir','fin','dono'].includes(role)){
       const itens=[
