@@ -5,6 +5,11 @@
 const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
 const PRAZOS_ETAPA=[null,5,5,6,3,3,4,15,null];
 const ETAPA_NOTA_EMITIDA=ETAPAS.indexOf('Nota emitida');
+const RH_COMISSAO_NOVAS_VENDAS=Object.freeze({
+  ativa:false,
+  percentual:0.001,
+  encerradaEm:'2026-07-30'
+});
 const BONUS_FORMAS={
   comissao:'Junto com a comissao',
   antecipado:'Antecipado'
@@ -581,11 +586,9 @@ function usuarioElegivelRhNovaVenda(usuario){
   const perfilAtual=typeof getPerfil==='function'?getPerfil(usuario.perfil):String(usuario.perfil||'').toLowerCase();
   return !!usuario.rhContratacao&&perfilAtual==='cor';
 }
-function pctRhCorretor(corretor,padrao=0,opcoes={}){
-  const corretorUser=getUsuarioCorretorVenda(corretor,{externo:!!opcoes.externo});
-  if(!corretorUser) return padrao;
-  if(opcoes.respeitarPerfilAtual===false) return corretorUser.rhContratacao?0.001:0;
-  return usuarioElegivelRhNovaVenda(corretorUser)?0.001:0;
+function pctRhNovaVenda(corretorUsuario,opcoes={}){
+  if(opcoes.corretorExterno||!RH_COMISSAO_NOVAS_VENDAS.ativa) return 0;
+  return usuarioElegivelRhNovaVenda(corretorUsuario)?RH_COMISSAO_NOVAS_VENDAS.percentual:0;
 }
 const AJUSTES_MANUAIS_RH=[  
   {cliente:'joao carlos',produto:'campo sales',construtora:'suica flats',corretor:'aline gabriele soek'},
@@ -642,48 +645,6 @@ function atualizarViewsPosSyncRh(){
   if(modCarteira&&!modCarteira.classList.contains('hidden')&&typeof renderCarteira==='function') renderCarteira();
   const modFinanceiro=document.getElementById('mod-financeiro');
   if(modFinanceiro&&!modFinanceiro.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
-}
-async function sincronizarPctRhVendas(vendasAlvo,opcoes={}){
-  const lista=Array.isArray(vendasAlvo)?vendasAlvo.filter(Boolean):[];
-  const alteradas=[];
-  lista.forEach(v=>{
-    if(!v||typeof v!=='object') return;
-    normalizarVendaNumeros(v);
-    const novoPct=typeof opcoes.forcarPctRh==='number'?opcoes.forcarPctRh:pctRhCorretor(v.corretor,null,{externo:corretorVendaEhExterno(v)});
-    if(novoPct===null) return;
-    if(numSeguro(v.pct_rh,0)===novoPct) return;
-    v.pct_rh=novoPct;
-    alteradas.push(v);
-  });
-  if(!alteradas.length) return {alteradas:0,persistidas:0,falhas:0};
-  salvarLS();
-  let falhas=0;
-  if(opcoes.persistir!==false&&typeof dbAtualizarVenda==='function'){
-    const resultados=await Promise.allSettled(alteradas.map(v=>dbAtualizarVenda(v)));
-    falhas=resultados.filter(r=>r.status==='rejected').length;
-    if(falhas) console.warn('Falha ao sincronizar RH em parte das vendas.', resultados);
-  }
-  if(opcoes.renderizar!==false) atualizarViewsPosSyncRh();
-  return {alteradas:alteradas.length,persistidas:alteradas.length-falhas,falhas};
-}
-async function sincronizarRhContratacaoUsuario(usuarioAtual,usuarioAnterior=null,opcoes={}){
-  const chaves=[...new Set([
-    ...chavesNomePessoa(usuarioAtual&&usuarioAtual.nome),
-    ...chavesNomePessoa(usuarioAnterior&&usuarioAnterior.nome)
-  ])];
-  if(!chaves.length) return {alteradas:0,persistidas:0,falhas:0};
-  const idsRelacionados=[usuarioAtual&&usuarioAtual.id!=null?String(usuarioAtual.id):'',usuarioAnterior&&usuarioAnterior.id!=null?String(usuarioAnterior.id):''].filter(Boolean);
-  const vendasRelacionadas=VENDAS.filter(v=>{
-    const meta=obterMetaCorretorVenda(v);
-    if(meta.origem==='externo') return false;
-    if(meta.refId) return idsRelacionados.includes(meta.refId);
-    const corretor=String(v&&v.corretor||'').trim().toLowerCase();
-    return !!corretor&&chaves.includes(corretor);
-  });
-  return sincronizarPctRhVendas(vendasRelacionadas,{...opcoes,forcarPctRh:(usuarioAtual&&usuarioAtual.rhContratacao)?0.001:0});
-}
-async function reconciliarPctRhVendas(opcoes={}){
-  return sincronizarPctRhVendas(VENDAS,opcoes);
 }
 function lerNumeroInput(id,padrao=0){
   return lerNumeroTexto(document.getElementById(id)?.value,padrao);
@@ -2091,7 +2052,9 @@ async function salvarVenda(){
   const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
   const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
   const mes=meses[mesNum];
-  const pct_rh=corretorExterno?0:(usuarioElegivelRhNovaVenda(corretorUsuario)?0.001:0);
+  // pct_rh é um snapshot da venda: históricos permanecem intactos e novas vendas
+  // seguem a configuração vigente, sem recalcular direitos já adquiridos.
+  const pct_rh=pctRhNovaVenda(corretorUsuario,{corretorExterno});
   const novaVenda={
     id:nextVendaId++,refLocal,data,mes,cliente,produto,construtora,origem,unidade,
     corretor,capitao,gerente,diretor,diretor2,cca,

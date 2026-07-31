@@ -795,8 +795,8 @@ function toggleRHField() {
   if (help) {
     help.textContent = zUiText(
       perfil === 'Corretor'
-        ? 'Se marcado, 0,1% de comissão será destinado ao RH nas vendas desse corretor'
-        : 'Essa origem continua valendo nas vendas antigas mesmo se o colaborador mudar de perfil'
+        ? 'Registra a origem histórica da contratação. Não gera comissão de RH em novas vendas'
+        : 'Essa origem é apenas histórica e não altera comissões de vendas'
     );
   }
 }
@@ -1127,25 +1127,17 @@ async function salvarUsuario() {
       await dbSalvarUsuario(usuarioSalvo, null);
     }
 
-    const perfilAnterior = usuarioAnterior ? perfilRoleUsuario(usuarioAnterior) : '';
-    const perfilAtual = perfilRoleUsuario(usuarioSalvo);
     const statusAnterior = usuarioAnterior && typeof usuarioStatusNormalizado === 'function'
       ? usuarioStatusNormalizado(usuarioAnterior)
       : zUiText(usuarioAnterior && usuarioAnterior.status || '');
     const statusAtual = typeof usuarioStatusNormalizado === 'function'
       ? usuarioStatusNormalizado(usuarioSalvo)
       : zUiText(usuarioSalvo.status || 'Ativo');
-    const rhMudou = !!(usuarioAnterior && usuarioAnterior.rhContratacao) !== !!usuarioSalvo.rhContratacao;
-    const podeSincronizarHistoricoRh = !!usuarioAnterior && rhMudou && perfilAnterior === 'cor' && perfilAtual === 'cor';
-    const syncResumo = podeSincronizarHistoricoRh
-      ? await sincronizarRhContratacaoUsuario(usuarioSalvo, usuarioAnterior, { renderizar:false })
-      : {alteradas:0,persistidas:0,falhas:0};
     zSetState('state.data.usuarios', USUARIOS);
     sincronizarSessaoUsuarioAtualizada(usuarioSalvo);
     salvarLS();
     fecharMU();
     renderUsuarios();
-    if (syncResumo.alteradas > 0) atualizarViewsPosSyncRh();
 
     if (autoAtendimento) {
       showToast(zUiText('✅'), zUiText('Seus dados de recebimento foram atualizados com sucesso!'));
@@ -1159,8 +1151,6 @@ async function salvarUsuario() {
         ? `Usuário "${nomeNormalizado}" inativado com sucesso!`
         : `Usuário "${nomeNormalizado}" reativado com sucesso!`;
     }
-    if (syncResumo.alteradas === 1) mensagem += ' 1 venda foi recalculada por causa da participação do RH.';
-    if (syncResumo.alteradas > 1) mensagem += ` ${syncResumo.alteradas} vendas foram recalculadas por causa da participação do RH.`;
     const usuarioAtualInativado = !!(usuarioLogado && zUiText(usuarioLogado.email).toLowerCase() === zUiText(usuarioSalvo.email).toLowerCase() && statusAtual === 'Inativo');
     if (usuarioAtualInativado) {
       if (typeof fazerLogout === 'function') fazerLogout();
@@ -1168,9 +1158,6 @@ async function salvarUsuario() {
       return;
     }
     showToast(zUiText('✅'), zUiText(mensagem));
-    if (syncResumo.falhas > 0) {
-      showToast(zUiText('⚠️'), zUiText('Parte das vendas foi ajustada na tela, mas não conseguiu sincronizar no banco. Recarregue e tente salvar novamente se notar divergência.'));
-    }
   } catch (e) {
     console.error(e);
     if (emEdicao) {
@@ -1309,8 +1296,8 @@ function toggleInvRH() {
   if (help) {
     help.textContent = zUiText(
       p === 'Corretor'
-        ? 'Se marcado, 0,1% de comissão será destinado ao RH nas vendas desse corretor'
-        : 'Essa origem fica registrada mesmo se o colaborador mudar de perfil depois'
+        ? 'Registra a origem histórica da contratação. Não gera comissão de RH em novas vendas'
+        : 'Essa origem fica registrada apenas para o histórico do RH'
     );
   }
 }
