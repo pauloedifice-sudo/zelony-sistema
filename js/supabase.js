@@ -1354,6 +1354,10 @@ function mapAgendamentoIn(a){
     reagendadoParaHorario:String(a&&(a.reagendado_para_horario||a.reagendadoParaHorario)||'').slice(0,5),
     origemAgendamentoId:parseInt(a&&(a.origem_agendamento_id||a.origemAgendamentoId),10)||0,
     novoAgendamentoId:parseInt(a&&(a.novo_agendamento_id||a.novoAgendamentoId),10)||0,
+    rendaBrutaFamiliar:Number(a&&(a.renda_bruta_familiar??a.rendaBrutaFamiliar))||0,
+    localCompra:a&&(a.local_compra||a.localCompra)||'',
+    tipoImovelInteresse:a&&(a.tipo_imovel_interesse||a.tipoImovelInteresse)||'',
+    finalidadeImovel:a&&(a.finalidade_imovel||a.finalidadeImovel)||'',
     atualizadoEm:a&&(a.atualizado_em||a.atualizadoEm)||'',
     refLocal:a&&(a.ref_local||a.refLocal)||'',
     syncPendente:!!(a&&(a.sync_pendente||a.syncPendente)),
@@ -1389,6 +1393,10 @@ function mapAgendamentoOut(a){
     reagendado_para_horario:a.reagendadoParaHorario||null,
     origem_agendamento_id:a.origemAgendamentoId||null,
     novo_agendamento_id:a.novoAgendamentoId||null,
+    renda_bruta_familiar:Number(a.rendaBrutaFamiliar)||null,
+    local_compra:a.localCompra||null,
+    tipo_imovel_interesse:a.tipoImovelInteresse||null,
+    finalidade_imovel:a.finalidadeImovel||null,
     atualizado_em:a.atualizadoEm||new Date().toISOString(),
     ref_local:garantirRefLocalAgendamento(a,a&&a.id?'banco':'local')||null
   };

@@ -19,6 +19,9 @@ const AG_SITUACAO_AGENDADO = AG_SITUACOES[0];
 const AG_SITUACAO_CONCLUIDA = AG_SITUACOES[1];
 const AG_SITUACAO_REAGENDADO = AG_SITUACOES[2];
 const AG_SITUACAO_CANCELADO = AG_SITUACOES[3];
+const AG_LOCAIS_COMPRA = ['Curitiba', 'Região metropolitana'];
+const AG_TIPOS_IMOVEL_INTERESSE = ['Casa', 'Apartamento'];
+const AG_FINALIDADES_IMOVEL = ['Moradia', 'Investimento'];
 const AG_DATA_MIN_OPERACIONAL = '2020-01-01';
 const AG_DATA_MAX_OPERACIONAL = '2035-12-31';
 let agTratativaFila = [];
@@ -66,6 +69,34 @@ function agAttr(valor) {
     .replace(/&/g, '&amp;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;');
+}
+
+function agRendaBrutaFamiliarNumero(valor) {
+  if (typeof valor === 'number') {
+    return Number.isFinite(valor) && valor > 0 ? Math.round(valor * 100) / 100 : 0;
+  }
+  let texto = agTexto(valor)
+    .replace(/R\$/gi, '')
+    .replace(/\s+/g, '')
+    .replace(/[^\d,.-]/g, '');
+  if (!texto) return 0;
+  if (texto.includes(',')) {
+    texto = texto.replace(/\./g, '').replace(',', '.');
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(texto)) {
+    texto = texto.replace(/\./g, '');
+  }
+  const numero = Number(texto);
+  return Number.isFinite(numero) && numero > 0 ? Math.round(numero * 100) / 100 : 0;
+}
+
+function agFormatarRendaBrutaFamiliar(valor) {
+  const numero = agRendaBrutaFamiliarNumero(valor);
+  return numero ? numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+}
+
+function formatarRendaBrutaFamiliarAgendamento(input) {
+  if (!input) return;
+  input.value = agFormatarRendaBrutaFamiliar(input.value);
 }
 
 function agTelefoneDigitos(valor) {
@@ -844,6 +875,383 @@ function agDesenharTabelaResumoTipo(doc, config) {
   return doc.lastAutoTable.finalY;
 }
 
+function agDocumentacaoRecebida(item) {
+  return agTipoDocumentacao(item) && agSituacaoNormalizada(item) === 'concluida';
+}
+
+function agPercentualDocumentacao(valor, total) {
+  if (!total) return '0%';
+  return `${((Number(valor) || 0) / total * 100).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
+}
+
+function agFormatarMoedaRelatorio(valor) {
+  const numero = Number(valor) || 0;
+  if (!numero) return '—';
+  return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function agMedianaDocumentacao(valores) {
+  const lista = (Array.isArray(valores) ? valores : [])
+    .map(Number)
+    .filter(valor => Number.isFinite(valor) && valor > 0)
+    .sort((a, b) => a - b);
+  if (!lista.length) return 0;
+  const meio = Math.floor(lista.length / 2);
+  return lista.length % 2 ? lista[meio] : (lista[meio - 1] + lista[meio]) / 2;
+}
+
+function agDocumentacaoDadosCompletos(item) {
+  return agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar) > 0
+    && AG_LOCAIS_COMPRA.includes(agTexto(item && item.localCompra))
+    && AG_TIPOS_IMOVEL_INTERESSE.includes(agTexto(item && item.tipoImovelInteresse))
+    && AG_FINALIDADES_IMOVEL.includes(agTexto(item && item.finalidadeImovel));
+}
+
+function agDistribuicaoDocumentacao(lista, campo, opcoes) {
+  const base = Array.isArray(lista) ? lista : [];
+  const itens = (Array.isArray(opcoes) ? opcoes : []).map(opcao => {
+    const valor = typeof opcao === 'string' ? opcao : opcao.valor;
+    const rotulo = typeof opcao === 'string' ? opcao : opcao.rotulo;
+    return {
+      rotulo,
+      quantidade: base.filter(item => agTexto(item && item[campo]) === valor).length
+    };
+  });
+  const informados = itens.reduce((total, item) => total + item.quantidade, 0);
+  itens.push({ rotulo: 'Não informado', quantidade: Math.max(base.length - informados, 0) });
+  return itens;
+}
+
+function agDistribuicaoRendaDocumentacao(lista) {
+  const base = Array.isArray(lista) ? lista : [];
+  const faixas = [
+    { rotulo: 'Até R$ 4 mil', teste: renda => renda <= 4000 },
+    { rotulo: 'De R$ 4 mil a R$ 8 mil', teste: renda => renda > 4000 && renda <= 8000 },
+    { rotulo: 'De R$ 8 mil a R$ 12 mil', teste: renda => renda > 8000 && renda <= 12000 },
+    { rotulo: 'De R$ 12 mil a R$ 20 mil', teste: renda => renda > 12000 && renda <= 20000 },
+    { rotulo: 'Acima de R$ 20 mil', teste: renda => renda > 20000 }
+  ];
+  const rendas = base.map(item => agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar));
+  const itens = faixas.map(faixa => ({
+    rotulo: faixa.rotulo,
+    quantidade: rendas.filter(renda => renda > 0 && faixa.teste(renda)).length
+  }));
+  itens.push({ rotulo: 'Não informado', quantidade: rendas.filter(renda => !renda).length });
+  return itens;
+}
+
+function agColetarDadosRelatorioDocumentacao() {
+  const dadosGerais = agColetarDadosRelatorio();
+  const lista = dadosGerais.lista.filter(agDocumentacaoRecebida);
+  const rendas = lista
+    .map(item => agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar))
+    .filter(renda => renda > 0);
+  const completos = lista.filter(agDocumentacaoDadosCompletos).length;
+  const total = lista.length;
+  return {
+    ...dadosGerais,
+    lista,
+    total,
+    completos,
+    incompletos: Math.max(total - completos, 0),
+    rendasInformadas: rendas.length,
+    rendaMedia: rendas.length ? rendas.reduce((soma, renda) => soma + renda, 0) / rendas.length : 0,
+    rendaMediana: agMedianaDocumentacao(rendas),
+    localizacao: agDistribuicaoDocumentacao(lista, 'localCompra', AG_LOCAIS_COMPRA),
+    tipoImovel: agDistribuicaoDocumentacao(lista, 'tipoImovelInteresse', AG_TIPOS_IMOVEL_INTERESSE),
+    finalidade: agDistribuicaoDocumentacao(lista, 'finalidadeImovel', AG_FINALIDADES_IMOVEL),
+    faixasRenda: agDistribuicaoRendaDocumentacao(lista)
+  };
+}
+
+function agResumoDocumentacaoPorCampo(lista, obterNome) {
+  const mapa = new Map();
+  (Array.isArray(lista) ? lista : []).forEach(item => {
+    const nome = agTexto(obterNome(item)) || 'Não informado';
+    const chave = agNormalizarTexto(nome) || nome;
+    if (!mapa.has(chave)) {
+      mapa.set(chave, {
+        nome,
+        total: 0,
+        completos: 0,
+        rendas: [],
+        curitiba: 0,
+        metropolitana: 0,
+        casa: 0,
+        apartamento: 0,
+        moradia: 0,
+        investimento: 0
+      });
+    }
+    const resumo = mapa.get(chave);
+    const renda = agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar);
+    resumo.total += 1;
+    if (agDocumentacaoDadosCompletos(item)) resumo.completos += 1;
+    if (renda) resumo.rendas.push(renda);
+    if (agTexto(item && item.localCompra) === 'Curitiba') resumo.curitiba += 1;
+    if (agTexto(item && item.localCompra) === 'Região metropolitana') resumo.metropolitana += 1;
+    if (agTexto(item && item.tipoImovelInteresse) === 'Casa') resumo.casa += 1;
+    if (agTexto(item && item.tipoImovelInteresse) === 'Apartamento') resumo.apartamento += 1;
+    if (agTexto(item && item.finalidadeImovel) === 'Moradia') resumo.moradia += 1;
+    if (agTexto(item && item.finalidadeImovel) === 'Investimento') resumo.investimento += 1;
+  });
+  return Array.from(mapa.values())
+    .map(item => ({
+      ...item,
+      rendaMedia: item.rendas.length ? item.rendas.reduce((soma, renda) => soma + renda, 0) / item.rendas.length : 0
+    }))
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+function agCabecalhoRelatorioDocumentacao(doc, titulo, total, largura) {
+  doc.setFillColor(184, 93, 31);
+  doc.rect(0, 0, largura, 18, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(11);
+  doc.text(titulo, 10, 11);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text(`${total} documentação(ões) recebida(s)`, largura - 10, 11, { align: 'right' });
+}
+
+function agDesenharDistribuicaoDocumentacao(doc, config) {
+  const itens = Array.isArray(config.itens) ? config.itens : [];
+  doc.setFillColor(253, 248, 238);
+  doc.setDrawColor(224, 186, 150);
+  doc.roundedRect(config.x, config.y, config.w, config.h, 2.5, 2.5, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.4);
+  doc.setTextColor(145, 71, 24);
+  doc.text(config.titulo, config.x + 4, config.y + 6);
+  itens.forEach((item, index) => {
+    const linhaY = config.y + 12 + (index * 6.4);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.7);
+    doc.setTextColor(72, 58, 38);
+    doc.text(agTexto(item.rotulo), config.x + 4, linhaY);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${item.quantidade} (${agPercentualDocumentacao(item.quantidade, config.total)})`, config.x + config.w - 4, linhaY, { align: 'right' });
+  });
+}
+
+function agTabelaResumoDocumentacao(doc, config) {
+  doc.autoTable({
+    startY: config.startY,
+    margin: { left: 10, right: 10, top: 22 },
+    head: [[config.titulo, 'Docs', 'Dados completos', 'Renda média', 'Curitiba', 'RMC', 'Casa', 'Apto.', 'Moradia', 'Invest.']],
+    body: (config.lista || []).map(item => [
+      item.nome,
+      item.total,
+      `${item.completos} (${agPercentualDocumentacao(item.completos, item.total)})`,
+      agFormatarMoedaRelatorio(item.rendaMedia),
+      item.curitiba,
+      item.metropolitana,
+      item.casa,
+      item.apartamento,
+      item.moradia,
+      item.investimento
+    ]),
+    theme: 'plain',
+    headStyles: { fillColor: [253, 241, 232], textColor: [164, 75, 22], fontSize: 6.5, fontStyle: 'bold', halign: 'center' },
+    bodyStyles: { fontSize: 6.3, textColor: [60, 48, 30], valign: 'middle', halign: 'center' },
+    alternateRowStyles: { fillColor: [250, 245, 236] },
+    styles: { cellPadding: 1.5, overflow: 'linebreak', lineColor: [232, 214, 195], lineWidth: 0.12 },
+    columnStyles: {
+      0: { cellWidth: 60, halign: 'left', fontStyle: 'bold' },
+      1: { cellWidth: 18 },
+      2: { cellWidth: 32 },
+      3: { cellWidth: 32 },
+      4: { cellWidth: 22 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 22 },
+      7: { cellWidth: 22 },
+      8: { cellWidth: 22 },
+      9: { cellWidth: 25 }
+    }
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+function exportarRelatorioDocumentacoes() {
+  const btn = document.getElementById('ag-docs-report-btn');
+  const textoOriginal = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Gerando documentação...';
+  }
+
+  setTimeout(() => {
+    try {
+      const dados = agColetarDadosRelatorioDocumentacao();
+      if (!dados.lista.length) {
+        showToast('PDF', 'Não há documentações recebidas com os filtros atuais para gerar o relatório.');
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Biblioteca PDF indisponível.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      if (typeof doc.autoTable !== 'function') throw new Error('Plugin de tabelas do PDF indisponível.');
+
+      const W = doc.internal.pageSize.getWidth();
+      const H = doc.internal.pageSize.getHeight();
+      const filtrosLinha = dados.filtrosResumo.join(' | ');
+      const resumoEquipe = agResumoDocumentacaoPorCampo(dados.lista, item => agEquipeValor(item));
+      const resumoCorretor = agResumoDocumentacaoPorCampo(dados.lista, item => item && item.corretor);
+
+      doc.setFillColor(184, 93, 31);
+      doc.rect(0, 0, W, 24, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ZELONY IMOVEIS', 10, 9);
+      doc.setFontSize(10.5);
+      doc.text('RELATORIO DE DOCUMENTACOES RECEBIDAS', 10, 17);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text(`Gerado em ${hoje()} | ${dados.total} registro(s)`, W - 10, 16, { align: 'right' });
+
+      doc.setFillColor(253, 248, 238);
+      doc.setDrawColor(224, 186, 150);
+      doc.roundedRect(10, 29, W - 20, 20, 3, 3, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.4);
+      doc.setTextColor(145, 71, 24);
+      doc.text('Escopo', 14, 35);
+      doc.text('Filtros', 14, 43);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(70, 56, 32);
+      doc.text(doc.splitTextToSize(agResumoPermissao(), W - 42), 36, 35);
+      doc.text(doc.splitTextToSize(filtrosLinha, W - 42), 36, 43);
+
+      const kpis = [
+        ['Recebidas', String(dados.total)],
+        ['Dados completos', `${dados.completos} (${agPercentualDocumentacao(dados.completos, dados.total)})`],
+        ['Renda informada', `${dados.rendasInformadas} de ${dados.total}`],
+        ['Renda média', agFormatarMoedaRelatorio(dados.rendaMedia)],
+        ['Renda mediana', agFormatarMoedaRelatorio(dados.rendaMediana)],
+        ['Sem dados completos', String(dados.incompletos)]
+      ];
+      const kpiY = 55;
+      const kpiW = (W - 20) / kpis.length;
+      kpis.forEach(([label, value], index) => {
+        const x = 10 + (index * kpiW);
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(224, 186, 150);
+        doc.roundedRect(x, kpiY, kpiW - 2, 19, 2.5, 2.5, 'FD');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.2);
+        doc.setTextColor(145, 91, 50);
+        doc.text(label.toUpperCase(), x + ((kpiW - 2) / 2), kpiY + 6, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(value.length > 15 ? 8 : 10);
+        doc.setTextColor(184, 93, 31);
+        doc.text(value, x + ((kpiW - 2) / 2), kpiY + 14, { align: 'center' });
+      });
+
+      const gap = 5;
+      const blocoW = (W - 20 - (gap * 2)) / 3;
+      agDesenharDistribuicaoDocumentacao(doc, { x: 10, y: 81, w: blocoW, h: 35, titulo: 'LOCAL DE COMPRA', itens: dados.localizacao, total: dados.total });
+      agDesenharDistribuicaoDocumentacao(doc, { x: 10 + blocoW + gap, y: 81, w: blocoW, h: 35, titulo: 'TIPO DE IMOVEL', itens: dados.tipoImovel, total: dados.total });
+      agDesenharDistribuicaoDocumentacao(doc, { x: 10 + ((blocoW + gap) * 2), y: 81, w: blocoW, h: 35, titulo: 'FINALIDADE', itens: dados.finalidade, total: dados.total });
+      agDesenharDistribuicaoDocumentacao(doc, { x: 10, y: 122, w: W - 20, h: 52, titulo: 'DISTRIBUICAO POR FAIXA DE RENDA', itens: dados.faixasRenda, total: dados.total });
+
+      doc.setFillColor(253, 241, 232);
+      doc.setDrawColor(224, 186, 150);
+      doc.roundedRect(10, 180, W - 20, 15, 2.5, 2.5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(145, 71, 24);
+      doc.text('Leitura dos dados', 14, 186);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(70, 56, 32);
+      const nota = `${dados.incompletos} registro(s) sem qualificação completa podem corresponder a documentações recebidas antes da criação destas perguntas. Médias de renda consideram somente os ${dados.rendasInformadas} registro(s) com renda informada.`;
+      doc.text(doc.splitTextToSize(nota, W - 28), 14, 191);
+
+      doc.addPage();
+      agCabecalhoRelatorioDocumentacao(doc, 'VISAO OPERACIONAL POR EQUIPE E CORRETOR', dados.total, W);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(145, 71, 24);
+      doc.text('Resumo por equipe', 10, 24);
+      let finalY = agTabelaResumoDocumentacao(doc, { titulo: 'Equipe', lista: resumoEquipe, startY: 27 });
+      let proximoY = finalY + 11;
+      if (proximoY > H - 45) {
+        doc.addPage();
+        agCabecalhoRelatorioDocumentacao(doc, 'VISAO OPERACIONAL POR CORRETOR', dados.total, W);
+        proximoY = 27;
+      } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(145, 71, 24);
+        doc.text('Resumo por corretor', 10, proximoY - 3);
+      }
+      agTabelaResumoDocumentacao(doc, { titulo: 'Corretor', lista: resumoCorretor, startY: proximoY });
+
+      doc.addPage();
+      agCabecalhoRelatorioDocumentacao(doc, 'DETALHAMENTO DAS DOCUMENTACOES RECEBIDAS', dados.total, W);
+      doc.autoTable({
+        startY: 23,
+        margin: { left: 7, right: 7, top: 23 },
+        head: [['#', 'Recebida em', 'Agendada para', 'Unidade', 'Equipe', 'Corretor', 'Cliente', 'Telefone', 'Renda familiar', 'Local', 'Imóvel', 'Finalidade']],
+        body: dados.lista.map(item => [
+          item.id || '',
+          agFormatarDataRelatorio(item.tratativaEm, { comHora: true }),
+          agFormatarDataHoraRelatorio(item.dataAgendamento, item.horarioAgendamento),
+          agTexto(item.unidade || '—'),
+          agTexto(agEquipeValor(item)),
+          agTexto(item.corretor || '—'),
+          agTexto(item.cliente || '—'),
+          agTexto(agFormatarTelefone(item.telefone || '') || item.telefone || '—'),
+          agFormatarMoedaRelatorio(agRendaBrutaFamiliarNumero(item.rendaBrutaFamiliar)),
+          agTexto(item.localCompra || 'Não informado'),
+          agTexto(item.tipoImovelInteresse || 'Não informado'),
+          agTexto(item.finalidadeImovel || 'Não informado')
+        ]),
+        theme: 'plain',
+        headStyles: { fillColor: [253, 241, 232], textColor: [164, 75, 22], fontSize: 6.1, fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { fontSize: 5.9, textColor: [60, 48, 30], valign: 'top' },
+        alternateRowStyles: { fillColor: [250, 245, 236] },
+        styles: { cellPadding: 1.3, overflow: 'linebreak', lineColor: [232, 214, 195], lineWidth: 0.12 },
+        columnStyles: {
+          0: { cellWidth: 7 },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 18 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 30 },
+          6: { cellWidth: 38 },
+          7: { cellWidth: 24 },
+          8: { cellWidth: 27 },
+          9: { cellWidth: 30 },
+          10: { cellWidth: 21 },
+          11: { cellWidth: 22 }
+        }
+      });
+
+      const totalPaginas = doc.getNumberOfPages();
+      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+        doc.setPage(pagina);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.7);
+        doc.setTextColor(140, 110, 80);
+        doc.text(`Documentações recebidas | ${dados.periodoResumo} | Página ${pagina} de ${totalPaginas}`, W / 2, H - 4, { align: 'center' });
+      }
+
+      doc.save(`documentacoes-recebidas-${agHojeIso()}.pdf`);
+      showToast('OK', 'Relatório de documentações recebidas gerado com sucesso.');
+    } catch (erro) {
+      console.error('Erro ao gerar relatório de documentações:', erro);
+      showToast('ERRO', 'Não foi possível gerar o relatório de documentações recebidas.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = textoOriginal || 'Relatório documentações';
+      }
+    }
+  }, 80);
+}
+
 function exportarRelatorioAgendamentos() {
   const btn = document.getElementById('ag-report-btn');
   const textoOriginal = btn ? btn.textContent : '';
@@ -1226,6 +1634,11 @@ function renderTratativaAgendamentoModal() {
   const rotuloConclusao = agRotuloConclusao(atual);
   const descricaoConclusao = agDescricaoConclusao(atual);
   const canalAgendamento = agCanalAgendamentoValor(atual && atual.canalAgendamento, atual && atual.tipoVisita);
+  const documentacaoRecebidaSelecionada = agTipoDocumentacao(atual) && agTratativaSelecao === AG_SITUACAO_CONCLUIDA;
+  const rendaBrutaFamiliar = agFormatarRendaBrutaFamiliar(atual && atual.rendaBrutaFamiliar);
+  const localCompra = agTexto(atual && atual.localCompra);
+  const tipoImovelInteresse = agTexto(atual && atual.tipoImovelInteresse);
+  const finalidadeImovel = agTexto(atual && atual.finalidadeImovel);
 
   const idxAtual = Math.max(agTratativaFila.indexOf(atual.id), 0);
   const totalFila = agTratativaFila.length || 1;
@@ -1284,6 +1697,43 @@ function renderTratativaAgendamentoModal() {
         </button>
       </div>
     </div>
+
+    ${agTipoDocumentacao(atual) ? `
+      <div id="agt-documentacao-box" class="agt-documentacao-box ${documentacaoRecebidaSelecionada ? 'show' : ''}" aria-live="polite">
+        <div class="agt-label">Informações obrigatórias do cliente</div>
+        <div class="agt-documentacao-intro">Preencha todos os campos abaixo para confirmar o recebimento da documentação.</div>
+        <div class="agt-documentacao-grid">
+          <div class="f-field">
+            <label for="agt-renda-bruta-familiar">Qual é a renda bruta familiar? *</label>
+            <div class="agt-money-input">
+              <span>R$</span>
+              <input type="text" id="agt-renda-bruta-familiar" value="${agAttr(rendaBrutaFamiliar)}" placeholder="Ex.: 8.500,00" inputmode="decimal" maxlength="18" onblur="formatarRendaBrutaFamiliarAgendamento(this)" required>
+            </div>
+          </div>
+          <div class="f-field">
+            <label for="agt-local-compra">Quer comprar em Curitiba ou Região Metropolitana? *</label>
+            <select id="agt-local-compra" required>
+              <option value="">Selecione...</option>
+              ${AG_LOCAIS_COMPRA.map(opcao => `<option value="${agAttr(opcao)}" ${localCompra === opcao ? 'selected' : ''}>${agTexto(opcao)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="f-field">
+            <label for="agt-tipo-imovel">Quer comprar casa ou apartamento? *</label>
+            <select id="agt-tipo-imovel" required>
+              <option value="">Selecione...</option>
+              ${AG_TIPOS_IMOVEL_INTERESSE.map(opcao => `<option value="${agAttr(opcao)}" ${tipoImovelInteresse === opcao ? 'selected' : ''}>${agTexto(opcao)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="f-field">
+            <label for="agt-finalidade-imovel">Moradia ou investimento? *</label>
+            <select id="agt-finalidade-imovel" required>
+              <option value="">Selecione...</option>
+              ${AG_FINALIDADES_IMOVEL.map(opcao => `<option value="${agAttr(opcao)}" ${finalidadeImovel === opcao ? 'selected' : ''}>${agTexto(opcao)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+    ` : ''}
 
     <div id="agt-reagendar-box" class="agt-reagendar-box ${agTratativaSelecao === AG_SITUACAO_REAGENDADO ? 'show' : ''}">
       <div class="agt-label">Novo horário do compromisso</div>
@@ -1495,6 +1945,46 @@ async function confirmarTratativaAgendamento() {
   const btn = document.getElementById('mat-save-btn');
   const modoTratativa = agTratativaModo || 'manual';
   const novosAgendamentos = [];
+  let qualificacaoDocumentacao = null;
+
+  if (agTipoDocumentacao(atual) && agTratativaSelecao === AG_SITUACAO_CONCLUIDA) {
+    const rendaInput = document.getElementById('agt-renda-bruta-familiar');
+    const localInput = document.getElementById('agt-local-compra');
+    const tipoImovelInput = document.getElementById('agt-tipo-imovel');
+    const finalidadeInput = document.getElementById('agt-finalidade-imovel');
+    const rendaBrutaFamiliar = agRendaBrutaFamiliarNumero(rendaInput && rendaInput.value);
+    const localCompra = agTexto(localInput && localInput.value);
+    const tipoImovelInteresse = agTexto(tipoImovelInput && tipoImovelInput.value);
+    const finalidadeImovel = agTexto(finalidadeInput && finalidadeInput.value);
+
+    if (!rendaBrutaFamiliar) {
+      if (rendaInput) rendaInput.focus();
+      showToast('⚠️', 'Informe a renda bruta familiar do cliente.');
+      return;
+    }
+    if (!AG_LOCAIS_COMPRA.includes(localCompra)) {
+      if (localInput) localInput.focus();
+      showToast('⚠️', 'Informe se o cliente quer comprar em Curitiba ou na Região metropolitana.');
+      return;
+    }
+    if (!AG_TIPOS_IMOVEL_INTERESSE.includes(tipoImovelInteresse)) {
+      if (tipoImovelInput) tipoImovelInput.focus();
+      showToast('⚠️', 'Informe se o cliente quer comprar casa ou apartamento.');
+      return;
+    }
+    if (!AG_FINALIDADES_IMOVEL.includes(finalidadeImovel)) {
+      if (finalidadeInput) finalidadeInput.focus();
+      showToast('⚠️', 'Informe se o imóvel será para moradia ou investimento.');
+      return;
+    }
+
+    qualificacaoDocumentacao = {
+      rendaBrutaFamiliar,
+      localCompra,
+      tipoImovelInteresse,
+      finalidadeImovel
+    };
+  }
 
   if (agTratativaSelecao === AG_SITUACAO_REAGENDADO) {
     const novaData = document.getElementById('agt-nova-data') ? document.getElementById('agt-nova-data').value : '';
@@ -1548,6 +2038,10 @@ async function confirmarTratativaAgendamento() {
       reagendadoParaHorario: '',
       origemAgendamentoId: atual.id || 0,
       novoAgendamentoId: 0,
+      rendaBrutaFamiliar: 0,
+      localCompra: '',
+      tipoImovelInteresse: '',
+      finalidadeImovel: '',
       atualizadoEm: agoraIso,
       refLocal: typeof gerarRefLocalAgendamento === 'function' ? gerarRefLocalAgendamento() : '',
       syncPendente: true,
@@ -1563,6 +2057,7 @@ async function confirmarTratativaAgendamento() {
   atual.tratativaPor = agTexto(usuarioAtual.nome || 'Sistema');
   atual.tratativaPorId = parseInt(usuarioAtual.id, 10) || 0;
   atual.tratativaPorEmail = agTexto(usuarioAtual.email).toLowerCase();
+  if (qualificacaoDocumentacao) Object.assign(atual, qualificacaoDocumentacao);
   atual.atualizadoEm = agoraIso;
   if (typeof marcarAgendamentoSyncPendente === 'function') marcarAgendamentoSyncPendente(atual);
   novosAgendamentos.forEach(item => {
@@ -1763,7 +2258,10 @@ function renderAgendamentos() {
           </div>
         </div>
         <button class="ag-clear-btn ag-report-btn" id="ag-report-btn" type="button" onclick="exportarRelatorioAgendamentos()">
-          Relatorio PDF
+          Relatório geral
+        </button>
+        <button class="ag-clear-btn ag-report-btn ag-docs-report-btn" id="ag-docs-report-btn" type="button" onclick="exportarRelatorioDocumentacoes()">
+          Relatório documentações
         </button>
         <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
@@ -1821,7 +2319,7 @@ function renderAgendamentos() {
         <div class="ag-stat-group-title">Documentacao</div>
         <div class="ag-stat-group-body">
           <div class="ag-stat-row">
-            <span>Total de agendamentos feitos</span>
+            <span>Total de promessas feitos</span>
             <strong>${resumoDocumentacaoDashboard.total}</strong>
           </div>
           <div class="ag-stat-row">
@@ -2252,6 +2750,10 @@ async function salvarAgendamento() {
     reagendadoParaHorario: '',
     origemAgendamentoId: 0,
     novoAgendamentoId: 0,
+    rendaBrutaFamiliar: 0,
+    localCompra: '',
+    tipoImovelInteresse: '',
+    finalidadeImovel: '',
     atualizadoEm: new Date().toISOString(),
     refLocal: typeof gerarRefLocalAgendamento === 'function' ? gerarRefLocalAgendamento() : '',
     syncPendente: true,
@@ -2358,6 +2860,7 @@ zRegisterModule('agendamentos', {
   limparFiltrosAgendamento,
   salvarAgendamento,
   exportarRelatorioAgendamentos,
+  exportarRelatorioDocumentacoes,
   temTratativaAgendamentoObrigatoriaAberta,
   verificarPendenciasAgendamento,
   iniciarMonitorTratativaAgendamento,
