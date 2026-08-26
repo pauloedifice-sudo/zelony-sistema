@@ -99,6 +99,19 @@ function formatarRendaBrutaFamiliarAgendamento(input) {
   input.value = agFormatarRendaBrutaFamiliar(input.value);
 }
 
+function agRespostaBooleana(valor) {
+  if (typeof valor === 'boolean') return valor;
+  const texto = String(valor == null ? '' : valor).trim().toLowerCase();
+  if (['sim', 'true', '1'].includes(texto)) return true;
+  if (['não', 'nao', 'false', '0'].includes(texto)) return false;
+  return null;
+}
+
+function agRespostaSimNaoValor(valor) {
+  const resposta = agRespostaBooleana(valor);
+  return resposta === true ? 'sim' : (resposta === false ? 'nao' : '');
+}
+
 function agTelefoneDigitos(valor) {
   let digitos = agTexto(valor).replace(/\D/g, '');
   if ((digitos.length === 12 || digitos.length === 13) && digitos.startsWith('55')) {
@@ -218,13 +231,15 @@ function agCanalBadgeRotulo(item) {
 }
 
 function agRotuloConclusao(item) {
-  return agTipoDocumentacao(item) ? 'Documentacao recebida' : 'Visita concluida';
+  if (agTipoDocumentacao(item)) return 'Documentacao recebida';
+  if (agTipoFechamento(item)) return 'Fechamento concluído';
+  return 'Visita concluida';
 }
 
 function agDescricaoConclusao(item) {
-  return agTipoDocumentacao(item)
-    ? 'O cliente enviou a documentacao para analise online.'
-    : 'O cliente foi atendido normalmente.';
+  if (agTipoDocumentacao(item)) return 'O cliente enviou a documentacao para analise online.';
+  if (agTipoFechamento(item)) return 'O atendimento de fechamento foi concluído.';
+  return 'O cliente foi atendido normalmente.';
 }
 
 function agSituacaoExibicao(item) {
@@ -232,9 +247,9 @@ function agSituacaoExibicao(item) {
 }
 
 function agHintTratativa(item) {
-  return agTipoDocumentacao(item)
-    ? 'Clique no compromisso para registrar documentacao recebida, reagendamento ou cancelamento.'
-    : 'Clique no compromisso para registrar visita concluida, reagendamento ou cancelamento.';
+  if (agTipoDocumentacao(item)) return 'Clique no compromisso para registrar documentacao recebida, reagendamento ou cancelamento.';
+  if (agTipoFechamento(item)) return 'Clique no compromisso para registrar fechamento concluído, reagendamento ou cancelamento.';
+  return 'Clique no compromisso para registrar visita concluida, reagendamento ou cancelamento.';
 }
 
 function agHojeIso() {
@@ -1252,6 +1267,351 @@ function exportarRelatorioDocumentacoes() {
   }, 80);
 }
 
+function agFechamentoConcluido(item) {
+  return agTipoFechamento(item) && agSituacaoNormalizada(item) === 'concluida';
+}
+
+function agFechamentoDadosCompletos(item) {
+  return agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar) > 0
+    && AG_TIPOS_IMOVEL_INTERESSE.includes(agTexto(item && item.tipoImovelInteresse))
+    && AG_FINALIDADES_IMOVEL.includes(agTexto(item && item.finalidadeImovel))
+    && agRespostaBooleana(item && item.assinouPropostaCompra) !== null
+    && agRespostaBooleana(item && item.pagouAto) !== null;
+}
+
+function agRespostaSimNaoRotulo(valor) {
+  const resposta = agRespostaBooleana(valor);
+  return resposta === true ? 'Sim' : (resposta === false ? 'Não' : 'Não informado');
+}
+
+function agDistribuicaoRespostaFechamento(lista, campo) {
+  const base = Array.isArray(lista) ? lista : [];
+  return [
+    { rotulo: 'Sim', quantidade: base.filter(item => agRespostaBooleana(item && item[campo]) === true).length },
+    { rotulo: 'Não', quantidade: base.filter(item => agRespostaBooleana(item && item[campo]) === false).length },
+    { rotulo: 'Não informado', quantidade: base.filter(item => agRespostaBooleana(item && item[campo]) === null).length }
+  ];
+}
+
+function agColetarDadosRelatorioFechamento() {
+  const dadosGerais = agColetarDadosRelatorio();
+  const lista = dadosGerais.lista.filter(agFechamentoConcluido);
+  const rendas = lista
+    .map(item => agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar))
+    .filter(renda => renda > 0);
+  const completos = lista.filter(agFechamentoDadosCompletos).length;
+  const total = lista.length;
+  return {
+    ...dadosGerais,
+    lista,
+    total,
+    completos,
+    incompletos: Math.max(total - completos, 0),
+    rendasInformadas: rendas.length,
+    rendaMedia: rendas.length ? rendas.reduce((soma, renda) => soma + renda, 0) / rendas.length : 0,
+    rendaMediana: agMedianaDocumentacao(rendas),
+    propostasAssinadas: lista.filter(item => agRespostaBooleana(item && item.assinouPropostaCompra) === true).length,
+    atosPagos: lista.filter(item => agRespostaBooleana(item && item.pagouAto) === true).length,
+    tipoImovel: agDistribuicaoDocumentacao(lista, 'tipoImovelInteresse', AG_TIPOS_IMOVEL_INTERESSE),
+    finalidade: agDistribuicaoDocumentacao(lista, 'finalidadeImovel', AG_FINALIDADES_IMOVEL),
+    proposta: agDistribuicaoRespostaFechamento(lista, 'assinouPropostaCompra'),
+    ato: agDistribuicaoRespostaFechamento(lista, 'pagouAto'),
+    faixasRenda: agDistribuicaoRendaDocumentacao(lista)
+  };
+}
+
+function agResumoFechamentoPorCampo(lista, obterNome) {
+  const mapa = new Map();
+  (Array.isArray(lista) ? lista : []).forEach(item => {
+    const nome = agTexto(obterNome(item)) || 'Não informado';
+    const chave = agNormalizarTexto(nome) || nome;
+    if (!mapa.has(chave)) {
+      mapa.set(chave, {
+        nome,
+        total: 0,
+        completos: 0,
+        rendas: [],
+        casa: 0,
+        apartamento: 0,
+        moradia: 0,
+        investimento: 0,
+        propostasAssinadas: 0,
+        atosPagos: 0
+      });
+    }
+    const resumo = mapa.get(chave);
+    const renda = agRendaBrutaFamiliarNumero(item && item.rendaBrutaFamiliar);
+    resumo.total += 1;
+    if (agFechamentoDadosCompletos(item)) resumo.completos += 1;
+    if (renda) resumo.rendas.push(renda);
+    if (agTexto(item && item.tipoImovelInteresse) === 'Casa') resumo.casa += 1;
+    if (agTexto(item && item.tipoImovelInteresse) === 'Apartamento') resumo.apartamento += 1;
+    if (agTexto(item && item.finalidadeImovel) === 'Moradia') resumo.moradia += 1;
+    if (agTexto(item && item.finalidadeImovel) === 'Investimento') resumo.investimento += 1;
+    if (agRespostaBooleana(item && item.assinouPropostaCompra) === true) resumo.propostasAssinadas += 1;
+    if (agRespostaBooleana(item && item.pagouAto) === true) resumo.atosPagos += 1;
+  });
+  return Array.from(mapa.values())
+    .map(item => ({
+      ...item,
+      rendaMedia: item.rendas.length ? item.rendas.reduce((soma, renda) => soma + renda, 0) / item.rendas.length : 0
+    }))
+    .sort((a, b) => b.total - a.total || a.nome.localeCompare(b.nome, 'pt-BR'));
+}
+
+function agCabecalhoRelatorioFechamento(doc, titulo, total, largura) {
+  doc.setFillColor(35, 122, 82);
+  doc.rect(0, 0, largura, 18, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(11);
+  doc.text(titulo, 10, 11);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.text(`${total} fechamento(s) concluído(s)`, largura - 10, 11, { align: 'right' });
+}
+
+function agDesenharDistribuicaoFechamento(doc, config) {
+  const itens = Array.isArray(config.itens) ? config.itens : [];
+  doc.setFillColor(238, 248, 242);
+  doc.setDrawColor(166, 212, 183);
+  doc.roundedRect(config.x, config.y, config.w, config.h, 2.5, 2.5, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.2);
+  doc.setTextColor(31, 101, 69);
+  doc.text(config.titulo, config.x + 4, config.y + 6);
+  itens.forEach((item, index) => {
+    const linhaY = config.y + 12 + (index * 6.4);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(52, 72, 60);
+    doc.text(agTexto(item.rotulo), config.x + 4, linhaY);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${item.quantidade} (${agPercentualDocumentacao(item.quantidade, config.total)})`, config.x + config.w - 4, linhaY, { align: 'right' });
+  });
+}
+
+function agTabelaResumoFechamento(doc, config) {
+  doc.autoTable({
+    startY: config.startY,
+    margin: { left: 10, right: 10, top: 22 },
+    head: [[config.titulo, 'Fech.', 'Dados completos', 'Renda média', 'Casa', 'Apto.', 'Moradia', 'Invest.', 'Proposta sim', 'Ato pago']],
+    body: (config.lista || []).map(item => [
+      item.nome,
+      item.total,
+      `${item.completos} (${agPercentualDocumentacao(item.completos, item.total)})`,
+      agFormatarMoedaRelatorio(item.rendaMedia),
+      item.casa,
+      item.apartamento,
+      item.moradia,
+      item.investimento,
+      item.propostasAssinadas,
+      item.atosPagos
+    ]),
+    theme: 'plain',
+    headStyles: { fillColor: [238, 248, 242], textColor: [31, 101, 69], fontSize: 6.5, fontStyle: 'bold', halign: 'center' },
+    bodyStyles: { fontSize: 6.3, textColor: [44, 65, 52], valign: 'middle', halign: 'center' },
+    alternateRowStyles: { fillColor: [244, 250, 246] },
+    styles: { cellPadding: 1.5, overflow: 'linebreak', lineColor: [200, 225, 210], lineWidth: 0.12 },
+    columnStyles: {
+      0: { cellWidth: 60, halign: 'left', fontStyle: 'bold' },
+      1: { cellWidth: 18 },
+      2: { cellWidth: 32 },
+      3: { cellWidth: 32 },
+      4: { cellWidth: 22 },
+      5: { cellWidth: 22 },
+      6: { cellWidth: 22 },
+      7: { cellWidth: 22 },
+      8: { cellWidth: 25 },
+      9: { cellWidth: 22 }
+    }
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+function exportarRelatorioFechamentos() {
+  const btn = document.getElementById('ag-close-report-btn');
+  const textoOriginal = btn ? btn.textContent : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Gerando fechamentos...';
+  }
+
+  setTimeout(() => {
+    try {
+      const dados = agColetarDadosRelatorioFechamento();
+      if (!dados.lista.length) {
+        showToast('PDF', 'Não há fechamentos concluídos com os filtros atuais para gerar o relatório.');
+        return;
+      }
+      if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('Biblioteca PDF indisponível.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      if (typeof doc.autoTable !== 'function') throw new Error('Plugin de tabelas do PDF indisponível.');
+
+      const W = doc.internal.pageSize.getWidth();
+      const H = doc.internal.pageSize.getHeight();
+      const filtrosLinha = dados.filtrosResumo.join(' | ');
+      const resumoEquipe = agResumoFechamentoPorCampo(dados.lista, item => agEquipeValor(item));
+      const resumoCorretor = agResumoFechamentoPorCampo(dados.lista, item => item && item.corretor);
+
+      doc.setFillColor(35, 122, 82);
+      doc.rect(0, 0, W, 24, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ZELONY IMOVEIS', 10, 9);
+      doc.setFontSize(10.5);
+      doc.text('RELATORIO DE FECHAMENTOS CONCLUIDOS', 10, 17);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.text(`Gerado em ${hoje()} | ${dados.total} registro(s)`, W - 10, 16, { align: 'right' });
+
+      doc.setFillColor(238, 248, 242);
+      doc.setDrawColor(166, 212, 183);
+      doc.roundedRect(10, 29, W - 20, 20, 3, 3, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.4);
+      doc.setTextColor(31, 101, 69);
+      doc.text('Escopo', 14, 35);
+      doc.text('Filtros', 14, 43);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(44, 65, 52);
+      doc.text(doc.splitTextToSize(agResumoPermissao(), W - 42), 36, 35);
+      doc.text(doc.splitTextToSize(filtrosLinha, W - 42), 36, 43);
+
+      const kpis = [
+        ['Concluídos', String(dados.total)],
+        ['Dados completos', `${dados.completos} (${agPercentualDocumentacao(dados.completos, dados.total)})`],
+        ['Renda média', agFormatarMoedaRelatorio(dados.rendaMedia)],
+        ['Renda mediana', agFormatarMoedaRelatorio(dados.rendaMediana)],
+        ['Proposta assinada', `${dados.propostasAssinadas} (${agPercentualDocumentacao(dados.propostasAssinadas, dados.total)})`],
+        ['Ato pago', `${dados.atosPagos} (${agPercentualDocumentacao(dados.atosPagos, dados.total)})`],
+        ['Sem dados completos', String(dados.incompletos)]
+      ];
+      const kpiY = 55;
+      const kpiW = (W - 20) / kpis.length;
+      kpis.forEach(([label, value], index) => {
+        const x = 10 + (index * kpiW);
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(166, 212, 183);
+        doc.roundedRect(x, kpiY, kpiW - 2, 19, 2.5, 2.5, 'FD');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.9);
+        doc.setTextColor(55, 105, 76);
+        doc.text(label.toUpperCase(), x + ((kpiW - 2) / 2), kpiY + 6, { align: 'center' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(value.length > 15 ? 7.2 : 9.2);
+        doc.setTextColor(35, 122, 82);
+        doc.text(value, x + ((kpiW - 2) / 2), kpiY + 14, { align: 'center' });
+      });
+
+      const gap = 5;
+      const blocoW = (W - 20 - (gap * 3)) / 4;
+      agDesenharDistribuicaoFechamento(doc, { x: 10, y: 81, w: blocoW, h: 35, titulo: 'TIPO DE IMOVEL', itens: dados.tipoImovel, total: dados.total });
+      agDesenharDistribuicaoFechamento(doc, { x: 10 + blocoW + gap, y: 81, w: blocoW, h: 35, titulo: 'FINALIDADE', itens: dados.finalidade, total: dados.total });
+      agDesenharDistribuicaoFechamento(doc, { x: 10 + ((blocoW + gap) * 2), y: 81, w: blocoW, h: 35, titulo: 'PROPOSTA ASSINADA', itens: dados.proposta, total: dados.total });
+      agDesenharDistribuicaoFechamento(doc, { x: 10 + ((blocoW + gap) * 3), y: 81, w: blocoW, h: 35, titulo: 'ATO PAGO', itens: dados.ato, total: dados.total });
+      agDesenharDistribuicaoFechamento(doc, { x: 10, y: 122, w: W - 20, h: 52, titulo: 'DISTRIBUICAO POR FAIXA DE RENDA', itens: dados.faixasRenda, total: dados.total });
+
+      doc.setFillColor(238, 248, 242);
+      doc.setDrawColor(166, 212, 183);
+      doc.roundedRect(10, 180, W - 20, 15, 2.5, 2.5, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(31, 101, 69);
+      doc.text('Funil do fechamento', 14, 186);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(44, 65, 52);
+      const nota = `${dados.total} fechamento(s) concluído(s) → ${dados.propostasAssinadas} proposta(s) assinada(s) → ${dados.atosPagos} ato(s) pago(s). ${dados.incompletos} registro(s) antigos ainda não possuem todos os dados de qualificação.`;
+      doc.text(doc.splitTextToSize(nota, W - 28), 14, 191);
+
+      doc.addPage();
+      agCabecalhoRelatorioFechamento(doc, 'VISAO OPERACIONAL POR EQUIPE E CORRETOR', dados.total, W);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(31, 101, 69);
+      doc.text('Resumo por equipe', 10, 24);
+      let finalY = agTabelaResumoFechamento(doc, { titulo: 'Equipe', lista: resumoEquipe, startY: 27 });
+      let proximoY = finalY + 11;
+      if (proximoY > H - 45) {
+        doc.addPage();
+        agCabecalhoRelatorioFechamento(doc, 'VISAO OPERACIONAL POR CORRETOR', dados.total, W);
+        proximoY = 27;
+      } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(31, 101, 69);
+        doc.text('Resumo por corretor', 10, proximoY - 3);
+      }
+      agTabelaResumoFechamento(doc, { titulo: 'Corretor', lista: resumoCorretor, startY: proximoY });
+
+      doc.addPage();
+      agCabecalhoRelatorioFechamento(doc, 'DETALHAMENTO DOS FECHAMENTOS CONCLUIDOS', dados.total, W);
+      doc.autoTable({
+        startY: 23,
+        margin: { left: 7, right: 7, top: 23 },
+        head: [['#', 'Concluído em', 'Agendado para', 'Unidade', 'Equipe', 'Corretor', 'Cliente', 'Telefone', 'Renda', 'Imóvel', 'Finalidade', 'Proposta', 'Ato']],
+        body: dados.lista.map(item => [
+          item.id || '',
+          agFormatarDataRelatorio(item.tratativaEm, { comHora: true }),
+          agFormatarDataHoraRelatorio(item.dataAgendamento, item.horarioAgendamento),
+          agTexto(item.unidade || '—'),
+          agTexto(agEquipeValor(item)),
+          agTexto(item.corretor || '—'),
+          agTexto(item.cliente || '—'),
+          agTexto(agFormatarTelefone(item.telefone || '') || item.telefone || '—'),
+          agFormatarMoedaRelatorio(agRendaBrutaFamiliarNumero(item.rendaBrutaFamiliar)),
+          agTexto(item.tipoImovelInteresse || 'Não informado'),
+          agTexto(item.finalidadeImovel || 'Não informado'),
+          agRespostaSimNaoRotulo(item.assinouPropostaCompra),
+          agRespostaSimNaoRotulo(item.pagouAto)
+        ]),
+        theme: 'plain',
+        headStyles: { fillColor: [238, 248, 242], textColor: [31, 101, 69], fontSize: 6, fontStyle: 'bold', halign: 'center' },
+        bodyStyles: { fontSize: 5.8, textColor: [44, 65, 52], valign: 'top' },
+        alternateRowStyles: { fillColor: [244, 250, 246] },
+        styles: { cellPadding: 1.3, overflow: 'linebreak', lineColor: [200, 225, 210], lineWidth: 0.12 },
+        columnStyles: {
+          0: { cellWidth: 7 },
+          1: { cellWidth: 22 },
+          2: { cellWidth: 22 },
+          3: { cellWidth: 18 },
+          4: { cellWidth: 22 },
+          5: { cellWidth: 28 },
+          6: { cellWidth: 36 },
+          7: { cellWidth: 24 },
+          8: { cellWidth: 26 },
+          9: { cellWidth: 20 },
+          10: { cellWidth: 22 },
+          11: { cellWidth: 18 },
+          12: { cellWidth: 18 }
+        }
+      });
+
+      const totalPaginas = doc.getNumberOfPages();
+      for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+        doc.setPage(pagina);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5.7);
+        doc.setTextColor(85, 120, 98);
+        doc.text(`Fechamentos concluídos | ${dados.periodoResumo} | Página ${pagina} de ${totalPaginas}`, W / 2, H - 4, { align: 'center' });
+      }
+
+      doc.save(`fechamentos-concluidos-${agHojeIso()}.pdf`);
+      showToast('OK', 'Relatório de fechamentos concluídos gerado com sucesso.');
+    } catch (erro) {
+      console.error('Erro ao gerar relatório de fechamentos:', erro);
+      showToast('ERRO', 'Não foi possível gerar o relatório de fechamentos concluídos.');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = textoOriginal || 'Relatório fechamentos';
+      }
+    }
+  }, 80);
+}
+
 function exportarRelatorioAgendamentos() {
   const btn = document.getElementById('ag-report-btn');
   const textoOriginal = btn ? btn.textContent : '';
@@ -1635,10 +1995,13 @@ function renderTratativaAgendamentoModal() {
   const descricaoConclusao = agDescricaoConclusao(atual);
   const canalAgendamento = agCanalAgendamentoValor(atual && atual.canalAgendamento, atual && atual.tipoVisita);
   const documentacaoRecebidaSelecionada = agTipoDocumentacao(atual) && agTratativaSelecao === AG_SITUACAO_CONCLUIDA;
+  const fechamentoConcluidoSelecionado = agTipoFechamento(atual) && agTratativaSelecao === AG_SITUACAO_CONCLUIDA;
   const rendaBrutaFamiliar = agFormatarRendaBrutaFamiliar(atual && atual.rendaBrutaFamiliar);
   const localCompra = agTexto(atual && atual.localCompra);
   const tipoImovelInteresse = agTexto(atual && atual.tipoImovelInteresse);
   const finalidadeImovel = agTexto(atual && atual.finalidadeImovel);
+  const assinouPropostaCompra = agRespostaSimNaoValor(atual && atual.assinouPropostaCompra);
+  const pagouAto = agRespostaSimNaoValor(atual && atual.pagouAto);
 
   const idxAtual = Math.max(agTratativaFila.indexOf(atual.id), 0);
   const totalFila = agTratativaFila.length || 1;
@@ -1729,6 +2092,52 @@ function renderTratativaAgendamentoModal() {
             <select id="agt-finalidade-imovel" required>
               <option value="">Selecione...</option>
               ${AG_FINALIDADES_IMOVEL.map(opcao => `<option value="${agAttr(opcao)}" ${finalidadeImovel === opcao ? 'selected' : ''}>${agTexto(opcao)}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+    ` : ''}
+
+    ${agTipoFechamento(atual) ? `
+      <div id="agt-fechamento-box" class="agt-documentacao-box ${fechamentoConcluidoSelecionado ? 'show' : ''}" aria-live="polite">
+        <div class="agt-label">Informações obrigatórias do fechamento</div>
+        <div class="agt-documentacao-intro">Preencha todos os campos abaixo para confirmar o fechamento concluído.</div>
+        <div class="agt-documentacao-grid">
+          <div class="f-field">
+            <label for="agt-renda-bruta-familiar">Qual é a renda bruta? *</label>
+            <div class="agt-money-input">
+              <span>R$</span>
+              <input type="text" id="agt-renda-bruta-familiar" value="${agAttr(rendaBrutaFamiliar)}" placeholder="Ex.: 8.500,00" inputmode="decimal" maxlength="18" onblur="formatarRendaBrutaFamiliarAgendamento(this)" required>
+            </div>
+          </div>
+          <div class="f-field">
+            <label for="agt-tipo-imovel">Seu cliente estava buscando casa ou apartamento? *</label>
+            <select id="agt-tipo-imovel" required>
+              <option value="">Selecione...</option>
+              ${AG_TIPOS_IMOVEL_INTERESSE.map(opcao => `<option value="${agAttr(opcao)}" ${tipoImovelInteresse === opcao ? 'selected' : ''}>${agTexto(opcao)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="f-field">
+            <label for="agt-finalidade-imovel">Era para moradia ou investimento? *</label>
+            <select id="agt-finalidade-imovel" required>
+              <option value="">Selecione...</option>
+              ${AG_FINALIDADES_IMOVEL.map(opcao => `<option value="${agAttr(opcao)}" ${finalidadeImovel === opcao ? 'selected' : ''}>${agTexto(opcao)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="f-field">
+            <label for="agt-assinou-proposta">Cliente assinou proposta de compra? *</label>
+            <select id="agt-assinou-proposta" required>
+              <option value="">Selecione...</option>
+              <option value="sim" ${assinouPropostaCompra === 'sim' ? 'selected' : ''}>Sim</option>
+              <option value="nao" ${assinouPropostaCompra === 'nao' ? 'selected' : ''}>Não</option>
+            </select>
+          </div>
+          <div class="f-field">
+            <label for="agt-pagou-ato">Pagou o ato? *</label>
+            <select id="agt-pagou-ato" required>
+              <option value="">Selecione...</option>
+              <option value="sim" ${pagouAto === 'sim' ? 'selected' : ''}>Sim</option>
+              <option value="nao" ${pagouAto === 'nao' ? 'selected' : ''}>Não</option>
             </select>
           </div>
         </div>
@@ -1946,6 +2355,7 @@ async function confirmarTratativaAgendamento() {
   const modoTratativa = agTratativaModo || 'manual';
   const novosAgendamentos = [];
   let qualificacaoDocumentacao = null;
+  let qualificacaoFechamento = null;
 
   if (agTipoDocumentacao(atual) && agTratativaSelecao === AG_SITUACAO_CONCLUIDA) {
     const rendaInput = document.getElementById('agt-renda-bruta-familiar');
@@ -1983,6 +2393,53 @@ async function confirmarTratativaAgendamento() {
       localCompra,
       tipoImovelInteresse,
       finalidadeImovel
+    };
+  }
+
+  if (agTipoFechamento(atual) && agTratativaSelecao === AG_SITUACAO_CONCLUIDA) {
+    const rendaInput = document.getElementById('agt-renda-bruta-familiar');
+    const tipoImovelInput = document.getElementById('agt-tipo-imovel');
+    const finalidadeInput = document.getElementById('agt-finalidade-imovel');
+    const propostaInput = document.getElementById('agt-assinou-proposta');
+    const atoInput = document.getElementById('agt-pagou-ato');
+    const rendaBrutaFamiliar = agRendaBrutaFamiliarNumero(rendaInput && rendaInput.value);
+    const tipoImovelInteresse = agTexto(tipoImovelInput && tipoImovelInput.value);
+    const finalidadeImovel = agTexto(finalidadeInput && finalidadeInput.value);
+    const assinouPropostaCompra = agRespostaBooleana(propostaInput && propostaInput.value);
+    const pagouAto = agRespostaBooleana(atoInput && atoInput.value);
+
+    if (!rendaBrutaFamiliar) {
+      if (rendaInput) rendaInput.focus();
+      showToast('⚠️', 'Informe a renda bruta do cliente.');
+      return;
+    }
+    if (!AG_TIPOS_IMOVEL_INTERESSE.includes(tipoImovelInteresse)) {
+      if (tipoImovelInput) tipoImovelInput.focus();
+      showToast('⚠️', 'Informe se o cliente estava buscando casa ou apartamento.');
+      return;
+    }
+    if (!AG_FINALIDADES_IMOVEL.includes(finalidadeImovel)) {
+      if (finalidadeInput) finalidadeInput.focus();
+      showToast('⚠️', 'Informe se o imóvel era para moradia ou investimento.');
+      return;
+    }
+    if (assinouPropostaCompra === null) {
+      if (propostaInput) propostaInput.focus();
+      showToast('⚠️', 'Informe se o cliente assinou a proposta de compra.');
+      return;
+    }
+    if (pagouAto === null) {
+      if (atoInput) atoInput.focus();
+      showToast('⚠️', 'Informe se o cliente pagou o ato.');
+      return;
+    }
+
+    qualificacaoFechamento = {
+      rendaBrutaFamiliar,
+      tipoImovelInteresse,
+      finalidadeImovel,
+      assinouPropostaCompra,
+      pagouAto
     };
   }
 
@@ -2042,6 +2499,8 @@ async function confirmarTratativaAgendamento() {
       localCompra: '',
       tipoImovelInteresse: '',
       finalidadeImovel: '',
+      assinouPropostaCompra: null,
+      pagouAto: null,
       atualizadoEm: agoraIso,
       refLocal: typeof gerarRefLocalAgendamento === 'function' ? gerarRefLocalAgendamento() : '',
       syncPendente: true,
@@ -2058,6 +2517,7 @@ async function confirmarTratativaAgendamento() {
   atual.tratativaPorId = parseInt(usuarioAtual.id, 10) || 0;
   atual.tratativaPorEmail = agTexto(usuarioAtual.email).toLowerCase();
   if (qualificacaoDocumentacao) Object.assign(atual, qualificacaoDocumentacao);
+  if (qualificacaoFechamento) Object.assign(atual, qualificacaoFechamento);
   atual.atualizadoEm = agoraIso;
   if (typeof marcarAgendamentoSyncPendente === 'function') marcarAgendamentoSyncPendente(atual);
   novosAgendamentos.forEach(item => {
@@ -2262,6 +2722,9 @@ function renderAgendamentos() {
         </button>
         <button class="ag-clear-btn ag-report-btn ag-docs-report-btn" id="ag-docs-report-btn" type="button" onclick="exportarRelatorioDocumentacoes()">
           Relatório documentações
+        </button>
+        <button class="ag-clear-btn ag-report-btn ag-close-report-btn" id="ag-close-report-btn" type="button" onclick="exportarRelatorioFechamentos()">
+          Relatório fechamentos
         </button>
         <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
@@ -2754,6 +3217,8 @@ async function salvarAgendamento() {
     localCompra: '',
     tipoImovelInteresse: '',
     finalidadeImovel: '',
+    assinouPropostaCompra: null,
+    pagouAto: null,
     atualizadoEm: new Date().toISOString(),
     refLocal: typeof gerarRefLocalAgendamento === 'function' ? gerarRefLocalAgendamento() : '',
     syncPendente: true,
@@ -2861,6 +3326,7 @@ zRegisterModule('agendamentos', {
   salvarAgendamento,
   exportarRelatorioAgendamentos,
   exportarRelatorioDocumentacoes,
+  exportarRelatorioFechamentos,
   temTratativaAgendamentoObrigatoriaAberta,
   verificarPendenciasAgendamento,
   iniciarMonitorTratativaAgendamento,

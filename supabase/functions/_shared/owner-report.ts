@@ -810,47 +810,6 @@ function financeiroReferenceDate(item: OwnerReportFinanceiro) {
   return parseIsoDate(item.data_realizada || item.dataRealizada || "") || parseIsoDate(item.data_prevista || item.dataPrevista || "");
 }
 
-function comissaoItem(venda: OwnerReportVenda, date: Date, status: "previsto" | "atrasado" | "realizado") {
-  return {
-    natureza: "entrada",
-    status,
-    valor_bruto: commissionBruta(venda),
-    valor_liquido: commissionZelony(venda),
-    data_ref: date,
-    categoria: "COMISSAO",
-    descricao: String(venda.cliente || "").split("/")[0].trim() || "COMISSAO",
-    unidade: String(venda.unidade || "").trim(),
-    gerente: String(venda.gerente || "").trim(),
-    venda_id: venda.id,
-  };
-}
-
-function collectCommissionMonth(vendas: OwnerReportVenda[], month: number, year: number, now: Date) {
-  const previstas: Array<Record<string, unknown>> = [];
-  const realizadas: Array<Record<string, unknown>> = [];
-  vendas.map(normalizeVenda).forEach((venda) => {
-    if (venda.distratada) return;
-    if (venda.etapa === FINAL_STAGE) {
-      const info = infoRecebimentoComissao(venda);
-      if (!info?.date || info.precision === "daymonth") return;
-      if (!sameMonth(info.date, month, year)) return;
-      realizadas.push(comissaoItem(venda, info.date, "realizado"));
-      return;
-    }
-    const previsao = calcPrevisao(venda, now);
-    if (!previsao?.data) return;
-    const parts = String(previsao.data).split("/");
-    if (parts.length < 3) return;
-    const day = parseInt(parts[0], 10);
-    const itemMonth = parseInt(parts[1], 10) - 1;
-    const itemYear = parseInt(parts[2], 10);
-    if (!Number.isFinite(day) || itemMonth !== month || itemYear !== year) return;
-    const date = new Date(itemYear, itemMonth, day, 12, 0, 0, 0);
-    previstas.push(comissaoItem(venda, date, numberOrZero(previsao.totalAtraso) > 0 ? "atrasado" : "previsto"));
-  });
-  return { previstas, realizadas };
-}
-
 function collectManualMonth(financeiro: OwnerReportFinanceiro[], month: number, year: number, now: Date) {
   const entriesProjected: Array<Record<string, unknown>> = [];
   const entriesRealized: Array<Record<string, unknown>> = [];
@@ -948,29 +907,21 @@ function criticalAccounts(financeiro: OwnerReportFinanceiro[], now: Date) {
   };
 }
 
-function computeFinance(vendas: OwnerReportVenda[], financeiro: OwnerReportFinanceiro[], now: Date) {
+function computeFinance(lancamentos: OwnerReportFinanceiro[], now: Date) {
+  // Mesma regra do caixa: preserva o historico, mas ignora repasses automaticos legados.
+  const financeiro = lancamentos.filter((item) => item && !/^fin-comissao-venda-\d+-[a-z0-9_]+$/i.test(String(item.refLocal || item.ref_local || "").trim()));
   const { month, year } = monthRange(now);
-  const commissionMonth = collectCommissionMonth(vendas, month, year, now);
   const manualMonth = collectManualMonth(financeiro, month, year, now);
-  const entriesProjected = [
-    ...commissionMonth.previstas.map((item) => numberOrZero(item.valor_bruto)),
-    ...manualMonth.entriesProjected.map((item) => numberOrZero(item.valor_bruto)),
-  ].reduce((total, value) => total + value, 0);
-  const entriesRealized = [
-    ...commissionMonth.realizadas.map((item) => numberOrZero(item.valor_bruto)),
-    ...manualMonth.entriesRealized.map((item) => numberOrZero(item.valor_bruto)),
-  ].reduce((total, value) => total + value, 0);
+  const entriesProjected = manualMonth.entriesProjected.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
+  const entriesRealized = manualMonth.entriesRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
   const exitsProjected = manualMonth.exitsProjected.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
   const exitsPaid = manualMonth.exitsRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
   const netCash = entriesRealized - exitsPaid;
 
   const previousDate = new Date(year, month - 1, 15, 12, 0, 0, 0);
-  const previousCommissionMonth = collectCommissionMonth(vendas, previousDate.getMonth(), previousDate.getFullYear(), now);
   const previousManualMonth = collectManualMonth(financeiro, previousDate.getMonth(), previousDate.getFullYear(), now);
-  const previousNetCash = (
-    previousCommissionMonth.realizadas.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0)
-    + previousManualMonth.entriesRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0)
-  ) - previousManualMonth.exitsRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
+  const previousNetCash = previousManualMonth.entriesRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0)
+    - previousManualMonth.exitsRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
 
   const closedMonths: Array<{ month: number; year: number; exits: number }> = [];
   for (let i = 1; i <= 3; i += 1) {
@@ -1316,7 +1267,7 @@ export function buildOwnerReportSnapshot(params: {
   const { month, year, monthStart, monthEnd, dayOfMonth, daysInMonth } = monthRange(now);
   const dashboard = computeDashboard(params.vendas, params.usuarios, now);
   const appointments = computeAppointments(params.agendamentos, now);
-  const finance = computeFinance(params.vendas, params.financeiro, now);
+  const finance = computeFinance(params.financeiro, now);
   const wallet = computeWallet(params.vendas, now);
   const distratos = computeDistratos(params.vendas, params.usuarios, now);
   const alerts = statusSummary({ dashboard, appointments, finance, wallet, distratos });

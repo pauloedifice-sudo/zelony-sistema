@@ -31,6 +31,8 @@ create table if not exists public.agendamentos (
   local_compra text,
   tipo_imovel_interesse text,
   finalidade_imovel text,
+  assinou_proposta_compra boolean,
+  pagou_ato boolean,
   ref_local text,
   atualizado_em timestamptz not null default now()
 );
@@ -51,6 +53,8 @@ alter table public.agendamentos add column if not exists renda_bruta_familiar nu
 alter table public.agendamentos add column if not exists local_compra text;
 alter table public.agendamentos add column if not exists tipo_imovel_interesse text;
 alter table public.agendamentos add column if not exists finalidade_imovel text;
+alter table public.agendamentos add column if not exists assinou_proposta_compra boolean;
+alter table public.agendamentos add column if not exists pagou_ato boolean;
 alter table public.agendamentos add column if not exists ref_local text;
 
 alter table public.agendamentos drop constraint if exists agendamentos_local_compra_check;
@@ -76,6 +80,21 @@ alter table public.agendamentos add constraint agendamentos_documentacao_recebid
       and local_compra is not null
       and tipo_imovel_interesse is not null
       and finalidade_imovel is not null
+    )
+  ) not valid;
+
+alter table public.agendamentos drop constraint if exists agendamentos_fechamento_concluido_dados_check;
+alter table public.agendamentos add constraint agendamentos_fechamento_concluido_dados_check
+  check (
+    tipo_visita <> 'Fechamento'
+    or situacao <> 'Concluída'
+    or (
+      renda_bruta_familiar is not null
+      and renda_bruta_familiar > 0
+      and tipo_imovel_interesse is not null
+      and finalidade_imovel is not null
+      and assinou_proposta_compra is not null
+      and pagou_ato is not null
     )
   ) not valid;
 

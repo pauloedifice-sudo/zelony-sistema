@@ -1,11 +1,9 @@
 // FINANCEIRO
-// Modulo Financeiro - caixa com entradas automaticas e lancamentos manuais
+// Modulo Financeiro - caixa composto exclusivamente por lancamentos manuais.
 
 let finMesAtual = new Date().getMonth();
 let finAnoAtual = new Date().getFullYear();
 let finFiltroUnidade = '';
-let finFiltroConstrutora = '';
-let finFiltroGerente = '';
 let finFiltroSituacao = '';
 let finFiltroFaixa = '';
 let finFiltroCategoria = '';
@@ -64,8 +62,6 @@ function syncFinState() {
   zSetState('state.ui.finMesAtual', finMesAtual);
   zSetState('state.ui.finAnoAtual', finAnoAtual);
   zSetState('state.ui.finFiltroUnidade', finFiltroUnidade);
-  zSetState('state.ui.finFiltroConstrutora', finFiltroConstrutora);
-  zSetState('state.ui.finFiltroGerente', finFiltroGerente);
   zSetState('state.ui.finFiltroSituacao', finFiltroSituacao);
   zSetState('state.ui.finFiltroFaixa', finFiltroFaixa);
   zSetState('state.ui.finFiltroCategoria', finFiltroCategoria);
@@ -245,12 +241,7 @@ function finDreSetIndice(valor) {
 
 function finDreAnosDisponiveis() {
   const anos = new Set([new Date().getFullYear(), finAnoAtual]);
-  (Array.isArray(VENDAS) ? VENDAS : []).forEach(v => {
-    if (!v || v.distratada || v.etapa !== ETAPAS.length - 1) return;
-    const info = finInfoRecebimentoComissaoVenda(v);
-    if (info && info.date && !Number.isNaN(info.date.getTime()) && info.precision !== 'daymonth') anos.add(info.date.getFullYear());
-  });
-  (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).forEach(item => {
+  finLancamentosManuais().forEach(item => {
     const ref = finReferenciaLancamentoManual(item);
     if (ref && !Number.isNaN(ref.getTime())) anos.add(ref.getFullYear());
   });
@@ -311,258 +302,6 @@ function finValorSeguro(valor) {
 function finValorParaInput(valor) {
   if (valor == null || String(valor).trim() === '') return '';
   return finValorSeguro(valor).toFixed(2).replace('.', ',');
-}
-
-function finRefLocalRepasseComissaoVenda(vendaId, papel) {
-  const alvoId = parseInt(vendaId, 10) || 0;
-  const chave = String(papel || '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '');
-  if (!alvoId || !chave) return '';
-  return `fin-comissao-venda-${alvoId}-${chave}`;
-}
-
-function finExtrairMetaRepasseComissao(refLocal) {
-  const match = /^fin-comissao-venda-(\d+)-([a-z0-9_]+)$/i.exec(String(refLocal || '').trim());
-  if (!match) return null;
-  return {
-    vendaId: parseInt(match[1], 10) || 0,
-    papel: String(match[2] || '').trim().toLowerCase()
-  };
-}
-
-function finBuscarVendaRepasseComissao(refLocal) {
-  const meta = finExtrairMetaRepasseComissao(refLocal);
-  if (!meta) return null;
-  return {
-    ...meta,
-    venda: Array.isArray(VENDAS)
-      ? VENDAS.find(item => parseInt(item && item.id, 10) === meta.vendaId) || null
-      : null
-  };
-}
-
-function finValorComissaoCalculado(venda, calculadora) {
-  if (!venda || typeof calculadora !== 'function') return 0;
-  return Math.abs(finValorSeguro(calculadora(venda)));
-}
-
-function finAdicionarParteRepasseComissao(lista, config = {}) {
-  const nome = finTextoMaiusculo(config.nome || '');
-  const valor = Math.abs(finValorSeguro(config.valor));
-  if (!nome || valor <= 0) return;
-  lista.push({
-    papel: String(config.papel || '').trim().toLowerCase() || 'repasse',
-    papelLabel: finTextoMaiusculo(config.papelLabel || config.papel || 'REPASSE'),
-    nome,
-    valor
-  });
-}
-
-function finMontarPartesRepasseComissaoVenda(venda) {
-  if (!venda) return [];
-  const alvo = typeof normalizarVendaNumeros === 'function' ? normalizarVendaNumeros(venda) : venda;
-  const partes = [];
-  const incluirBonus = typeof bonusEntraNoRepasseComissao === 'function'
-    ? bonusEntraNoRepasseComissao(alvo)
-    : String(alvo && alvo.bonus_forma || '').trim().toLowerCase() !== 'antecipado';
-  finAdicionarParteRepasseComissao(partes, {
-    papel: 'corretor',
-    papelLabel: 'CORRETOR',
-    nome: alvo.corretor,
-    valor: finValorComissaoCalculado(alvo, typeof comC === 'function' ? comC : null)
-      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusCor === 'function' ? bonusCor : null) : 0)
-  });
-  finAdicionarParteRepasseComissao(partes, {
-    papel: 'capitao',
-    papelLabel: 'CAPITAO',
-    nome: alvo.capitao,
-    valor: finValorComissaoCalculado(alvo, typeof comCap === 'function' ? comCap : null)
-  });
-  finAdicionarParteRepasseComissao(partes, {
-    papel: 'gerente',
-    papelLabel: 'GERENTE',
-    nome: alvo.gerente,
-    valor: finValorComissaoCalculado(alvo, typeof comG === 'function' ? comG : null)
-      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusGer === 'function' ? bonusGer : null) : 0)
-  });
-  finAdicionarParteRepasseComissao(partes, {
-    papel: 'diretor',
-    papelLabel: 'DIRETOR',
-    nome: alvo.diretor,
-    valor: finValorComissaoCalculado(alvo, typeof comD === 'function' ? comD : null)
-      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusDir === 'function' ? bonusDir : null) : 0)
-  });
-  finAdicionarParteRepasseComissao(partes, {
-    papel: 'diretor_2',
-    papelLabel: 'DIRETOR 2',
-    nome: alvo.diretor2,
-    valor: finValorComissaoCalculado(alvo, typeof comD2 === 'function' ? comD2 : null)
-      + (incluirBonus ? finValorComissaoCalculado(alvo, typeof bonusDir2 === 'function' ? bonusDir2 : null) : 0)
-  });
-  return partes;
-}
-
-function finInfoRecebimentoComissaoVenda(venda) {
-  const etapaFinal = Array.isArray(ETAPAS) && ETAPAS.length ? ETAPAS.length - 1 : 0;
-  const historico = Array.isArray(venda && venda.hist) ? venda.hist : [];
-  const historicoFinal = historico.length
-    ? [...historico].reverse().find(item => item
-      && parseInt(item.e, 10) === etapaFinal
-      && (typeof histAfetaFluxo !== 'function' || histAfetaFluxo(item)))
-    : null;
-  const infoFinal = historicoFinal && typeof obterMomentoHistorico === 'function'
-    ? obterMomentoHistorico(historicoFinal, { preferTs: false })
-    : null;
-  if (infoFinal && infoFinal.date instanceof Date && !Number.isNaN(infoFinal.date.getTime())) {
-    return {
-      ...infoFinal,
-      date: new Date(infoFinal.date.getFullYear(), infoFinal.date.getMonth(), infoFinal.date.getDate(), 12, 0, 0, 0)
-    };
-  }
-  const historicoFallback = historico.length
-    ? [...historico].reverse().find(item => item && (typeof histAfetaFluxo !== 'function' || histAfetaFluxo(item)))
-    : null;
-  const infoFallback = historicoFallback && typeof obterMomentoHistorico === 'function'
-    ? obterMomentoHistorico(historicoFallback, { preferTs: false })
-    : null;
-  if (infoFallback && infoFallback.date instanceof Date && !Number.isNaN(infoFallback.date.getTime())) {
-    return {
-      ...infoFallback,
-      date: new Date(infoFallback.date.getFullYear(), infoFallback.date.getMonth(), infoFallback.date.getDate(), 12, 0, 0, 0)
-    };
-  }
-  return null;
-}
-
-function finObterDataRecebimentoComissaoVenda(venda) {
-  const info = finInfoRecebimentoComissaoVenda(venda);
-  return info && info.date instanceof Date ? info.date : finHojeRef();
-}
-
-function finDescricaoRepasseComissao(parte) {
-  return finTextoMaiusculo(`REPASSE ${parte.papelLabel} - ${parte.nome}`);
-}
-
-function finObservacaoRepasseComissao(venda) {
-  const partes = [
-    finNomeClienteVenda(venda && venda.cliente),
-    venda && venda.produto,
-    venda && venda.construtora
-  ].filter(Boolean);
-  return finTextoMaiusculo(`VENDA ${partes.join(' - ')}`);
-}
-
-async function finSincronizarSaidasComissaoVenda(venda, opcoes = {}) {
-  const etapaFinal = Array.isArray(ETAPAS) && ETAPAS.length ? ETAPAS.length - 1 : 0;
-  if (!venda || !venda.id || venda.distratada || parseInt(venda.etapa, 10) !== etapaFinal) {
-    return { itens: 0, criados: 0, atualizados: 0, falhas: 0, ignorado: true };
-  }
-
-  const partes = finMontarPartesRepasseComissaoVenda(venda);
-  if (!partes.length) {
-    return { itens: 0, criados: 0, atualizados: 0, falhas: 0, ignorado: true };
-  }
-
-  const dataRecebimento = finObterDataRecebimentoComissaoVenda(venda);
-  const dataLiquidacao = finDateParaIso(dataRecebimento) || finDateParaIso(finHojeRef());
-  const observacao = finObservacaoRepasseComissao(venda);
-  const alterados = [];
-  let criados = 0;
-  let atualizados = 0;
-  let falhas = 0;
-
-  partes.forEach((parte, indice) => {
-    const refLocal = finRefLocalRepasseComissaoVenda(venda.id, parte.papel);
-    if (!refLocal) return;
-
-    const existente = (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(item => {
-      return String(item && (item.refLocal || item.ref_local) || '') === refLocal;
-    }) || null;
-
-    const alvo = existente || {
-      id: Date.now() + indice,
-      refLocal,
-      criadoPor: usuarioLogado ? (usuarioLogado.nome || '') : 'Sistema',
-      criadoPorId: usuarioLogado ? (parseInt(usuarioLogado.id, 10) || 0) : 0,
-      criadoPorEmail: usuarioLogado ? (usuarioLogado.email || '') : '',
-      syncPendente: false,
-      syncErro: ''
-    };
-
-    const proximo = {
-      tipo: 'saida',
-      categoria: 'REPASSE COMISSAO',
-      descricao: finDescricaoRepasseComissao(parte),
-      unidade: venda.unidade || '',
-      dataPrevista: dataLiquidacao,
-      status: 'realizado',
-      dataRealizada: dataLiquidacao,
-      valor: parte.valor,
-      observacao,
-      atualizadoEm: new Date().toISOString(),
-      refLocal
-    };
-
-    const camposComparacao = [
-      'tipo',
-      'categoria',
-      'descricao',
-      'unidade',
-      'dataPrevista',
-      'status',
-      'dataRealizada',
-      'observacao',
-      'refLocal'
-    ];
-
-    let mudou = !existente;
-    if (!mudou) {
-      mudou = camposComparacao.some(campo => String(alvo[campo] || '') !== String(proximo[campo] || ''));
-    }
-    if (!mudou) {
-      mudou = Math.abs(finValorSeguro(alvo.valor) - finValorSeguro(proximo.valor)) > 0.009;
-    }
-
-    Object.assign(alvo, proximo);
-
-    if (!existente) {
-      FINANCEIRO_LANCAMENTOS.push(alvo);
-      criados++;
-    } else if (mudou) {
-      atualizados++;
-    }
-
-    if (mudou || alvo.syncPendente) alterados.push(alvo);
-  });
-
-  if (!criados && !atualizados && !alterados.length) {
-    return { itens: partes.length, criados: 0, atualizados: 0, falhas: 0, ignorado: false };
-  }
-
-  FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
-  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
-  if (typeof salvarLS === 'function') salvarLS();
-
-  if (opcoes.persistir !== false && typeof dbSalvarLancamentoFinanceiro === 'function') {
-    for (const item of alterados) {
-      try {
-        await dbSalvarLancamentoFinanceiro(item, item.id || 0);
-      } catch (erro) {
-        falhas++;
-        console.warn('Falha ao sincronizar repasse automatico de comissao no financeiro:', erro);
-      }
-    }
-  }
-
-  FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
-  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
-  if (typeof salvarLS === 'function') salvarLS();
-  if (!document.getElementById('mod-financeiro')?.classList.contains('hidden')) renderFinanceiro();
-
-  return { itens: partes.length, criados, atualizados, falhas, ignorado: false };
 }
 
 function finTamanhoArquivoTexto(bytes) {
@@ -627,10 +366,10 @@ function finRotuloVisao(visao) {
 }
 
 function finSubtituloVisao() {
-  if (finVisao === 'dre') return 'Demonstrativo gerencial consolidado por periodo, com leitura de resultado e variacao de caixa.';
-  if (finVisao === 'entradas') return 'Comissoes previstas/recebidas mais entradas manuais do financeiro.';
-  if (finVisao === 'saidas') return 'Saidas previstas e pagas para leitura de caixa do mes.';
-  return 'Fluxo de caixa consolidado com entradas automaticas e lancamentos manuais.';
+  if (finVisao === 'dre') return 'Demonstrativo gerencial dos lancamentos manuais realizados no periodo.';
+  if (finVisao === 'entradas') return 'Entradas cadastradas manualmente, previstas ou recebidas. Vendas nao geram entradas no caixa.';
+  if (finVisao === 'saidas') return 'Saidas cadastradas manualmente, previstas ou pagas, incluindo os repasses de comissao.';
+  return 'Fluxo de caixa com entradas e saidas manuais. Concluir uma venda nao gera movimentacoes financeiras.';
 }
 
 function finRotuloFiltroSituacao(status) {
@@ -657,7 +396,7 @@ function finTipoPadraoNovaAcao() {
 
 function finCategoriasPorTipo(tipo, adicionais = []) {
   const base = tipo === 'saida' ? FIN_CATEGORIAS.saida : FIN_CATEGORIAS.entrada;
-  const usadas = (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : [])
+  const usadas = finLancamentosManuais()
     .filter(item => tipoLancamentoFinanceiroNormalizado(item && item.tipo) === tipo)
     .map(item => finTextoMaiusculo(item && item.categoria))
     .filter(Boolean);
@@ -668,9 +407,8 @@ function finCategoriasPorTipo(tipo, adicionais = []) {
 }
 
 function finUnidadesDisponiveis() {
-  const vendas = Array.isArray(VENDAS) ? VENDAS.map(v => v.unidade) : [];
-  const manuais = Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS.map(item => item.unidade) : [];
-  return finOpcoes([...vendas, ...manuais]);
+  const manuais = finLancamentosManuais().map(item => item.unidade);
+  return finOpcoes(['Centro', 'Cristo Rei', ...manuais]);
 }
 
 function finCategoriasDisponiveis() {
@@ -727,10 +465,6 @@ function finAtualizarCategoriaNovaValor(valor, elemento = null) {
   if (elemento && elemento.value !== normalizado) elemento.value = normalizado;
 }
 
-function finTemFiltrosVenda() {
-  return finVisao === 'entradas';
-}
-
 function finMatchFaixa(valor, faixa) {
   const total = Math.abs(finValorSeguro(valor));
   if (!faixa) return true;
@@ -755,94 +489,7 @@ function finMatchCamposItem(item) {
   }
   if (!finMatchFaixa(item.valorBruto, finFiltroFaixa)) return false;
   if (!finMatchStatusItem(item)) return false;
-  if (finTemFiltrosVenda()) {
-    if (finFiltroConstrutora && item.construtora !== finFiltroConstrutora) return false;
-    if (finFiltroGerente && item.gerente !== finFiltroGerente) return false;
-  }
   return true;
-}
-
-function finNomeClienteVenda(cliente) {
-  if (typeof nomeCalendario === 'function') return nomeCalendario(cliente || '');
-  return String(cliente || '').split('/')[0].trim();
-}
-
-function finCriarItemComissao(v, bruto, liquido, dataRef, status, atraso, manualNota) {
-  return {
-    key: `venda-${v.id}-${status}-${dataRef.getTime()}`,
-    origem: 'venda',
-    natureza: 'entrada',
-    categoria: 'COMISSAO',
-    descricao: finNomeClienteVenda(v.cliente),
-    valorBruto: bruto,
-    valorLiquido: liquido,
-    dataRef,
-    dia: dataRef.getDate(),
-    status,
-    atraso: atraso || 0,
-    manualNota: !!manualNota,
-    unidade: v.unidade || '',
-    construtora: v.construtora || '',
-    gerente: v.gerente || '',
-    v
-  };
-}
-
-function finColetarComissoesMes(mes, ano) {
-  const previstas = [];
-  const realizadas = [];
-
-  (Array.isArray(VENDAS) ? VENDAS : []).forEach(v => {
-    if (!v || v.distratada) return;
-    if (finFiltroUnidade && v.unidade !== finFiltroUnidade) return;
-    if (finTemFiltrosVenda() && finFiltroConstrutora && v.construtora !== finFiltroConstrutora) return;
-    if (finTemFiltrosVenda() && finFiltroGerente && v.gerente !== finFiltroGerente) return;
-
-    const bruto = finValorSeguro(v.valor) * finValorSeguro(v.pct);
-    const liquido = typeof comZ === 'function' ? finValorSeguro(comZ(v)) : bruto;
-    if (!finMatchFaixa(bruto, finFiltroFaixa)) return;
-
-    const concluida = v.etapa === ETAPAS.length - 1;
-    if (concluida) {
-      const recebimentoInfo = finInfoRecebimentoComissaoVenda(v);
-      if (!recebimentoInfo || !recebimentoInfo.date || recebimentoInfo.precision === 'daymonth') return;
-      if (recebimentoInfo.date.getMonth() !== mes || recebimentoInfo.date.getFullYear() !== ano) return;
-      const item = finCriarItemComissao(v, bruto, liquido, recebimentoInfo.date, 'realizado', 0, false);
-      if (finFiltroCategoria && finFiltroCategoria !== 'COMISSAO') return;
-      if (!finMatchCamposItem(item)) return;
-      realizadas.push(item);
-      return;
-    }
-
-    if (v.etapa >= ETAPAS.length - 1) return;
-    const prev = typeof calcPrevisao === 'function' ? calcPrevisao(v) : null;
-    if (!prev || !prev.data) return;
-    const partes = String(prev.data).split('/');
-    if (partes.length < 3) return;
-    const dia = parseInt(partes[0], 10);
-    const mesPrev = parseInt(partes[1], 10) - 1;
-    const anoPrev = parseInt(partes[2], 10);
-    if (!Number.isFinite(dia) || mesPrev !== mes || anoPrev !== ano) return;
-    const dataRef = new Date(anoPrev, mesPrev, dia, 12, 0, 0, 0);
-    const status = prev.totalAtraso > 0 ? 'atrasado' : 'previsto';
-    const item = finCriarItemComissao(v, bruto, liquido, dataRef, status, prev.totalAtraso || 0, !!prev.manual);
-    if (finFiltroCategoria && finFiltroCategoria !== 'COMISSAO') return;
-    if (!finMatchCamposItem(item)) return;
-    previstas.push(item);
-  });
-
-  previstas.sort((a, b) => a.dataRef - b.dataRef || b.valorBruto - a.valorBruto);
-  realizadas.sort((a, b) => a.dataRef - b.dataRef || b.valorBruto - a.valorBruto);
-
-  return {
-    previstas,
-    realizadas,
-    todos: [...previstas, ...realizadas].sort((a, b) => finPrioridadeItem(a) - finPrioridadeItem(b) || a.dataRef - b.dataRef || b.valorBruto - a.valorBruto),
-    totalPrevistoBrut: previstas.reduce((soma, item) => soma + item.valorBruto, 0),
-    totalPrevistoLiq: previstas.reduce((soma, item) => soma + item.valorLiquido, 0),
-    totalRealizadoBrut: realizadas.reduce((soma, item) => soma + item.valorBruto, 0),
-    totalRealizadoLiq: realizadas.reduce((soma, item) => soma + item.valorLiquido, 0)
-  };
 }
 
 function finStatusLoteManual(baseStatus, dataPrevista) {
@@ -861,17 +508,22 @@ function finReferenciaLancamentoManual(item) {
   return null;
 }
 
+function finLancamentosManuais() {
+  // Preserva o historico automatico no banco/cache, sem inclui-lo no caixa ou DRE.
+  return (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : [])
+    .filter(item => item && !lancamentoFinanceiroAutomaticoLegado(item));
+}
+
 function finNormalizarLancamentoManual(item) {
-  if (!item) return null;
+  if (!item || lancamentoFinanceiroAutomaticoLegado(item)) return null;
   const tipo = tipoLancamentoFinanceiroNormalizado(item.tipo);
   const dataRef = finReferenciaLancamentoManual(item);
   if (!dataRef) return null;
   const status = finStatusLoteManual(statusLancamentoFinanceiroNormalizado(item.status), item.dataPrevista);
   const atraso = status === 'atrasado' ? finDiffDias(finHojeRef(), finDataIsoParaDate(item.dataPrevista)) : 0;
-  const origemAuto = finBuscarVendaRepasseComissao(item.refLocal || item.ref_local || '');
   return {
     key: `manual-${item.refLocal || item.id}`,
-    origem: origemAuto ? 'venda_comissao_saida' : 'manual',
+    origem: 'manual',
     natureza: tipo,
     categoria: finTextoMaiusculo(item.categoria) || (tipo === 'saida' ? 'OUTRAS SAIDAS' : 'OUTRAS ENTRADAS'),
     descricao: finTextoMaiusculo(item.descricao) || (tipo === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL'),
@@ -893,9 +545,6 @@ function finNormalizarLancamentoManual(item) {
     comprovanteStorageBucket: item.comprovanteStorageBucket || '',
     comprovanteStoragePath: item.comprovanteStoragePath || '',
     refLocal: item.refLocal || '',
-    origemVendaId: origemAuto ? origemAuto.vendaId : 0,
-    origemComissaoPapel: origemAuto ? origemAuto.papel : '',
-    v: origemAuto ? (origemAuto.venda || null) : null,
     raw: item
   };
 }
@@ -942,17 +591,9 @@ function finColetarLancamentosManuaisMes(mes, ano) {
 }
 
 function finColetarMes(mes, ano) {
-  const comissoes = finColetarComissoesMes(mes, ano);
   const manuais = finColetarLancamentosManuaisMes(mes, ano);
-
-  const entradas = finMontarResumoNatureza(
-    [...comissoes.previstas, ...manuais.entradas.previstas],
-    [...comissoes.realizadas, ...manuais.entradas.realizadas]
-  );
-  const saidas = finMontarResumoNatureza(
-    [...manuais.saidas.previstas],
-    [...manuais.saidas.realizadas]
-  );
+  const entradas = manuais.entradas;
+  const saidas = manuais.saidas;
 
   const agendaPorDia = {};
   [...entradas.todos, ...saidas.todos].forEach(item => {
@@ -964,7 +605,6 @@ function finColetarMes(mes, ano) {
   });
 
   return {
-    comissoes,
     manuais,
     entradas,
     saidas,
@@ -1033,24 +673,6 @@ function finDreCriarLinha(dataRef, natureza, categoria, descricao, valor, origem
 
 function finDreColetarLinhas(meta) {
   const linhas = [];
-
-  (Array.isArray(VENDAS) ? VENDAS : []).forEach(v => {
-    if (!v || v.distratada || v.etapa !== ETAPAS.length - 1) return;
-    if (finFiltroUnidade && v.unidade !== finFiltroUnidade) return;
-    const recebimentoInfo = finInfoRecebimentoComissaoVenda(v);
-    if (!recebimentoInfo || !recebimentoInfo.date || recebimentoInfo.precision === 'daymonth') return;
-    if (!finDreDentroPeriodo(recebimentoInfo.date, meta)) return;
-    const bruto = finValorSeguro(v.valor) * finValorSeguro(v.pct);
-    linhas.push(finDreCriarLinha(
-      recebimentoInfo.date,
-      'entrada',
-      'COMISSAO',
-      finNomeClienteVenda(v.cliente),
-      bruto,
-      'venda',
-      v.unidade || ''
-    ));
-  });
 
   (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).forEach(item => {
     const normalizado = finNormalizarLancamentoManual(item);
@@ -1438,13 +1060,8 @@ function finMetaItem(item, opcoes = {}) {
   const includeStatus = config.includeStatus !== false;
   const includeProof = config.includeProof !== false;
   const partes = [];
-  if (item.origem === 'venda') {
-    if (item.construtora) partes.push(item.construtora);
-    if (item.gerente) partes.push(item.gerente);
-  } else {
-    if (item.categoria) partes.push(item.categoria);
-    if (item.unidade) partes.push(item.unidade);
-  }
+  if (item.categoria) partes.push(item.categoria);
+  if (item.unidade) partes.push(item.unidade);
   if (includeStatus) partes.push(finStatusItem(item));
   if (includeProof && finTemComprovante(item)) partes.push(item.natureza === 'saida' ? 'comprovante anexado' : 'anexo');
   return zUiText(partes.filter(Boolean).join(' · '));
@@ -1587,7 +1204,7 @@ function finBuildKpis(atual, anterior, anteriorRef, meses) {
     return [
       finResumoCard('Previsto no mes', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)'),
       finResumoCard('Ja recebido', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good'),
-      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Comissoes + entradas manuais', '#3060B8'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Entradas manuais previstas + recebidas', '#3060B8'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#2E9E6E' : '#C05030', deltaMes.delta >= 0 ? 'good' : 'bad'),
       finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.entradas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#2E9E6E', 'good'),
       finResumoCard('Manuais do mes', finFmtMoeda(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A')
@@ -1639,7 +1256,7 @@ function finBuildKpisPainel(atual, anterior, anteriorRef, meses) {
     return [
       finResumoCard('Previsto no mes', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)', '', 'projected'),
       finResumoCard('Ja recebido', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good', 'realized'),
-      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Comissoes + entradas manuais', '#3060B8', '', 'total'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Entradas manuais previstas + recebidas', '#3060B8', '', 'total'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#2E9E6E' : '#C05030', deltaMes.delta >= 0 ? 'good' : 'bad', 'compare'),
       finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.entradas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#2E9E6E', 'good', 'progress'),
       finResumoCard('Manuais do mes', finFmtMoeda(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A', '', 'neutral')
@@ -1679,18 +1296,11 @@ function finAcaoItem(item) {
 function finAcaoItemComOpcao(item, pararEvento = false) {
   if (!item) return '';
   const prefixo = pararEvento ? 'event.stopPropagation();' : '';
-  if (item.origem === 'venda' && item.v && item.v.id) return `onclick="${prefixo}irParaVenda(${item.v.id})"`;
-  if (item.origem === 'venda_comissao_saida' && (item.origemVendaId || (item.v && item.v.id))) {
-    const vendaId = item.origemVendaId || item.v.id;
-    return `onclick="${prefixo}irParaVenda(${vendaId})"`;
-  }
   const chave = finEscapeAttr(finChaveItem(item));
   return `onclick="${prefixo}finEditarLancamentoManual('${chave}')"`; 
 }
 
 function finNomeItem(item) {
-  if (item.origem === 'venda') return item.descricao || 'COMISSAO';
-  if (item.origem === 'venda_comissao_saida') return item.descricao || 'REPASSE COMISSAO';
   return item.descricao || item.categoria || (item.natureza === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL');
 }
 
@@ -1762,7 +1372,7 @@ function finBuildSideCards(atual, dataInicioRecorte, dataFim7) {
     return [
       finSideList('Proximos 7 dias', 'O que tende a entrar no curtissimo prazo dentro do recorte.', proximas, 'Nenhuma entrada prevista para os proximos 7 dias.'),
       finSideList('Maiores entradas do mes', 'Os maiores valores, recebidos ou previstos, para leitura executiva.', maiores, 'Nenhuma entrada no recorte.'),
-      finSideList('Entradas manuais', 'Lancamentos criados manualmente para complementar as comissoes.', manuais, 'Nenhuma entrada manual neste mes.')
+      finSideList('Entradas manuais', 'Recebimentos e previsoes cadastrados diretamente no financeiro.', manuais, 'Nenhuma entrada manual neste mes.')
     ].join('');
   }
 
@@ -1817,7 +1427,7 @@ function finBuildCalendario(atual, ano, mes, hoje, primeiroDia, diasNoMes) {
 
 function finLancamentoAtual() {
   if (!finModalLancamentoId) return null;
-  return (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(item => {
+  return finLancamentosManuais().find(item => {
     const chave = item.refLocal || item.id || '';
     return String(chave) === String(finModalLancamentoId);
   }) || null;
@@ -1856,7 +1466,7 @@ function finChaveItem(item) {
 function finLancamentoPorChave(chave) {
   const alvo = String(chave || '').trim();
   if (!alvo) return null;
-  return (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(item => {
+  return finLancamentosManuais().find(item => {
     const atual = String(item && (item.refLocal || item.id || '') || '').trim();
     return atual && atual === alvo;
   }) || null;
@@ -2229,7 +1839,11 @@ function finAbrirModalLancamento(tipo = '') {
 }
 
 function finEditarLancamentoManual(chave) {
-  const item = (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).find(entry => String(entry.refLocal || entry.id || '') === String(chave || '')) || null;
+  const item = finLancamentoPorChave(chave);
+  if (!item) {
+    showToast('!', zUiText('Lancamento manual nao encontrado. Repasses automaticos antigos nao compoem mais o caixa.'));
+    return;
+  }
   finResetDetalheDiaState();
   finModalAberto = true;
   finModalLancamentoId = String(chave || '');
@@ -2582,10 +2196,6 @@ function finSetVisao(visao) {
   finFiltroSituacao = '';
   finFiltroCategoria = '';
   finFiltroFaixa = '';
-  if (!finTemFiltrosVenda()) {
-    finFiltroConstrutora = '';
-    finFiltroGerente = '';
-  }
   if (finVisao === 'dre') finDreNormalizarCursor();
   syncFinState();
   renderFinanceiro();
@@ -2594,8 +2204,6 @@ function finSetVisao(visao) {
 function finSetFiltro(chave, valor) {
   finResetDetalheDiaState();
   if (chave === 'unidade') finFiltroUnidade = valor || '';
-  if (chave === 'construtora') finFiltroConstrutora = valor || '';
-  if (chave === 'gerente') finFiltroGerente = valor || '';
   if (chave === 'situacao') finFiltroSituacao = valor || '';
   if (chave === 'faixa') finFiltroFaixa = valor || '';
   if (chave === 'categoria') finFiltroCategoria = valor || '';
@@ -2676,8 +2284,6 @@ function renderFinanceiro() {
 
   const unidades = finUnidadesDisponiveis();
   const categorias = finCategoriasDisponiveis();
-  const construtoras = finTemFiltrosVenda() ? finOpcoes((Array.isArray(VENDAS) ? VENDAS : []).map(v => v.construtora)) : [];
-  const gerentes = finTemFiltrosVenda() ? finOpcoes((Array.isArray(VENDAS) ? VENDAS : []).map(v => v.gerente)) : [];
   const dreMeta = finVisao === 'dre' ? finDreMetaAtual() : null;
   const dreDados = dreMeta ? finMontarDadosDre(dreMeta) : null;
   const anosDre = finVisao === 'dre' ? finDreAnosDisponiveis() : [];
@@ -2722,7 +2328,7 @@ function renderFinanceiro() {
     ? `${zUiText('Financeiro')} · ${zUiText('DRE')} · ${zUiText(dreMeta && dreMeta.etiqueta || '')}`
     : `${zUiText('Financeiro')} · ${zUiText(meses[mes])} ${ano}`;
   const subtituloPainel = finVisao === 'dre'
-    ? zUiText('Demonstrativo gerencial consolidado com base nas movimentacoes realizadas do periodo.')
+    ? zUiText(finSubtituloVisao())
     : zUiText(finSubtituloVisao());
   const filtroDrePeriodoHtml = finVisao === 'dre'
     ? (dreMeta.escopo === 'mes'
@@ -2769,15 +2375,6 @@ function renderFinanceiro() {
             <option value="">${zUiText('Todas as unidades')}</option>
             ${unidades.map(item => `<option value="${finEscapeAttr(item)}" ${finFiltroUnidade === item ? 'selected' : ''}>${zUiText(item)}</option>`).join('')}
           </select>
-          ${finTemFiltrosVenda() ? `
-            <select onchange="finSetFiltro('construtora', this.value)">
-              <option value="">${zUiText('Todas as construtoras')}</option>
-              ${construtoras.map(item => `<option value="${finEscapeAttr(item)}" ${finFiltroConstrutora === item ? 'selected' : ''}>${zUiText(item)}</option>`).join('')}
-            </select>
-            <select onchange="finSetFiltro('gerente', this.value)">
-              <option value="">${zUiText('Todos os gerentes')}</option>
-              ${gerentes.map(item => `<option value="${finEscapeAttr(item)}" ${finFiltroGerente === item ? 'selected' : ''}>${zUiText(item)}</option>`).join('')}
-            </select>` : ''}
           <select onchange="finSetFiltro('situacao', this.value)">
             <option value="">${zUiText('Todas as situacoes')}</option>
             <option value="realizado" ${finFiltroSituacao === 'realizado' ? 'selected' : ''}>${zUiText(finRotuloFiltroSituacao('realizado'))}</option>
@@ -3174,7 +2771,7 @@ function renderFinanceiro() {
       <div class="modal-top">
         <div>
           <div class="modal-title">${zUiText(tituloModal)}</div>
-          <div style="font-size:10px;color:var(--tm);margin-top:2px;">${zUiText('Use este formulario para complementar as comissoes automaticas e montar o caixa do sistema.')}</div>
+          <div style="font-size:10px;color:var(--tm);margin-top:2px;">${zUiText('Cadastre cada entrada ou saida manualmente, incluindo os recebimentos e repasses de comissao.')}</div>
         </div>
         <button class="mclose" onclick="finFecharModalLancamento()">✕</button>
       </div>
@@ -3258,7 +2855,7 @@ function renderFinanceiro() {
             <button class="btn-c fin-proof-remove" type="button" id="fin-comprovante-remove-btn" style="display:${comprovanteModalAtual ? 'inline-flex' : 'none'};" onclick="finLimparComprovanteSelecionado()">${zUiText('Remover')}</button>
           </div>
         </div>
-        <div class="fin-modal-note">${zUiText('Na aba Entradas, os valores manuais entram junto com as comissoes previstas/recebidas. Na aba Entrada / Saida, esse mesmo lancamento passa a compor o caixa consolidado.')}</div>
+        <div class="fin-modal-note">${zUiText('Somente lancamentos manuais compoem o caixa e o DRE. Marcar uma venda como Comissao recebida nao gera entradas nem saidas no financeiro.')}</div>
       </div>
       <div class="modal-foot">
         <div class="fin-modal-actions" style="width:100%;">

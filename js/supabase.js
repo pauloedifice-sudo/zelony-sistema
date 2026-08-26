@@ -1321,6 +1321,14 @@ function ordenarTreinamentosMesclados(a,b){
   return String(a&&a.titulo||'').localeCompare(String(b&&b.titulo||''),'pt-BR');
 }
 
+function mapAgendamentoBooleano(valor){
+  if(typeof valor==='boolean') return valor;
+  const texto=String(valor==null?'':valor).trim().toLowerCase();
+  if(['sim','true','1'].includes(texto)) return true;
+  if(['não','nao','false','0'].includes(texto)) return false;
+  return null;
+}
+
 function mapAgendamentoIn(a){
   const item={
     id:parseInt(a&&a.id,10)||0,
@@ -1358,6 +1366,8 @@ function mapAgendamentoIn(a){
     localCompra:a&&(a.local_compra||a.localCompra)||'',
     tipoImovelInteresse:a&&(a.tipo_imovel_interesse||a.tipoImovelInteresse)||'',
     finalidadeImovel:a&&(a.finalidade_imovel||a.finalidadeImovel)||'',
+    assinouPropostaCompra:mapAgendamentoBooleano(a&&(a.assinou_proposta_compra??a.assinouPropostaCompra)),
+    pagouAto:mapAgendamentoBooleano(a&&(a.pagou_ato??a.pagouAto)),
     atualizadoEm:a&&(a.atualizado_em||a.atualizadoEm)||'',
     refLocal:a&&(a.ref_local||a.refLocal)||'',
     syncPendente:!!(a&&(a.sync_pendente||a.syncPendente)),
@@ -1397,6 +1407,8 @@ function mapAgendamentoOut(a){
     local_compra:a.localCompra||null,
     tipo_imovel_interesse:a.tipoImovelInteresse||null,
     finalidade_imovel:a.finalidadeImovel||null,
+    assinou_proposta_compra:mapAgendamentoBooleano(a.assinouPropostaCompra),
+    pagou_ato:mapAgendamentoBooleano(a.pagouAto),
     atualizado_em:a.atualizadoEm||new Date().toISOString(),
     ref_local:garantirRefLocalAgendamento(a,a&&a.id?'banco':'local')||null
   };
@@ -1441,6 +1453,11 @@ function preferirAgendamentoMaisRecente(atual, proximo){
 // ── CRUD VENDAS ───────────────────────────────────────────────────────────────
 function tipoLancamentoFinanceiroNormalizado(tipo){
   return String(tipo||'').trim().toLowerCase()==='saida' ? 'saida' : 'entrada';
+}
+
+function lancamentoFinanceiroAutomaticoLegado(item){
+  // A origem e identificada pela referencia, nunca pela categoria de uma saida manual.
+  return /^fin-comissao-venda-\d+-[a-z0-9_]+$/i.test(String(item&&(item.refLocal||item.ref_local)||'').trim());
 }
 
 function statusLancamentoFinanceiroNormalizado(status){
@@ -1954,13 +1971,6 @@ async function dbSalvarVenda(v, tentativa=1){
     if(payloadReduzido){
       console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Venda salva com payload reduzido.');
     }
-    if(typeof finSincronizarSaidasComissaoVenda==='function'){
-      try{
-        await finSincronizarSaidasComissaoVenda(v,{persistir:true});
-      }catch(erroFinanceiro){
-        console.warn('Falha ao sincronizar repasse automatico de comissao apos salvar a venda:',erroFinanceiro);
-      }
-    }
     return true;
   }catch(e){
     console.error(`Erro ao salvar venda (tentativa ${tentativa}):`,e.message);
@@ -2013,13 +2023,6 @@ async function dbAtualizarVenda(v){
     const {payloadReduzido}=await salvarVendaComFallbackSchema(payload,'update',v.id);
     if(payloadReduzido){
       console.warn('Tabela de vendas do Supabase sem todas as colunas mais novas. Atualizacao salva com payload reduzido.');
-    }
-    if(typeof finSincronizarSaidasComissaoVenda==='function'){
-      try{
-        await finSincronizarSaidasComissaoVenda(v,{persistir:true});
-      }catch(erroFinanceiro){
-        console.warn('Falha ao sincronizar repasse automatico de comissao apos atualizar a venda:',erroFinanceiro);
-      }
     }
     return true;
   }catch(error){
@@ -2225,6 +2228,9 @@ async function dbExcluirAgendamento(agOuId){
 
 async function dbSalvarLancamentoFinanceiro(lancamento, id){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para o financeiro.'});
+  if(lancamentoFinanceiroAutomaticoLegado(lancamento)){
+    throw new Error('Repasses automaticos foram desativados. Cadastre uma saida manual no financeiro.');
+  }
   if(ehLancamentoFinanceiroTesteLegado(lancamento)){
     removerLancamentosFinanceirosTesteLegado(FINANCEIRO_LANCAMENTOS);
     zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
@@ -2321,7 +2327,7 @@ async function dbExcluirLancamentoFinanceiro(lancamentoOuId){
 }
 
 function lancamentoFinanceiroTemSyncPendente(item){
-  return !!(item&&item.syncPendente);
+  return !!(item&&item.syncPendente&&!lancamentoFinanceiroAutomaticoLegado(item));
 }
 
 async function sincronizarFinanceiroPendentes(opcoes={}){
