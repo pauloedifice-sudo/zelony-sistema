@@ -20,6 +20,8 @@ const TEAM_RANKING_MIN_BASE = 5;
 const UNIT_RANKING_MIN_BASE = 2;
 const DISTRATO_RANKING_MIN_BASE = 3;
 const FINAL_STAGE = ETAPAS_VENDA.length - 1;
+// Mesmo corte do Financeiro: recebimentos anteriores preservados, novos manuais.
+const FINANCE_MANUAL_START = "2026-08-26";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -434,23 +436,26 @@ function calcPrevisao(vendaRaw: OwnerReportVenda, now: Date) {
 
 function infoRecebimentoComissao(venda: OwnerReportVenda) {
   const hist = Array.isArray(venda.hist) ? venda.hist : [];
-  const finalHist = [...hist].reverse().find((item) => item && Number(item.e) === FINAL_STAGE && historyAffectsFlow(item)) || null;
-  const finalInfo = finalHist ? parseHistoryMoment(finalHist, false) : null;
-  if (finalInfo?.date) {
-    return {
-      date: new Date(finalInfo.date.getFullYear(), finalInfo.date.getMonth(), finalInfo.date.getDate(), 12, 0, 0, 0),
-      precision: finalInfo.precision,
-    };
-  }
-  const fallbackHist = [...hist].reverse().find((item) => item && historyAffectsFlow(item)) || null;
-  const fallbackInfo = fallbackHist ? parseHistoryMoment(fallbackHist, false) : null;
-  if (fallbackInfo?.date) {
-    return {
-      date: new Date(fallbackInfo.date.getFullYear(), fallbackInfo.date.getMonth(), fallbackInfo.date.getDate(), 12, 0, 0, 0),
-      precision: fallbackInfo.precision,
-    };
-  }
-  return null;
+  const affectsReceipt = (item: JsonRecord) => item && historyAffectsFlow(item) && String(item.tipo || "").trim().toLowerCase() !== "bonus_gestao";
+  const finalHist = [...hist].reverse().find((item) => affectsReceipt(item) && Number(item.e) === FINAL_STAGE) || null;
+  const fallbackHist = [...hist].reverse().find(affectsReceipt) || null;
+  const info = (finalHist && parseHistoryMoment(finalHist, false)) || (fallbackHist && parseHistoryMoment(fallbackHist, false));
+  if (!info || info.precision === "daymonth" || Number.isNaN(info.date.getTime())) return null;
+  // Nao usar o fuso UTC do servidor para decidir o dia de um recebimento antigo.
+  return info.precision === "datetime"
+    ? parseIsoDate(formatIsoDateSaoPaulo(info.date))
+    : new Date(info.date.getFullYear(), info.date.getMonth(), info.date.getDate(), 12, 0, 0, 0);
+}
+
+function collectHistoricalCommissionMonth(vendas: OwnerReportVenda[], month: number, year: number) {
+  return vendas.reduce((total, venda) => {
+    if (!venda || venda.distratada || Number(venda.etapa) !== FINAL_STAGE) return total;
+    const date = infoRecebimentoComissao(venda);
+    if (!date || !sameMonth(date, month, year)) return total;
+    const dateIso = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    if (dateIso >= FINANCE_MANUAL_START) return total;
+    return total + Math.max(commissionBruta(venda), 0);
+  }, 0);
 }
 
 function normalizePerfil(perfil: unknown) {
@@ -907,13 +912,14 @@ function criticalAccounts(financeiro: OwnerReportFinanceiro[], now: Date) {
   };
 }
 
-function computeFinance(lancamentos: OwnerReportFinanceiro[], now: Date) {
-  // Mesma regra do caixa: preserva o historico, mas ignora repasses automaticos legados.
-  const financeiro = lancamentos.filter((item) => item && !/^fin-comissao-venda-\d+-[a-z0-9_]+$/i.test(String(item.refLocal || item.ref_local || "").trim()));
+function computeFinance(vendas: OwnerReportVenda[], lancamentos: OwnerReportFinanceiro[], now: Date) {
+  // Todos os repasses ja registrados permanecem; nenhuma saida e gerada a partir das vendas.
+  const financeiro = lancamentos.filter(Boolean);
   const { month, year } = monthRange(now);
   const manualMonth = collectManualMonth(financeiro, month, year, now);
   const entriesProjected = manualMonth.entriesProjected.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
-  const entriesRealized = manualMonth.entriesRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
+  const entriesRealized = manualMonth.entriesRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0)
+    + collectHistoricalCommissionMonth(vendas, month, year);
   const exitsProjected = manualMonth.exitsProjected.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
   const exitsPaid = manualMonth.exitsRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
   const netCash = entriesRealized - exitsPaid;
@@ -921,6 +927,7 @@ function computeFinance(lancamentos: OwnerReportFinanceiro[], now: Date) {
   const previousDate = new Date(year, month - 1, 15, 12, 0, 0, 0);
   const previousManualMonth = collectManualMonth(financeiro, previousDate.getMonth(), previousDate.getFullYear(), now);
   const previousNetCash = previousManualMonth.entriesRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0)
+    + collectHistoricalCommissionMonth(vendas, previousDate.getMonth(), previousDate.getFullYear())
     - previousManualMonth.exitsRealized.reduce((total, item) => total + numberOrZero(item.valor_bruto), 0);
 
   const closedMonths: Array<{ month: number; year: number; exits: number }> = [];
@@ -1267,7 +1274,7 @@ export function buildOwnerReportSnapshot(params: {
   const { month, year, monthStart, monthEnd, dayOfMonth, daysInMonth } = monthRange(now);
   const dashboard = computeDashboard(params.vendas, params.usuarios, now);
   const appointments = computeAppointments(params.agendamentos, now);
-  const finance = computeFinance(params.financeiro, now);
+  const finance = computeFinance(params.vendas, params.financeiro, now);
   const wallet = computeWallet(params.vendas, now);
   const distratos = computeDistratos(params.vendas, params.usuarios, now);
   const alerts = statusSummary({ dashboard, appointments, finance, wallet, distratos });

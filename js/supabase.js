@@ -1621,6 +1621,8 @@ function mapLancamentoFinanceiroIn(item){
     criadoPorEmail:String(item&&(item.criado_por_email||item.criadoPorEmail)||'').trim(),
     atualizadoEm:String(item&&(item.atualizado_em||item.atualizadoEm)||'').trim(),
     refLocal:String(item&&(item.ref_local||item.refLocal)||'').trim(),
+    // Marcador apenas local: permite retomar uma baixa manual de repasse antigo apos recarregar.
+    edicaoManualLegado:!!(item&&item.edicaoManualLegado),
     syncPendente:!!(item&&(item.sync_pendente||item.syncPendente))||texto.alterado,
     syncErro:syncErroOriginal||(texto.alterado?'Padronizacao de texto pendente.':'')
   };
@@ -2228,7 +2230,8 @@ async function dbExcluirAgendamento(agOuId){
 
 async function dbSalvarLancamentoFinanceiro(lancamento, id){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para o financeiro.'});
-  if(lancamentoFinanceiroAutomaticoLegado(lancamento)){
+  const automaticoLegado=lancamentoFinanceiroAutomaticoLegado(lancamento);
+  if(automaticoLegado&&!lancamento.edicaoManualLegado){
     throw new Error('Repasses automaticos foram desativados. Cadastre uma saida manual no financeiro.');
   }
   if(ehLancamentoFinanceiroTesteLegado(lancamento)){
@@ -2264,12 +2267,14 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
           if(respostaRef.error) throw respostaRef.error;
           data=respostaRef.data||null;
         }
-        if(!data&&alvoId){
+        if(!data&&alvoId&&!automaticoLegado){
           const respostaId=await sb.from('financeiro_lancamentos').update(payloadAtual).eq('id',alvoId).select().maybeSingle();
           if(respostaId.error) throw respostaId.error;
           data=respostaId.data||null;
         }
         if(!data){
+          // Repasses antigos podem ser editados manualmente, nunca inseridos/recriados.
+          if(automaticoLegado) throw new Error('Repasse historico nao encontrado. Atualize o financeiro antes de editar.');
           const respostaInsert=await sb.from('financeiro_lancamentos').insert(payloadAtual).select().single();
           if(respostaInsert.error) throw respostaInsert.error;
           data=respostaInsert.data||null;
@@ -2294,6 +2299,7 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
         preservarComprovanteFinanceiroLocal(lancamento,comprovantePreservado);
       }
     }
+    if(automaticoLegado) lancamento.edicaoManualLegado=true;
     lancamento.syncPendente=!!payloadReduzido;
     lancamento.syncErro=payloadReduzido?'Schema do Supabase ainda nao possui todas as colunas do financeiro.':'';
     return lancamento;
@@ -2327,7 +2333,7 @@ async function dbExcluirLancamentoFinanceiro(lancamentoOuId){
 }
 
 function lancamentoFinanceiroTemSyncPendente(item){
-  return !!(item&&item.syncPendente&&!lancamentoFinanceiroAutomaticoLegado(item));
+  return !!(item&&item.syncPendente&&(!lancamentoFinanceiroAutomaticoLegado(item)||item.edicaoManualLegado));
 }
 
 async function sincronizarFinanceiroPendentes(opcoes={}){

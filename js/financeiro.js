@@ -1,5 +1,7 @@
 // FINANCEIRO
-// Modulo Financeiro - caixa composto exclusivamente por lancamentos manuais.
+// Novas movimentacoes manuais, preservando o historico anterior a transicao.
+// Data de corte confirmada pelo usuario; nao acompanha a data atual do sistema.
+const FIN_INICIO_MOVIMENTACAO_MANUAL = '2026-08-26';
 
 let finMesAtual = new Date().getMonth();
 let finAnoAtual = new Date().getFullYear();
@@ -241,10 +243,11 @@ function finDreSetIndice(valor) {
 
 function finDreAnosDisponiveis() {
   const anos = new Set([new Date().getFullYear(), finAnoAtual]);
-  finLancamentosManuais().forEach(item => {
+  finLancamentosRegistrados().forEach(item => {
     const ref = finReferenciaLancamentoManual(item);
     if (ref && !Number.isNaN(ref.getTime())) anos.add(ref.getFullYear());
   });
+  finComissoesRecebidasHistoricas().forEach(item => anos.add(item.dataRef.getFullYear()));
   return Array.from(anos).sort((a, b) => b - a);
 }
 
@@ -366,10 +369,10 @@ function finRotuloVisao(visao) {
 }
 
 function finSubtituloVisao() {
-  if (finVisao === 'dre') return 'Demonstrativo gerencial dos lancamentos manuais realizados no periodo.';
-  if (finVisao === 'entradas') return 'Entradas cadastradas manualmente, previstas ou recebidas. Vendas nao geram entradas no caixa.';
-  if (finVisao === 'saidas') return 'Saidas cadastradas manualmente, previstas ou pagas, incluindo os repasses de comissao.';
-  return 'Fluxo de caixa com entradas e saidas manuais. Concluir uma venda nao gera movimentacoes financeiras.';
+  if (finVisao === 'dre') return 'Demonstrativo dos movimentos realizados, incluindo o historico anterior ao modo manual.';
+  if (finVisao === 'entradas') return 'Comissoes recebidas ate 25/08/2026 preservadas. A partir de 26/08/2026, novas entradas sao manuais.';
+  if (finVisao === 'saidas') return 'Repasses ja registrados preservados. Novas saidas de comissao devem ser cadastradas manualmente.';
+  return 'Modo manual a partir de 26/08/2026. Recebimentos anteriores e repasses ja registrados continuam no caixa.';
 }
 
 function finRotuloFiltroSituacao(status) {
@@ -396,7 +399,7 @@ function finTipoPadraoNovaAcao() {
 
 function finCategoriasPorTipo(tipo, adicionais = []) {
   const base = tipo === 'saida' ? FIN_CATEGORIAS.saida : FIN_CATEGORIAS.entrada;
-  const usadas = finLancamentosManuais()
+  const usadas = finLancamentosRegistrados()
     .filter(item => tipoLancamentoFinanceiroNormalizado(item && item.tipo) === tipo)
     .map(item => finTextoMaiusculo(item && item.categoria))
     .filter(Boolean);
@@ -407,8 +410,9 @@ function finCategoriasPorTipo(tipo, adicionais = []) {
 }
 
 function finUnidadesDisponiveis() {
-  const manuais = finLancamentosManuais().map(item => item.unidade);
-  return finOpcoes(['Centro', 'Cristo Rei', ...manuais]);
+  const registradas = finLancamentosRegistrados().map(item => item.unidade);
+  const historicas = finComissoesRecebidasHistoricas().map(item => item.unidade);
+  return finOpcoes(['Centro', 'Cristo Rei', ...registradas, ...historicas]);
 }
 
 function finCategoriasDisponiveis() {
@@ -508,22 +512,65 @@ function finReferenciaLancamentoManual(item) {
   return null;
 }
 
-function finLancamentosManuais() {
-  // Preserva o historico automatico no banco/cache, sem inclui-lo no caixa ou DRE.
+function finLancamentosRegistrados() {
+  // Inclui repasses antigos com seus valores, datas, situacoes e comprovantes originais.
   return (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : [])
-    .filter(item => item && !lancamentoFinanceiroAutomaticoLegado(item));
+    .filter(Boolean);
+}
+
+function finInfoRecebimentoComissaoVenda(venda) {
+  const etapaFinal = ETAPAS.length - 1;
+  const historico = (Array.isArray(venda.hist) ? venda.hist : []).slice().reverse();
+  const afetaFluxo = item => item && histAfetaFluxo(item);
+  const final = historico.find(item => afetaFluxo(item) && Number(item.e) === etapaFinal);
+  const fallback = historico.find(afetaFluxo);
+  const info = (final && obterMomentoHistorico(final, { preferTs: false }))
+    || (fallback && obterMomentoHistorico(fallback, { preferTs: false }));
+  if (!info || info.precision === 'daymonth' || Number.isNaN(info.date.getTime())) return null;
+  if (info.precision === 'datetime') {
+    // Timestamps antigos sem data comercial usam o dia de Sao Paulo, inclusive no servidor UTC.
+    const partes = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+    }).formatToParts(info.date);
+    const parte = tipo => partes.find(item => item.type === tipo).value;
+    return finDataIsoParaDate(`${parte('year')}-${parte('month')}-${parte('day')}`);
+  }
+  return new Date(info.date.getFullYear(), info.date.getMonth(), info.date.getDate(), 12);
+}
+
+function finComissoesRecebidasHistoricas() {
+  // Apenas leitura: nao recria lancamentos nem volta a gerar previsoes de vendas.
+  return (Array.isArray(VENDAS) ? VENDAS : []).flatMap(venda => {
+    if (!venda || venda.distratada || Number(venda.etapa) !== ETAPAS.length - 1) return [];
+    const dataRef = finInfoRecebimentoComissaoVenda(venda);
+    if (!dataRef || finDateParaIso(dataRef) >= FIN_INICIO_MOVIMENTACAO_MANUAL) return [];
+    const valorBruto = finValorSeguro(venda.valor) * finValorSeguro(venda.pct);
+    if (valorBruto <= 0) return [];
+    return [{
+      key: `venda-${venda.id}`, origem: 'venda', historicoAutomatico: true,
+      natureza: 'entrada', categoria: 'COMISSAO',
+      descricao: finTextoMaiusculo(venda.cliente) || 'COMISSAO RECEBIDA',
+      valorBruto, valorLiquido: typeof comZ === 'function' ? finValorSeguro(comZ(venda)) : valorBruto,
+      dataRef, dia: dataRef.getDate(), status: 'realizado', atraso: 0,
+      unidade: venda.unidade || '', construtora: venda.construtora || '', gerente: venda.gerente || '',
+      v: venda
+    }];
+  });
 }
 
 function finNormalizarLancamentoManual(item) {
-  if (!item || lancamentoFinanceiroAutomaticoLegado(item)) return null;
+  if (!item) return null;
+  const historicoAutomatico = lancamentoFinanceiroAutomaticoLegado(item);
+  const refLocal = String(item.refLocal || item.ref_local || '').trim();
   const tipo = tipoLancamentoFinanceiroNormalizado(item.tipo);
   const dataRef = finReferenciaLancamentoManual(item);
   if (!dataRef) return null;
   const status = finStatusLoteManual(statusLancamentoFinanceiroNormalizado(item.status), item.dataPrevista);
   const atraso = status === 'atrasado' ? finDiffDias(finHojeRef(), finDataIsoParaDate(item.dataPrevista)) : 0;
   return {
-    key: `manual-${item.refLocal || item.id}`,
-    origem: 'manual',
+    key: `registrado-${refLocal || item.id}`,
+    origem: historicoAutomatico ? 'venda_comissao_saida' : 'manual',
+    historicoAutomatico,
     natureza: tipo,
     categoria: finTextoMaiusculo(item.categoria) || (tipo === 'saida' ? 'OUTRAS SAIDAS' : 'OUTRAS ENTRADAS'),
     descricao: finTextoMaiusculo(item.descricao) || (tipo === 'saida' ? 'SAIDA MANUAL' : 'ENTRADA MANUAL'),
@@ -544,7 +591,7 @@ function finNormalizarLancamentoManual(item) {
     comprovanteLocalId: item.comprovanteLocalId || '',
     comprovanteStorageBucket: item.comprovanteStorageBucket || '',
     comprovanteStoragePath: item.comprovanteStoragePath || '',
-    refLocal: item.refLocal || '',
+    refLocal,
     raw: item
   };
 }
@@ -560,7 +607,7 @@ function finMontarResumoNatureza(previstas, realizadas) {
   };
 }
 
-function finColetarLancamentosManuaisMes(mes, ano) {
+function finColetarLancamentosRegistradosMes(mes, ano) {
   const entradasPrevistas = [];
   const entradasRealizadas = [];
   const saidasPrevistas = [];
@@ -591,9 +638,15 @@ function finColetarLancamentosManuaisMes(mes, ano) {
 }
 
 function finColetarMes(mes, ano) {
-  const manuais = finColetarLancamentosManuaisMes(mes, ano);
-  const entradas = manuais.entradas;
-  const saidas = manuais.saidas;
+  const registrados = finColetarLancamentosRegistradosMes(mes, ano);
+  const historicas = finComissoesRecebidasHistoricas().filter(item =>
+    item.dataRef.getMonth() === mes && item.dataRef.getFullYear() === ano && finMatchCamposItem(item));
+  const entradas = finMontarResumoNatureza(registrados.entradas.previstas, [...registrados.entradas.realizadas, ...historicas]);
+  const saidas = registrados.saidas;
+  const apenasManuais = resumo => finMontarResumoNatureza(
+    resumo.previstas.filter(item => item.origem === 'manual'),
+    resumo.realizadas.filter(item => item.origem === 'manual'));
+  const manuais = { entradas: apenasManuais(registrados.entradas), saidas: apenasManuais(registrados.saidas) };
 
   const agendaPorDia = {};
   [...entradas.todos, ...saidas.todos].forEach(item => {
@@ -674,8 +727,11 @@ function finDreCriarLinha(dataRef, natureza, categoria, descricao, valor, origem
 function finDreColetarLinhas(meta) {
   const linhas = [];
 
-  (Array.isArray(FINANCEIRO_LANCAMENTOS) ? FINANCEIRO_LANCAMENTOS : []).forEach(item => {
-    const normalizado = finNormalizarLancamentoManual(item);
+  const movimentos = [
+    ...finComissoesRecebidasHistoricas(),
+    ...finLancamentosRegistrados().map(finNormalizarLancamentoManual)
+  ];
+  movimentos.forEach(normalizado => {
     if (!normalizado || normalizado.status !== 'realizado') return;
     if (finFiltroUnidade && normalizado.unidade !== finFiltroUnidade) return;
     if (!finDreDentroPeriodo(normalizado.dataRef, meta)) return;
@@ -1061,6 +1117,7 @@ function finMetaItem(item, opcoes = {}) {
   const includeProof = config.includeProof !== false;
   const partes = [];
   if (item.categoria) partes.push(item.categoria);
+  if (item.historicoAutomatico) partes.push('historico automatico');
   if (item.unidade) partes.push(item.unidade);
   if (includeStatus) partes.push(finStatusItem(item));
   if (includeProof && finTemComprovante(item)) partes.push(item.natureza === 'saida' ? 'comprovante anexado' : 'anexo');
@@ -1073,7 +1130,7 @@ function finTemComprovante(item) {
 }
 
 function finPodeBaixaRapida(item) {
-  return !!(item && item.origem === 'manual' && item.status !== 'realizado');
+  return !!(item && item.raw && item.status !== 'realizado');
 }
 
 function finRotuloBaixaRapida(item) {
@@ -1204,7 +1261,7 @@ function finBuildKpis(atual, anterior, anteriorRef, meses) {
     return [
       finResumoCard('Previsto no mes', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)'),
       finResumoCard('Ja recebido', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good'),
-      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Entradas manuais previstas + recebidas', '#3060B8'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Entradas previstas + recebidas, incluindo historico', '#3060B8'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#2E9E6E' : '#C05030', deltaMes.delta >= 0 ? 'good' : 'bad'),
       finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.entradas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#2E9E6E', 'good'),
       finResumoCard('Manuais do mes', finFmtMoeda(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A')
@@ -1256,7 +1313,7 @@ function finBuildKpisPainel(atual, anterior, anteriorRef, meses) {
     return [
       finResumoCard('Previsto no mes', finFmtMoeda(atual.entradas.totalPrevisto), `${atual.entradas.previstas.length} entradas projetadas`, 'var(--gold)', '', 'projected'),
       finResumoCard('Ja recebido', finFmtMoeda(atual.entradas.totalRealizado), `${atual.entradas.realizadas.length} entradas realizadas`, '#2E9E6E', 'good', 'realized'),
-      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Entradas manuais previstas + recebidas', '#3060B8', '', 'total'),
+      finResumoCard('Total do mes', finFmtMoeda(totalAtual), 'Entradas previstas + recebidas, incluindo historico', '#3060B8', '', 'total'),
       finResumoCard('Vs mes anterior', finFmtDelta(deltaMes), `${meses[finMesAtual]} vs ${meses[anteriorRef.mes]} • ${finFmtDeltaPct(deltaMes)}`, deltaMes.delta >= 0 ? '#2E9E6E' : '#C05030', deltaMes.delta >= 0 ? 'good' : 'bad', 'compare'),
       finResumoCard('% realizado', `${realizadoPct.toFixed(1).replace('.', ',')}%`, `${finFmtMoeda(atual.entradas.totalRealizado)} de ${finFmtMoeda(totalAtual)}`, '#2E9E6E', 'good', 'progress'),
       finResumoCard('Manuais do mes', finFmtMoeda(totalManuais), `${qtdManuais} entradas manuais no recorte`, '#8B6C1A', '', 'neutral')
@@ -1296,6 +1353,7 @@ function finAcaoItem(item) {
 function finAcaoItemComOpcao(item, pararEvento = false) {
   if (!item) return '';
   const prefixo = pararEvento ? 'event.stopPropagation();' : '';
+  if (item.origem === 'venda') return `onclick="${prefixo}irParaVenda(${Number(item.v.id)})"`;
   const chave = finEscapeAttr(finChaveItem(item));
   return `onclick="${prefixo}finEditarLancamentoManual('${chave}')"`; 
 }
@@ -1427,8 +1485,8 @@ function finBuildCalendario(atual, ano, mes, hoje, primeiroDia, diasNoMes) {
 
 function finLancamentoAtual() {
   if (!finModalLancamentoId) return null;
-  return finLancamentosManuais().find(item => {
-    const chave = item.refLocal || item.id || '';
+  return finLancamentosRegistrados().find(item => {
+    const chave = String(item.refLocal || item.ref_local || item.id || '').trim();
     return String(chave) === String(finModalLancamentoId);
   }) || null;
 }
@@ -1460,14 +1518,14 @@ function finPrepararComprovanteModal(item = null) {
 }
 
 function finChaveItem(item) {
-  return String(item && (item.refLocal || (item.raw && item.raw.refLocal) || item.id || item.key || '') || '');
+  return String(item && (item.refLocal || item.ref_local || (item.raw && (item.raw.refLocal || item.raw.ref_local || item.raw.id)) || item.id || item.key || '') || '').trim();
 }
 
 function finLancamentoPorChave(chave) {
   const alvo = String(chave || '').trim();
   if (!alvo) return null;
-  return finLancamentosManuais().find(item => {
-    const atual = String(item && (item.refLocal || item.id || '') || '').trim();
+  return finLancamentosRegistrados().find(item => {
+    const atual = String(item && (item.refLocal || item.ref_local || item.id || '') || '').trim();
     return atual && atual === alvo;
   }) || null;
 }
@@ -1841,7 +1899,7 @@ function finAbrirModalLancamento(tipo = '') {
 function finEditarLancamentoManual(chave) {
   const item = finLancamentoPorChave(chave);
   if (!item) {
-    showToast('!', zUiText('Lancamento manual nao encontrado. Repasses automaticos antigos nao compoem mais o caixa.'));
+    showToast('!', zUiText('Lancamento nao encontrado. Atualize o financeiro e tente novamente.'));
     return;
   }
   finResetDetalheDiaState();
@@ -2006,6 +2064,8 @@ async function finSalvarLancamento() {
   alvo.valor = valor;
   alvo.observacao = observacao;
   alvo.atualizadoEm = agoraIso;
+  // Somente uma edicao explicita permite atualizar/sincronizar um repasse antigo.
+  if (existente && lancamentoFinanceiroAutomaticoLegado(existente)) alvo.edicaoManualLegado = true;
   if (finComprovanteRemovido) {
     alvo.comprovanteNome = '';
     alvo.comprovanteMime = '';
@@ -2855,7 +2915,7 @@ function renderFinanceiro() {
             <button class="btn-c fin-proof-remove" type="button" id="fin-comprovante-remove-btn" style="display:${comprovanteModalAtual ? 'inline-flex' : 'none'};" onclick="finLimparComprovanteSelecionado()">${zUiText('Remover')}</button>
           </div>
         </div>
-        <div class="fin-modal-note">${zUiText('Somente lancamentos manuais compoem o caixa e o DRE. Marcar uma venda como Comissao recebida nao gera entradas nem saidas no financeiro.')}</div>
+        <div class="fin-modal-note">${zUiText('Novas movimentacoes sao manuais desde 26/08/2026. Comissoes recebidas ate 25/08 e repasses ja registrados permanecem no caixa e no DRE. Editar um repasse antigo nao cria outro lancamento.')}</div>
       </div>
       <div class="modal-foot">
         <div class="fin-modal-actions" style="width:100%;">
