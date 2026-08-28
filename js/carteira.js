@@ -7,6 +7,8 @@ const carteiraFiltros = {
   construtora: '',
   situacao: 'todos'
 };
+let carteiraMobileLimite = 24;
+const CARTEIRA_MOBILE_PASSO = 24;
 
 const CARTEIRA_MESES = ['JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO', 'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
 const CARTEIRA_MESES_CURTOS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
@@ -161,11 +163,13 @@ function carteiraMeuBonusNaoPago(v) {
 
 function setCarteiraFiltro(chave, valor) {
   carteiraFiltros[chave] = valor;
+  carteiraMobileLimite = CARTEIRA_MOBILE_PASSO;
   renderCarteira();
 }
 
 function setCarteiraSituacao(valor) {
   carteiraFiltros.situacao = valor;
+  carteiraMobileLimite = CARTEIRA_MOBILE_PASSO;
   renderCarteira();
 }
 
@@ -174,6 +178,12 @@ function resetCarteiraFiltros() {
   carteiraFiltros.unidade = '';
   carteiraFiltros.construtora = '';
   carteiraFiltros.situacao = 'todos';
+  carteiraMobileLimite = CARTEIRA_MOBILE_PASSO;
+  renderCarteira();
+}
+
+function mostrarMaisCarteiraMobile() {
+  carteiraMobileLimite += CARTEIRA_MOBILE_PASSO;
   renderCarteira();
 }
 
@@ -2943,6 +2953,61 @@ function renderCarteiraTabelaRows(lista, cols) {
   }).join('');
 }
 
+function renderCarteiraMobileCards(lista) {
+  if (!lista.length) {
+    return `<div class="cart-mobile-empty">${zUiText('Nenhuma venda encontrada para este recorte.')}</div>`;
+  }
+
+  const limite = Math.min(carteiraMobileLimite, lista.length);
+  const cards = lista.slice(0, limite).map(v => {
+    const etapa = ETAPAS[parseInt(v.etapa, 10) || 0] || 'Sem etapa';
+    const statusClasse = v.distratada ? 'danger' : (v.etapa === ETAPAS.length - 1 ? 'success' : 'warn');
+    const statusTexto = v.distratada ? 'Distrato' : (v.etapa === ETAPAS.length - 1 ? 'Concluída' : 'Pipeline');
+    const comissaoLabel = role === 'dono'
+      ? 'Lucro Zelony'
+      : (role === 'fin' ? 'Comissão líquida' : 'Minha comissão');
+    const comissaoValor = role === 'dono'
+      ? comZ(v)
+      : (role === 'fin' ? comTotal(v) : carteiraMinhaComissaoValor(v));
+    const bonusValor = role === 'dono' || role === 'fin'
+      ? (Number(v.bonus) > 0 ? bonusLiquidoTotal(v) : 0)
+      : carteiraMeuBonusValor(v);
+
+    return `
+      <article class="cart-mobile-card ${v.distratada ? 'is-distrato' : ''}">
+        <div class="cart-mobile-card-head">
+          <div>
+            <div class="cart-mobile-date">${zUiText(v.data || 'Sem data')}</div>
+            <h3>${zUiText(clienteVendaTexto(v.cliente) || 'Cliente não informado')}</h3>
+            <p>${zUiText(v.produto || 'Produto não informado')}</p>
+          </div>
+          <span class="cart-status-pill ${statusClasse}">${zUiText(statusTexto)}</span>
+        </div>
+        <div class="cart-mobile-people">
+          <span><small>${zUiText('Corretor')}</small><strong>${zUiText(v.corretor || 'Não informado')}</strong></span>
+          <span><small>${zUiText('Gerente')}</small><strong>${zUiText(v.gerente || 'Não informado')}</strong></span>
+        </div>
+        <div class="cart-mobile-values">
+          <span><small>${zUiText('Valor da venda')}</small><strong>${fmtCarteiraValor(v.valor)}</strong></span>
+          <span><small>${zUiText(comissaoLabel)}</small><strong>${fmtCarteiraValor(comissaoValor)}</strong></span>
+          ${bonusValor > 0 ? `<span><small>${zUiText('Bônus')}</small><strong>${fmtCarteiraValor(bonusValor)}</strong></span>` : ''}
+        </div>
+        <div class="cart-mobile-stage">
+          <small>${zUiText('Etapa atual')}</small>
+          <strong>${zUiText(etapa)}</strong>
+        </div>
+      </article>`;
+  }).join('');
+  const restantes = lista.length - limite;
+  if (!restantes) return cards;
+  const proximoLote = Math.min(CARTEIRA_MOBILE_PASSO, restantes);
+  return `${cards}
+    <div class="cart-mobile-more">
+      <span>${zUiText(`${limite} de ${lista.length} vendas exibidas`)}</span>
+      <button type="button" onclick="mostrarMaisCarteiraMobile()">${zUiText(`Mostrar mais ${proximoLote}`)}</button>
+    </div>`;
+}
+
 function renderCarteira() {
   const lMinhas = vendasU(VENDAS, true);
   const etapaFinal = ETAPAS.length - 1;
@@ -3381,6 +3446,7 @@ function renderCarteira() {
             <span>${zUiText(labelSituacaoCarteira(carteiraFiltros.situacao))}</span>
           </div>
         </div>
+        <div class="cart-mobile-list">${renderCarteiraMobileCards(visiveis)}</div>
         <div class="tscroll">
           <table>
             <thead><tr>${cols.map(c => `<th>${zUiText(headerMap[c] || c)}</th>`).join('')}</tr></thead>
@@ -3401,7 +3467,7 @@ function renderCarteira() {
       <div class="cmc r"><div class="cmc-l">${zUiText('A receber')}</div><div class="cmc-v" style="color:#C06030;">${fmtCarteiraValor(pend)}</div><div class="cmc-s">${zUiText('comissões pendentes + bônus sem nota')}</div></div>
     </div>
     ${perdido > 0 ? `<div style="background:#FEF0EC;border:1px solid #E0A090;border-radius:9px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:#C05030;font-weight:700;margin-bottom:2px;">${zUiText(`⚠ Perdido com distrato${distratas.length > 1 ? 's' : ''}`)}</div><div style="font-size:11px;color:#C05030;opacity:0.8;">${zUiText(`${distratas.length} venda${distratas.length > 1 ? 's' : ''} distratada${distratas.length > 1 ? 's' : ''}`)}</div></div><div style="font-size:22px;font-weight:700;color:#C05030;font-family:'Playfair Display',serif;">- ${fmtCarteiraValor(perdido)}</div></div>` : ''}
-    <div class="ctbl cart-detail-table"><div class="ctbl-h"><span class="ctbl-t">${zUiText('Detalhe por venda')}</span><span style="font-size:10px;color:var(--tm);">${zUiText(`${lMinhas.length} venda${lMinhas.length !== 1 ? 's' : ''}`)}</span></div><div class="tscroll"><table><thead><tr>${cols.map(c => `<th>${zUiText(headerMap[c] || c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    <div class="ctbl cart-detail-table"><div class="ctbl-h"><span class="ctbl-t">${zUiText('Detalhe por venda')}</span><span style="font-size:10px;color:var(--tm);">${zUiText(`${lMinhas.length} venda${lMinhas.length !== 1 ? 's' : ''}`)}</span></div><div class="cart-mobile-list">${renderCarteiraMobileCards(lMinhas)}</div><div class="tscroll"><table><thead><tr>${cols.map(c => `<th>${zUiText(headerMap[c] || c)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table></div></div>`;
 }
 
 zRegisterModule('carteira', {

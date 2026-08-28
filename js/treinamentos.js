@@ -1256,7 +1256,8 @@ function renderProc(){
       div.id = 'proc-embreve';
       div.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;';
       div.innerHTML = `<div style="font-size:48px;">${zUiText('📋')}</div><div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--gold);">${zUiText('Em Breve')}</div><div style="font-size:12px;color:var(--tm);text-align:center;max-width:280px;line-height:1.6;">${zUiText('Os Processos Operacionais estão sendo estruturados para orientar o trabalho da equipe.')}</div><div style="background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:8px;padding:8px 20px;font-size:11px;color:var(--gold);font-weight:600;">${zUiText('🔔 Em desenvolvimento')}</div>`;
-      cont.appendChild(div);
+      const host = cont.querySelector('.proc-wrap') || cont;
+      host.appendChild(div);
     }
     return;
   }

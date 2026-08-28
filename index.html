@@ -357,9 +357,9 @@
       <option value="dir">👤 Diretor</option>
       <option value="rh">👤 RH</option>
     </select>
-    <button class="notif-btn" onclick="toggleNotif()">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
-    <button class="tb-action-btn" onclick="fazerLogout()" title="Sair do sistema">↩ Sair</button>
-    <button class="tb-action-btn tb-action-accent" onclick="abrirTS()" title="Trocar senha">🔑</button>
+    <button class="notif-btn" type="button" onclick="toggleNotif()" aria-label="Notificações" title="Notificações">🔔<span class="nbadge hidden" id="nbadge">0</span></button>
+    <button class="tb-action-btn tb-logout-btn" type="button" onclick="fazerLogout()" aria-label="Sair do sistema" title="Sair do sistema">↩ Sair</button>
+    <button class="tb-action-btn tb-action-accent tb-password-btn" type="button" onclick="abrirTS()" aria-label="Trocar senha" title="Trocar senha">🔑</button>
   </div>
 </div>
 
@@ -423,6 +423,23 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-3 2-4.5 5-4.5s5 1.5 5 4.5"/><circle cx="12" cy="5" r="2"/><path d="M11.5 8.5c1.5 0 3 .8 3 3.5"/></svg>
         Usuários
       </button>
+    </div>
+  </div>
+  <div class="sb-mobile-account" aria-label="Ações da conta">
+    <label for="role-sel-mobile">Conta e acesso</label>
+    <select class="role-sel sb-mobile-role" id="role-sel-mobile" onchange="trocaRole(this.value)" style="display:none;" title="Visualizar como...">
+      <option value="dono">🧑‍💼 Dono</option>
+      <option value="fin">👤 Financeiro</option>
+      <option value="cor">👤 Corretor</option>
+      <option value="cap">👤 Capitão</option>
+      <option value="ger">👤 Gerente</option>
+      <option value="dir">👤 Diretor</option>
+      <option value="rh">👤 RH</option>
+    </select>
+    <div class="sb-mobile-actions">
+      <button type="button" onclick="fecharMenuMobile();toggleNotif()">🔔 <span>Notificações</span></button>
+      <button type="button" onclick="fecharMenuMobile();abrirTS()">🔑 <span>Trocar senha</span></button>
+      <button type="button" class="danger" onclick="fazerLogout()">↩ <span>Sair</span></button>
     </div>
   </div>
   <div class="sb-bottom">

@@ -229,6 +229,11 @@ function atualizarTopbar(usuario, rv) {
   const sel = document.getElementById('role-sel');
   sel.style.display = rv === 'dono' ? 'block' : 'none';
   if (rv === 'dono') sel.value = rv;
+  const selMobile = document.getElementById('role-sel-mobile');
+  if (selMobile) {
+    selMobile.style.display = rv === 'dono' ? 'block' : 'none';
+    if (rv === 'dono') selMobile.value = rv;
+  }
   const sbFin = document.getElementById('sb-financeiro');
   if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(rv) ? 'flex' : 'none';
   const sbRh = document.getElementById('sb-rh');
@@ -240,8 +245,12 @@ function atualizarTopbar(usuario, rv) {
   document.getElementById('sb-urole').textContent = zUiText(perfil);
 }
 
-function trocaRole() {
-  role = document.getElementById('role-sel').value;
+function trocaRole(novoRole = '') {
+  const sel = document.getElementById('role-sel');
+  const selMobile = document.getElementById('role-sel-mobile');
+  role = novoRole || (sel && sel.value) || (selMobile && selMobile.value) || role;
+  if (sel) sel.value = role;
+  if (selMobile) selMobile.value = role;
   zSetState('state.auth.role', role);
   const d = RD[role];
   document.getElementById('sb-av').textContent    = d.av;
