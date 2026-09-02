@@ -67,6 +67,7 @@ function makeContext(lancamentos = fixtures()) {
   const ctx = vm.createContext({
     Date, console, setTimeout, clearTimeout,
     FINANCEIRO_LANCAMENTOS: lancamentos,
+    FINANCEIRO_SALDOS_BANCARIOS: [],
     VENDAS: salesFixtures(), ETAPAS: Array.from({ length: 9 }, (_, index) => `Etapa ${index}`),
     zSetState() {}, zRegisterModule() {}, zUiText: text => String(text ?? ''),
     appExigirModoOnline() {}, showToast() {}, salvarLS() {},
@@ -164,6 +165,74 @@ test('recebimento manual usa a data realizada e nao a data prevista', () => {
   ctx.VENDAS = [];
   assert.equal(ctx.finColetarMes(7, 2026).entradas.totalRealizado, 0);
   assert.equal(ctx.finColetarMes(8, 2026).entradas.totalRealizado, 700);
+});
+
+test('conciliacao carrega o saldo anterior e compara banco com movimentos realizados', () => {
+  const ctx = makeContext([
+    { id: 31, tipo: 'entrada', valor: 1000, status: 'realizado', dataPrevista: '2026-09-01', dataRealizada: '2026-09-01' },
+    { id: 32, tipo: 'saida', valor: 200, status: 'realizado', dataPrevista: '2026-09-02', dataRealizada: '2026-09-02' },
+    { id: 33, tipo: 'saida', valor: 900, status: 'previsto', dataPrevista: '2026-09-02', dataRealizada: '' }
+  ]);
+  ctx.VENDAS = [];
+  ctx.FINANCEIRO_SALDOS_BANCARIOS.push(
+    { id: 1, conta: 'CONTA PRINCIPAL', dataReferencia: '2026-08-31', saldo: 5000 },
+    { id: 2, conta: 'CONTA PRINCIPAL', dataReferencia: '2026-09-02', saldo: 5500 }
+  );
+  vm.runInContext("finMesAtual = 8; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 8, 2, 12); finFiltroUnidade = 'Cristo Rei'; finFiltroCategoria = 'ALUGUEL';", ctx);
+  const conciliacao = ctx.finConciliacaoMes(8, 2026);
+  assert.equal(conciliacao.saldoAnterior.saldo, 5000);
+  assert.equal(conciliacao.movimentoSistema, 800);
+  assert.equal(conciliacao.saldoSistema, 5800);
+  assert.equal(conciliacao.saldoBancario.saldo, 5500);
+  assert.equal(conciliacao.diferenca, -300);
+  assert.equal(conciliacao.conciliado, false);
+  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Diferenca de -R\$\s?300,00/);
+});
+
+test('primeiro saldo bancario vira base sem inventar saldo do sistema', () => {
+  const ctx = makeContext([]);
+  ctx.VENDAS = [];
+  ctx.FINANCEIRO_SALDOS_BANCARIOS.push(
+    { id: 1, conta: 'CONTA PRINCIPAL', dataReferencia: '2026-09-02', saldo: 5500 }
+  );
+  vm.runInContext("finMesAtual = 8; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 8, 2, 12);", ctx);
+  const conciliacao = ctx.finConciliacaoMes(8, 2026);
+  assert.equal(conciliacao.saldoAnterior, null);
+  assert.equal(conciliacao.saldoSistema, null);
+  assert.equal(conciliacao.diferenca, null);
+  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Saldo inicial registrado/);
+});
+
+test('painel financeiro renderiza conciliacao e distingue movimento mensal de saldo bancario', () => {
+  const ctx = makeContext([]);
+  ctx.VENDAS = [];
+  const target = { style: {}, innerHTML: '', querySelector: () => null };
+  ctx.document = { getElementById: id => id === 'financeiro-content' ? target : null };
+  vm.runInContext("role = 'dono'; finVisao = 'geral'; finMesAtual = 8; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 8, 2, 12);", ctx);
+  ctx.renderFinanceiro();
+  assert.match(target.innerHTML, /CONCILIACAO BANCARIA/);
+  assert.match(target.innerHTML, /Movimento liquido/);
+  assert.match(target.innerHTML, /Saldo bancario/);
+  assert.match(target.innerHTML, /Cadastrar saldo anterior/);
+});
+
+test('mapeamento do saldo bancario preserva data, valor negativo e auditoria', () => {
+  const ctx = vm.createContext({ Date });
+  vm.runInContext(supabaseFunction('mapSaldoBancarioIn'), ctx);
+  vm.runInContext(supabaseFunction('mapSaldoBancarioOut'), ctx);
+  const interno = ctx.mapSaldoBancarioIn({
+    id: '7', conta: 'Conta principal', data_referencia: '2026-08-31T00:00:00Z',
+    saldo_bancario: '-125.50', observacao: 'fechamento', criado_por: 'Paulo', criado_por_id: '1'
+  });
+  assert.equal(interno.id, 7);
+  assert.equal(interno.conta, 'CONTA PRINCIPAL');
+  assert.equal(interno.dataReferencia, '2026-08-31');
+  assert.equal(interno.saldo, -125.5);
+  assert.equal(interno.observacao, 'FECHAMENTO');
+  const banco = ctx.mapSaldoBancarioOut(interno);
+  assert.equal(banco.data_referencia, '2026-08-31');
+  assert.equal(banco.saldo_bancario, -125.5);
+  assert.equal(banco.criado_por_id, 1);
 });
 
 test('automaticos antigos nao sao reenviados pela fila de sincronizacao', async () => {

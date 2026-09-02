@@ -1,0 +1,2273 @@
+﻿// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ VENDAS / COMISSÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+// MÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³dulo principal: listagem, filtros, detalhe, etapas, cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡lculos, distrato, ediÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ CONSTANTES ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+const ETAPAS=['Aguardando demanda','Entrevista','Ass. formulários','Envio CEHOP','Entrevista Caixa','Aguard. Ass. CEF','Assinado CEF','Nota emitida','Comissão recebida'];
+const PRAZOS_ETAPA=[null,5,5,6,3,3,4,15,null];
+const ETAPA_NOTA_EMITIDA=ETAPAS.indexOf('Nota emitida');
+const RH_COMISSAO_NOVAS_VENDAS=Object.freeze({
+  ativa:false,
+  percentual:0.001,
+  encerradaEm:'2026-07-30'
+});
+const BONUS_FORMAS={
+  comissao:'Junto com a comissao',
+  antecipado:'Antecipado'
+};
+const BONUS_STATUS={
+  pendente:'Pendente',
+  nota_gerada:'Nota gerada',
+  pago:'Pago'
+};
+const DISTRATO_CATEGORIAS_PADRAO=[
+  'Cliente desistiu',
+  'Crédito e financiamento',
+  'Capacidade de pagamento',
+  'Documentação e cadastro',
+  'Jurídico e contrato',
+  'Produto e enquadramento',
+  'Atendimento comercial',
+  'Duplicidade e erro operacional',
+  'Outros'
+];
+
+const PROC_DATA={
+  'Comercial':[
+    {nome:'Captação de imóveis',etapas:8,status:'Ativo',badge:'bg-g',steps:['Prospecção do imóvel','Avaliação de mercado','Visita técnica','Documentação do proprietário','Assinatura de exclusividade','Cadastro no sistema','Publicação nas plataformas','Acompanhamento de leads']},
+    {nome:'Processo de venda',etapas:12,status:'Ativo',badge:'bg-g',steps:['Atendimento do lead','Qualificação do cliente','Apresentação do imóvel','Proposta inicial','Negociação','Aprovação do crédito','Assinatura de promessa','Análise jurídica','CEHOP','Entrevista Caixa','Assinatura CEF','Entrega das chaves']},
+    {nome:'Locação de imóveis',etapas:10,status:'Ativo',badge:'bg-g',steps:['Captação do imóvel','Divulgação','Atendimento','Visita','Proposta','Análise cadastral','Assinatura do contrato','Vistoria de entrada','Pagamento de taxas','Entrega das chaves']}
+  ],
+  'Jurídico':[
+    {nome:'Contratos e escritura',etapas:6,status:'Revisão',badge:'bg-a',steps:['Minuta do contrato','Revisão jurídica','Assinatura das partes','Reconhecimento de firma','Registro em cartório','Entrega do documento']}
+  ],
+  'Financeiro':[
+    {nome:'Repasse de comissões',etapas:7,status:'Ativo',badge:'bg-g',steps:['Nota fiscal emitida','Validação dos valores','Aprovação do gerente','Aprovação do diretor','Processamento bancário','Depósito realizado','Comprovante enviado']}
+  ],
+  'RH / Pessoas':[
+    {nome:'Onboarding de corretor',etapas:5,status:'Rascunho',badge:'bg-gr',steps:['Documentação admissional','Apresentação da empresa','Treinamento inicial','Acompanhamento na primeira venda','Avaliação de 30 dias']},
+    {nome:'Avaliação de desempenho',etapas:4,status:'Pendente',badge:'bg-r',steps:['Coleta de métricas','Reunião com gestor','Plano de desenvolvimento','Registro no sistema']}
+  ]
+};
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ ESTADO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+let curVId=null, pendId=null, fEtapa='all', fEtapaModo='incluir', fEtapasSelecionadas=[], filtroEtapaMenuAberto=false, relMes='TODOS', vtab='acomp', filtroUnidade='all', fPrazo='all', maisFiltrosAbertos=false;
+let nextVendaId=1;
+let mvDocs={comp:null,cont:null};
+let distratoVendaId=null;
+let editVendaId=null;
+let distratoSalvando=false;
+let distratoCategoriaNovaAtiva=false;
+let distratoCategoriaNovaValor='';
+let editVendaSalvando=false;
+let previsaoRecebVendaId=null;
+let previsaoRecebSalvando=false;
+let bonusGestaoVendaId=null;
+let bonusGestaoSalvando=false;
+let vendaSalvando=false;
+let novaVendaRefLocal='';
+zSetState('config.etapas', ETAPAS);
+zSetState('config.prazosEtapa', PRAZOS_ETAPA);
+zSetState('config.procData', PROC_DATA);
+zSetState('state.ui.curVId', curVId);
+zSetState('state.ui.pendId', pendId);
+zSetState('state.ui.fEtapa', fEtapa);
+zSetState('state.ui.fEtapaModo', fEtapaModo);
+zSetState('state.ui.fEtapasSelecionadas', fEtapasSelecionadas);
+zSetState('state.ui.filtroEtapaMenuAberto', filtroEtapaMenuAberto);
+zSetState('state.ui.relMes', relMes);
+zSetState('state.ui.fPrazo', fPrazo);
+zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
+
+function normalizarEtapasSelecionadas(lista){
+  return [...new Set((Array.isArray(lista)?lista:[])
+    .map(item=>Number(item))
+    .filter(item=>Number.isInteger(item)&&item>=0&&item<ETAPAS.length))]
+    .sort((a,b)=>a-b);
+}
+function syncFiltroEtapaState(){
+  fEtapasSelecionadas=normalizarEtapasSelecionadas(fEtapasSelecionadas);
+  fEtapa=fEtapasSelecionadas.length===0?'all':(fEtapaModo==='incluir'&&fEtapasSelecionadas.length===1?fEtapasSelecionadas[0]:'multi');
+  zSetState('state.ui.fEtapa', fEtapa);
+  zSetState('state.ui.fEtapaModo', fEtapaModo);
+  zSetState('state.ui.fEtapasSelecionadas', [...fEtapasSelecionadas]);
+  zSetState('state.ui.filtroEtapaMenuAberto', filtroEtapaMenuAberto);
+}
+function etapaSelecionadaNoFiltro(etapa){
+  return fEtapasSelecionadas.includes(Number(etapa));
+}
+function vendaPassaFiltroEtapa(v){
+  if(!fEtapasSelecionadas.length) return true;
+  const selecionada=etapaSelecionadaNoFiltro(v&&v.etapa);
+  return fEtapaModo==='excluir'?!selecionada:selecionada;
+}
+function resumoFiltroEtapas(limite=3){
+  if(!fEtapasSelecionadas.length) return zUiText('Todas');
+  const labels=fEtapasSelecionadas.map(idx=>labelFiltroEtapa(ETAPAS[idx]));
+  if(labels.length<=limite) return labels.join(', ');
+  return `${labels.slice(0,limite).join(', ')} +${labels.length-limite}`;
+}
+function resumoFiltroEtapasDetalhado(){
+  if(!fEtapasSelecionadas.length) return zUiText('Mostrando todas as etapas do pipeline.');
+  if(fEtapaModo==='excluir') return `${zUiText('Mostrando todas as etapas, exceto')}: ${zUiText(resumoFiltroEtapas(4))}`;
+  return `${zUiText('Mostrando somente')}: ${zUiText(resumoFiltroEtapas(4))}`;
+}
+syncFiltroEtapaState();
+
+function histAfetaFluxo(h){
+  return h.tipo!=='edicao'
+    && h.tipo!=='distrato'
+    && h.tipo!=='reversao'
+    && h.tipo!=='bonus_gestao'
+    && h.tipo!=='obs'
+    && h.tipo!=='pend_comercial'
+    && h.tipo!=='pend_comercial_editada'
+    && h.tipo!=='pend_comercial_resolvida'
+    && h.tipo!=='corretor_vinculo'
+    && h.tipo!=='prev_receb_manual'
+    && h.tipo!=='prev_receb_editada';
+}
+function getPendenciaComercial(v){
+  if(!v||!Array.isArray(v.hist)) return null;
+  let aberta=null;
+  v.hist.forEach(h=>{
+    if(h.tipo==='pend_comercial'||h.tipo==='pend_comercial_editada'){
+      aberta={obs:h.o||'',por:h.u||'',em:h.d||'',tipo:h.tipo};
+    }else if(h.tipo==='pend_comercial_resolvida'){
+      aberta=null;
+    }
+  });
+  return aberta;
+}
+function temPendenciaComercial(v){ return !!getPendenciaComercial(v); }
+
+function podeGerirPrevisaoRecebimento(){
+  return ['fin','dir','dono'].includes(role);
+}
+
+function dataIsoParaBr(dataIso){
+  if(!dataIso||!/^\d{4}-\d{2}-\d{2}$/.test(String(dataIso).trim())) return '';
+  const [ano,mes,dia]=String(dataIso).trim().split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function dataBrParaIso(dataBr){
+  const info=obterMomentoHistorico({d:dataBr},{preferTs:false});
+  if(!info||!info.date) return '';
+  const data=new Date(info.date.getTime());
+  return `${data.getFullYear()}-${String(data.getMonth()+1).padStart(2,'0')}-${String(data.getDate()).padStart(2,'0')}`;
+}
+
+function obterPrevisaoRecebimentoManual(v){
+  if(!v||!Array.isArray(v.hist)) return null;
+  const hist=[...v.hist].reverse().find(h=>h&&(h.tipo==='prev_receb_manual'||h.tipo==='prev_receb_editada')&&String(h.prevData||'').trim());
+  if(!hist) return null;
+  const info=obterMomentoHistorico({d:hist.prevData},{preferTs:false});
+  if(!info||!info.date) return null;
+  const dataRef=new Date(info.date.getTime());
+  dataRef.setHours(0,0,0,0);
+  return {
+    data:formatarDataLocal(dataRef,{comAno:true}),
+    date:dataRef,
+    por:hist.u||'',
+    obs:hist.o||'',
+    tipo:hist.tipo,
+    anterior:hist.prevAnterior||'',
+    historico:hist,
+    registradaEm:formatarMomentoHistorico(hist)
+  };
+}
+
+function registrarPrevisaoRecebimentoHistorico(v, config={}){
+  if(!v) return null;
+  const dataBr=String(config.data||'').trim();
+  if(!dataBr) return null;
+  const tipo=config.tipo||'prev_receb_manual';
+  const registro=criarRegistroHistorico({
+    e:v.etapa,
+    u:config.quem||'Sistema',
+    o:config.obs||'',
+    tipo,
+    prevData:dataBr,
+    prevAnterior:config.anterior||''
+  });
+  v.hist=v.hist||[];
+  v.hist.push(registro);
+  return registro;
+}
+
+function calcPrevisaoAutomatica(v){
+  if(v.distratada||v.etapa>=ETAPAS.length-1||PRAZOS_ETAPA[v.etapa]===null) return null;
+  const histEtapa1=[...v.hist].find(h=>h.e===1&&histAfetaFluxo(h));
+  const refInicio=histEtapa1||(v.hist&&v.hist.length?v.hist[0]:null);
+  const refInicioInfo=obterMomentoHistorico(refInicio,{preferTs:false});
+  if(!refInicioInfo||!refInicioInfo.date) return null;
+  let dataBase=new Date(refInicioInfo.date.getTime());
+  dataBase.setHours(0,0,0,0);
+  let prazosRestantes=0;
+  for(let i=1;i<ETAPAS.length-1;i++){ if(PRAZOS_ETAPA[i]) prazosRestantes+=PRAZOS_ETAPA[i]; }
+  let ajusteAcumulado=0, atrasosAcumulados=0, antecipacoes=0;
+  for(let i=1;i<v.etapa;i++){
+    const hEntrada=[...v.hist].find(h=>h.e===i&&histAfetaFluxo(h));
+    const hSaida=[...v.hist].find(h=>h.e===i+1&&histAfetaFluxo(h));
+    const infoEntrada=obterMomentoHistorico(hEntrada,{preferTs:false});
+    const infoSaida=obterMomentoHistorico(hSaida,{preferTs:false});
+    if(!infoEntrada||!infoSaida||!infoEntrada.date||!infoSaida.date) continue;
+    const dEntrada=new Date(infoEntrada.date.getTime());
+    const dSaida=new Date(infoSaida.date.getTime());
+    dEntrada.setHours(0,0,0,0);
+    dSaida.setHours(0,0,0,0);
+    const diasNaEtapa=Math.floor((dSaida-dEntrada)/(1000*60*60*24));
+    const prazoEtapa=PRAZOS_ETAPA[i]||0;
+    const diff=diasNaEtapa-prazoEtapa;
+    ajusteAcumulado+=diff;
+    if(diff>0) atrasosAcumulados+=diff;
+    else if(diff<0) antecipacoes+=Math.abs(diff);
+  }
+  const atrasoAtual=calcAtraso(v);
+  const atrasoCorrente=atrasoAtual!==null&&atrasoAtual>0?atrasoAtual:0;
+  const totalDias=prazosRestantes+ajusteAcumulado+atrasoCorrente;
+  const dataFinal=new Date(dataBase.getTime());
+  dataFinal.setDate(dataFinal.getDate()+totalDias);
+  return{
+    data:formatarDataLocal(dataFinal,{comAno:true}),
+    atrasosAcumulados,
+    antecipacoes,
+    atrasoCorrente,
+    ajusteAcumulado,
+    totalAtraso:atrasosAcumulados+atrasoCorrente,
+    prazosRestantes,
+    manual:false,
+    origem:'automatica'
+  };
+}
+zSetState('state.ui.vtab', vtab);
+zSetState('state.ui.filtroUnidade', filtroUnidade);
+zSetState('state.ui.fPrazo', fPrazo);
+zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
+zSetState('state.ui.nextVendaId', nextVendaId);
+zSetState('state.ui.mvDocs', mvDocs);
+zSetState('state.ui.distratoVendaId', distratoVendaId);
+zSetState('state.ui.editVendaId', editVendaId);
+zSetState('state.ui.distratoSalvando', distratoSalvando);
+zSetState('state.ui.editVendaSalvando', editVendaSalvando);
+zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
+zSetState('state.ui.previsaoRecebSalvando', previsaoRecebSalvando);
+zSetState('state.ui.bonusGestaoVendaId', bonusGestaoVendaId);
+zSetState('state.ui.bonusGestaoSalvando', bonusGestaoSalvando);
+zSetState('state.ui.vendaSalvando', vendaSalvando);
+zSetState('state.ui.novaVendaRefLocal', novaVendaRefLocal);
+
+function numSeguro(valor,padrao=0){
+  const n=Number(valor);
+  return Number.isFinite(n)?n:padrao;
+}
+function normalizarTextoNumeroInput(valor){
+  if(typeof valor==='number') return Number.isFinite(valor)?String(valor):'';
+  let texto=String(valor==null?'':valor).trim();
+  if(!texto) return '';
+  texto=texto
+    .replace(/\s+/g,'')
+    .replace(/^R\$/i,'')
+    .replace(/[^0-9,.\-]/g,'');
+  if(!texto||texto==='-'||texto===','||texto==='.') return '';
+  if(/^-?\d{1,3}(\.\d{3})+$/.test(texto)) return texto.replace(/\./g,'');
+  if(/^-?\d{1,3}(,\d{3})+$/.test(texto)) return texto.replace(/,/g,'');
+  const ultimoPonto=texto.lastIndexOf('.');
+  const ultimaVirgula=texto.lastIndexOf(',');
+  if(ultimoPonto>=0&&ultimaVirgula>=0){
+    if(ultimaVirgula>ultimoPonto) return texto.replace(/\./g,'').replace(/,/g,'.');
+    return texto.replace(/,/g,'');
+  }
+  if(ultimaVirgula>=0) return texto.replace(/\./g,'').replace(/,/g,'.');
+  return texto;
+}
+function lerNumeroTexto(valor,padrao=0){
+  const normalizado=normalizarTextoNumeroInput(valor);
+  if(!normalizado) return padrao;
+  return numSeguro(Number(normalizado),padrao);
+}
+function lerPercentualTexto(valor,padrao=0){
+  return lerNumeroTexto(valor,padrao*100)/100;
+}
+function formatarNumeroInput(valor,casas=2){
+  return numSeguro(valor,0).toFixed(casas).replace('.',',');
+}
+function normalizarBonusGestaoVenda(v){
+  if(!v||typeof v!=='object') return v;
+  const bonusTotal=numSeguro(v.bonus,0);
+  if(bonusTotal>0){
+    const forma=String(v.bonus_forma||v.bonusForma||'').trim().toLowerCase();
+    const status=String(v.bonus_status||v.bonusStatus||'').trim().toLowerCase();
+    v.bonus_forma=BONUS_FORMAS[forma]?forma:'comissao';
+    v.bonus_status=BONUS_STATUS[status]?status:'pendente';
+    v.bonus_obs=String(v.bonus_obs??v.bonusObs??'').trim();
+    return v;
+  }
+  v.bonus_forma='';
+  v.bonus_status='';
+  v.bonus_obs='';
+  return v;
+}
+function normalizarVendaNumeros(v){
+  if(!v||typeof v!=='object') return v;
+  v.valor=numSeguro(v.valor,0);
+  v.pct=numSeguro(v.pct,0);
+  v.imp=numSeguro(v.imp,0.11);
+  v.pct_cor=numSeguro(v.pct_cor,0);
+  v.pct_cap=numSeguro(v.pct_cap,0);
+  v.pct_ger=numSeguro(v.pct_ger,0);
+  v.pct_dir=numSeguro(v.pct_dir,0);
+  v.pct_dir2=numSeguro(v.pct_dir2,0);
+  v.pct_rh=numSeguro(v.pct_rh,0);
+  v.bonus=numSeguro(v.bonus,0);
+  v.bonus_pct_dir=numSeguro(v.bonus_pct_dir,0);
+  v.bonus_pct_dir2=numSeguro(v.bonus_pct_dir2,0);
+  v.bonus_pct_ger=numSeguro(v.bonus_pct_ger,0);
+  v.bonus_pct_cor=numSeguro(v.bonus_pct_cor,0);
+  normalizarBonusGestaoVenda(v);
+  return v;
+}
+function bonusTemGestao(v){
+  const venda=normalizarVendaNumeros(v);
+  return !!(venda&&venda.bonus>0);
+}
+function bonusFormaVenda(v){
+  const venda=normalizarVendaNumeros(v);
+  return bonusTemGestao(venda)?String(venda.bonus_forma||'comissao').trim().toLowerCase():'';
+}
+function bonusStatusVenda(v){
+  const venda=normalizarVendaNumeros(v);
+  return bonusTemGestao(venda)?String(venda.bonus_status||'pendente').trim().toLowerCase():'';
+}
+function bonusFormaLabel(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  return BONUS_FORMAS[chave]||'';
+}
+function bonusStatusLabel(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  return BONUS_STATUS[chave]||'';
+}
+function bonusStatusMeta(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  if(chave==='pago') return {label:bonusStatusLabel(chave),bg:'#E8F5EE',color:'#2E7E5E',border:'#80C8A0'};
+  if(chave==='nota_gerada') return {label:bonusStatusLabel(chave),bg:'#EEF4FE',color:'#3060B8',border:'#93B4F5'};
+  return {label:bonusStatusLabel(chave||'pendente')||'Pendente',bg:'#FFF8E8',color:'#C08020',border:'#E8C060'};
+}
+function bonusFormaMeta(codigo=''){
+  const chave=String(codigo||'').trim().toLowerCase();
+  if(chave==='antecipado') return {label:bonusFormaLabel(chave),bg:'#FEF0EC',color:'#C05030',border:'#E0A090'};
+  return {label:bonusFormaLabel('comissao'),bg:'#F3F0EA',color:'#7A6330',border:'#D8C090'};
+}
+function bonusEntraNoRepasseComissao(v){
+  const venda=normalizarVendaNumeros(v);
+  if(!bonusTemGestao(venda)) return false;
+  return bonusFormaVenda(venda)!=='antecipado';
+}
+function bonusUltimoHistorico(v){
+  if(!v||!Array.isArray(v.hist)) return null;
+  return [...v.hist].reverse().find(h=>h&&h.tipo==='bonus_gestao')||null;
+}
+function aplicarDefaultsBonusGestaoVenda(v,opcoes={}){
+  const venda=normalizarVendaNumeros(v);
+  if(!venda||typeof venda!=='object') return venda;
+  if(venda.bonus>0){
+    if(!BONUS_FORMAS[String(venda.bonus_forma||'').trim().toLowerCase()]) venda.bonus_forma='comissao';
+    if(!BONUS_STATUS[String(venda.bonus_status||'').trim().toLowerCase()]) venda.bonus_status='pendente';
+    venda.bonus_obs=String(venda.bonus_obs||'').trim();
+    return venda;
+  }
+  if(opcoes.limparZero!==false){
+    venda.bonus_forma='';
+    venda.bonus_status='';
+    venda.bonus_obs='';
+  }
+  return venda;
+}
+function criarHistoricoBonusGestao(v,config={}){
+  if(!v) return null;
+  aplicarDefaultsBonusGestaoVenda(v);
+  const observacao=String(config.obs!=null?config.obs:v.bonus_obs||'').trim();
+  const registro=criarRegistroHistorico({
+    e:numSeguro(v.etapa,0),
+    u:config.quem||'Sistema',
+    o:observacao,
+    tipo:'bonus_gestao',
+    bonusForma:config.forma||bonusFormaVenda(v),
+    bonusStatus:config.status||bonusStatusVenda(v),
+    bonusObs:observacao
+  },config.historico||{});
+  v.hist=v.hist||[];
+  v.hist.push(registro);
+  return registro;
+}
+
+function somaBonusPercentuais(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.bonus_pct_dir+venda.bonus_pct_dir2+venda.bonus_pct_ger+venda.bonus_pct_cor;
+}
+
+function validarSomaBonusVenda(v, campoFocus=''){
+  const total=somaBonusPercentuais(v);
+  if(total<=100.0001) return true;
+  if(campoFocus){
+    const el=document.getElementById(campoFocus);
+    if(el) el.focus();
+  }
+  showToast(zUiText('⚠️'),zUiText('A soma dos percentuais de bônus não pode passar de 100%.'));
+  return false;
+}
+function pctSeguro(valor,casas=2){
+  return `${(numSeguro(valor,0)*100).toFixed(casas)}%`;
+}
+function normalizarTextoBusca(valor){
+  const texto=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(valor):String(valor||'').trim();
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+}
+function limparCategoriaDistrato(valor){
+  return zUiText(String(valor||'')).replace(/\s+/g,' ').trim();
+}
+function chaveCategoriaDistrato(valor){
+  return normalizarTextoBusca(limparCategoriaDistrato(valor));
+}
+function listarCategoriasDistrato(extra=[]){
+  const mapa=new Map();
+  const incluir=(valor)=>{
+    const texto=limparCategoriaDistrato(valor);
+    const chave=chaveCategoriaDistrato(texto);
+    if(!chave||mapa.has(chave)) return;
+    mapa.set(chave,texto);
+  };
+  DISTRATO_CATEGORIAS_PADRAO.forEach(incluir);
+  (VENDAS||[]).forEach(v=>(v&&Array.isArray(v.hist)?v.hist:[]).forEach(h=>{
+    if(h&&h.tipo==='distrato') incluir(h.categoriaDistrato||h.categoria||'');
+  }));
+  (Array.isArray(extra)?extra:[extra]).forEach(incluir);
+  return Array.from(mapa.values()).sort((a,b)=>a.localeCompare(b,'pt-BR'));
+}
+function preencherCategoriasDistrato(valorAtual=''){
+  const sel=document.getElementById('dt-categoria');
+  if(!sel) return [];
+  const categorias=listarCategoriasDistrato(valorAtual?[valorAtual]:[]);
+  sel.innerHTML='';
+  const placeholder=document.createElement('option');
+  placeholder.value='';
+  placeholder.textContent=zUiText('Selecione a categoria');
+  sel.appendChild(placeholder);
+  categorias.forEach(item=>{
+    const option=document.createElement('option');
+    option.value=item;
+    option.textContent=zUiText(item);
+    sel.appendChild(option);
+  });
+  sel.value=valorAtual&&categorias.includes(valorAtual)?valorAtual:'';
+  sel.disabled=distratoSalvando||distratoCategoriaNovaAtiva;
+  return categorias;
+}
+function atualizarCampoCategoriaNovaDistrato(valor,campo){
+  distratoCategoriaNovaValor=limparCategoriaDistrato(valor);
+  if(campo&&campo.value!==distratoCategoriaNovaValor) campo.value=distratoCategoriaNovaValor;
+}
+function toggleCategoriaNovaDistrato(forcar){
+  if(distratoSalvando) return;
+  distratoCategoriaNovaAtiva=typeof forcar==='boolean'?forcar:!distratoCategoriaNovaAtiva;
+  const wrap=document.getElementById('dt-categoria-nova-wrap');
+  const input=document.getElementById('dt-categoria-nova');
+  const botao=document.getElementById('dt-categoria-nova-btn');
+  const select=document.getElementById('dt-categoria');
+  if(wrap) wrap.style.display=distratoCategoriaNovaAtiva?'flex':'none';
+  if(botao) botao.textContent=zUiText(distratoCategoriaNovaAtiva?'Cancelar nova categoria':'Nova categoria');
+  if(select) select.disabled=distratoCategoriaNovaAtiva;
+  if(!distratoCategoriaNovaAtiva){
+    distratoCategoriaNovaValor='';
+    if(input) input.value='';
+  }else if(input){
+    input.value=distratoCategoriaNovaValor||'';
+    setTimeout(()=>input.focus(),0);
+  }
+}
+function obterCategoriaDistratoSelecionada(){
+  if(distratoCategoriaNovaAtiva){
+    return limparCategoriaDistrato(distratoCategoriaNovaValor||document.getElementById('dt-categoria-nova')?.value||'');
+  }
+  return limparCategoriaDistrato(document.getElementById('dt-categoria')?.value||'');
+}
+function chavesNomePessoa(nome){
+  const base=normalizarTextoBusca(nome);
+  if(!base) return [];
+  const chaves=[base];
+  const partes=base.split(' ').filter(Boolean);
+  const primeiroNome=partes[0]||'';
+  if(primeiroNome.length>=3&&!chaves.includes(primeiroNome)) chaves.push(primeiroNome);
+  if(partes.length>=2){
+    const nomeCurto=partes.slice(0,2).join(' ');
+    if(!chaves.includes(nomeCurto)) chaves.push(nomeCurto);
+  }
+  return chaves;
+}
+function campoVendaBatePessoa(campo,nomeOuUsuario,opcoes={}){
+  const alvo=normalizarTextoBusca(campo);
+  if(!alvo) return false;
+  const nomeBase=typeof nomeOuUsuario==='string'?nomeOuUsuario:(nomeOuUsuario&&nomeOuUsuario.nome);
+  const nomeCompleto=normalizarTextoBusca(nomeBase);
+  if(!nomeCompleto) return false;
+  if(alvo===nomeCompleto) return true;
+  if(opcoes.exato) return false;
+  const partesAlvo=alvo.split(' ').filter(Boolean);
+  if(partesAlvo.length<2) return false;
+  const chaves=chavesNomePessoa(nomeBase);
+  if(chaves.some(chave=>chave!==nomeCompleto&&chave===alvo)) return true;
+  return chaves.some(chave=>chave.includes(' ')&&(alvo.startsWith(chave+' ')||chave.startsWith(alvo+' ')));
+}
+function obterMetaCorretorVenda(v){
+  if(!v||!Array.isArray(v.hist)) return {origem:'',refId:'',historico:null};
+  const meta=[...v.hist].reverse().find(h=>h&&(typeof h.corretorOrigem==='string'||h.corretorRefId!=null));
+  return{
+    origem:meta&&typeof meta.corretorOrigem==='string'?String(meta.corretorOrigem):'',
+    refId:meta&&meta.corretorRefId!=null?String(meta.corretorRefId):'',
+    historico:meta||null
+  };
+}
+function corretorVendaEhExterno(v){
+  return obterMetaCorretorVenda(v).origem==='externo';
+}
+function getUsuarioCorretorVenda(corretor,opcoes={}){
+  if(opcoes.externo) return null;
+  const nome=String(corretor||'').trim();
+  if(!nome) return null;
+  const exato=USUARIOS.find(u=>campoVendaBatePessoa(nome,u,{exato:true}))||null;
+  if(exato||opcoes.permitirAproximado===false) return exato;
+  return USUARIOS.find(u=>campoVendaBatePessoa(nome,u))||null;
+}
+function getUsuarioCorretorDaVenda(v,opcoes={}){
+  if(!v||typeof v!=='object') return null;
+  const meta=obterMetaCorretorVenda(v);
+  if(meta.origem==='externo') return null;
+  if(meta.refId){
+    const usuarioRef=USUARIOS.find(u=>String(u.id)===meta.refId)||null;
+    if(usuarioRef) return usuarioRef;
+  }
+  return getUsuarioCorretorVenda(v.corretor,opcoes);
+}
+function corretorVendaPertenceAoUsuario(v,usuario){
+  if(!v||!usuario) return false;
+  const meta=obterMetaCorretorVenda(v);
+  if(meta.origem==='externo') return false;
+  if(meta.refId) return String(usuario.id)===meta.refId;
+  const nomeCorretor=String(v.corretor||'').trim();
+  if(!nomeCorretor) return false;
+  if(campoVendaBatePessoa(nomeCorretor,usuario,{exato:true})) return true;
+  return nomeCorretor.split(/\s+/).length>=2&&campoVendaBatePessoa(nomeCorretor,usuario);
+}
+function getUsuarioVendaPorCampo(v,campo,opcoes={}){
+  if(!v||!campo) return null;
+  if(campo==='corretor') return getUsuarioCorretorDaVenda(v,opcoes);
+  const nome=String(v[campo]||'').trim();
+  if(!nome) return null;
+  return USUARIOS.find(u=>campoVendaBatePessoa(nome,u,{exato:true}))
+    || USUARIOS.find(u=>campoVendaBatePessoa(nome,u))
+    || null;
+}
+function registrarVinculoCorretorVenda(v,config={}){
+  if(!v) return null;
+  const registro=criarRegistroHistorico({
+    e:numSeguro(v.etapa,0),
+    u:config.quem||'Sistema',
+    o:config.obs||'',
+    tipo:config.tipo||'corretor_vinculo',
+    corretorOrigem:config.origem||'externo',
+    corretorRefId:config.refId!=null?config.refId:null
+  });
+  v.hist=v.hist||[];
+  v.hist.push(registro);
+  return registro;
+}
+function usuarioElegivelRhNovaVenda(usuario){
+  if(!usuario) return false;
+  const perfilAtual=typeof getPerfil==='function'?getPerfil(usuario.perfil):String(usuario.perfil||'').toLowerCase();
+  return !!usuario.rhContratacao&&perfilAtual==='cor';
+}
+function pctRhNovaVenda(corretorUsuario,opcoes={}){
+  if(opcoes.corretorExterno||!RH_COMISSAO_NOVAS_VENDAS.ativa) return 0;
+  return usuarioElegivelRhNovaVenda(corretorUsuario)?RH_COMISSAO_NOVAS_VENDAS.percentual:0;
+}
+const AJUSTES_MANUAIS_RH=[  
+  {cliente:'joao carlos',produto:'campo sales',construtora:'suica flats',corretor:'aline gabriele soek'},
+  {cliente:'adenilson de souza',produto:'kentucky',construtora:'lyx',corretor:'aline gabriele soek'},
+  {cliente:'hiann joao da conceicao beleza',produto:'kentucky',construtora:'lyx',corretor:'aline gabriele soek'}
+];
+const OBS_AJUSTE_MANUAL_RH='Ajuste manual: comissão do RH preservada em venda anterior à promoção da colaboradora.';
+function vendaBateAjusteManualRh(v,alvo){
+  if(!v||!alvo) return false;
+  const cliente=normalizarTextoBusca(String(v.cliente||'').split('/')[0]);
+  const produto=normalizarTextoBusca(v.produto);
+  const construtora=normalizarTextoBusca(v.construtora);
+  const corretor=normalizarTextoBusca(v.corretor);
+  return cliente.startsWith(alvo.cliente)
+    && produto===alvo.produto
+    && construtora===alvo.construtora
+    && corretor===alvo.corretor;
+}
+async function aplicarAjustesManuaisRhPendentes(opcoes={}){
+  const alteradas=[];
+  AJUSTES_MANUAIS_RH.forEach(alvo=>{
+    VENDAS.filter(v=>vendaBateAjusteManualRh(v,alvo)).forEach(venda=>{
+      normalizarVendaNumeros(venda);
+      let mudou=false;
+      if(numSeguro(venda.pct_rh,0)!==0.001){
+        venda.pct_rh=0.001;
+        mudou=true;
+      }
+      if(!Array.isArray(venda.hist)) venda.hist=[];
+      const jaTemObs=venda.hist.some(h=>normalizarTextoBusca(h&&h.o).includes(normalizarTextoBusca(OBS_AJUSTE_MANUAL_RH)));
+      if(!jaTemObs){
+        venda.hist.push(criarRegistroHistorico({e:numSeguro(venda.etapa,0),u:'Sistema',o:OBS_AJUSTE_MANUAL_RH,tipo:'obs'}));
+        mudou=true;
+      }
+      if(mudou&&!alteradas.includes(venda)) alteradas.push(venda);
+    });
+  });
+  if(!alteradas.length) return {alteradas:0,persistidas:0,falhas:0};
+  salvarLS();
+  let falhas=0;
+  if(opcoes.persistir!==false&&typeof dbAtualizarVenda==='function'){
+    const resultados=await Promise.allSettled(alteradas.map(v=>dbAtualizarVenda(v)));
+    falhas=resultados.filter(r=>r.status==='rejected').length;
+    if(falhas) console.warn('Falha ao aplicar ajustes manuais de RH.', resultados);
+  }
+  if(opcoes.renderizar!==false) atualizarViewsPosSyncRh();
+  return {alteradas:alteradas.length,persistidas:alteradas.length-falhas,falhas};
+}
+function atualizarViewsPosSyncRh(){
+  if(typeof renderFiltros==='function') renderFiltros();
+  if(typeof renderVList==='function') renderVList();
+  if(typeof showVDetail==='function'&&curVId&&VENDAS.some(v=>v.id===curVId)) showVDetail(curVId);
+  const modCarteira=document.getElementById('mod-carteira');
+  if(modCarteira&&!modCarteira.classList.contains('hidden')&&typeof renderCarteira==='function') renderCarteira();
+  const modFinanceiro=document.getElementById('mod-financeiro');
+  if(modFinanceiro&&!modFinanceiro.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+}
+function lerNumeroInput(id,padrao=0){
+  return lerNumeroTexto(document.getElementById(id)?.value,padrao);
+}
+function lerPercentualInput(id,padrao=0){
+  return lerPercentualTexto(document.getElementById(id)?.value,padrao);
+}
+function comBruta(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.valor*venda.pct;
+}
+function impostoComissao(v){
+  const venda=normalizarVendaNumeros(v);
+  return comBruta(venda)*venda.imp;
+}
+function bonusBrutoTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.bonus||0;
+}
+function bonusLiquidoTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.bonus?(venda.bonus*(1-venda.imp)):0;
+}
+function impostoBonusTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return Math.max(bonusBrutoTotal(venda)-bonusLiquidoTotal(venda),0);
+}
+function bonusParteBruta(v,pct){
+  const venda=normalizarVendaNumeros(v);
+  const percentual=numSeguro(pct,0);
+  return venda.bonus?(venda.bonus*percentual/100):0;
+}
+function bonusParteLiquida(v,pct){
+  const venda=normalizarVendaNumeros(v);
+  return bonusParteBruta(venda,pct)*(1-venda.imp);
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ CÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂLCULOS DE COMISSÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function com(v,p){
+  const venda=normalizarVendaNumeros(v);
+  const pct=numSeguro(p,0);
+  return(venda.valor*pct)-(venda.valor*pct*venda.imp);
+}
+function comC(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_cor); }
+function comCap(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_cap); }
+function comG(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_ger); }
+function comD(v){ const venda=normalizarVendaNumeros(v); return com(venda,venda.pct_dir); }
+function comD2(v){ const venda=normalizarVendaNumeros(v); return venda.pct_dir2?com(venda,venda.pct_dir2):0; }
+function bonusDir(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_dir); }
+function bonusDir2(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_dir2); }
+function bonusGer(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_ger); }
+function bonusCor(v){ const venda=normalizarVendaNumeros(v); return bonusParteLiquida(venda,venda.bonus_pct_cor); }
+function comRH(v){ const venda=normalizarVendaNumeros(v); return venda.pct_rh?com(venda,venda.pct_rh):0; }
+function pctZelony(v){
+  const venda=normalizarVendaNumeros(v);
+  return Math.max(
+    venda.pct-
+    venda.pct_cor-
+    venda.pct_cap-
+    venda.pct_ger-
+    venda.pct_dir-
+    venda.pct_dir2-
+    venda.pct_rh,
+    0
+  );
+}
+function comZ(v){ return com(v,pctZelony(v)); }
+function comTotal(v){
+  const venda=normalizarVendaNumeros(v);
+  return venda.valor*venda.pct*(1-venda.imp);
+}
+
+function comVis(v){
+  if(role==='cor') return comC(v);
+  if(role==='cap') return comCap(v)+comC(v);
+  if(role==='ger') return comG(v)+comCap(v)+comC(v);
+  if(role==='dir') return comD(v)+comD2(v)+comG(v)+comCap(v)+comC(v);
+  if(role==='rh') return comRH(v);
+  return comTotal(v);
+}
+
+function comMinha(v){
+  if(role==='cor') return comC(v);
+  if(role==='cap') return comCap(v);
+  if(role==='ger') return comG(v);
+  if(role==='rh') return comRH(v);
+  if(role==='fin') return comZ(v);
+  if(role==='dono') return comTotal(v);
+  if(role==='dir'){
+    if(!usuarioLogado) return comD(v);
+    const matchDir=(campo)=>{
+      if(!campo) return false;
+      const c=campo.toLowerCase().trim();
+      const nomeCompleto=usuarioLogado.nome.toLowerCase().trim();
+      const primeiroNome=nomeCompleto.split(' ')[0];
+      return c===nomeCompleto||(primeiroNome.length>=3&&c===primeiroNome);
+    };
+    if(matchDir(v.diretor2)&&!matchDir(v.diretor)) return comD2(v);
+    if(matchDir(v.diretor2)&&matchDir(v.diretor)) return comD(v)+comD2(v);
+    return comD(v);
+  }
+  return comTotal(v);
+}
+
+function lblCom(){
+  if(role==='cor') return 'Minha comissão';
+  if(role==='cap') return 'Cap + Corretor';
+  if(role==='ger') return 'Ger + equipe';
+  if(role==='dir') return 'Dir + equipe';
+  if(role==='rh') return 'Comissão RH';
+  if(role==='dono') return 'Com. líquida total';
+  return 'Com. líquida total';
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ FILTRO POR UNIDADE ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function getUnidadeUsuario(){ return(!usuarioLogado)?'Ambas':(usuarioLogado.unidade||'Ambas'); }
+function vendaNaUnidade(v){ const u=getUnidadeUsuario(); if(u==='Ambas') return true; return v.unidade===u; }
+function vendaNoFiltro(v){ if(filtroUnidade==='all') return true; return v.unidade===filtroUnidade; }
+function aplicarFiltroSituacao(lista){
+  const vfSituacao=document.getElementById('vf-situacao')?.value;
+  if(vfSituacao==='ativas') return lista.filter(v=>!v.distratada);
+  if(vfSituacao==='distratos') return lista.filter(v=>!!v.distratada);
+  return lista;
+}
+function aplicarFiltroPendencia(lista){
+  const vfPend=document.getElementById('vf-pend-comercial')?.value;
+  if(vfPend==='com') return lista.filter(v=>temPendenciaComercial(v));
+  if(vfPend==='sem') return lista.filter(v=>!temPendenciaComercial(v));
+  return lista;
+}
+
+function vendasU(l, somenteMinhas=false){
+  l=(l||[]).map(normalizarVendaNumeros);
+  const unid=getUnidadeUsuario();
+  let base=l;
+  if(unid==='Ambas'){
+    if(filtroUnidade!=='all') base=l.filter(v=>v.unidade===filtroUnidade);
+  } else {
+    base=l.filter(v=>v.unidade===unid||!v.unidade);
+  }
+  if(role==='dono') return base;
+  if(role==='fin') return base;
+  if(role==='rh') return base.filter(v=>v.pct_rh&&v.pct_rh>0);
+  const matchCampo=(v,campo,usuario)=>{
+    if(campo==='corretor') return corretorVendaPertenceAoUsuario(v,usuario);
+    return campoVendaBatePessoa(v&&v[campo],usuario);
+  };
+  if(role==='cor') return usuarioLogado?base.filter(v=>matchCampo(v,'corretor',usuarioLogado)):[];
+  if(role==='dir'&&(unid==='Ambas'||!unid)){
+    if(somenteMinhas&&usuarioLogado){
+      return base.filter(v=>matchCampo(v,'diretor',usuarioLogado)||matchCampo(v,'diretor2',usuarioLogado)||matchCampo(v,'gerente',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado));
+    }
+    return base;
+  }
+  if(role==='dir'){
+    if(somenteMinhas&&usuarioLogado){
+      return base.filter(v=>matchCampo(v,'diretor',usuarioLogado)||matchCampo(v,'diretor2',usuarioLogado)||matchCampo(v,'gerente',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado));
+    }
+    return base;
+  }
+  if(role==='cap') return usuarioLogado?base.filter(v=>matchCampo(v,'capitao',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado)):[];
+  if(role==='ger') return usuarioLogado?base.filter(v=>matchCampo(v,'gerente',usuarioLogado)||matchCampo(v,'corretor',usuarioLogado)||matchCampo(v,'capitao',usuarioLogado)):[];
+  return base;
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ PRAZOS ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function calcAtraso(v){
+  const prazo=PRAZOS_ETAPA[v.etapa];
+  if(prazo===null||v.etapa===ETAPAS.length-1||v.distratada) return null;
+  const histEtapa=[...v.hist].reverse().find(h=>h.e===v.etapa&&histAfetaFluxo(h));
+  const ref=histEtapa||(v.hist&&v.hist.length?v.hist[0]:null);
+  const refInfo=obterMomentoHistorico(ref,{preferTs:false});
+  if(!refInfo||!refInfo.date) return 0;
+  const dataInicio=new Date(refInfo.date.getTime());
+  dataInicio.setHours(0,0,0,0);
+  const hoje2=new Date(); hoje2.setHours(0,0,0,0);
+  const diasPassados=Math.floor((hoje2-dataInicio)/(1000*60*60*24));
+  return diasPassados-prazo;
+}
+
+function labelAtraso(v){
+  const a=calcAtraso(v);
+  if(a===null) return null;
+  if(a<0) return {tipo:'ok',label:`${Math.abs(a)}d restante${Math.abs(a)!==1?'s':''}`};
+  if(a===0) return {tipo:'alerta',label:'Vence hoje!'};
+  return {tipo:'atrasada',label:`${a} dia${a!==1?'s':''} atrasada`};
+}
+
+function calcPrevisao(v){
+  if(v.distratada||v.etapa>=ETAPAS.length-1) return null;
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  if(v.etapa>=ETAPA_NOTA_EMITIDA&&previsaoManual&&previsaoManual.date){
+    const hoje2=new Date();
+    hoje2.setHours(0,0,0,0);
+    const diffDias=Math.floor((hoje2-previsaoManual.date)/(1000*60*60*24));
+    const atrasoCorrente=diffDias>0?diffDias:0;
+    return{
+      data:previsaoManual.data,
+      atrasosAcumulados:0,
+      antecipacoes:0,
+      atrasoCorrente,
+      ajusteAcumulado:0,
+      totalAtraso:atrasoCorrente,
+      prazosRestantes:0,
+      manual:true,
+      origem:'manual',
+      definidaPor:previsaoManual.por,
+      observacao:previsaoManual.obs,
+      registradaEm:previsaoManual.registradaEm,
+      anterior:previsaoManual.anterior,
+      historico:previsaoManual.historico
+    };
+  }
+  if(PRAZOS_ETAPA[v.etapa]===null) return null;
+  return calcPrevisaoAutomatica(v);
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ RENDERIZAÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢O DA LISTA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function renderBtnNovaVenda(){
+  const wrap=document.getElementById('btn-nova-venda-wrap');
+  if(!wrap) return;
+  if(['dir','fin','dono'].includes(role)){
+    wrap.innerHTML=`<button class="btn-nova-venda" id="btn-nv"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>Nova venda</button>`;
+    document.getElementById('btn-nv').addEventListener('click',abrirModalVenda);
+  } else {
+    wrap.innerHTML='';
+  }
+}
+function toggleMaisFiltros(force){
+  maisFiltrosAbertos=typeof force==='boolean'?force:!maisFiltrosAbertos;
+  zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
+  const box=document.getElementById('v-adv-filters');
+  if(box) box.classList.toggle('open', maisFiltrosAbertos);
+  atualizarBotaoMaisFiltros();
+}
+function atualizarBotaoMaisFiltros(){
+  const btn=document.getElementById('vf-more-btn');
+  if(!btn) return;
+  const ativos=['vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-pend-comercial','vf-bonus-status','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
+  btn.classList.toggle('active', maisFiltrosAbertos);
+  btn.textContent=ativos?zUiText(`Mais filtros (${ativos})`):(maisFiltrosAbertos?zUiText('Ocultar filtros'):zUiText('Mais filtros'));
+}
+function atualizarFiltrosRapidos(){
+  const vfSituacao=document.getElementById('vf-situacao')?.value||'';
+  const vfPend=document.getElementById('vf-pend-comercial')?.value||'';
+  document.getElementById('qf-ativas')?.classList.toggle('active',vfSituacao==='ativas');
+  document.getElementById('qf-distratos')?.classList.toggle('active',vfSituacao==='distratos');
+  document.getElementById('qf-pendencia')?.classList.toggle('active',vfPend==='com');
+  document.getElementById('qf-atrasadas')?.classList.toggle('active',fPrazo==='atrasada');
+  document.getElementById('qf-prazo')?.classList.toggle('active',fPrazo==='ok');
+}
+function setFiltroSituacaoRapido(valor){
+  const el=document.getElementById('vf-situacao');
+  if(!el) return;
+  el.value=el.value===valor?'':valor;
+  renderFiltros();
+  renderVList();
+}
+function setFiltroPendenciaRapido(valor){
+  const el=document.getElementById('vf-pend-comercial');
+  if(!el) return;
+  el.value=el.value===valor?'':valor;
+  renderFiltros();
+  renderVList();
+}
+function setFiltroPrazoRapido(valor){
+  fPrazo=fPrazo===valor?'all':valor;
+  zSetState('state.ui.fPrazo', fPrazo);
+  renderFiltros();
+  renderVList();
+}
+function limparTodosFiltrosVendas(){
+  const ids=['vsearch','vf-mes','vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-origem','vf-situacao','vf-pend-comercial','vf-bonus-status'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  fEtapaModo='incluir';
+  fEtapasSelecionadas=[];
+  filtroEtapaMenuAberto=false;
+  fPrazo='all';
+  filtroUnidade='all';
+  syncFiltroEtapaState();
+  zSetState('state.ui.fPrazo', fPrazo);
+  zSetState('state.ui.filtroUnidade', filtroUnidade);
+  document.querySelectorAll('.uf').forEach(b=>{b.className='uf';});
+  const ufAll=document.getElementById('uf-all');
+  if(ufAll) ufAll.classList.add('active-all');
+  toggleMaisFiltros(false);
+  renderFiltros();
+  renderVList();
+}
+function labelFiltroEtapa(etapa){
+  const mapa={
+    'Aguardando demanda':'Aguard.',
+    'Entrevista':'Entrev.',
+    'Ass. formulários':'Ass. form.',
+    'Envio CEHOP':'CEHOP',
+    'Entrevista Caixa':'Entr. Cx',
+    'Aguard. Ass. CEF':'Ag. CEF',
+    'Assinado CEF':'Assinado',
+    'Nota emitida':'Nota',
+    'Comissão recebida':'Com.'
+  };
+  return mapa[zUiText(etapa)]||zUiText(etapa);
+}
+function chipFiltroHTML(label,count,onclick,extraClass='',extraStyle=''){
+  return `<button type="button" class="fe ${extraClass}" onclick="${onclick}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></button>`;
+}
+function chipEtapaVisualHTML(label,count,extraClass='',extraStyle=''){
+  return `<span class="fe fe-static ${extraClass}" style="${extraStyle}"><span class="fe-label">${zUiText(label)}</span><span class="fe-count">${count}</span></span>`;
+}
+function renderFiltros(){
+  const base=aplicarFiltroPendencia(aplicarFiltroSituacao(vendasU(VENDAS)));
+  const cnt={}; base.forEach(v=>{cnt[v.etapa]=(cnt[v.etapa]||0)+1;});
+  const mostrarTodasAtiva=!fEtapasSelecionadas.length;
+  const hPainelEtapas=`
+    <div class="vf-stage-inline-tools">
+      <button type="button" class="vf-stage-filter-btn ${filtroEtapaMenuAberto?'active':''}" onclick="toggleFiltroEtapaMenu()">
+        ${zUiText('Filtrar etapas')}
+        ${fEtapasSelecionadas.length?`<span class="vf-stage-filter-count">${fEtapasSelecionadas.length}</span>`:''}
+      </button>
+      <div class="vf-stage-summary">${resumoFiltroEtapasDetalhado()}</div>
+    </div>
+    ${filtroEtapaMenuAberto?`
+      <div class="vf-stage-panel">
+        <div class="vf-stage-panel-top">
+          <div class="vf-stage-mode">
+            <span class="vf-stage-mode-label">${zUiText('Modo')}</span>
+            <button type="button" class="vf-stage-toggle ${fEtapaModo==='incluir'?'active':''}" onclick="setModoFiltroEtapa('incluir')">${zUiText('Incluir')}</button>
+            <button type="button" class="vf-stage-toggle ${fEtapaModo==='excluir'?'active':''}" onclick="setModoFiltroEtapa('excluir')">${zUiText('Exceto')}</button>
+          </div>
+          <div class="vf-stage-actions">
+            <button type="button" class="vf-stage-action" onclick="selecionarTodasEtapasFiltro()">${zUiText('Selecionar todas')}</button>
+            <button type="button" class="vf-stage-action ${mostrarTodasAtiva?'active':''}" onclick="limparFiltroEtapa()">${zUiText('Limpar')}</button>
+            <button type="button" class="vf-stage-action" onclick="toggleFiltroEtapaMenu(false)">${zUiText('Fechar')}</button>
+          </div>
+        </div>
+        <div class="vf-stage-checklist">
+          ${ETAPAS.map((e,i)=>`
+            <label class="vf-stage-check">
+              <span class="vf-stage-check-main">
+                <input type="checkbox" ${etapaSelecionadaNoFiltro(i)?'checked':''} onchange="setFE(${i})">
+                <span>${zUiText(e)}</span>
+              </span>
+              <b>${cnt[i]||0}</b>
+            </label>`).join('')}
+        </div>
+      </div>`:''}`;
+  let h=chipFiltroHTML('Todas',base.length,'limparFiltroEtapa()',mostrarTodasAtiva?'active':'');
+  ETAPAS.forEach((e,i)=>{
+    if(cnt[i]||etapaSelecionadaNoFiltro(i)){
+      const classe=etapaSelecionadaNoFiltro(i)?(fEtapaModo==='excluir'?'active-exclude':'active'):'';
+      h+=chipFiltroHTML(labelFiltroEtapa(e),cnt[i]||0,`setFE(${i})`,classe);
+    }
+  });
+  let hPrazo='';
+  if(document.getElementById('vf-situacao')?.value!=='distratos'){
+    const comPrazo=base.filter(v=>!v.distratada&&PRAZOS_ETAPA[v.etapa]!==null&&v.etapa<ETAPAS.length-1);
+    const atrasadas=comPrazo.filter(v=>calcAtraso(v)>0);
+    const vencem=comPrazo.filter(v=>calcAtraso(v)===0);
+    const noPrazo=comPrazo.filter(v=>calcAtraso(v)<=0);
+    if(atrasadas.length) hPrazo+=chipFiltroHTML('❗ Atrasadas',atrasadas.length,`filtrarPrazo('atrasada')`,`${fPrazo==='atrasada'?'is-highlighted ':''}fe-alerta`,'background:#FEF0EC;color:#C05030;border-color:#E0A090;');
+    if(vencem.length) hPrazo+=chipFiltroHTML('⚠️ Vence hoje',vencem.length,`filtrarPrazo('alerta')`,`${fPrazo==='alerta'?'is-highlighted ':''}fe-vence`,'background:#FFF8E8;color:#C08020;border-color:#E8C060;');
+    if(noPrazo.length) hPrazo+=chipFiltroHTML('✓ No prazo',noPrazo.length,`filtrarPrazo('ok')`,`${fPrazo==='ok'?'is-highlighted ':''}fe-ok`,'background:#E8F5EE;color:#2E7E5E;border-color:#80C8A0;');
+  }
+  document.getElementById('vfilters').innerHTML=`${hPainelEtapas}<div class="vf-chip-stage-row">${h}</div>${hPrazo?`<div class="vf-chip-row">${hPrazo}</div>`:''}`;
+  const unidEl=document.getElementById('unid-filter');
+  const temAmbas=['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas');
+  if(unidEl) unidEl.classList.toggle('hidden',!temAmbas);
+  renderBtnNovaVenda();
+  const todasVendas=base;
+  const selMes=document.getElementById('vf-mes');
+  const selConst=document.getElementById('vf-construtora');
+  const selEquipe=document.getElementById('vf-equipe');
+  const selCorretor=document.getElementById('vf-corretor');
+  const selCca=document.getElementById('vf-cca');
+  if(!selMes) return;
+  const curMes=selMes.value,curConst=selConst.value,curEq=selEquipe.value,curCorretor=selCorretor?.value||'',curCca=selCca.value;
+  const meses=[...new Set(todasVendas.map(v=>v.mes).filter(Boolean))].sort();
+  const construtoras=[...new Set(todasVendas.map(v=>v.construtora).filter(Boolean))].sort();
+  const corretores=[...new Set(todasVendas.map(v=>v.corretor).filter(Boolean))].sort();
+  const ccas=[...new Set(todasVendas.map(v=>v.cca).filter(Boolean))].sort();
+  const equipesSet=new Set();
+  todasVendas.forEach(v=>{
+    ['corretor','gerente','diretor'].forEach(campo=>{
+      const u=getUsuarioVendaPorCampo(v,campo,{permitirAproximado:campo!=='corretor'});
+      if(u&&u.equipe) equipesSet.add(u.equipe);
+    });
+  });
+  const equipes=[...equipesSet].sort();
+  selMes.innerHTML=`<option value="">${zUiText('📅 Todos os meses')}</option>`+meses.map(m=>`<option value="${m}" ${curMes===m?'selected':''}>${zUiText(m)}</option>`).join('');
+  selConst.innerHTML=`<option value="">${zUiText('🏗️ Todas construtoras')}</option>`+construtoras.map(c=>`<option value="${c}" ${curConst===c?'selected':''}>${zUiText(c)}</option>`).join('');
+  selEquipe.innerHTML=`<option value="">${zUiText('👥 Todas as equipes')}</option>`+equipes.map(e=>`<option value="${e}" ${curEq===e?'selected':''}>${zUiText(e)}</option>`).join('');
+  if(selCorretor) selCorretor.innerHTML=`<option value="">${zUiText('🧑‍💼 Todos os corretores')}</option>`+corretores.map(c=>`<option value="${c}" ${curCorretor===c?'selected':''}>${zUiText(c)}</option>`).join('');
+  selCca.innerHTML=`<option value="">${zUiText('🧑‍💼 Todos os CCA')}</option>`+ccas.map(c=>`<option value="${c}" ${curCca===c?'selected':''}>${zUiText(c)}</option>`).join('');
+  atualizarTagsFiltros();
+}
+function atualizarTagsFiltros(){
+  const wrap=document.getElementById('vf-active-tags');
+  if(!wrap) return;
+  const activeWrap=document.getElementById('vf-active-wrap');
+  const activeHead=document.getElementById('vf-active-head');
+  const tags=[];
+  const busca=document.getElementById('vsearch')?.value?.trim();
+  const vfMes=document.getElementById('vf-mes')?.value;
+  const vfConst=document.getElementById('vf-construtora')?.value;
+  const vfEq=document.getElementById('vf-equipe')?.value;
+  const vfCorretor=document.getElementById('vf-corretor')?.value;
+  const vfCca=document.getElementById('vf-cca')?.value;
+  const vfOrigem=document.getElementById('vf-origem')?.value;
+  const vfSituacao=document.getElementById('vf-situacao')?.value;
+  const vfPend=document.getElementById('vf-pend-comercial')?.value;
+  const vfBonusStatus=document.getElementById('vf-bonus-status')?.value;
+  if(busca) tags.push({label:zUiText(`🔎 ${busca}`),clear:()=>{document.getElementById('vsearch').value='';renderVList();}});
+  if(vfMes) tags.push({label:zUiText(`📅 ${vfMes}`),clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
+  if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
+  if(vfEq) tags.push({label:zUiText(`👥 ${vfEq}`),clear:()=>{document.getElementById('vf-equipe').value='';renderVList();}});
+  if(vfCorretor) tags.push({label:zUiText(`🧑‍💼 ${vfCorretor}`),clear:()=>{document.getElementById('vf-corretor').value='';renderVList();}});
+  if(vfCca) tags.push({label:zUiText(`🧑‍💼 ${vfCca}`),clear:()=>{document.getElementById('vf-cca').value='';renderVList();}});
+  if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
+  if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
+  if(vfPend) tags.push({label:zUiText(`🟠 ${vfPend==='com'?'Com pendência comercial':'Sem pendência comercial'}`),clear:()=>{document.getElementById('vf-pend-comercial').value='';renderFiltros();renderVList();}});
+  if(vfBonusStatus) tags.push({label:zUiText(`🎁 ${bonusStatusLabel(vfBonusStatus)}`),clear:()=>{document.getElementById('vf-bonus-status').value='';renderFiltros();renderVList();}});
+  if(fEtapasSelecionadas.length){
+    const prefixo=fEtapaModo==='excluir'
+      ? `🧭 ${zUiText('Todas exceto')}`
+      : `🧭 ${zUiText('Somente')}`;
+    tags.push({label:`${prefixo} ${zUiText(resumoFiltroEtapas())}`,clear:()=>{limparFiltroEtapa();}});
+  }
+  if(filtroUnidade!=='all') tags.push({label:zUiText(`📍 ${filtroUnidade}`),clear:()=>{const ufAll=document.getElementById('uf-all');if(ufAll) setUnidade('all',ufAll);}});
+  if(fPrazo!=='all'){
+    const labels={atrasada:'❗ Atrasadas',alerta:'⚠️ Vence hoje',ok:'✓ No prazo'};
+    tags.push({label:zUiText(labels[fPrazo]||'Prazo'),clear:()=>{fPrazo='all';zSetState('state.ui.fPrazo', fPrazo);renderFiltros();renderVList();}});
+  }
+  wrap.innerHTML=tags.map((t,i)=>`<button type="button" class="vf-tag" onclick="clearTag(${i})">${zUiText(t.label)} <span>${zUiText('✕')}</span></button>`).join('');
+  wrap._tags=tags;
+  if(activeWrap) activeWrap.classList.toggle('hidden',!tags.length);
+  if(activeHead) activeHead.classList.toggle('hidden',!tags.length);
+  atualizarFiltrosRapidos();
+  atualizarBotaoMaisFiltros();
+}
+function clearTag(i){
+  const wrap=document.getElementById('vf-active-tags');
+  const tags=wrap&&wrap._tags;
+  if(tags&&tags[i]&&typeof tags[i].clear==='function') tags[i].clear();
+}
+function toggleFiltroEtapaMenu(force){
+  filtroEtapaMenuAberto=typeof force==='boolean'?force:!filtroEtapaMenuAberto;
+  zSetState('state.ui.filtroEtapaMenuAberto', filtroEtapaMenuAberto);
+  renderFiltros();
+}
+function limparFiltroEtapa(){
+  fEtapasSelecionadas=[];
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function selecionarTodasEtapasFiltro(){
+  fEtapasSelecionadas=ETAPAS.map((_,idx)=>idx);
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function setModoFiltroEtapa(modo){
+  const proximo=modo==='excluir'?'excluir':'incluir';
+  if(fEtapaModo===proximo) return;
+  fEtapaModo=proximo;
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function setFE(v){
+  if(v==='all'){
+    limparFiltroEtapa();
+    return;
+  }
+  const etapa=parseInt(v,10);
+  if(!Number.isInteger(etapa)) return;
+  if(etapaSelecionadaNoFiltro(etapa)) fEtapasSelecionadas=fEtapasSelecionadas.filter(item=>item!==etapa);
+  else fEtapasSelecionadas=[...fEtapasSelecionadas,etapa];
+  syncFiltroEtapaState();
+  renderFiltros();
+  renderVList();
+}
+function setUnidade(u,el){
+  filtroUnidade=u;
+  zSetState('state.ui.filtroUnidade', filtroUnidade);
+  document.querySelectorAll('.uf').forEach(b=>{b.className='uf';});
+  if(el){ if(u==='all')el.classList.add('active-all'); else if(u==='Centro')el.classList.add('active-centro'); else el.classList.add('active-cristo'); }
+  renderFiltros();
+  renderVList();
+}
+function setVTab(t,el){
+  vtab=t;
+  zSetState('state.ui.vtab', vtab);
+  document.querySelectorAll('.vtab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  const a=document.getElementById('vd-acomp'),r=document.getElementById('vd-rel');
+  if(t==='acomp'){a.style.display='flex';r.classList.add('hidden');}
+  else{a.style.display='none';r.classList.remove('hidden');renderRel();}
+}
+
+function filtrarPrazo(tipo){
+  setFiltroPrazoRapido(tipo);
+}
+function renderVList(){
+  let l=aplicarFiltroPendencia(aplicarFiltroSituacao(vendasU(VENDAS)));
+  l=l.filter(vendaPassaFiltroEtapa);
+  const q=(document.getElementById('vsearch')||{value:''}).value.toLowerCase();
+  if(q) l=l.filter(v=>v.cliente.toLowerCase().includes(q)||v.produto.toLowerCase().includes(q)||v.construtora.toLowerCase().includes(q)||v.corretor.toLowerCase().includes(q));
+  const vfMes=document.getElementById('vf-mes')?.value;
+  const vfConst=document.getElementById('vf-construtora')?.value;
+  const vfEq=document.getElementById('vf-equipe')?.value;
+  const vfCorretor=document.getElementById('vf-corretor')?.value;
+  const vfCca=document.getElementById('vf-cca')?.value;
+  const vfOrigem=document.getElementById('vf-origem')?.value;
+  const vfBonusStatus=document.getElementById('vf-bonus-status')?.value;
+  if(vfMes) l=l.filter(v=>v.mes===vfMes);
+  if(vfConst) l=l.filter(v=>v.construtora===vfConst);
+  if(vfCorretor) l=l.filter(v=>v.corretor===vfCorretor);
+  if(vfCca) l=l.filter(v=>v.cca===vfCca);
+  if(vfOrigem) l=l.filter(v=>v.origem===vfOrigem);
+  if(vfBonusStatus) l=l.filter(v=>bonusTemGestao(v)&&bonusStatusVenda(v)===vfBonusStatus);
+  if(vfEq) l=l.filter(v=>['corretor','gerente','diretor'].some(campo=>{const u=getUsuarioVendaPorCampo(v,campo,{permitirAproximado:campo!=='corretor'});return !!(u&&u.equipe===vfEq);}));
+  if(fPrazo!=='all'){
+    l=l.filter(v=>{
+      if(v.distratada) return false;
+      if(PRAZOS_ETAPA[v.etapa]===null||v.etapa>=ETAPAS.length-1) return false;
+      const a=calcAtraso(v);
+      if(fPrazo==='atrasada') return a!==null&&a>0;
+      if(fPrazo==='alerta') return a===0;
+      if(fPrazo==='ok') return a!==null&&a<=0;
+      return true;
+    });
+  }
+  atualizarTagsFiltros();
+  document.getElementById('vc').textContent=l.length;
+  if(!l.length){
+    curVId=null;
+    zSetState('state.ui.curVId', curVId);
+    document.getElementById('vlista').innerHTML='<div style="padding:20px;text-align:center;font-size:12px;color:var(--tm);">Nenhuma venda</div>';
+    if(typeof limparDetalheVenda==='function') limparDetalheVenda('Nenhuma venda encontrada com os filtros atuais.');
+    return;
+  }
+  if(!l.some(v=>v.id===curVId)){
+    curVId=l[0].id;
+    zSetState('state.ui.curVId', curVId);
+  }
+  document.getElementById('vlista').innerHTML=l.map(v=>{
+    const ubadge=v.unidade?`<span class="badge-unid ${v.unidade==='Centro'?'badge-centro':'badge-cristo'}" style="margin-top:3px;display:inline-flex;">${zUiText(`📍 ${v.unidade}`)}</span>`:'';
+    const statusBadge=`<span class="vstate ${v.distratada?'vstate-distrato':'vstate-ativa'}">${zUiText(v.distratada?'⚠ Distrato':'● Ativa')}</span>`;
+    const pbadge=temPendenciaComercial(v)?`<span class="badge-pend-comercial">${zUiText('🟠 Pend. comercial')}</span>`:'';
+    const bonusStatus=bonusTemGestao(v)?bonusStatusMeta(bonusStatusVenda(v)):null;
+    const bonusForma=bonusTemGestao(v)?bonusFormaVenda(v):'';
+    const bbadge=bonusStatus?`<span style="font-size:9px;background:${bonusStatus.bg};color:${bonusStatus.color};border:1px solid ${bonusStatus.border};border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('🎁')} ${zUiText(bonusStatus.label)}</span>`:'';
+    const bformaBadge=bonusForma==='antecipado'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚡')} ${zUiText('Antecipado')}</span>`:'';
+    const atraso=labelAtraso(v);
+    const abadge=atraso?atraso.tipo==='atrasada'?`<span style="font-size:9px;background:#FEF0EC;color:#C05030;border:1px solid #E0A090;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('❗')} ${zUiText(atraso.label)}</span>`:atraso.tipo==='alerta'?`<span style="font-size:9px;background:#FFF8E8;color:#C08020;border:1px solid #E8C060;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;font-weight:600;">${zUiText('⚠️')} ${zUiText(atraso.label)}</span>`:`<span style="font-size:9px;background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;border-radius:3px;padding:1px 5px;margin-top:3px;display:inline-flex;">${zUiText('✓')} ${zUiText(atraso.label)}</span>`:'';
+    const rowClass=[
+      'vrow',
+      curVId===v.id?'active':'',
+      v.distratada?'vrow-distrato':'vrow-ativa',
+      atraso&&atraso.tipo==='atrasada'?'vrow-atrasada':''
+    ].filter(Boolean).join(' ');
+    return`<div class="${rowClass}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav ${v.distratada?'vav-distrato':'vav-ativa'}">${ini(v.cliente)}</div><div class="vmeta"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div class="vbadges">${statusBadge}<span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${pbadge}${bbadge}${bformaBadge}${abadge}</div></div></div>`;
+  }).join('');
+  if(typeof showVDetail==='function'&&curVId) showVDetail(curVId);
+}
+function abrirM(id){
+  if(!['fin','dir','dono'].includes(role)){showToast('❗','Sem permissão para avançar etapas.');return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v)return;
+  pendId=id;
+  zSetState('state.ui.pendId', pendId);
+  const proxEtapa=v.etapa+1;
+  const exigePrevisaoManual=proxEtapa===ETAPA_NOTA_EMITIDA;
+  const previsaoAtual=calcPrevisao(v);
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  document.getElementById('m-titulo').textContent=zUiText(`Avançar: ${ETAPAS[proxEtapa]}`);
+  document.getElementById('mobs').value='';
+  document.getElementById('mchars').textContent='0/400';
+  document.getElementById('marrow').innerHTML=`<div class="step-arrow"><div class="sf from"><span>${zUiText('Etapa atual')}</span><strong>${zUiText(ETAPAS[v.etapa])}</strong></div><div style="font-size:16px;color:var(--gold);">${zUiText('→')}</div><div class="sf to"><span>${zUiText('Próxima etapa')}</span><strong>${zUiText(ETAPAS[proxEtapa])}</strong></div></div>`;
+  const wrapPrevisao=document.getElementById('m-prev-manual-wrap');
+  const inputPrevisao=document.getElementById('m-prev-data');
+  const helpPrevisao=document.getElementById('m-prev-manual-help');
+  const copyPrevisao=document.getElementById('m-prev-manual-copy');
+  if(wrapPrevisao&&inputPrevisao&&helpPrevisao){
+    if(exigePrevisaoManual){
+      const sugestao=previsaoManual?.data||previsaoAtual?.data||'';
+      wrapPrevisao.style.display='flex';
+      inputPrevisao.value=dataBrParaIso(sugestao);
+      if(copyPrevisao) copyPrevisao.textContent=zUiText('Ao entrar em Nota emitida, confirme a previsão mais assertiva de recebimento para o financeiro.');
+      helpPrevisao.textContent=sugestao?zUiText(`Referência atual do sistema: ${sugestao}. Você pode confirmar ou ajustar essa data antes de avançar.`):zUiText('Defina a data prevista para o financeiro acompanhar o recebimento.');
+    }else{
+      wrapPrevisao.style.display='none';
+      inputPrevisao.value='';
+      if(copyPrevisao) copyPrevisao.textContent=zUiText('Ao entrar em Nota emitida, informe a previsão mais assertiva de recebimento para o financeiro.');
+      helpPrevisao.textContent='';
+    }
+  }
+  const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
+  if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
+  document.getElementById('mbackdrop').classList.add('show');
+  setTimeout(()=>{(exigePrevisaoManual&&inputPrevisao?inputPrevisao:document.getElementById('mobs'))?.focus();},100);
+}
+function fecharM(){
+  document.getElementById('mbackdrop').classList.remove('show');
+  pendId=null;
+  zSetState('state.ui.pendId', pendId);
+  document.getElementById('mobs').value='';
+  document.getElementById('mchars').textContent='0/400';
+  document.getElementById('m-titulo').textContent=zUiText('Avançar etapa');
+  document.getElementById('marrow').innerHTML='';
+  const wrapPrevisao=document.getElementById('m-prev-manual-wrap');
+  const inputPrevisao=document.getElementById('m-prev-data');
+  const helpPrevisao=document.getElementById('m-prev-manual-help');
+  const copyPrevisao=document.getElementById('m-prev-manual-copy');
+  if(wrapPrevisao) wrapPrevisao.style.display='none';
+  if(inputPrevisao) inputPrevisao.value='';
+  if(helpPrevisao) helpPrevisao.textContent='';
+  if(copyPrevisao) copyPrevisao.textContent=zUiText('Ao entrar em Nota emitida, informe a previsão mais assertiva de recebimento para o financeiro.');
+  const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
+  if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
+}
+function handleBackdropAv(e){ if(e.target===document.getElementById('mbackdrop'))fecharM(); }
+async function confirmAv(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. As vendas estão em modo consulta até o banco voltar.'})) return;
+  const v=VENDAS.find(x=>x.id===pendId);
+  if(!v)return;
+  const btnConfirmar=document.querySelector('#mbackdrop .btn-s');
+  if(btnConfirmar&&btnConfirmar.disabled)return;
+  const proxEtapa=v.etapa+1;
+  const exigePrevisaoManual=proxEtapa===ETAPA_NOTA_EMITIDA;
+  const inputPrevisao=document.getElementById('m-prev-data');
+  const dataPrevisaoIso=exigePrevisaoManual&&inputPrevisao?inputPrevisao.value:'';
+  if(exigePrevisaoManual&&!dataPrevisaoIso){
+    if(inputPrevisao) inputPrevisao.focus();
+    showToast(zUiText('⚠️'),zUiText('Informe a previsão manual de recebimento antes de avançar para Nota emitida.'));
+    return;
+  }
+  if(btnConfirmar){btnConfirmar.disabled=true;btnConfirmar.textContent='Confirmando...';}
+  const obs=document.getElementById('mobs').value.trim();
+  const quemAvancou=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  const original=JSON.parse(JSON.stringify(v));
+  const previsaoManualAtual=obterPrevisaoRecebimentoManual(v);
+  v.etapa++;
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quemAvancou,o:obs}));
+  if(exigePrevisaoManual&&dataPrevisaoIso){
+    const dataPrevisaoBr=dataIsoParaBr(dataPrevisaoIso);
+    if(!previsaoManualAtual){
+      registrarPrevisaoRecebimentoHistorico(v,{data:dataPrevisaoBr,quem:quemAvancou,tipo:'prev_receb_manual'});
+    }else if(previsaoManualAtual.data!==dataPrevisaoBr){
+      registrarPrevisaoRecebimentoHistorico(v,{data:dataPrevisaoBr,anterior:previsaoManualAtual.data,quem:quemAvancou,tipo:'prev_receb_editada'});
+    }
+  }
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    fecharM();
+    atualizarBadgeNotificacoes();
+    renderFiltros(); renderVList(); showVDetail(v.id); renderNots();
+    if(!document.getElementById('mod-carteira').classList.contains('hidden')) renderCarteira();
+    if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+    showToast(zUiText('✅'),zUiText(`Etapa atualizada para ${ETAPAS[v.etapa]}.`));
+    if(typeof dispararNotificacaoEvolucaoVendaZapi==='function'){
+      dispararNotificacaoEvolucaoVendaZapi({
+        vendaId:v.id,
+        vendaRefLocal:v.refLocal||'',
+        etapaAnterior:original.etapa,
+        etapaNova:v.etapa,
+        responsavel:quemAvancou
+      },{avisar:true}).catch(err=>console.warn('Falha na notificacao Z-API da venda:',err));
+    }
+  }catch(e){
+    Object.assign(v,original);
+    if(btnConfirmar){btnConfirmar.disabled=false;btnConfirmar.textContent='Confirmar';}
+    console.error(e);
+    const msgErro=typeof mensagemErroSyncAgendamentos==='function'
+      ? mensagemErroSyncAgendamentos(e)
+      : String((e&&e.message)||e||'');
+    const erroTimeout=/timeout|network|fetch|abort/i.test(String(msgErro||''));
+    showToast(
+      zUiText('❌'),
+      zUiText(erroTimeout?'O Supabase demorou para responder ao avancar a etapa. Tente novamente em alguns segundos.':'Falha ao avançar a etapa no banco. Tente novamente.')
+    );
+  }
+}
+
+function setPrevisaoRecebLoading(loading){
+  previsaoRecebSalvando=loading;
+  zSetState('state.ui.previsaoRecebSalvando', previsaoRecebSalvando);
+  const campoData=document.getElementById('mpr-data');
+  const campoObs=document.getElementById('mpr-obs');
+  const salvar=document.getElementById('mpr-save-btn');
+  const cancelar=document.getElementById('mpr-cancel-btn');
+  const fechar=document.getElementById('mpr-close-btn');
+  const status=document.getElementById('mpr-status');
+  if(campoData) campoData.disabled=loading;
+  if(campoObs) campoObs.disabled=loading;
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(salvar){
+    salvar.disabled=loading;
+    salvar.textContent=loading?zUiText('⏳ Salvando...'):zUiText('Salvar previsão');
+    salvar.style.opacity=loading?'0.8':'1';
+    salvar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+
+function abrirModalPrevisaoRecebimento(id){
+  if(!podeGerirPrevisaoRecebimento()){showToast(zUiText('⚠️'),zUiText('Sem permissão para editar a previsão de recebimento.'));return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v||v.distratada||v.etapa<ETAPA_NOTA_EMITIDA||v.etapa>=ETAPAS.length-1) return;
+  previsaoRecebVendaId=id;
+  zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  const previsaoAutomatica=calcPrevisaoAutomatica(v);
+  const editando=!!previsaoManual;
+  document.getElementById('mpr-title').textContent=zUiText(editando?'Editar previsão de recebimento':'Definir previsão de recebimento');
+  document.getElementById('mpr-sub').textContent=zUiText(`${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${v.produto}`);
+  document.getElementById('mpr-data').value=dataBrParaIso(previsaoManual?.data||previsaoAutomatica?.data||'');
+  document.getElementById('mpr-obs').value='';
+  document.getElementById('mpr-obs-wrap').style.display=editando?'block':'none';
+  const autoBox=document.getElementById('mpr-auto-box');
+  const autoCopy=document.getElementById('mpr-auto-copy');
+  if(autoBox&&autoCopy){
+    if(previsaoAutomatica&&previsaoAutomatica.data){
+      autoBox.style.display='block';
+      autoCopy.textContent=zUiText(editando?`Estimativa automática original do fluxo: ${previsaoAutomatica.data}. Se alterar a previsão manual, o motivo ficará registrado no histórico.`:`Estimativa automática atual do sistema: ${previsaoAutomatica.data}. Confirme ou ajuste para transformar em previsão manual.`);
+    }else{
+      autoBox.style.display='none';
+      autoCopy.textContent='';
+    }
+  }
+  setPrevisaoRecebLoading(false);
+  document.getElementById('m-prev-receb').classList.add('show');
+  setTimeout(()=>document.getElementById('mpr-data').focus(),80);
+}
+
+function fecharModalPrevisaoRecebimento(){
+  if(previsaoRecebSalvando) return;
+  document.getElementById('m-prev-receb').classList.remove('show');
+  previsaoRecebVendaId=null;
+  zSetState('state.ui.previsaoRecebVendaId', previsaoRecebVendaId);
+  document.getElementById('mpr-title').textContent=zUiText('Previsão de recebimento');
+  document.getElementById('mpr-sub').textContent=zUiText('Defina a data prevista para acompanhamento do financeiro.');
+  document.getElementById('mpr-data').value='';
+  document.getElementById('mpr-obs').value='';
+  document.getElementById('mpr-obs-wrap').style.display='none';
+  document.getElementById('mpr-auto-box').style.display='none';
+  document.getElementById('mpr-auto-copy').textContent='';
+  setPrevisaoRecebLoading(false);
+}
+
+async function salvarPrevisaoRecebimento(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A previsão de recebimento está bloqueada no modo consulta.'})) return;
+  if(previsaoRecebSalvando) return;
+  if(!podeGerirPrevisaoRecebimento()) return;
+  const v=VENDAS.find(x=>x.id===previsaoRecebVendaId);
+  if(!v||v.distratada||v.etapa<ETAPA_NOTA_EMITIDA||v.etapa>=ETAPAS.length-1) return;
+  const dataIso=document.getElementById('mpr-data').value;
+  const campoObs=document.getElementById('mpr-obs');
+  const previsaoManual=obterPrevisaoRecebimentoManual(v);
+  const editando=!!previsaoManual;
+  if(!dataIso){
+    document.getElementById('mpr-data').focus();
+    showToast(zUiText('⚠️'),zUiText('Informe a data prevista de recebimento.'));
+    return;
+  }
+  const novaData=dataIsoParaBr(dataIso);
+  if(editando&&previsaoManual.data===novaData){
+    document.getElementById('mpr-data').focus();
+    showToast(zUiText('⚠️'),zUiText('Escolha uma nova data para registrar a alteração da previsão.'));
+    return;
+  }
+  const obs=campoObs?campoObs.value.trim():'';
+  if(editando&&!obs){
+    if(campoObs) campoObs.focus();
+    showToast(zUiText('⚠️'),zUiText('Informe o motivo da alteração da previsão de recebimento.'));
+    return;
+  }
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  registrarPrevisaoRecebimentoHistorico(v,{
+    data:novaData,
+    anterior:previsaoManual?previsaoManual.data:'',
+    quem,
+    obs:editando?obs:'',
+    tipo:editando?'prev_receb_editada':'prev_receb_manual'
+  });
+  setPrevisaoRecebLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    setPrevisaoRecebLoading(false);
+    fecharModalPrevisaoRecebimento();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+    showToast(zUiText('✅'),zUiText(editando?'Previsão de recebimento atualizada com sucesso.':'Previsão de recebimento definida com sucesso.'));
+  }catch(e){
+    Object.assign(v,original);
+    setPrevisaoRecebLoading(false);
+    console.error(e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar a previsão de recebimento no banco. Tente novamente.'));
+  }
+}
+
+async function marcarCorretorVendaComoExterno(vendaId){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. Esse ajuste está bloqueado no modo consulta.'})) return;
+  if(!['dir','fin','dono'].includes(role)){showToast(zUiText('⚠️'),zUiText('Sem permissão para ajustar o vínculo do corretor.'));return;}
+  const v=VENDAS.find(x=>x.id===vendaId);
+  if(!v) return;
+  if(corretorVendaEhExterno(v)){showToast(zUiText('ℹ️'),zUiText('Esta venda já está marcada com corretor externo.'));return;}
+  const nomeCorretor=String(v.corretor||'').trim()||'Corretor';
+  if(!confirm(zUiText(`Marcar "${nomeCorretor}" como corretor externo nesta venda? Isso impede que o sistema vincule esta venda a um usuário ativo com o mesmo nome.`))) return;
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  registrarVinculoCorretorVenda(v,{origem:'externo',quem,obs:'Corretor marcado como externo para evitar vínculo automático com usuário do sistema.'});
+  normalizarVendaNumeros(v);
+  v.pct_rh=0;
+  try{
+    await dbAtualizarVenda(v);
+    salvarLS();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    if(!document.getElementById('mod-carteira').classList.contains('hidden')&&typeof renderCarteira==='function') renderCarteira();
+    showToast(zUiText('✅'),zUiText('Corretor marcado como externo com sucesso.'));
+  }catch(e){
+    Object.assign(v,original);
+    console.error(e);
+    showToast(zUiText('❌'),zUiText('Falha ao atualizar o vínculo do corretor no banco. Tente novamente.'));
+  }
+}
+
+function voltarEtapa(id){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A reversão de etapa está bloqueada no modo consulta.'})) return;
+  if(!['fin','dir','dono'].includes(role)){showToast('ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢','Sem permissÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o.');return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v||v.etapa<=0)return;
+  const etapaAnterior=ETAPAS[v.etapa-1];
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  v.etapa--;
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:`Etapa revertida para: ${etapaAnterior}`,tipo:'reversao'}));
+  renderFiltros(); renderVList(); showVDetail(v.id);
+  atualizarBadgeNotificacoes();
+  dbAtualizarVenda(v).catch(e=>console.error(e));
+  salvarLS();
+  if(!document.getElementById('mod-financeiro').classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+  showToast('ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â©','Etapa revertida com sucesso.');
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ DISTRATO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function abrirDistrato(id){
+  if(!['dir','fin','dono'].includes(role)){showToast(zUiText('⚠️'),zUiText('Sem permissão para registrar distrato.'));return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v)return;
+  distratoVendaId=id;
+  zSetState('state.ui.distratoVendaId', distratoVendaId);
+  document.getElementById('dt-subtitulo').textContent=zUiText(`Venda: ${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${v.produto}`);
+  distratoCategoriaNovaAtiva=false;
+  distratoCategoriaNovaValor='';
+  preencherCategoriasDistrato('');
+  toggleCategoriaNovaDistrato(false);
+  document.getElementById('dt-motivo').value='';
+  document.getElementById('dt-data').value=new Date().toISOString().split('T')[0];
+  setDistratoLoading(false);
+  document.getElementById('m-distrato').classList.add('show');
+  setTimeout(()=>{
+    const categoria=document.getElementById('dt-categoria');
+    if(categoria) categoria.focus();
+  },100);
+}
+function setDistratoLoading(loading){
+  distratoSalvando=loading;
+  zSetState('state.ui.distratoSalvando', distratoSalvando);
+  const motivo=document.getElementById('dt-motivo');
+  const categoria=document.getElementById('dt-categoria');
+  const categoriaNova=document.getElementById('dt-categoria-nova');
+  const categoriaNovaBtn=document.getElementById('dt-categoria-nova-btn');
+  const data=document.getElementById('dt-data');
+  const cancelar=document.getElementById('dt-cancel-btn');
+  const confirmar=document.getElementById('dt-confirm-btn');
+  const fechar=document.getElementById('dt-close-btn');
+  const status=document.getElementById('dt-status');
+  if(motivo) motivo.disabled=loading;
+  if(categoria) categoria.disabled=loading||distratoCategoriaNovaAtiva;
+  if(categoriaNova) categoriaNova.disabled=loading;
+  if(categoriaNovaBtn) categoriaNovaBtn.disabled=loading;
+  if(data) data.disabled=loading;
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(confirmar){
+    confirmar.disabled=loading;
+    confirmar.textContent=loading?zUiText('⏳ Registrando distrato...'):zUiText('⚠️ Confirmar distrato');
+    confirmar.style.opacity=loading?'0.75':'1';
+    confirmar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+function fecharDistrato(){
+  if(distratoSalvando) return;
+  setDistratoLoading(false);
+  distratoCategoriaNovaAtiva=false;
+  distratoCategoriaNovaValor='';
+  toggleCategoriaNovaDistrato(false);
+  document.getElementById('m-distrato').classList.remove('show');
+  distratoVendaId=null;
+  zSetState('state.ui.distratoVendaId', distratoVendaId);
+}
+function confirmarDistrato(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O registro de distrato está bloqueado no modo consulta.'})) return;
+  if(distratoSalvando) return;
+  const v=VENDAS.find(x=>x.id===distratoVendaId);
+  if(!v)return;
+  const motivo=document.getElementById('dt-motivo').value.trim();
+  const categoria=obterCategoriaDistratoSelecionada();
+  const dataDistrato=document.getElementById('dt-data').value;
+  if(!categoria){
+    if(distratoCategoriaNovaAtiva){
+      document.getElementById('dt-categoria-nova')?.focus();
+      showToast(zUiText('⚠️'),zUiText('Digite o nome da nova categoria do distrato.'));
+    }else{
+      document.getElementById('dt-categoria')?.focus();
+      showToast(zUiText('⚠️'),zUiText('Selecione a categoria do distrato.'));
+    }
+    return;
+  }
+  if(!motivo){document.getElementById('dt-motivo').focus();showToast(zUiText('⚠️'),zUiText('Informe a observação do distrato.'));return;}
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  const dataFmt=dataDistrato?dataDistrato.split('-').reverse().join('/').slice(0,5):hoje().slice(0,5);
+  v.distratada=true;
+  v.dataDistrato=dataFmt;
+  v.hist.push(criarRegistroHistorico({
+    e:v.etapa,
+    u:quem,
+    o:motivo,
+    tipo:'distrato',
+    categoriaDistrato:categoria,
+    observacaoDistrato:motivo,
+    motivoDistrato:motivo
+  },{data:dataDistrato||undefined}));
+  setDistratoLoading(true);
+  dbAtualizarVenda(v).then(()=>{
+    salvarLS();
+    setDistratoLoading(false);
+    fecharDistrato();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    atualizarBadgeNotificacoes();
+    showToast(zUiText('⚠️'),zUiText('Distrato registrado no histórico.'));
+    if(typeof dispararNotificacaoDistratoVendaZapi==='function'){
+      dispararNotificacaoDistratoVendaZapi({
+        vendaId:v.id,
+        vendaRefLocal:v.refLocal||'',
+        etapaAnterior:v.etapa,
+        etapaNova:v.etapa,
+        responsavel:quem
+      },{avisar:true}).catch(err=>console.warn('Falha na notificacao Z-API do distrato:',err));
+    }
+  }).catch(e=>{
+    Object.assign(v, original);
+    setDistratoLoading(false);
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    console.error('Erro ao registrar distrato:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao registrar distrato no banco. Tente novamente.'));
+  });
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ EDITAR VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function podeGerirBonusVenda(v){
+  return ['fin','dir','dono'].includes(role)&&!!v&&bonusTemGestao(v)&&!v.distratada;
+}
+function abrirGestaoBonus(id){
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v) return;
+  if(!podeGerirBonusVenda(v)){
+    showToast(zUiText('⚠️'),zUiText('O bônus desta venda não pode ser gerido neste perfil ou situação.'));
+    return;
+  }
+  aplicarDefaultsBonusGestaoVenda(v);
+  bonusGestaoVendaId=id;
+  zSetState('state.ui.bonusGestaoVendaId', bonusGestaoVendaId);
+  document.getElementById('bg-subtitulo').textContent=`${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${zUiText('Bonus liquido')} ${fmt(bonusLiquidoTotal(v))}`;
+  document.getElementById('bg-forma').value=bonusFormaVenda(v)||'comissao';
+  document.getElementById('bg-status').value=bonusStatusVenda(v)||'pendente';
+  document.getElementById('bg-obs').value=String(v.bonus_obs||'');
+  setGestaoBonusLoading(false);
+  document.getElementById('m-bonus-gestao').classList.add('show');
+  setTimeout(()=>document.getElementById('bg-status')?.focus(),80);
+}
+function setGestaoBonusLoading(loading){
+  bonusGestaoSalvando=!!loading;
+  zSetState('state.ui.bonusGestaoSalvando', bonusGestaoSalvando);
+  ['bg-forma','bg-status','bg-obs'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled=bonusGestaoSalvando;
+  });
+  const cancelar=document.getElementById('bg-cancel-btn');
+  const fechar=document.getElementById('bg-close-btn');
+  const salvar=document.getElementById('bg-save-btn');
+  const status=document.getElementById('bg-status-wrap');
+  if(cancelar) cancelar.disabled=bonusGestaoSalvando;
+  if(fechar) fechar.disabled=bonusGestaoSalvando;
+  if(salvar){
+    salvar.disabled=bonusGestaoSalvando;
+    salvar.textContent=bonusGestaoSalvando?zUiText('⏳ Salvando gestão...'):zUiText('✓ Salvar gestão');
+  }
+  if(status) status.style.display=bonusGestaoSalvando?'flex':'none';
+}
+function fecharGestaoBonus(){
+  if(bonusGestaoSalvando) return;
+  setGestaoBonusLoading(false);
+  document.getElementById('m-bonus-gestao').classList.remove('show');
+  bonusGestaoVendaId=null;
+  zSetState('state.ui.bonusGestaoVendaId', bonusGestaoVendaId);
+}
+async function salvarGestaoBonus(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A gestão do bônus está bloqueada no modo consulta.'})) return;
+  if(bonusGestaoSalvando) return;
+  const v=VENDAS.find(x=>x.id===bonusGestaoVendaId);
+  if(!v||!podeGerirBonusVenda(v)) return;
+  const forma=String(document.getElementById('bg-forma')?.value||'').trim().toLowerCase();
+  const status=String(document.getElementById('bg-status')?.value||'').trim().toLowerCase();
+  const obs=String(document.getElementById('bg-obs')?.value||'').trim();
+  if(!BONUS_FORMAS[forma]){
+    document.getElementById('bg-forma')?.focus();
+    showToast(zUiText('⚠️'),zUiText('Selecione como esse bônus será pago.'));
+    return;
+  }
+  if(!BONUS_STATUS[status]){
+    document.getElementById('bg-status')?.focus();
+    showToast(zUiText('⚠️'),zUiText('Selecione o status operacional do bônus.'));
+    return;
+  }
+  aplicarDefaultsBonusGestaoVenda(v);
+  const original={
+    bonus_forma:v.bonus_forma,
+    bonus_status:v.bonus_status,
+    bonus_obs:v.bonus_obs,
+    hist:JSON.parse(JSON.stringify(v.hist||[]))
+  };
+  if(original.bonus_forma===forma&&original.bonus_status===status&&String(original.bonus_obs||'')===obs){
+    showToast(zUiText('ℹ️'),zUiText('Nenhuma alteração na gestão do bônus.'));
+    return;
+  }
+  v.bonus_forma=forma;
+  v.bonus_status=status;
+  v.bonus_obs=obs;
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  criarHistoricoBonusGestao(v,{quem,forma,status,obs});
+  setGestaoBonusLoading(true);
+  try{
+    await dbAtualizarVenda(v);
+    setGestaoBonusLoading(false);
+    fecharGestaoBonus();
+    salvarLS();
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    showToast(zUiText('✅'),zUiText('Gestão do bônus atualizada com sucesso.'));
+  }catch(e){
+    v.bonus_forma=original.bonus_forma;
+    v.bonus_status=original.bonus_status;
+    v.bonus_obs=original.bonus_obs;
+    v.hist=original.hist;
+    setGestaoBonusLoading(false);
+    renderFiltros();
+    renderVList();
+    showVDetail(v.id);
+    console.error('Erro ao salvar gestão do bônus:',e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar a gestão do bônus no banco. Tente novamente.'));
+  }
+}
+
+function preencherDiretor2Edit(valorAtual){
+  const sel=document.getElementById('ev-diretor2');
+  if(!sel) return;
+  const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
+  const diretorPrincipal=sel.dataset.currentDiretor||'';
+  const diretores=USUARIOS
+    .filter(u=>{
+      if(perfilRole(u)!=='dir') return false;
+      if(typeof usuarioEstaAtivo==='function'&&!usuarioEstaAtivo(u)) return false;
+      return u.nome!==diretorPrincipal;
+    })
+    .sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+  const atual=(valorAtual!==undefined?valorAtual:sel.value)||'';
+  let options=`<option value="">Nenhum</option>`;
+  if(atual && !diretores.some(u=>u.nome===atual)){
+    options+=`<option value="${atual}">${zUiText(`${atual} (histórico)`)}</option>`;
+  }
+  options+=diretores.map(u=>`<option value="${u.nome}">${zUiText(u.nome)}</option>`).join('');
+  sel.innerHTML=options;
+  sel.value=atual;
+  toggleDiretor2EditPct(false);
+}
+function toggleDiretor2EditPct(limpar){
+  const sel=document.getElementById('ev-diretor2');
+  const wrap=document.getElementById('ev-dir2-pct-field');
+  const pct=document.getElementById('ev-pct-dir2');
+  const bonusWrap=document.getElementById('ev-bonus-dir2-field');
+  const bonusPct=document.getElementById('ev-bonus-dir2');
+  const ativo=!!(sel&&sel.value);
+  if(wrap) wrap.style.display=ativo?'block':'none';
+  if(bonusWrap) bonusWrap.style.display=ativo?'block':'none';
+  if(!ativo&&limpar&&pct) pct.value='';
+  if(!ativo&&limpar&&bonusPct) bonusPct.value='';
+}
+function abrirEditVenda(id){
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v)return;
+  normalizarVendaNumeros(v);
+  aplicarDefaultsBonusGestaoVenda(v);
+  editVendaId=id;
+  zSetState('state.ui.editVendaId', editVendaId);
+  document.getElementById('ev-subtitulo').textContent=`Editando: ${clienteVendaTexto(v.cliente) || 'Sem cliente'}`;
+  document.getElementById('ev-cliente').value=v.cliente;
+  const partes=v.data?v.data.split('/'):[]; const anoAtual=new Date().getFullYear();
+  document.getElementById('ev-data').value=partes.length===2?`${anoAtual}-${partes[1]}-${partes[0]}`:'';
+  document.getElementById('ev-produto').value=v.produto;
+  document.getElementById('ev-construtora').value=v.construtora;
+  document.getElementById('ev-origem').value=v.origem||'IndicaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o';
+  document.getElementById('ev-unidade').value=v.unidade||'Centro';
+  document.getElementById('ev-valor').value=v.valor;
+  document.getElementById('ev-pct').value=formatarNumeroInput(v.pct*100,2);
+  document.getElementById('ev-imp').value=formatarNumeroInput((v.imp??0.11)*100,1);
+  document.getElementById('ev-pct-cor').value=formatarNumeroInput((v.pct_cor||0)*100,2);
+  document.getElementById('ev-pct-cap').value=formatarNumeroInput((v.pct_cap||0)*100,2);
+  document.getElementById('ev-pct-ger').value=formatarNumeroInput((v.pct_ger||0)*100,2);
+  document.getElementById('ev-pct-dir').value=formatarNumeroInput((v.pct_dir||0)*100,2);
+  document.getElementById('ev-pct-dir2').value=formatarNumeroInput((v.pct_dir2||0)*100,2);
+  document.getElementById('ev-diretor2').dataset.currentDiretor=v.diretor||'';
+  preencherDiretor2Edit(v.diretor2||'');
+  document.getElementById('ev-diretor2').onchange=function(){toggleDiretor2EditPct(true);};
+  document.getElementById('ev-unidade').onchange=function(){preencherDiretor2Edit();};
+  document.getElementById('ev-bonus').value=v.bonus||0;
+  document.getElementById('ev-bonus-dir').value=formatarNumeroInput(v.bonus_pct_dir||0,0);
+  document.getElementById('ev-bonus-dir2').value=formatarNumeroInput(v.bonus_pct_dir2||0,0);
+  document.getElementById('ev-bonus-ger').value=formatarNumeroInput(v.bonus_pct_ger||0,0);
+  document.getElementById('ev-bonus-cor').value=formatarNumeroInput(v.bonus_pct_cor||0,0);
+  document.getElementById('ev-cca').value=v.cca||'';
+  document.getElementById('ev-motivo').value='';
+  setEditVendaLoading(false);
+  document.getElementById('m-edit-venda').classList.add('show');
+  setTimeout(()=>document.getElementById('ev-motivo').focus(),100);
+}
+function setEditVendaLoading(loading){
+  editVendaSalvando=loading;
+  zSetState('state.ui.editVendaSalvando', editVendaSalvando);
+  ['ev-cliente','ev-data','ev-produto','ev-construtora','ev-origem','ev-unidade','ev-diretor2','ev-valor','ev-pct','ev-imp','ev-pct-cor','ev-pct-cap','ev-pct-ger','ev-pct-dir','ev-pct-dir2','ev-bonus','ev-bonus-dir','ev-bonus-dir2','ev-bonus-ger','ev-bonus-cor','ev-cca','ev-motivo']
+    .forEach(id=>{
+      const el=document.getElementById(id);
+      if(el) el.disabled=loading;
+    });
+  const cancelar=document.getElementById('ev-cancel-btn');
+  const fechar=document.getElementById('ev-close-btn');
+  const salvar=document.getElementById('ev-save-btn');
+  const status=document.getElementById('ev-status');
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(salvar){
+    salvar.disabled=loading;
+    salvar.textContent=loading?zUiText('⏳ Salvando alterações...'):zUiText('✓ Salvar alterações');
+    salvar.style.opacity=loading?'0.75':'1';
+    salvar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+function fecharEditVenda(){
+  if(editVendaSalvando) return;
+  setEditVendaLoading(false);
+  document.getElementById('m-edit-venda').classList.remove('show');
+  editVendaId=null;
+  zSetState('state.ui.editVendaId', editVendaId);
+}
+
+function salvarEditVenda(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A edição da venda está bloqueada no modo consulta.'})) return;
+  if(editVendaSalvando) return;
+  const v=VENDAS.find(x=>x.id===editVendaId);
+  if(!v)return;
+  const motivo=document.getElementById('ev-motivo').value.trim();
+  if(!motivo){document.getElementById('ev-motivo').focus();showToast('Ã¢Å¡Â Ã¯Â¸Â','Informe o motivo da alteraÃƒÂ§ÃƒÂ£o.');return;}
+  const original=JSON.parse(JSON.stringify(v));
+  const dataVal=document.getElementById('ev-data').value;
+  const d2=new Date(dataVal+'T12:00:00');
+  const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  v.cliente=document.getElementById('ev-cliente').value.toUpperCase().trim();
+  v.data=`${d2.getDate().toString().padStart(2,'0')}/${(d2.getMonth()+1).toString().padStart(2,'0')}`;
+  v.mes=meses[d2.getMonth()];
+  v.produto=document.getElementById('ev-produto').value.trim();
+  v.construtora=document.getElementById('ev-construtora').value.trim();
+  v.origem=document.getElementById('ev-origem').value;
+  v.unidade=document.getElementById('ev-unidade').value;
+  v.diretor2=document.getElementById('ev-diretor2').value||'';
+  v.valor=lerNumeroInput('ev-valor',0);
+  v.pct=lerPercentualInput('ev-pct',0);
+  v.imp=lerPercentualInput('ev-imp',0.11);
+  v.pct_cor=lerPercentualInput('ev-pct-cor',0);
+  v.pct_cap=lerPercentualInput('ev-pct-cap',0);
+  v.pct_ger=lerPercentualInput('ev-pct-ger',0);
+  v.pct_dir=lerPercentualInput('ev-pct-dir',0);
+  v.pct_dir2=v.diretor2?lerPercentualInput('ev-pct-dir2',0):0;
+  if(v.diretor2&&v.diretor2===v.diretor){
+    document.getElementById('ev-diretor2').focus();
+    showToast(zUiText('⚠️'),zUiText('O Diretor 2 precisa ser diferente do diretor principal.'));
+    Object.assign(v, original);
+    return;
+  }
+  v.bonus=lerNumeroInput('ev-bonus',0);
+  v.bonus_pct_dir=lerNumeroInput('ev-bonus-dir',0);
+  v.bonus_pct_dir2=v.diretor2?lerNumeroInput('ev-bonus-dir2',0):0;
+  v.bonus_pct_ger=lerNumeroInput('ev-bonus-ger',0);
+  v.bonus_pct_cor=lerNumeroInput('ev-bonus-cor',0);
+  aplicarDefaultsBonusGestaoVenda(v);
+  if(!validarSomaBonusVenda(v,'ev-bonus-dir')){ Object.assign(v, original); return; }
+  normalizarVendaNumeros(v);
+  v.cca=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(document.getElementById('ev-cca').value):document.getElementById('ev-cca').value.trim();
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  v.hist.push(criarRegistroHistorico({e:v.etapa,u:quem,o:motivo,tipo:'edicao'}));
+  setEditVendaLoading(true);
+  dbAtualizarVenda(v).then(()=>{
+    setEditVendaLoading(false);
+    fecharEditVenda();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    salvarLS();
+    showToast(zUiText('✅'),zUiText('Venda atualizada com sucesso.'));
+  }).catch(e=>{
+    Object.assign(v, original);
+    setEditVendaLoading(false);
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    console.error('Erro ao atualizar venda:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar alteração no banco. Tente novamente.'));
+  });
+}
+
+// ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ NOVA VENDA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
+function novaVendaCriarRefLocal(){
+  if(typeof gerarRefLocalVenda==='function') return gerarRefLocalVenda();
+  return `ven-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,10)}`;
+}
+
+function setNovaVendaRefLocal(valor=''){
+  novaVendaRefLocal=String(valor||'').trim();
+  zSetState('state.ui.novaVendaRefLocal', novaVendaRefLocal);
+  return novaVendaRefLocal;
+}
+
+function setVendaModalLoading(loading){
+  vendaSalvando=!!loading;
+  zSetState('state.ui.vendaSalvando', vendaSalvando);
+  document.querySelectorAll('#mvenda input, #mvenda select, #mvenda textarea, #mvenda button').forEach(el=>{
+    if(el.id==='mv-salvar-btn'){
+      el.disabled=vendaSalvando;
+      el.textContent=zUiText(vendaSalvando?'💾 Salvando...':'✓ Cadastrar venda');
+      return;
+    }
+    el.disabled=vendaSalvando;
+  });
+  document.querySelectorAll('#mvenda .doc-upload-box').forEach(el=>{
+    el.style.pointerEvents=vendaSalvando?'none':'';
+    el.style.opacity=vendaSalvando?'0.7':'';
+  });
+}
+
+function abrirModalVenda(){
+  const filtrarUnid=(u)=>['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas')||!u.unidade||u.unidade===usuarioLogado.unidade;
+  const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
+  const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
+  const todos=USUARIOS.filter(u=>filtrarUnid(u)&&usuarioAtivo(u));
+  const capitaes=todos.filter(u=>perfilRole(u)==='cap');
+  const gerentes=todos.filter(u=>['ger','dir','cap','dono'].includes(perfilRole(u)));
+  const diretores=todos.filter(u=>perfilRole(u)==='dir');
+  const perfilOrdem=[
+    {label:'Dono', role:'dono'},
+    {label:'Diretor', role:'dir'},
+    {label:'Gerente', role:'ger'},
+    {label:'Capitão', role:'cap'},
+    {label:'Corretor', role:'cor'},
+    {label:'Financeiro', role:'fin'},
+    {label:'RH', role:'rh'}
+  ];
+  const optCor=perfilOrdem.flatMap(({label,role:perfilKey})=>{
+    const lista=todos.filter(u=>perfilRole(u)===perfilKey);
+    if(!lista.length) return [];
+    return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`),'</optgroup>'];
+  }).join('');
+  const optExterno=`<optgroup label="${zUiText('— Externo —')}"><option value="__externo__">${zUiText('✏️ Digitar nome externo...')}</option></optgroup>`;
+  const optCap=capitaes.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`).join('');
+  const optGer=gerentes.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`).join('');
+  const optDir=diretores.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`).join('');
+  document.getElementById('mv-corretor').innerHTML=`<option value="">Selecione...</option>${optCor}${optExterno}`;
+  document.getElementById('mv-capitao').innerHTML=`<option value="">Nenhum</option>${optCap}`;
+  document.getElementById('mv-gerente').innerHTML=`<option value="">Selecione...</option>${optGer}`;
+  document.getElementById('mv-diretor').innerHTML=`<option value="">Selecione...</option>${optDir}`;
+  document.getElementById('mv-diretor2').innerHTML=`<option value="">Nenhum</option>${optDir}`;
+  document.getElementById('mv-diretor2').onchange=function(){
+    const temDir2=!!this.value;
+    const f=document.getElementById('mv-dir2-pct-field');
+    const bonusField=document.getElementById('mv-bonus-dir2-field');
+    if(f) f.style.display=temDir2?'block':'none';
+    if(bonusField) bonusField.style.display=temDir2?'block':'none';
+    if(!temDir2){
+      const d2=document.getElementById('mv-pct-dir2');
+      const b2=document.getElementById('mv-bonus-dir2');
+      if(d2) d2.value='';
+      if(b2) b2.value='';
+    }
+    calcularPrevV();
+    calcularPrevBonus();
+  };
+  document.getElementById('mv-corretor').onchange=function(){
+    const extField=document.getElementById('mv-corretor-ext-wrap');
+    if(this.value==='__externo__'){extField.style.display='block';document.getElementById('mv-corretor-ext').focus();}
+    else{extField.style.display='none';document.getElementById('mv-corretor-ext').value='';}
+    calcularPrevV();
+  };
+  ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-dir2','mv-bonus-ger','mv-bonus-cor','mv-corretor-ext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const f=document.getElementById('mv-dir2-pct-field');
+  if(f) f.style.display='none';
+  const bonusDir2Field=document.getElementById('mv-bonus-dir2-field');
+  if(bonusDir2Field) bonusDir2Field.style.display='none';
+  const pw=document.getElementById('pv-dir2-wrap');
+  if(pw) pw.style.display='none';
+  const pbw=document.getElementById('pb-dir2-wrap');
+  if(pbw) pbw.style.display='none';
+  const extWrap=document.getElementById('mv-corretor-ext-wrap');
+  if(extWrap) extWrap.style.display='none';
+  document.getElementById('mv-imp').value='11';
+  document.getElementById('mv-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('mv-origem').value='Indicação';
+  setNovaVendaRefLocal(novaVendaCriarRefLocal());
+  document.getElementById('mvenda').classList.add('show');
+  setVendaModalLoading(false);
+  calcularPrevV();
+  setTimeout(()=>document.getElementById('mv-cliente').focus(),100);
+}
+function fecharMV(forcar=false){
+  if(vendaSalvando&&!forcar) return;
+  document.getElementById('mvenda').classList.remove('show');
+  setVendaModalLoading(false);
+  setNovaVendaRefLocal('');
+}
+function handleBackdropV(e){ if(e.target===document.getElementById('mvenda'))fecharMV(); }
+async function salvarVenda(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. O cadastro de vendas está bloqueado no modo consulta.'})) return;
+  if(vendaSalvando) return;
+  const cliente=document.getElementById('mv-cliente').value.trim().toUpperCase();
+  const dataVal=document.getElementById('mv-data').value;
+  const produto=document.getElementById('mv-produto').value.trim();
+  const construtora=document.getElementById('mv-construtora').value.trim();
+  const origem=document.getElementById('mv-origem').value;
+  const unidade=document.getElementById('mv-unidade').value;
+  const corretorSelecionado=document.getElementById('mv-corretor').value;
+  const corretorExterno=corretorSelecionado==='__externo__';
+  const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
+  const corretorUsuario=!corretorExterno?USUARIOS.find(u=>String(u.id)===String(corretorSelecionado))||null:null;
+  let corretor=corretorUsuario?corretorUsuario.nome:'';
+  if(corretorExterno){
+    corretor=document.getElementById('mv-corretor-ext').value.trim().toUpperCase();
+    if(!corretor){document.getElementById('mv-corretor-ext').focus();showToast('⚠️','Informe o nome do corretor externo.');return;}
+  }
+  const capitaoUsuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-capitao').value))||null;
+  const gerenteUsuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-gerente').value))||null;
+  const diretorUsuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-diretor').value))||null;
+  const diretor2Usuario=USUARIOS.find(u=>String(u.id)===String(document.getElementById('mv-diretor2').value))||null;
+  const capitao=capitaoUsuario?capitaoUsuario.nome:'';
+  const gerente=gerenteUsuario?gerenteUsuario.nome:'';
+  const diretor=diretorUsuario?diretorUsuario.nome:'';
+  const diretor2=diretor2Usuario?diretor2Usuario.nome:'';
+  const cca=typeof zNormalizarCampoTexto==='function'?zNormalizarCampoTexto(document.getElementById('mv-cca').value):document.getElementById('mv-cca').value.trim();
+  const valor=lerNumeroInput('mv-valor',0);
+  const pct=lerPercentualInput('mv-pct',0);
+  const imp=lerPercentualInput('mv-imp',0.11);
+  const pct_cor=lerPercentualInput('mv-pct-cor',0);
+  const pct_cap=lerPercentualInput('mv-pct-cap',0);
+  const pct_ger=lerPercentualInput('mv-pct-ger',0);
+  const pct_dir=lerPercentualInput('mv-pct-dir',0);
+  const pct_dir2=diretor2?lerPercentualInput('mv-pct-dir2',0):0;
+  const bonus=lerNumeroInput('mv-bonus',0);
+  const bonus_pct_dir=lerNumeroInput('mv-bonus-dir',0);
+  const bonus_pct_dir2=diretor2?lerNumeroInput('mv-bonus-dir2',0):0;
+  const bonus_pct_ger=lerNumeroInput('mv-bonus-ger',0);
+  const bonus_pct_cor=lerNumeroInput('mv-bonus-cor',0);
+  if(!cliente){document.getElementById('mv-cliente').focus();showToast(zUiText('⚠️'),zUiText('Informe o nome do cliente.'));return;}
+  if(!dataVal){document.getElementById('mv-data').focus();showToast(zUiText('⚠️'),zUiText('Informe a data da venda.'));return;}
+  if(!produto){document.getElementById('mv-produto').focus();showToast(zUiText('⚠️'),zUiText('Informe o produto.'));return;}
+  if(!construtora){document.getElementById('mv-construtora').focus();showToast(zUiText('⚠️'),zUiText('Informe a construtora.'));return;}
+  if(!unidade){showToast(zUiText('⚠️'),zUiText('Selecione a unidade.'));return;}
+  if(!corretorExterno&&(!corretorUsuario||!usuarioAtivo(corretorUsuario))){showToast(zUiText('⚠️'),zUiText('Selecione um corretor ativo.'));return;}
+  if(capitaoUsuario&&!usuarioAtivo(capitaoUsuario)){showToast(zUiText('⚠️'),zUiText('Selecione um capitão ativo.'));return;}
+  if(!gerenteUsuario||!usuarioAtivo(gerenteUsuario)){showToast(zUiText('⚠️'),zUiText('Selecione um gerente ativo.'));return;}
+  if(!diretorUsuario||!usuarioAtivo(diretorUsuario)){showToast(zUiText('⚠️'),zUiText('Selecione um diretor ativo.'));return;}
+  if(diretor2Usuario&&!usuarioAtivo(diretor2Usuario)){showToast(zUiText('⚠️'),zUiText('Selecione um diretor 2 ativo.'));return;}
+  if(!corretor){showToast(zUiText('⚠️'),zUiText('Selecione o corretor.'));return;}
+  if(!gerente){showToast(zUiText('⚠️'),zUiText('Selecione o gerente.'));return;}
+  if(!diretor){showToast(zUiText('⚠️'),zUiText('Selecione o diretor.'));return;}
+  if(!valor){document.getElementById('mv-valor').focus();showToast(zUiText('⚠️'),zUiText('Informe o valor da venda.'));return;}
+  if(!pct){document.getElementById('mv-pct').focus();showToast(zUiText('⚠️'),zUiText('Informe o % de comissão.'));return;}
+  if(!mvDocs.comp){showToast(zUiText('⚠️'),zUiText('Anexe o comprovante de pagamento.'));return;}
+  if(!mvDocs.cont){showToast(zUiText('⚠️'),zUiText('Anexe o contrato assinado.'));return;}
+
+  const refLocal=novaVendaRefLocal||setNovaVendaRefLocal(novaVendaCriarRefLocal());
+  const d=new Date(dataVal+'T12:00:00');
+  const dia=d.getDate().toString().padStart(2,'0');
+  const mesNum=d.getMonth();
+  const meses=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const data=`${dia}/${(mesNum+1).toString().padStart(2,'0')}`;
+  const mes=meses[mesNum];
+  // pct_rh é um snapshot da venda: históricos permanecem intactos e novas vendas
+  // seguem a configuração vigente, sem recalcular direitos já adquiridos.
+  const pct_rh=pctRhNovaVenda(corretorUsuario,{corretorExterno});
+  const novaVenda={
+    id:nextVendaId++,refLocal,data,mes,cliente,produto,construtora,origem,unidade,
+    corretor,capitao,gerente,diretor,diretor2,cca,
+    bonus,bonus_pct_dir,bonus_pct_dir2,bonus_pct_ger,bonus_pct_cor,
+    bonus_forma:bonus>0?'comissao':'',
+    bonus_status:bonus>0?'pendente':'',
+    bonus_obs:'',
+    valor,pct,imp,pct_cor,pct_cap,pct_ger,pct_dir,pct_dir2,pct_rh,
+    etapa:0,
+    hist:[criarRegistroHistorico({e:0,u:RD[role]?.nome||'Sistema',o:'Venda cadastrada.',corretorOrigem:corretorExterno?'externo':'usuario',corretorRefId:corretorExterno?null:(corretorUsuario&&corretorUsuario.id!=null?corretorUsuario.id:null)},{data:d})],
+    anexos:[
+      {nome:mvDocs.comp.nome,tipo:'comprovante',tamanho:mvDocs.comp.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.comp.dataUrl,mime:mvDocs.comp.mime},
+      {nome:mvDocs.cont.nome,tipo:'contrato',tamanho:mvDocs.cont.tamanho,data,por:RD[role]?.nome||'Sistema',dataUrl:mvDocs.cont.dataUrl,mime:mvDocs.cont.mime}
+    ]
+  };
+  normalizarVendaNumeros(novaVenda);
+  aplicarDefaultsBonusGestaoVenda(novaVenda);
+  if(!validarSomaBonusVenda(novaVenda,'mv-bonus-dir')) return;
+  zSetState('state.ui.nextVendaId', nextVendaId);
+  setVendaModalLoading(true);
+  showToast(zUiText('💾'),zUiText('Salvando venda no banco...'));
+
+  try{
+    const ok=await dbSalvarVenda(novaVenda);
+    if(!ok) return;
+    VENDAS.push(novaVenda);
+    zSetState('state.data.vendas', VENDAS);
+    salvarLS();
+    fecharMV(true);
+    renderFiltros(); renderVList(); showVDetail(novaVenda.id);
+    showToast(zUiText('✅'),zUiText(`Venda de ${cliente.split(' ')[0]} salva com sucesso!`));
+    if(typeof dispararNotificacaoCadastroVendaZapi==='function'){
+      dispararNotificacaoCadastroVendaZapi({
+        vendaId:novaVenda.id,
+        vendaRefLocal:novaVenda.refLocal||'',
+        etapaAnterior:novaVenda.etapa,
+        etapaNova:novaVenda.etapa,
+        responsavel:RD[role]?.nome||'Sistema'
+      },{avisar:true}).catch(err=>console.warn('Falha na notificacao Z-API do cadastro da venda:',err));
+    }
+  }catch(e){
+    console.error(e);
+    showToast(zUiText('❌'),zUiText('Erro inesperado. Tente novamente.'));
+  }finally{
+    if(vendaSalvando) setVendaModalLoading(false);
+  }
+}
+
+zRegisterModule('vendas', {
+  ETAPAS,
+  PRAZOS_ETAPA,
+  PROC_DATA,
+  com,
+  comC,
+  comCap,
+  comG,
+  comD,
+  comD2,
+  comRH,
+  comZ,
+  comTotal,
+  comVis,
+  comMinha,
+  lblCom,
+  vendasU,
+  calcAtraso,
+  labelAtraso,
+  calcPrevisao,
+  obterPrevisaoRecebimentoManual,
+  getPendenciaComercial,
+  temPendenciaComercial,
+  renderFiltros,
+  renderVList,
+  renderBtnNovaVenda,
+  abrirM,
+  fecharM,
+  abrirModalPrevisaoRecebimento,
+  fecharModalPrevisaoRecebimento,
+  salvarPrevisaoRecebimento,
+  abrirDistrato,
+  fecharDistrato,
+  abrirGestaoBonus,
+  fecharGestaoBonus,
+  salvarGestaoBonus,
+  abrirEditVenda,
+  fecharEditVenda,
+  abrirModalVenda,
+  salvarVenda,
+  bonusFormaVenda,
+  bonusStatusVenda,
+  bonusEntraNoRepasseComissao
+});
+
+// Preview de comissÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o no modal
+function calcularPrevV(){
+  const val=lerNumeroInput('mv-valor',0);
+  const pct=lerPercentualInput('mv-pct',0);
+  const imp=lerPercentualInput('mv-imp',0.11);
+  const pct_cor=lerPercentualInput('mv-pct-cor',0);
+  const pct_cap=lerPercentualInput('mv-pct-cap',0);
+  const pct_ger=lerPercentualInput('mv-pct-ger',0);
+  const pct_dir=lerPercentualInput('mv-pct-dir',0);
+  const pct_dir2=lerPercentualInput('mv-pct-dir2',0);
+  const comBruta=val*pct;
+  const comLiq=comBruta*(1-imp);
+  const calc=(p)=>(val*p)*(1-imp);
+  const cCor=calc(pct_cor),cCap=calc(pct_cap),cGer=calc(pct_ger),cDir=calc(pct_dir),cDir2=calc(pct_dir2);
+  const pctRHNum=0;
+  const cZelony=Math.max(comLiq-cCor-cCap-cGer-cDir-cDir2,0);
+  const pv=document.getElementById('mv-preview');
+  if(!pv)return;
+  const temValores=val>0||pct>0||pct_cor>0||pct_cap>0||pct_ger>0||pct_dir>0||pct_dir2>0;
+  pv.style.display=temValores?'flex':'none';
+  if(!temValores){
+    calcularPrevBonus();
+    return;
+  }
+  document.getElementById('pv-bruta').textContent=fmt(comBruta);
+  const liqEl=document.getElementById('pv-liq');
+  if(liqEl) liqEl.textContent=fmt(comLiq);
+  document.getElementById('pv-imp').textContent=fmt(comBruta*imp);
+  document.getElementById('pv-cor').textContent=fmt(cCor);
+  document.getElementById('pv-cap').textContent=fmt(cCap);
+  document.getElementById('pv-ger').textContent=fmt(cGer);
+  document.getElementById('pv-dir').textContent=fmt(cDir);
+  document.getElementById('pv-zel').textContent=fmt(cZelony);
+  const dir2wrap=document.getElementById('pv-dir2-wrap');
+  const dir2val=document.getElementById('mv-diretor2')?.value;
+  if(dir2wrap) dir2wrap.style.display=dir2val?'flex':'none';
+  if(dir2val){const pd=document.getElementById('pv-dir2');if(pd)pd.textContent=fmt(cDir2);}
+  calcularPrevBonus();
+}
+// Upload de documentos no modal nova venda
+function handleDocUpload(input,tipo){
+  const file=input.files[0];
+  if(!file)return;
+  if(file.size>10*1024*1024){showToast('⚠️','Arquivo maior que 10MB.');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    mvDocs[tipo]={nome:file.name,tamanho:fmtTamanho(file.size),mime:file.type,dataUrl:e.target.result};
+    const box=document.getElementById('dbox-'+tipo);
+    const inner=document.getElementById('dbox-'+tipo+'-inner');
+    const icon=tipo==='comp'?'🧾':'📄';
+    const label=tipo==='comp'?'Comprovante de pagamento':'Contrato assinado';
+    box.classList.remove('erro');box.classList.add('ok');box.onclick=null;
+    inner.innerHTML=`<div style="font-size:18px;margin-bottom:3px;">${zUiText(icon)} ${zUiText('✓')}</div><div style="font-size:11px;font-weight:600;color:#2E7E5E;">${zUiText(label)}</div><div style="font-size:10px;color:#2E9E6E;margin-top:2px;">${zUiText(file.name)} ${zUiText('·')} ${fmtTamanho(file.size)}</div><button onclick="removerDoc('${tipo}',event)" style="margin-top:6px;font-size:9px;background:none;border:1px solid #2E9E6E;border-radius:4px;padding:2px 8px;color:#2E7E5E;cursor:pointer;">${zUiText('Trocar arquivo')}</button>`;
+  };
+  reader.readAsDataURL(file);
+}
+function removerDoc(tipo,e){
+  e.stopPropagation();
+  mvDocs[tipo]=null;
+  const box=document.getElementById('dbox-'+tipo);
+  const inner=document.getElementById('dbox-'+tipo+'-inner');
+  const icon=tipo==='comp'?'🧾':'📄';
+  const label=tipo==='comp'?'Comprovante de pagamento':'Contrato assinado';
+  box.classList.remove('ok','erro');
+  box.onclick=()=>document.getElementById('mv-'+tipo+'-input').click();
+  document.getElementById('mv-'+tipo+'-input').value='';
+  inner.innerHTML=`<div style="font-size:22px;margin-bottom:4px;">${zUiText(icon)}</div><div style="font-size:12px;font-weight:600;color:var(--ts);">${zUiText(label)} <span style="color:#C05030;">*</span></div><div style="font-size:10px;color:var(--tm);margin-top:3px;">${zUiText('Clique para selecionar · PDF, JPG, PNG')}</div>`;
+}
+
+// Navegar do financeiro para uma venda
+function irParaVenda(id){
+  const btn=document.querySelector('.sb-item[onclick*="vendas"]');
+  if(btn) setMod('vendas',btn);
+  setTimeout(()=>{
+    document.querySelectorAll('.vtab').forEach(b=>{if(b.textContent.includes('Acomp'))b.click();});
+    showVDetail(id);
+    const row=document.getElementById('vr-'+id);
+    if(row) row.scrollIntoView({behavior:'smooth',block:'center'});
+  },100);
+}
+// Preview de bônus no modal nova venda (oninput em mv-bonus / mv-bonus-*)
+function calcularPrevBonus() {
+  const bonus=lerNumeroInput('mv-bonus',0);
+  const imp=lerPercentualInput('mv-imp',0.11);
+  const pDir=lerNumeroInput('mv-bonus-dir',0);
+  const pDir2=lerNumeroInput('mv-bonus-dir2',0);
+  const pGer=lerNumeroInput('mv-bonus-ger',0);
+  const pCor=lerNumeroInput('mv-bonus-cor',0);
+  const prev  = document.getElementById('mv-bonus-preview');
+  const temDir2 = !!document.getElementById('mv-diretor2')?.value;
+  if (!bonus) { if (prev) prev.style.display = 'none'; return; }
+  if (prev) prev.style.display = 'flex';
+  const bonusLiquido = bonus * (1 - imp);
+  const impostoBonus = bonus - bonusLiquido;
+  const calcBonus = (p) => (bonus * (p / 100)) * (1 - imp);
+  const vDir  = calcBonus(pDir);
+  const vDir2 = calcBonus(pDir2);
+  const vGer  = calcBonus(pGer);
+  const vCor  = calcBonus(pCor);
+  const total = pDir + pDir2 + pGer + pCor;
+  const resto = bonusLiquido - (vDir + vDir2 + vGer + vCor);
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  set('pb-total', fmt(bonusLiquido));
+  set('pb-imp', impostoBonus > 0 ? `- ${fmt(impostoBonus)}` : zUiText('—'));
+  set('pb-dir',   pDir ? fmt(vDir) : zUiText('—'));
+  const dir2Wrap=document.getElementById('pb-dir2-wrap');
+  if (dir2Wrap) dir2Wrap.style.display = temDir2 ? 'flex' : 'none';
+  set('pb-dir2', temDir2 && pDir2 ? fmt(vDir2) : zUiText('—'));
+  set('pb-ger',   pGer ? fmt(vGer) : zUiText('—'));
+  set('pb-cor',   pCor ? fmt(vCor) : zUiText('—'));
+  const restoEl  = document.getElementById('pb-resto');
+  const restoLbl = document.getElementById('pb-resto-lbl');
+  if (restoEl && restoLbl) {
+    if (total === 100)       { restoEl.textContent = zUiText('✓ 100%'); restoEl.style.color = '#2E9E6E'; restoLbl.textContent = zUiText('Distribuição'); }
+    else if (total > 100)    { restoEl.textContent = zUiText(`⚠️ ${total}% (excede 100%)`); restoEl.style.color = '#C05030'; restoLbl.textContent = 'Total %'; }
+    else                     { restoEl.textContent = fmt(resto) + ` (${(100 - total).toFixed(0)}% sem destino)`; restoEl.style.color = '#C06030'; restoLbl.textContent = 'Sem destino'; }
+  }
+}
+
+// Backdrop do modal "Avançar etapa" (id=mbackdrop)
+function handleBackdrop(e) { if (e.target === document.getElementById('mbackdrop')) fecharM(); }
+
+
