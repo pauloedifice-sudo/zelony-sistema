@@ -433,6 +433,38 @@ async function updateSelf(body: Record<string, unknown>) {
   });
 }
 
+async function changePassword(body: Record<string, unknown>) {
+  const sessionToken = normalizeText(body.sessionToken, 160);
+  if (!sessionToken) {
+    return jsonResponse({ error: "Sessão protegida ausente para trocar a senha." }, { status: 401 });
+  }
+
+  const supabase = createServiceClient();
+  const { data: sessao, error: sessaoError } = await loadSessionByToken(supabase, sessionToken);
+  if (sessaoError) throw sessaoError;
+  if (!sessao) {
+    return jsonResponse({ error: "Sessão protegida inválida. Entre novamente para trocar a senha." }, { status: 401 });
+  }
+
+  const expiraEmMs = Date.parse(sessao.expira_em || "");
+  if (!Number.isFinite(expiraEmMs) || expiraEmMs <= Date.now()) {
+    await supabase.from("usuario_sessoes_app").delete().eq("usuario_id", sessao.usuario_id);
+    return jsonResponse({ error: "Sessão protegida expirada. Entre novamente para trocar a senha." }, { status: 401 });
+  }
+
+  const novaSenha = String(body.novaSenha || "");
+  if (novaSenha.length < 6) {
+    return jsonResponse({ error: "A nova senha deve ter pelo menos 6 caracteres." }, { status: 400 });
+  }
+
+  const { error: upsertError } = await supabase
+    .from("senhas")
+    .upsert({ email: sessao.email, senha: novaSenha }, { onConflict: "email" });
+  if (upsertError) throw upsertError;
+
+  return jsonResponse({ ok: true });
+}
+
 async function authorizeUserInvites(body: Record<string, unknown>) {
   const sessionToken = normalizeText(body.sessionToken, 160);
   if (!sessionToken) {
@@ -1124,6 +1156,10 @@ Deno.serve(async (req) => {
 
     if (action === "issue_session") {
       return await issueSession(body);
+    }
+
+    if (action === "change_password") {
+      return await changePassword(body);
     }
 
     if (action === "update_self") {

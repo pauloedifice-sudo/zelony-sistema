@@ -1094,9 +1094,7 @@ async function salvarUsuario() {
       }
       if (autoAtendimento) {
         const emailSessao = String(email || '').trim().toLowerCase();
-        const senhaFallback = emailSessao
-          ? String((typeof SENHAS_INDIVIDUAIS !== 'undefined' && SENHAS_INDIVIDUAIS[emailSessao]) || (typeof SENHA_PADRAO !== 'undefined' ? SENHA_PADRAO : '') || '')
-          : '';
+        const senhaFallback = '';
         if (typeof usuarioSelfServiceAtualizarMe !== 'function') {
           throw new Error('Autoatendimento protegido indisponível no momento.');
         }
@@ -1211,41 +1209,44 @@ function toggleSenhaField(inputId, btnId) {
   else { inp.type = 'password'; btn.textContent = zUiText('👁'); }
 }
 
-function salvarNovaSenha() {
-  const emailInput = document.getElementById('ts-email');
-  const emailField = document.getElementById('ts-email-field');
-  const nova       = document.getElementById('ts-nova').value.trim();
-  const confirma   = document.getElementById('ts-confirma').value.trim();
-  const errEl      = document.getElementById('ts-error');
-  const errMsg     = document.getElementById('ts-error-msg');
+async function salvarNovaSenha() {
+  const nova        = document.getElementById('ts-nova').value.trim();
+  const confirma     = document.getElementById('ts-confirma').value.trim();
+  const errEl        = document.getElementById('ts-error');
+  const errMsg       = document.getElementById('ts-error-msg');
+  const btnSalvarTS  = document.querySelector('#m-trocar-senha .btn-s');
 
   const mostrarErro = (msg) => { if (errMsg) errMsg.textContent = zUiText(msg); if (errEl) errEl.style.display = 'flex'; };
   if (errEl) errEl.style.display = 'none';
 
-  let emailAlvo = '';
-  if (emailField.style.display !== 'none') {
-    emailAlvo = emailInput.value.trim().toLowerCase();
-    if (!emailAlvo) { document.getElementById('ts-email').focus(); mostrarErro('Informe o e-mail.'); return; }
-    if (!USUARIOS.find(u => u.email.toLowerCase() === emailAlvo)) { mostrarErro('E-mail nÃ£o encontrado no sistema.'); return; }
-  } else {
-    emailAlvo = usuarioLogado ? usuarioLogado.email.toLowerCase() : '';
+  if (!usuarioLogado || !usuarioLogado.email) {
+    mostrarErro('Faça login para trocar sua senha.');
+    return;
   }
+  const emailAlvo = usuarioLogado.email.toLowerCase();
 
   if (!nova) { document.getElementById('ts-nova').focus(); mostrarErro('Informe a nova senha.'); return; }
   if (nova.length < 6) { document.getElementById('ts-nova').focus(); mostrarErro('A senha deve ter pelo menos 6 caracteres.'); return; }
-  if (nova !== confirma) { document.getElementById('ts-confirma').focus(); mostrarErro('As senhas nÃ£o coincidem.'); return; }
+  if (nova !== confirma) { document.getElementById('ts-confirma').focus(); mostrarErro('As senhas não coincidem.'); return; }
 
-  dbSalvarSenha(emailAlvo, nova).catch(e => console.error(e));
+  if (btnSalvarTS) btnSalvarTS.disabled = true;
+  try {
+    await dbTrocarSenhaProtegida(emailAlvo, nova);
+  } catch (e) {
+    if (btnSalvarTS) btnSalvarTS.disabled = false;
+    mostrarErro((e && e.message) || 'Não foi possível trocar a senha agora. Tente novamente.');
+    return;
+  }
+  if (btnSalvarTS) btnSalvarTS.disabled = false;
+
   salvarLS();
   fecharTS();
   showToast(zUiText('✅'), zUiText('Senha alterada com sucesso!'));
 
-  if (usuarioLogado && usuarioLogado.email.toLowerCase() === emailAlvo) {
-    setTimeout(() => {
-      showToast(zUiText('â„¹ï¸'), zUiText('Entre novamente com sua nova senha.'));
-      fazerLogout();
-    }, 1500);
-  }
+  setTimeout(() => {
+    showToast(zUiText('ℹ️'), zUiText('Entre novamente com sua nova senha.'));
+    fazerLogout();
+  }, 1500);
 }
 
 const confirmarTrocaSenha = salvarNovaSenha;
@@ -1516,8 +1517,6 @@ async function concluirCadastro() {
       banco, agencia, conta, tipoConta, pixTipo:pixSelCV, pix
     }, senha);
     sincronizarUsuarioConviteLocal(resultado.usuario);
-    SENHAS_INDIVIDUAIS[String(conviteAtivo.email || '').toLowerCase()] = senha;
-    zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
     salvarLS();
     document.getElementById('conv-form').style.display = 'none';
     document.getElementById('conv-success').style.display = 'block';

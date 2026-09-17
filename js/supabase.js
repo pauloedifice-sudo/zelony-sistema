@@ -108,7 +108,6 @@ const USUARIOS_PADRAO=[
   {id:1,nome:'Paulo Edifice',email:'paulo.edifice@gmail.com',tel:'',perfil:'Diretor',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false,dataAtivacao:'',dataInativacao:'',historicoStatus:[]},
   {id:2,nome:'Giovana',email:'giovana@zelonyimoveis.com',tel:'',perfil:'RH',status:'Ativo',unidade:'Ambas',banco:'',agencia:'',conta:'',tipoConta:'',pixTipo:'',pix:'',rhContratacao:false,dataAtivacao:'',dataInativacao:'',historicoStatus:[]},
 ];
-const SENHAS_PADRAO_MAP={'paulo.edifice@gmail.com':'Mudar@123','giovana@zelonyimoveis.com':'Mudar@123'};
 const AGENDAMENTOS_SYNC_STATUS={
   tabela:'desconhecida',
   erro:'',
@@ -393,7 +392,6 @@ zSetState('state.data.financeiroSaldosBancarios', FINANCEIRO_SALDOS_BANCARIOS);
 zSetState('state.data.folhaPagamentoColaboradores', FOLHA_PAGAMENTO_COLABORADORES);
 zSetState('state.data.reembolsosAto', REEMBOLSOS_ATO);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
-zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
 zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
 
@@ -605,13 +603,8 @@ async function dbConcluirConviteUsuarioSeguro(token='',dados={},senha=''){
 
 async function folhaPagamentoInvocarProtegido(action,payload={},tentativa=0){
   const email=String((typeof usuarioLogado!=='undefined'&&usuarioLogado&&usuarioLogado.email)||'').trim().toLowerCase();
-  const senha=String(
-    (typeof SENHAS_INDIVIDUAIS!=='undefined'&&SENHAS_INDIVIDUAIS[email])
-    ||(typeof SENHA_PADRAO!=='undefined'&&SENHA_PADRAO)
-    ||''
-  );
   try{
-    const sessionToken=await usuarioSelfServiceGarantirSessao(email,senha);
+    const sessionToken=await usuarioSelfServiceGarantirSessao(email,'');
     return await usuarioSelfServiceInvocar(action,{sessionToken,...(payload||{})});
   }catch(e){
     const msg=String(e&&e.message||e||'');
@@ -749,7 +742,7 @@ async function carregarAgendamentosSupabase(){
   }
 }
 
-function aplicarUsuariosESenhas(us, ss){
+function aplicarUsuariosESenhas(us){
   if(Array.isArray(us)){
     USUARIOS.splice(0,USUARIOS.length,...us.map(mapUsuarioIn));
     if(typeof nextUserId!=='undefined'){
@@ -758,14 +751,6 @@ function aplicarUsuariosESenhas(us, ss){
       zSetState('state.ui.nextUserId', nextUserId);
     }
     zSetState('state.data.usuarios', USUARIOS);
-  }
-  if(Array.isArray(ss)){
-    Object.keys(SENHAS_INDIVIDUAIS).forEach(email=>delete SENHAS_INDIVIDUAIS[email]);
-    Object.assign(SENHAS_INDIVIDUAIS, SENHAS_PADRAO_MAP);
-    ss.forEach(s=>{
-      if(s&&s.email) SENHAS_INDIVIDUAIS[String(s.email).toLowerCase()]=s.senha;
-    });
-    zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
   }
 }
 
@@ -890,15 +875,12 @@ async function carregarCredenciaisDB(){
     });
     setBootStage('acordando projeto do Supabase');
     await sbLong.from('usuarios').select('id').limit(1);
-    setBootStage('validando usuarios e senhas');
-    const [us,ss]=await Promise.all([
-      carregarTabelaSupabase('usuarios','id'),
-      carregarTabelaSupabase('senhas',null)
-    ]);
-    aplicarUsuariosESenhas(us,ss);
-    if(us===null&&ss===null) throw new Error('Falha total no carregamento das credenciais');
+    setBootStage('validando usuarios');
+    const us=await carregarTabelaSupabase('usuarios','id');
+    aplicarUsuariosESenhas(us);
+    if(us===null) throw new Error('Falha total no carregamento de usuarios');
     setBootStage('credenciais carregadas');
-    return {us,ss};
+    return {us};
   })();
   try{
     return await cargaCredenciaisPromise;
@@ -2316,10 +2298,10 @@ async function dbSalvarUsuario(u, id){
   return u;
 }
 
-async function dbSalvarSenha(email, senha){
-  await sb.from('senhas').upsert({email:email.toLowerCase(),senha},{onConflict:'email'});
-  SENHAS_INDIVIDUAIS[email.toLowerCase()]=senha;
-  zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
+async function dbTrocarSenhaProtegida(email, novaSenha){
+  const emailNormalizado=String(email||'').trim().toLowerCase();
+  const sessionToken=await usuarioSelfServiceGarantirSessao(emailNormalizado,'');
+  await usuarioSelfServiceInvocar('change_password',{sessionToken,novaSenha:String(novaSenha||'')});
 }
 
 // ── CRUD FOLHA DE PAGAMENTO ──────────────────────────────────────────────────
@@ -2789,7 +2771,6 @@ function salvarLS(){
     localStorage.setItem('zel_agendamentos',JSON.stringify(AGENDAMENTOS));
     localStorage.setItem('zel_financeiro_lancamentos',JSON.stringify(FINANCEIRO_LANCAMENTOS));
     localStorage.setItem('zel_financeiro_saldos_bancarios',JSON.stringify(FINANCEIRO_SALDOS_BANCARIOS));
-    localStorage.setItem('zel_senhas',JSON.stringify(SENHAS_INDIVIDUAIS));
     zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
     zSetState('state.data.vendas', VENDAS);
     zSetState('state.data.treinamentos', TREIN);
@@ -2827,7 +2808,6 @@ function carregarLS(){
     const usuariosRaw=localStorage.getItem('zel_usuarios');
     const vendasRaw=localStorage.getItem('zel_vendas');
     const treinRaw=localStorage.getItem('zel_trein');
-    const senhasRaw=localStorage.getItem('zel_senhas');
     const docsLocal=carregarDocumentosLS();
     const agendamentosLocal=carregarAgendamentosLS();
     const financeirosLocal=carregarFinanceiroLancamentosLS();
@@ -2878,14 +2858,6 @@ function carregarLS(){
     zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
     atualizarEstadoSyncAgendamentos();
 
-    if(senhasRaw){
-      const senhas=JSON.parse(senhasRaw);
-      if(senhas&&typeof senhas==='object'){
-        Object.keys(SENHAS_INDIVIDUAIS).forEach(email=>delete SENHAS_INDIVIDUAIS[email]);
-        Object.assign(SENHAS_INDIVIDUAIS, senhas);
-        zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
-      }
-    }
   }catch(e){
     console.warn('Falha ao carregar cache local:',e.message);
   }

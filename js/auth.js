@@ -3,12 +3,11 @@
 
 let role = 'cor';
 let usuarioLogado = null;
-const SENHAS_INDIVIDUAIS = { ...SENHAS_PADRAO_MAP };
-const SENHA_PADRAO = 'Mudar@123';
+const SENHAS_INDIVIDUAIS = {};
+try { localStorage.removeItem('zel_senhas'); } catch (e) {}
 zSetState('state.auth.role', role);
 zSetState('state.auth.usuarioLogado', usuarioLogado);
 zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
-zSetState('config.senhaPadrao', SENHA_PADRAO);
 
 const RD = {
   dono: { av:'DO',  nome:'Dono',       role:'Dono'           },
@@ -135,11 +134,15 @@ function fazerLogin() {
     if (st === 'Pendente') return showErr('Cadastro pendente. Verifique o e-mail de convite para completar.');
     if (st === 'Inativo')  return showErr('Conta inativa. Entre em contato com o administrador.');
 
-    const senhaEsperada = SENHAS_INDIVIDUAIS[email] || SENHA_PADRAO;
-    if (senha !== senhaEsperada) {
+    if (typeof usuarioSelfServiceEmitirSessao !== 'function') {
+      return showErr('Servico de autenticacao indisponivel no momento. Tente novamente em instantes.');
+    }
+    try {
+      await usuarioSelfServiceEmitirSessao(email, senha);
+    } catch (erroSenha) {
       document.getElementById('lg-senha').value = '';
       document.getElementById('lg-senha').focus();
-      return showErr('Senha incorreta. Tente novamente.');
+      return showErr((erroSenha && erroSenha.message) || 'Senha incorreta. Tente novamente.');
     }
 
     aplicarSessaoUsuario(usuario);
@@ -167,11 +170,6 @@ function fazerLogin() {
     }
 
     if (typeof iniciarApp === 'function') iniciarApp();
-    if (typeof usuarioSelfServiceEmitirSessao === 'function') {
-      usuarioSelfServiceEmitirSessao(email, senha).catch(erro => {
-        console.warn('Sessão protegida do autoatendimento não foi emitida no login:', erro && (erro.message || erro) || erro);
-      });
-    }
     forcarDashboardInicial();
     ocultarTelaLogin();
     atualizarBadgeNotificacoes();
@@ -389,7 +387,12 @@ function setMod(m, el) {
     emailInp.addEventListener('keydown', e => { if (e.key === 'Enter') senhaInp.focus(); });
     senhaInp.addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
     const btnTS = document.getElementById('lg-trocar-senha');
-    if (btnTS) btnTS.addEventListener('click', () => abrirTS(true));
+    if (btnTS) btnTS.addEventListener('click', () => {
+      const errElLg = document.getElementById('lg-error');
+      const errMsgLg = document.getElementById('lg-error-msg');
+      if (errMsgLg) errMsgLg.textContent = zUiText('Redefinicao de senha sem login esta temporariamente indisponivel. Peca para um administrador redefinir sua senha.');
+      if (errElLg) errElLg.classList.add('show');
+    });
     emailInp.focus();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
