@@ -95,6 +95,8 @@ const DOCUMENTOS=[];
 let AGENDAMENTOS=[];
 const FINANCEIRO_LANCAMENTOS=[];
 const FINANCEIRO_SALDOS_BANCARIOS=[];
+const FOLHA_PAGAMENTO_COLABORADORES=[];
+const REEMBOLSOS_ATO=[];
 const FINANCEIRO_COMPROVANTE_DB='zel_financeiro_comprovantes';
 const FINANCEIRO_COMPROVANTE_STORE='arquivos';
 const FINANCEIRO_TESTES_LEGADOS_BLOQUEADOS=[
@@ -246,6 +248,8 @@ function renderizarModulosBaseApp(){
   if(!document.getElementById('mod-agendamentos')?.classList.contains('hidden')&&typeof renderAgendamentos==='function') renderAgendamentos();
   if(!document.getElementById('mod-envios')?.classList.contains('hidden')&&typeof renderEnvios==='function') renderEnvios();
   if(!document.getElementById('mod-financeiro')?.classList.contains('hidden')&&typeof renderFinanceiro==='function') renderFinanceiro();
+  if(!document.getElementById('mod-reembolsos-ato')?.classList.contains('hidden')&&typeof renderReembolsosAto==='function') renderReembolsosAto();
+  if(!document.getElementById('mod-folha-pagamento')?.classList.contains('hidden')&&typeof renderFolhaPagamento==='function') renderFolhaPagamento();
   if(!document.getElementById('mod-dashboard')?.classList.contains('hidden')&&typeof renderDashboard==='function') renderDashboard();
   if(!document.getElementById('mod-rh')?.classList.contains('hidden')&&typeof renderRhDashboard==='function') renderRhDashboard();
   if(!document.getElementById('mod-usuarios')?.classList.contains('hidden')&&typeof renderUsuarios==='function') renderUsuarios();
@@ -386,6 +390,8 @@ zSetState('state.data.documentos', DOCUMENTOS);
 zSetState('state.data.agendamentos', AGENDAMENTOS);
 zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
 zSetState('state.data.financeiroSaldosBancarios', FINANCEIRO_SALDOS_BANCARIOS);
+zSetState('state.data.folhaPagamentoColaboradores', FOLHA_PAGAMENTO_COLABORADORES);
+zSetState('state.data.reembolsosAto', REEMBOLSOS_ATO);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
 zSetState('state.auth.senhasPadraoMap', SENHAS_PADRAO_MAP);
 zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
@@ -413,6 +419,16 @@ function usuarioSelfServiceRegistrarSessao(token='',expiraEm=''){
 function usuarioSelfServiceLimparSessao(){
   usuarioSessaoAutoatendimentoToken='';
   usuarioSessaoAutoatendimentoExpiraEm='';
+  if(typeof FOLHA_PAGAMENTO_COLABORADORES!=='undefined'){
+    FOLHA_PAGAMENTO_COLABORADORES.splice(0,FOLHA_PAGAMENTO_COLABORADORES.length);
+    zSetState('state.data.folhaPagamentoColaboradores',FOLHA_PAGAMENTO_COLABORADORES);
+  }
+  if(typeof REEMBOLSOS_ATO!=='undefined'){
+    REEMBOLSOS_ATO.splice(0,REEMBOLSOS_ATO.length);
+    zSetState('state.data.reembolsosAto',REEMBOLSOS_ATO);
+  }
+  if(typeof folhaResetarCargaProtegida==='function') folhaResetarCargaProtegida();
+  if(typeof atoResetarCargaProtegida==='function') atoResetarCargaProtegida();
   zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
   zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
 }
@@ -437,9 +453,12 @@ async function usuarioSelfServiceInvocar(action,payload={}){
     data=null;
   }
   if(!response.ok){
-    const mensagem=data&&(data.error||data.message)
-      ? String(data.error||data.message)
-      : `HTTP ${response.status}`;
+    const mensagemErro=data&&data.error&&typeof data.error==='object'
+      ? (data.error.message||data.error.details||data.error.hint||data.message)
+      : data&&(data.error||data.message);
+    const mensagem=mensagemErro&&String(mensagemErro)!=='[object Object]'
+      ? String(mensagemErro)
+      : `Não foi possível concluir a operação no banco de dados (HTTP ${response.status}).`;
     throw new Error(mensagem);
   }
   return data||{};
@@ -526,6 +545,106 @@ async function usuarioSelfServiceAtualizarMe(dados={},opcoes={}){
     }
     throw e;
   }
+}
+
+async function dbCriarConviteUsuarioProtegido(convite={}){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para convites de usuários.'});
+  const data=await folhaPagamentoInvocarProtegido('create_user_invite',{
+    convite:{
+      nome:String(convite&&convite.nome||'').trim(),
+      email:String(convite&&convite.email||'').trim().toLowerCase(),
+      perfil:String(convite&&convite.perfil||'').trim(),
+      equipe:String(convite&&convite.equipe||'').trim(),
+      unidade:String(convite&&convite.unidade||'').trim(),
+      rhContratacao:!!(convite&&convite.rhContratacao)
+    }
+  });
+  if(!data||!data.link||!data.usuario) throw new Error('O serviço protegido não confirmou a criação do convite.');
+  return{
+    ...data,
+    usuario:typeof mapUsuarioIn==='function'?mapUsuarioIn(data.usuario):usuarioSelfServiceMapUsuario(data.usuario)
+  };
+}
+
+async function dbObterConviteUsuarioSeguro(token=''){
+  const data=await usuarioSelfServiceInvocar('get_user_invite',{
+    token:String(token||'').trim()
+  });
+  if(!data||!data.convite) throw new Error('Convite não retornado pelo serviço protegido.');
+  return data.convite;
+}
+
+async function dbConcluirConviteUsuarioSeguro(token='',dados={},senha=''){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para concluir o convite.'});
+  const data=await usuarioSelfServiceInvocar('complete_user_invite',{
+    token:String(token||'').trim(),
+    dados:{
+      nome:String(dados&&dados.nome||'').trim(),
+      tel:String(dados&&dados.tel||'').trim(),
+      nasc:String(dados&&dados.nasc||'').trim(),
+      cpf:String(dados&&dados.cpf||'').trim(),
+      cep:String(dados&&dados.cep||'').trim(),
+      endereco:String(dados&&(dados.endereco||dados.end)||'').trim(),
+      cidade:String(dados&&dados.cidade||'').trim(),
+      estado:String(dados&&dados.estado||'').trim(),
+      banco:String(dados&&dados.banco||'').trim(),
+      agencia:String(dados&&dados.agencia||'').trim(),
+      conta:String(dados&&dados.conta||'').trim(),
+      tipoConta:String(dados&&dados.tipoConta||'').trim(),
+      pixTipo:String(dados&&dados.pixTipo||'').trim(),
+      pix:String(dados&&dados.pix||'').trim()
+    },
+    senha:String(senha||'')
+  });
+  if(!data||!data.usuario) throw new Error('O serviço protegido não confirmou a conclusão do cadastro.');
+  return{
+    ...data,
+    usuario:typeof mapUsuarioIn==='function'?mapUsuarioIn(data.usuario):usuarioSelfServiceMapUsuario(data.usuario)
+  };
+}
+
+async function folhaPagamentoInvocarProtegido(action,payload={},tentativa=0){
+  const email=String((typeof usuarioLogado!=='undefined'&&usuarioLogado&&usuarioLogado.email)||'').trim().toLowerCase();
+  const senha=String(
+    (typeof SENHAS_INDIVIDUAIS!=='undefined'&&SENHAS_INDIVIDUAIS[email])
+    ||(typeof SENHA_PADRAO!=='undefined'&&SENHA_PADRAO)
+    ||''
+  );
+  try{
+    const sessionToken=await usuarioSelfServiceGarantirSessao(email,senha);
+    return await usuarioSelfServiceInvocar(action,{sessionToken,...(payload||{})});
+  }catch(e){
+    const msg=String(e&&e.message||e||'');
+    if(/sess[aã]o|session|token/i.test(msg)&&tentativa<1&&senha){
+      usuarioSelfServiceLimparSessao();
+      return folhaPagamentoInvocarProtegido(action,payload,tentativa+1);
+    }
+    throw e;
+  }
+}
+
+async function recarregarFolhaPagamentoProtegida(){
+  const data=await folhaPagamentoInvocarProtegido('list_payroll');
+  const lista=Array.isArray(data&&data.colaboradores)?data.colaboradores:[];
+  FOLHA_PAGAMENTO_COLABORADORES.splice(
+    0,
+    FOLHA_PAGAMENTO_COLABORADORES.length,
+    ...lista.map(mapFolhaPagamentoIn).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'))
+  );
+  zSetState('state.data.folhaPagamentoColaboradores',FOLHA_PAGAMENTO_COLABORADORES);
+  return FOLHA_PAGAMENTO_COLABORADORES;
+}
+
+async function recarregarReembolsosAtoProtegidos(){
+  const data=await folhaPagamentoInvocarProtegido('list_ato_refunds');
+  const lista=Array.isArray(data&&data.reembolsos)?data.reembolsos:[];
+  REEMBOLSOS_ATO.splice(
+    0,
+    REEMBOLSOS_ATO.length,
+    ...lista.map(mapReembolsoAtoIn).sort((a,b)=>String(a.dataPrevista||'').localeCompare(String(b.dataPrevista||'')))
+  );
+  zSetState('state.data.reembolsosAto',REEMBOLSOS_ATO);
+  return REEMBOLSOS_ATO;
 }
 
 // ── CARREGAR DO BANCO ─────────────────────────────────────────────────────────
@@ -738,10 +857,14 @@ function aplicarDadosOperacionais({vs,ts,ds,ags,fls,fsbs}={}){
     zSetState('state.data.documentos', DOCUMENTOS);
   }
   {
-    const finLocal=carregarFinanceiroLancamentosLS();
-    const finMesclados=mesclarFinanceiroLancamentosBancoComLocal(Array.isArray(fls)?fls:[], finLocal);
-    FINANCEIRO_LANCAMENTOS.splice(0,FINANCEIRO_LANCAMENTOS.length,...finMesclados);
-    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+    // O caixa compartilhado usa o Supabase como fonte de verdade. O cache local
+    // continua servindo para consulta durante uma indisponibilidade, mas nunca
+    // injeta no caixa um lancamento cuja gravacao nao foi confirmada pelo banco.
+    if(Array.isArray(fls)){
+      const finMesclados=mesclarFinanceiroLancamentosBancoComLocal(fls, carregarFinanceiroLancamentosLS());
+      FINANCEIRO_LANCAMENTOS.splice(0,FINANCEIRO_LANCAMENTOS.length,...finMesclados);
+      zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+    }
   }
   {
     const saldosLocal=carregarFinanceiroSaldosBancariosLS();
@@ -885,26 +1008,8 @@ async function executarPosCargaSupabase(opcoes={}){
         console.warn('Pos-carga do Supabase: falha ao sincronizar agendamentos pendentes:',msg);
       }
     }
-    try{
-      if(FINANCEIRO_LANCAMENTOS.some(lancamentoFinanceiroTemSyncPendente)){
-        setBootStage('sincronizando financeiro pendente');
-        await promiseComTimeout(
-          sincronizarFinanceiroPendentes({
-            silencioso:config.silenciosoFinanceiro,
-            renderizar:config.renderizarFinanceiro
-          }),
-          config.timeoutMs,
-          'Sincronizacao do financeiro'
-        );
-      }
-    }catch(e){
-      const msg=e&&e.message?e.message:e;
-      if(/timeout/i.test(String(msg||''))){
-        console.info('Pos-carga do Supabase: sincronizacao do financeiro ficou para a proxima tentativa:',msg);
-      }else{
-        console.warn('Pos-carga do Supabase: falha ao sincronizar o financeiro pendente:',msg);
-      }
-    }
+    // Falhas financeiras antigas nao sao reenviadas automaticamente. Novas
+    // movimentacoes so entram no caixa depois da confirmacao do banco.
     try{
       if(typeof aplicarAjustesManuaisRhPendentes==='function'&&VENDAS.length){
         setBootStage('aplicando ajustes de RH');
@@ -970,6 +1075,74 @@ function mapUsuarioOut(u){
     data_ativacao:normalizarDataUsuarioCampo(u.dataAtivacao||'')||null,
     data_inativacao:normalizarDataUsuarioCampo(u.dataInativacao||'')||null,
     historico_status:normalizarUsuarioHistoricoStatus(u.historicoStatus||[])
+  };
+}
+
+function mapFolhaPagamentoIn(item){
+  const salario=Number(item&&(item.salario!=null?item.salario:item.valor_salario));
+  return{
+    id:item&&item.id!=null?parseInt(item.id,10)||item.id:null,
+    nome:normalizarCampoSistema(item&&item.nome||''),
+    cpf:String(item&&item.cpf||'').replace(/\D/g,''),
+    funcao:normalizarCampoSistema(item&&(item.funcao||item['função'])||''),
+    salario:Number.isFinite(salario)?salario:0,
+    chavePix:String(item&&(item.chavePix||item.chave_pix)||'').trim(),
+    banco:normalizarCampoSistema(item&&item.banco||''),
+    criadoPor:item&&(item.criadoPor||item.criado_por)||'',
+    criadoPorId:item&&(item.criadoPorId||item.criado_por_id)||null,
+    criadoPorEmail:item&&(item.criadoPorEmail||item.criado_por_email)||'',
+    atualizadoEm:item&&(item.atualizadoEm||item.atualizado_em)||''
+  };
+}
+
+function mapFolhaPagamentoOut(item){
+  return{
+    nome:normalizarCampoSistema(item&&item.nome||''),
+    cpf:String(item&&item.cpf||'').replace(/\D/g,''),
+    funcao:normalizarCampoSistema(item&&item.funcao||''),
+    salario:Number(item&&item.salario)||0,
+    chave_pix:String(item&&item.chavePix||'').trim(),
+    banco:normalizarCampoSistema(item&&item.banco||''),
+    criado_por:item&&item.criadoPor||null,
+    criado_por_id:item&&item.criadoPorId||null,
+    criado_por_email:item&&item.criadoPorEmail||null,
+    atualizado_em:new Date().toISOString()
+  };
+}
+
+function mapReembolsoAtoIn(item){
+  const valor=Number(item&&item.valor);
+  return{
+    id:item&&item.id!=null?parseInt(item.id,10)||item.id:null,
+    cliente:normalizarCampoSistema(item&&item.cliente||''),
+    telefone:String(item&&item.telefone||'').trim(),
+    valor:Number.isFinite(valor)?valor:0,
+    dataPrevista:String(item&&(item.data_prevista||item.dataPrevista)||'').slice(0,10),
+    banco:normalizarCampoSistema(item&&item.banco||''),
+    chavePix:String(item&&(item.chave_pix||item.chavePix)||'').trim(),
+    status:String(item&&item.status||'pendente').trim().toLowerCase()==='reembolsado'?'reembolsado':'pendente',
+    dataReembolso:String(item&&(item.data_reembolso||item.dataReembolso)||'').slice(0,10),
+    financeiroLancamentoId:parseInt(item&&(item.financeiro_lancamento_id||item.financeiroLancamentoId),10)||null,
+    comprovanteNome:String(item&&(item.comprovante_nome||item.comprovanteNome)||'').trim(),
+    comprovanteMime:String(item&&(item.comprovante_mime||item.comprovanteMime)||'').trim(),
+    comprovanteSize:parseInt(item&&(item.comprovante_size||item.comprovanteSize),10)||0,
+    comprovanteStorageBucket:String(item&&(item.comprovante_storage_bucket||item.comprovanteStorageBucket)||'').trim(),
+    comprovanteStoragePath:String(item&&(item.comprovante_storage_path||item.comprovanteStoragePath)||'').trim(),
+    criadoPor:item&&(item.criadoPor||item.criado_por)||'',
+    criadoPorId:item&&(item.criadoPorId||item.criado_por_id)||null,
+    criadoPorEmail:item&&(item.criadoPorEmail||item.criado_por_email)||'',
+    atualizadoEm:item&&(item.atualizadoEm||item.atualizado_em)||''
+  };
+}
+
+function mapReembolsoAtoOut(item){
+  return{
+    cliente:normalizarCampoSistema(item&&item.cliente||''),
+    telefone:String(item&&item.telefone||'').trim(),
+    valor:Number(item&&item.valor)||0,
+    data_prevista:String(item&&item.dataPrevista||'').slice(0,10),
+    banco:normalizarCampoSistema(item&&item.banco||''),
+    chave_pix:String(item&&item.chavePix||'').trim()
   };
 }
 
@@ -1630,6 +1803,7 @@ function mapLancamentoFinanceiroIn(item){
     criadoPorEmail:String(item&&(item.criado_por_email||item.criadoPorEmail)||'').trim(),
     atualizadoEm:String(item&&(item.atualizado_em||item.atualizadoEm)||'').trim(),
     refLocal:String(item&&(item.ref_local||item.refLocal)||'').trim(),
+    confirmadoSupabase:!!(item&&item.confirmadoSupabase),
     // Marcador apenas local: permite retomar uma baixa manual de repasse antigo apos recarregar.
     edicaoManualLegado:!!(item&&item.edicaoManualLegado),
     syncPendente:!!(item&&(item.sync_pendente||item.syncPendente))||texto.alterado,
@@ -1800,7 +1974,10 @@ function carregarFinanceiroLancamentosLS(){
     const raw=localStorage.getItem('zel_financeiro_lancamentos');
     const lista=raw?JSON.parse(raw):[];
     return Array.isArray(lista)
-      ? lista.map(mapLancamentoFinanceiroIn).filter(item=>!ehLancamentoFinanceiroTesteLegado(item))
+      ? lista.map(mapLancamentoFinanceiroIn).filter(item=>
+        !ehLancamentoFinanceiroTesteLegado(item)
+        && (!item.syncPendente||item.confirmadoSupabase)
+      )
       : [];
   }catch(e){
     return [];
@@ -1818,31 +1995,17 @@ function carregarFinanceiroSaldosBancariosLS(){
 }
 
 function mesclarFinanceiroLancamentosBancoComLocal(bancoLista, localLista){
-  const mapa=new Map();
-  const localMap=new Map();
   const bancoMap=new Map();
-  (Array.isArray(localLista)?localLista:[]).forEach(item=>{
-    const mapped=mapLancamentoFinanceiroIn(item);
-    if(ehLancamentoFinanceiroTesteLegado(mapped)) return;
-    const chave=getFinanceiroLancamentoMergeKey(mapped);
-    localMap.set(chave,mapped);
-    mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
-  });
   (Array.isArray(bancoLista)?bancoLista:[]).forEach(item=>{
     const mapped=mapLancamentoFinanceiroIn(item);
     if(ehLancamentoFinanceiroTesteLegado(mapped)) return;
+    mapped.confirmadoSupabase=true;
+    mapped.syncPendente=false;
+    mapped.syncErro='';
     const chave=getFinanceiroLancamentoMergeKey(mapped);
-    bancoMap.set(chave,mapped);
-    mapa.set(chave,preferirLancamentoFinanceiroMaisRecente(mapa.get(chave), mapped));
+    bancoMap.set(chave,preferirLancamentoFinanceiroMaisRecente(bancoMap.get(chave), mapped));
   });
-  return [...mapa.entries()]
-    .filter(([chave])=>{
-      const local=localMap.get(chave);
-      const banco=bancoMap.get(chave);
-      if(!banco&&local&&!local.syncPendente) return false;
-      return true;
-    })
-    .map(([,item])=>item)
+  return [...bancoMap.values()]
     .sort(ordenarFinanceiroLancamentos);
 }
 
@@ -2159,6 +2322,139 @@ async function dbSalvarSenha(email, senha){
   zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
 }
 
+// ── CRUD FOLHA DE PAGAMENTO ──────────────────────────────────────────────────
+async function dbSalvarFolhaPagamentoColaborador(colaborador, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para a folha de pagamento.'});
+  const payload=mapFolhaPagamentoOut(colaborador);
+  const data=await folhaPagamentoInvocarProtegido('save_payroll',{
+    id:id||null,
+    colaborador:payload
+  });
+  if(!data||!data.colaborador) throw new Error('Colaborador da folha não retornado pelo serviço protegido.');
+  Object.assign(colaborador,mapFolhaPagamentoIn(data.colaborador));
+  zSetState('state.data.folhaPagamentoColaboradores', FOLHA_PAGAMENTO_COLABORADORES);
+  return colaborador;
+}
+
+async function dbExcluirFolhaPagamentoColaborador(id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para a folha de pagamento.'});
+  const alvoId=parseInt(id,10)||0;
+  if(!alvoId) return true;
+  await folhaPagamentoInvocarProtegido('delete_payroll',{id:alvoId});
+  return true;
+}
+
+// ── CRUD REEMBOLSOS DE ATO ──────────────────────────────────────────────────
+async function dbSalvarReembolsoAto(reembolso, id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para os reembolsos de ATO.'});
+  const data=await folhaPagamentoInvocarProtegido('save_ato_refund',{
+    id:id||null,
+    reembolso:mapReembolsoAtoOut(reembolso)
+  });
+  if(!data||!data.reembolso) throw new Error('Reembolso de ATO não retornado pelo serviço protegido.');
+  Object.assign(reembolso,mapReembolsoAtoIn(data.reembolso));
+  zSetState('state.data.reembolsosAto',REEMBOLSOS_ATO);
+  return reembolso;
+}
+
+async function dbExcluirReembolsoAto(id){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para os reembolsos de ATO.'});
+  const alvoId=parseInt(id,10)||0;
+  if(!alvoId) return true;
+  const data=await folhaPagamentoInvocarProtegido('delete_ato_refund',{id:alvoId});
+  const financeiroId=parseInt(data&&data.financeiroLancamentoId,10)||0;
+  const financeiroRef=String(data&&data.financeiroRefLocal||`fin-reembolso-ato-${alvoId}`).trim();
+  for(let indice=FINANCEIRO_LANCAMENTOS.length-1;indice>=0;indice--){
+    const lancamento=FINANCEIRO_LANCAMENTOS[indice];
+    if(
+      (financeiroId&&String(lancamento&&lancamento.id)===String(financeiroId))
+      ||(financeiroRef&&String(lancamento&&(lancamento.refLocal||lancamento.ref_local)||'')===financeiroRef)
+    ){
+      FINANCEIRO_LANCAMENTOS.splice(indice,1);
+    }
+  }
+  zSetState('state.data.financeiroLancamentos',FINANCEIRO_LANCAMENTOS);
+  return data||{ok:true};
+}
+
+async function dbMarcarReembolsoAtoPago(id,dataReembolso){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para os reembolsos de ATO.'});
+  const alvoId=parseInt(id,10)||0;
+  if(!alvoId) throw new Error('Reembolso inválido para baixa.');
+  const data=await folhaPagamentoInvocarProtegido('mark_ato_refunded',{
+    id:alvoId,
+    data_reembolso:String(dataReembolso||'').slice(0,10)
+  });
+  if(!data||!data.reembolso) throw new Error('Baixa do reembolso não retornada pelo serviço protegido.');
+  if(data.lancamento){
+    const lancamento=mapLancamentoFinanceiroIn(data.lancamento);
+    lancamento.confirmadoSupabase=true;
+    lancamento.syncPendente=false;
+    lancamento.syncErro='';
+    const indice=FINANCEIRO_LANCAMENTOS.findIndex(item=>(
+      (lancamento.id&&String(item.id)===String(lancamento.id))
+      ||(lancamento.refLocal&&String(item.refLocal||'')===lancamento.refLocal)
+    ));
+    if(indice>=0) FINANCEIRO_LANCAMENTOS[indice]=lancamento;
+    else FINANCEIRO_LANCAMENTOS.push(lancamento);
+    if(typeof ordenarFinanceiroLancamentos==='function') FINANCEIRO_LANCAMENTOS.sort(ordenarFinanceiroLancamentos);
+    zSetState('state.data.financeiroLancamentos',FINANCEIRO_LANCAMENTOS);
+  }
+  return mapReembolsoAtoIn(data.reembolso);
+}
+
+function tipoComprovanteReembolsoAto(file){
+  const tipo=String(file&&file.type||'').trim().toLowerCase();
+  if(['application/pdf','image/jpeg','image/jpg','image/png','image/webp'].includes(tipo)) return tipo;
+  const nome=String(file&&file.name||'').toLowerCase();
+  if(/\.pdf$/.test(nome)) return 'application/pdf';
+  if(/\.png$/.test(nome)) return 'image/png';
+  if(/\.webp$/.test(nome)) return 'image/webp';
+  if(/\.(jpg|jpeg)$/.test(nome)) return 'image/jpeg';
+  return '';
+}
+
+async function dbEnviarComprovanteReembolsoAto(id,file){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para os comprovantes de ATO.'});
+  const alvoId=parseInt(id,10)||0;
+  const mime=tipoComprovanteReembolsoAto(file);
+  const nome=String(file&&file.name||'comprovante').trim()||'comprovante';
+  const size=Number(file&&file.size)||0;
+  if(!alvoId||!file||!mime||size<=0||size>10*1024*1024){
+    throw new Error('Envie um comprovante em PDF, JPG, PNG ou WEBP com no máximo 10MB.');
+  }
+  const autorizado=await folhaPagamentoInvocarProtegido('create_ato_receipt_upload',{
+    id:alvoId,nome,mime,size
+  });
+  const upload=autorizado&&autorizado.upload;
+  if(!upload||!upload.bucket||!upload.path||!upload.token){
+    throw new Error('O serviço protegido não retornou a autorização para enviar o comprovante.');
+  }
+  const {error:uploadError}=await sb.storage.from(upload.bucket).uploadToSignedUrl(upload.path,upload.token,file,{
+    contentType:mime,
+    cacheControl:'3600'
+  });
+  if(uploadError) throw uploadError;
+  const confirmado=await folhaPagamentoInvocarProtegido('confirm_ato_receipt_upload',{
+    id:alvoId,
+    bucket:upload.bucket,
+    path:upload.path,
+    nome,
+    mime,
+    size
+  });
+  if(!confirmado||!confirmado.reembolso) throw new Error('O comprovante foi enviado, mas o cadastro não foi confirmado. Tente novamente.');
+  return mapReembolsoAtoIn(confirmado.reembolso);
+}
+
+async function dbObterUrlComprovanteReembolsoAto(id){
+  const alvoId=parseInt(id,10)||0;
+  if(!alvoId) throw new Error('Reembolso inválido para abrir o comprovante.');
+  const data=await folhaPagamentoInvocarProtegido('get_ato_receipt_url',{id:alvoId});
+  if(!data||!data.url) throw new Error('Não foi possível obter o comprovante deste reembolso.');
+  return data;
+}
+
 // ── CRUD TREINAMENTOS ─────────────────────────────────────────────────────────
 async function dbSalvarTrein(t, idx){
   appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para treinamentos.'});
@@ -2298,6 +2594,9 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
   garantirRefLocalFinanceiro(lancamento);
   if(!lancamento.atualizadoEm) lancamento.atualizadoEm=new Date().toISOString();
   const payloadOriginal=mapLancamentoFinanceiroOut(lancamento);
+  // Estado de transporte nunca faz parte de uma gravacao confirmada.
+  payloadOriginal.sync_pendente=false;
+  payloadOriginal.sync_erro='';
   const comprovantePreservado={
     comprovanteNome:lancamento.comprovanteNome||'',
     comprovanteMime:lancamento.comprovanteMime||'',
@@ -2308,6 +2607,7 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
     comprovanteStoragePath:lancamento.comprovanteStoragePath||''
   };
   const alvoId=parseInt(id||lancamento.id,10)||0;
+  const clienteFinanceiro=typeof sbLong!=='undefined'&&sbLong?sbLong:sb;
   try{
     let payloadAtual={...payloadOriginal};
     let data=null;
@@ -2316,19 +2616,19 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
       try{
         data=null;
         if(payloadAtual.ref_local){
-          const respostaRef=await sb.from('financeiro_lancamentos').update(payloadAtual).eq('ref_local',payloadAtual.ref_local).select().maybeSingle();
+          const respostaRef=await clienteFinanceiro.from('financeiro_lancamentos').update(payloadAtual).eq('ref_local',payloadAtual.ref_local).select().maybeSingle();
           if(respostaRef.error) throw respostaRef.error;
           data=respostaRef.data||null;
         }
         if(!data&&alvoId&&!automaticoLegado){
-          const respostaId=await sb.from('financeiro_lancamentos').update(payloadAtual).eq('id',alvoId).select().maybeSingle();
+          const respostaId=await clienteFinanceiro.from('financeiro_lancamentos').update(payloadAtual).eq('id',alvoId).select().maybeSingle();
           if(respostaId.error) throw respostaId.error;
           data=respostaId.data||null;
         }
         if(!data){
           // Repasses antigos podem ser editados manualmente, nunca inseridos/recriados.
           if(automaticoLegado) throw new Error('Repasse historico nao encontrado. Atualize o financeiro antes de editar.');
-          const respostaInsert=await sb.from('financeiro_lancamentos').insert(payloadAtual).select().single();
+          const respostaInsert=await clienteFinanceiro.from('financeiro_lancamentos').insert(payloadAtual).select().single();
           if(respostaInsert.error) throw respostaInsert.error;
           data=respostaInsert.data||null;
         }
@@ -2357,7 +2657,8 @@ async function dbSalvarLancamentoFinanceiro(lancamento, id){
     lancamento.syncErro=payloadReduzido?'Schema do Supabase ainda nao possui todas as colunas do financeiro.':'';
     return lancamento;
   }catch(error){
-    lancamento.syncPendente=true;
+    // O formulario permanece aberto; a falha nao entra no caixa nem em uma fila.
+    lancamento.syncPendente=false;
     lancamento.syncErro=mensagemErroSyncAgendamentos(error);
     throw error;
   }
@@ -2415,65 +2716,13 @@ async function dbExcluirSaldoBancario(saldoOuId){
 }
 
 function lancamentoFinanceiroTemSyncPendente(item){
-  return !!(item&&item.syncPendente&&(!lancamentoFinanceiroAutomaticoLegado(item)||item.edicaoManualLegado));
+  // O financeiro nao trabalha mais com fila de gravacoes locais.
+  return false;
 }
 
 async function sincronizarFinanceiroPendentes(opcoes={}){
-  const removidosLegado=removerLancamentosFinanceirosTesteLegado(FINANCEIRO_LANCAMENTOS);
-  if(removidosLegado.length){
-    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
-    salvarLS();
-  }
-  const pendentes=(Array.isArray(FINANCEIRO_LANCAMENTOS)?FINANCEIRO_LANCAMENTOS:[]).filter(lancamentoFinanceiroTemSyncPendente);
-  if(!pendentes.length) return {pendentes:0,sincronizados:0,falhas:0};
-  let sincronizados=0;
-  let falhas=0;
-  for(const item of pendentes){
-    try{
-      if(!item.comprovanteStoragePath&&(item.comprovanteLocalId||item.comprovanteDataUrl)){
-        const arquivo=await prepararComprovanteFinanceiroParaUpload(item);
-        if(item.comprovanteLocalId&&!arquivo){
-          throw new Error('Comprovante local pendente nao encontrado para sincronizacao.');
-        }
-        if(arquivo){
-          const upload=await dbUploadDocumentoArquivo(arquivo,{ folder:'financeiro/comprovantes' });
-          item.comprovanteStorageBucket=upload.bucket||'';
-          item.comprovanteStoragePath=upload.path||'';
-          item.comprovanteDataUrl='';
-          if(item.comprovanteLocalId){
-            await excluirFinanceiroComprovanteLocal(item.comprovanteLocalId).catch(()=>true);
-            item.comprovanteLocalId='';
-          }
-        }
-      }
-      item.atualizadoEm=new Date().toISOString();
-      await dbSalvarLancamentoFinanceiro(item,0);
-      if(item.comprovanteStoragePath&&item.comprovanteLocalId){
-        await excluirFinanceiroComprovanteLocal(item.comprovanteLocalId).catch(()=>true);
-        item.comprovanteLocalId='';
-      }
-      sincronizados++;
-    }catch(error){
-      item.syncPendente=true;
-      item.syncErro=mensagemErroSyncAgendamentos(error);
-      falhas++;
-    }
-  }
-  FINANCEIRO_LANCAMENTOS.splice(0,FINANCEIRO_LANCAMENTOS.length,...FINANCEIRO_LANCAMENTOS.sort(ordenarFinanceiroLancamentos));
-  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
-  salvarLS();
-  if(opcoes.renderizar!==false&&typeof renderFinanceiro==='function'&&!document.getElementById('mod-financeiro')?.classList.contains('hidden')){
-    renderFinanceiro();
-  }
-  if(opcoes.silencioso!==true&&typeof showToast==='function'){
-    if(sincronizados&&!falhas) showToast('âœ…',`${sincronizados} lancamento${sincronizados>1?'s':''} financeiro${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''} com o Supabase.`);
-    else if(sincronizados&&falhas) showToast('âš ï¸',`${sincronizados} lancamento${sincronizados>1?'s':''} financeiro${sincronizados>1?'s':''} sincronizado${sincronizados>1?'s':''}, mas ${falhas} ainda pendente${falhas>1?'s':''}.`);
-    else if(falhas) showToast('âš ï¸','Nao foi possivel sincronizar os lancamentos pendentes do financeiro agora.');
-  }
-  /*
-    showToast('âš ï¸',`${descartados} agendamento${descartados>1?'s foram':' foi'} removido${descartados>1?'s':''} por telefone ja cadastrado em outro compromisso aberto.`);
-  */
-  return {pendentes:pendentes.length,sincronizados,falhas};
+  // Mantida por compatibilidade com chamadas antigas, sem alterar dados.
+  return {pendentes:0,sincronizados:0,falhas:0,desativado:true};
 }
 
 async function sincronizarAgendamentosPendentes(opcoes={}){
@@ -2548,6 +2797,8 @@ function salvarLS(){
     zSetState('state.data.agendamentos', AGENDAMENTOS);
     zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
     zSetState('state.data.financeiroSaldosBancarios', FINANCEIRO_SALDOS_BANCARIOS);
+    zSetState('state.data.folhaPagamentoColaboradores', FOLHA_PAGAMENTO_COLABORADORES);
+    zSetState('state.data.reembolsosAto', REEMBOLSOS_ATO);
     atualizarEstadoSyncAgendamentos();
     zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
     if(typeof renderDashboard==='function'&&!document.getElementById('mod-dashboard')?.classList.contains('hidden')){
@@ -2555,6 +2806,12 @@ function salvarLS(){
     }
     if(typeof renderRhDashboard==='function'&&!document.getElementById('mod-rh')?.classList.contains('hidden')){
       renderRhDashboard();
+    }
+    if(typeof renderFolhaPagamento==='function'&&!document.getElementById('mod-folha-pagamento')?.classList.contains('hidden')){
+      renderFolhaPagamento();
+    }
+    if(typeof renderReembolsosAto==='function'&&!document.getElementById('mod-reembolsos-ato')?.classList.contains('hidden')){
+      renderReembolsosAto();
     }
     return true;
   }catch(e){
@@ -2812,6 +3069,13 @@ zRegisterModule('supabase', {
   dbSalvarUsuario,
   dbExcluirUsuario,
   dbSalvarSenha,
+  dbSalvarFolhaPagamentoColaborador,
+  dbExcluirFolhaPagamentoColaborador,
+  dbSalvarReembolsoAto,
+  dbExcluirReembolsoAto,
+  dbMarcarReembolsoAtoPago,
+  dbEnviarComprovanteReembolsoAto,
+  dbObterUrlComprovanteReembolsoAto,
   dbSalvarTrein,
   dbExcluirTrein,
   dbSalvarAgendamento,
@@ -2822,6 +3086,11 @@ zRegisterModule('supabase', {
   usuarioSelfServiceGarantirSessao,
   usuarioSelfServiceAtualizarMe,
   usuarioSelfServiceLimparSessao,
+  dbCriarConviteUsuarioProtegido,
+  dbObterConviteUsuarioSeguro,
+  dbConcluirConviteUsuarioSeguro,
+  recarregarFolhaPagamentoProtegida,
+  recarregarReembolsosAtoProtegidos,
   recarregarAgendamentosCompartilhados,
   sincronizarAgendamentosPendentes,
   sincronizarFinanceiroPendentes,

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <!-- CSS modular -->
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/styles.css?v=20260914.3">
 </head>
 <body>
 <body>
@@ -391,6 +391,14 @@
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="11" rx="1.5"/><path d="M1 7h14"/><path d="M5 11h2M10 11h1"/></svg>
         Financeiro
       </button>
+      <button class="sb-item" id="sb-reembolsos-ato" onclick="setMod('reembolsos-ato',this)" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5h10v8H3z"/><path d="M5 2.5h6v2M5 7h6M5 9.5h3"/><path d="M11 11.5l1 1 2-2"/></svg>
+        Reembolsos de ATO
+      </button>
+      <button class="sb-item" id="sb-folha-pagamento" onclick="setMod('folha-pagamento',this)" style="display:none;">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2.5h10v11H3z"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h2"/><circle cx="11" cy="11" r="1.5"/></svg>
+        Folha de Pagamento
+      </button>
       <button class="sb-item" onclick="setMod('carteira',this)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M11 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg>
         Minha Carteira
@@ -632,6 +640,8 @@
     </div>
 
     <div class="page hidden" id="mod-financeiro"><div class="carteira-wrap" id="financeiro-content"></div></div>
+    <div class="page hidden" id="mod-reembolsos-ato"><div class="folha-wrap" id="reembolsos-ato-content"></div></div>
+    <div class="page hidden" id="mod-folha-pagamento"><div class="folha-wrap" id="folha-pagamento-content"></div></div>
     <div class="page hidden" id="mod-carteira"><div class="carteira-wrap" id="carteira-content"></div></div>
     <div class="page" id="mod-dashboard"><div class="dash-wrap" id="dashboard-content"></div></div>
     <div class="page hidden" id="mod-rh"><div class="rh-wrap" id="rh-dashboard-content"></div></div>
@@ -1418,37 +1428,41 @@
 
 <!-- â”€â”€â”€ MÃ“DULOS JS â€” ORDEM IMPORTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <!-- 1. UtilitÃ¡rios base (sem dependÃªncias) -->
-<script src="js/utils.js"></script>
+<script src="js/utils.js?v=20260914.3"></script>
 <!-- 2. Supabase: conexÃ£o, dados globais, mappers, CRUD, retry -->
-<script src="js/supabase.js"></script>
+<script src="js/supabase.js?v=20260914.3"></script>
 <!-- 2.1. Z-API: disparo de notificacoes de evolucao via Edge Functions -->
-<script src="js/zapi.js"></script>
+<script src="js/zapi.js?v=20260914.3"></script>
 <!-- 3. Auth: login, sessÃ£o, topbar, navegaÃ§Ã£o â€” depende de supabase + utils -->
-<script src="js/auth.js"></script>
+<script src="js/auth.js?v=20260914.3"></script>
 <!-- 4.1. Resumo executivo do dono — depende de auth/supabase -->
-<script src="js/owner-report.js"></script>
+<script src="js/owner-report.js?v=20260914.3"></script>
 <!-- 4. Vendas: etapas, comissÃµes, filtros, nova venda, distrato â€” depende de auth -->
-<script src="js/vendas.js"></script>
+<script src="js/vendas.js?v=20260914.3"></script>
 <!-- 5. Carteira: saldo por perfil â€” depende de vendas -->
-<script src="js/carteira.js"></script>
+<script src="js/carteira.js?v=20260914.3"></script>
 <!-- 6. Financeiro: calendÃ¡rio de previsÃµes â€” depende de vendas -->
-<script src="js/financeiro.js"></script>
+<script src="js/financeiro.js?v=20260914.3"></script>
+<!-- 6.1. Reembolsos de ATO: controle de valores a devolver aos clientes -->
+<script src="js/reembolsos-ato.js?v=20260914.3"></script>
+<!-- 6.1. Folha de Pagamento: cadastro salarial e dados de recebimento -->
+<script src="js/folha-pagamento.js?v=20260914.3"></script>
 <!-- 7. Dashboard: resultado de vendas em tempo real -->
-<script src="js/dashboard.js"></script>
+<script src="js/dashboard.js?v=20260914.3"></script>
 <!-- 7.1. Dash RH: estrutura de usuarios, equipes e unidades -->
-<script src="js/rh.js"></script>
+<script src="js/rh.js?v=20260914.3"></script>
 <!-- 8. Envios WhatsApp: monitor da integracao Z-API -->
-<script src="js/envios.js"></script>
+<script src="js/envios.js?v=20260914.3"></script>
 <!-- 9. Treinamentos + Processos Operacionais -->
-<script src="js/treinamentos.js"></script>
+<script src="js/treinamentos.js?v=20260914.3"></script>
 <!-- 10. Documentos: biblioteca de PDFs, visualizacao e download -->
-<script src="js/documentos.js"></script>
+<script src="js/documentos.js?v=20260914.3"></script>
 <!-- 11. UsuÃ¡rios: CRUD, convite, onboarding, trocar senha -->
-<script src="js/usuarios.js"></script>
+<script src="js/usuarios.js?v=20260914.3"></script>
 <!-- 12. Agendamentos: agenda comercial por perfil -->
-<script src="js/agendamentos.js"></script>
+<script src="js/agendamentos.js?v=20260914.3"></script>
 <!-- 13. App: showVDetail, anexos, relatÃ³rio, exportaÃ§Ãµes â€” depende de tudo -->
-<script src="js/app.js"></script>
+<script src="js/app.js?v=20260914.3"></script>
 
 <!-- â”€â”€â”€ INICIALIZAÃ‡ÃƒO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
 <script>

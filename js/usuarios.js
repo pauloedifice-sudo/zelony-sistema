@@ -35,6 +35,8 @@ zSetState('state.ui.uFiltroStatus', uFiltroStatus);
 const EJS_SERVICE  = 'service_wirqv1v';
 const EJS_TEMPLATE = 'template_ylfp3ad';
 const EJS_PUBKEY   = 'GEXIho24PuM7N3RTZ';
+const CONVITE_URL_PUBLICA = 'https://zelony-sistema.netlify.app/';
+const CONVITE_CLIENT_VERSION = '20260914.3';
 const CONVITES_PENDENTES = {};
 const EXCLUSOES_PENDENTES = {};
 const STATUS_PENDENTES_USUARIOS = {};
@@ -50,42 +52,34 @@ function gerarToken() {
   return 'ZEL-' + Math.random().toString(36).substr(2, 6).toUpperCase();
 }
 
-function conviteEncodePayload(dados) {
-  const bruto = btoa(unescape(encodeURIComponent(JSON.stringify(dados))));
-  return bruto.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-function conviteDecodePayload(token) {
-  const bruto = String(token || '').trim();
-  if (!bruto) return null;
-  const normalizado = bruto.replace(/-/g, '+').replace(/_/g, '/');
-  const padding = normalizado.length % 4 ? '='.repeat(4 - (normalizado.length % 4)) : '';
-  try {
-    return JSON.parse(decodeURIComponent(escape(atob(normalizado + padding))));
-  } catch (e) {
-    try {
-      return JSON.parse(decodeURIComponent(escape(atob(bruto))));
-    } catch (erroLegado) {
-      return null;
-    }
-  }
-}
-
-function gerarLinkConvite(nome, email, perfil, equipe, rhContratacao, unidade) {
-  const dados = { nome, email, perfil, equipe, rhContratacao, unidade, ts: Date.now() };
-  const token = conviteEncodePayload(dados);
-  const url = new URL(window.location.href);
-  url.search = '';
-  url.hash = '';
+function gerarLinkConvite(token) {
+  const url = new URL(CONVITE_URL_PUBLICA);
   url.searchParams.set('c', token);
   return url.toString();
 }
 
 function lerConviteURL() {
   const params = new URLSearchParams(window.location.search);
-  const c = params.get('c');
-  if (!c) return null;
-  return conviteDecodePayload(c);
+  return String(params.get('c') || '').trim();
+}
+
+async function garantirVersaoAtualConvites() {
+  let resposta;
+  try {
+    const url = new URL('version.json', CONVITE_URL_PUBLICA);
+    url.searchParams.set('_', String(Date.now()));
+    resposta = await fetch(url.toString(), { cache: 'no-store' });
+  } catch (_erro) {
+    throw new Error('Não foi possível verificar a versão do sistema. Atualize a página e tente novamente.');
+  }
+  if (!resposta.ok) {
+    throw new Error('Não foi possível verificar a versão do sistema. Atualize a página e tente novamente.');
+  }
+  const dados = await resposta.json().catch(() => ({}));
+  if (String(dados && dados.version || '') !== CONVITE_CLIENT_VERSION) {
+    throw new Error('O sistema foi atualizado. Recarregue esta página antes de enviar o convite.');
+  }
+  return true;
 }
 
 function montarPayloadEmailConvite({ nome, email, perfil, equipe, rhContratacao, unidade, link, diretor }) {
@@ -1302,6 +1296,19 @@ function toggleInvRH() {
   }
 }
 
+function sincronizarUsuarioConviteLocal(usuario) {
+  if (!usuario || !usuario.email) return null;
+  const email = String(usuario.email || '').trim().toLowerCase();
+  const indice = USUARIOS.findIndex(item => String(item && item.email || '').trim().toLowerCase() === email);
+  if (indice >= 0) USUARIOS[indice] = { ...USUARIOS[indice], ...usuario };
+  else USUARIOS.push(usuario);
+  nextUserId = Math.max(nextUserId, (parseInt(usuario.id, 10) || 0) + 1);
+  zSetState('state.ui.nextUserId', nextUserId);
+  zSetState('state.data.usuarios', USUARIOS);
+  salvarLS();
+  return usuario;
+}
+
 async function enviarConvite() {
   if (!usuarioPodeGerirEquipe()) {
     showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem enviar convites.'));
@@ -1323,69 +1330,116 @@ async function enviarConvite() {
   if (EXCLUSOES_PENDENTES[email]) { erro('A exclusão deste usuário ainda está em processamento. Aguarde concluir para reenviar o convite.'); return; }
   if (!perfil)                    { erro('Selecione o perfil de acesso.'); return; }
   if (!unidade)                   { erro('Selecione a unidade.'); return; }
-  if (USUARIOS.find(u => u.email.toLowerCase() === email)) { erro('Este e-mail jÃ¡ estÃ¡ cadastrado.'); return; }
-
-  const btn  = document.getElementById('inv-btn');
-  const link = gerarLinkConvite(nome, email, perfil, equipe, rhContratacao, unidade);
-  const diretor = usuarioLogado ? usuarioLogado.nome : 'Diretor Zelony';
-  btn.textContent = zUiText('Enviando...'); btn.disabled = true;
-
-  if (!window.emailjs || typeof emailjs.init !== 'function' || typeof emailjs.send !== 'function') {
-    btn.textContent = zUiText('✉️ Enviar convite');
-    btn.disabled = false;
-    erro('O serviço de e-mail não carregou nesta página. Recarregue o sistema e tente novamente.');
+  const usuarioExistente = USUARIOS.find(u => String(u.email || '').toLowerCase() === email);
+  if (usuarioExistente && usuarioStatusPadrao(usuarioExistente.status) !== 'Pendente') {
+    erro('Este e-mail já possui um usuário ativo ou inativo.');
     return;
   }
 
+  const btn = document.getElementById('inv-btn');
+  const diretor = usuarioLogado ? usuarioLogado.nome : 'Diretor Zelony';
+  let conviteCriado = null;
+  let link = '';
+  btn.textContent = zUiText(usuarioExistente ? 'Reenviando...' : 'Criando convite...');
+  btn.disabled = true;
+
   try {
+    await garantirVersaoAtualConvites();
+    if (typeof dbCriarConviteUsuarioProtegido !== 'function') {
+      throw new Error('O serviço seguro de convites não está disponível.');
+    }
+    conviteCriado = await dbCriarConviteUsuarioProtegido({
+      nome, email, perfil, equipe, rhContratacao, unidade
+    });
+    sincronizarUsuarioConviteLocal(conviteCriado.usuario);
+    link = String(conviteCriado.link || '').trim();
+    const linkUrl = new URL(link);
+    const origemOficial = new URL(CONVITE_URL_PUBLICA);
+    const tokenLink = String(linkUrl.searchParams.get('c') || '').toLowerCase();
+    if (linkUrl.origin !== origemOficial.origin || !/^[0-9a-f]{64}$/.test(tokenLink)) {
+      throw new Error('O servidor retornou um endereço de convite inválido.');
+    }
+
+    btn.textContent = zUiText('Enviando e-mail...');
+    if (!window.emailjs || typeof emailjs.init !== 'function' || typeof emailjs.send !== 'function') {
+      throw new Error('O serviço de e-mail não carregou nesta página.');
+    }
     emailjs.init(EJS_PUBKEY);
     await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, montarPayloadEmailConvite({
       nome, email, perfil, equipe, rhContratacao, unidade, link, diretor
     }));
-
-    const novoU = {
-      id: nextUserId, nome, email, tel: '', perfil, status: 'Pendente',
-      banco:'', agencia:'', conta:'', tipoConta:'', pixTipo:'', pix:'',
-      rhContratacao, equipe, unidade, cpf:'', nasc:'', cep:'', end:'', cidade:'', estado:'',
-      dataAtivacao:'', dataInativacao:'', historicoStatus:[]
-    };
-    try {
-      await dbSalvarUsuario(novoU, null);
-    } catch (e) {
-      console.error('Erro ao salvar convite:', e);
-      btn.textContent = zUiText('✉️ Enviar convite');
-      btn.disabled = false;
-      erro('O e-mail foi enviado, mas o convite não foi salvo no banco. Tente novamente após alguns instantes.');
-      return;
-    }
-    nextUserId = Math.max(nextUserId + 1, (novoU.id || 0) + 1);
-    USUARIOS.push(novoU);
-    zSetState('state.ui.nextUserId', nextUserId);
-    zSetState('state.data.usuarios', USUARIOS);
-    salvarLS();
     fecharConvite(); renderUsuarios();
-    showToast(zUiText('✅'), zUiText(`Convite enviado para ${nome}!`));
+    showToast(zUiText('✅'), zUiText(`${usuarioExistente ? 'Novo convite' : 'Convite'} enviado para ${nome}!`));
   } catch (err) {
-    console.error('EmailJS:', err);
-    await copiarTexto(link, 'Link do convite').catch(()=>false);
-    erro('Erro ao enviar e-mail. O link do convite foi copiado para envio manual enquanto o EmailJS é verificado.');
+    console.error('Convite de usuário:', err);
+    if (conviteCriado && link) {
+      const copiado = await copiarTexto(link, 'Link do convite').catch(()=>false);
+      erro(copiado
+        ? 'O convite foi salvo, mas o e-mail não pôde ser enviado. O link seguro foi copiado para envio manual.'
+        : 'O convite foi salvo, mas o e-mail não pôde ser enviado. Tente reenviar o convite.');
+    } else {
+      erro(String(err && err.message || 'Não foi possível criar o convite. Tente novamente.'));
+    }
   } finally {
     btn.textContent = zUiText('✉️ Enviar convite');
     btn.disabled = false;
   }
 }
 
-function verificarConviteURL() {
-  const conv = lerConviteURL();
-  if (!conv || !conv.email || !conv.perfil) return;
-  conviteAtivo = conv;
+function mostrarErroAcessoConvite(mensagem) {
+  const erro = document.getElementById('conv-error');
+  const formulario = document.getElementById('conv-form');
+  const sucesso = document.getElementById('conv-success');
+  if (formulario) formulario.style.display = 'none';
+  if (sucesso) sucesso.style.display = 'none';
+  if (erro) {
+    erro.style.display = 'block';
+    erro.textContent = zUiText(String(mensagem || 'Não foi possível abrir este convite.'));
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'conv-btn';
+    botao.style.marginTop = '14px';
+    botao.textContent = zUiText('Voltar ao login');
+    botao.onclick = irParaLogin;
+    erro.append(document.createElement('br'), botao);
+  }
+}
+
+async function verificarConviteURL() {
+  const token = lerConviteURL();
+  if (!token) return;
+  conviteAtivo = null;
   zSetState('state.ui.conviteAtivo', conviteAtivo);
   document.getElementById('login-screen').classList.add('hidden');
   document.getElementById('convite-screen').classList.add('show');
-  document.getElementById('conv-nome-bv').textContent = zUiText(`OlÃ¡, ${conv.nome.split(' ')[0]}!`);
-  document.getElementById('conv-cargo-bv').textContent = zUiText(conv.perfil);
-  document.getElementById('cv-nome').value = zUiText(conv.nome);
+  const erro = document.getElementById('conv-error');
+  const formulario = document.getElementById('conv-form');
+  const sucesso = document.getElementById('conv-success');
+  if (formulario) formulario.style.display = 'none';
+  if (sucesso) sucesso.style.display = 'none';
+  if (erro) {
+    erro.textContent = zUiText('Validando convite seguro...');
+    erro.style.display = 'block';
+  }
   document.getElementById('convite-screen').scrollTo(0, 0);
+  try {
+    if (typeof dbObterConviteUsuarioSeguro !== 'function') throw new Error('O serviço seguro de convites não está disponível.');
+    const conv = await dbObterConviteUsuarioSeguro(token);
+    if (!conv || !conv.email || !conv.perfil) throw new Error('O convite não retornou os dados necessários.');
+    conviteAtivo = { ...conv, token };
+    pixSelCV = '';
+    zSetState('state.ui.conviteAtivo', conviteAtivo);
+    zSetState('state.ui.pixSelCV', pixSelCV);
+    document.getElementById('conv-nome-bv').textContent = zUiText(`Olá, ${String(conv.nome || '').split(' ')[0]}!`);
+    document.getElementById('conv-cargo-bv').textContent = zUiText(conv.perfil);
+    document.getElementById('cv-nome').value = zUiText(conv.nome);
+    document.querySelectorAll('#cv-pix-types .pix-type').forEach(b => b.classList.remove('sel'));
+    if (erro) { erro.textContent = ''; erro.style.display = 'none'; }
+    if (formulario) formulario.style.display = 'block';
+  } catch (e) {
+    console.error('Falha ao validar convite:', e);
+    mostrarErroAcessoConvite(String(e && e.message || 'Este convite é inválido ou expirou. Solicite um novo convite.'));
+  }
 }
 
 function selPixCV(tipo, el) {
@@ -1412,7 +1466,7 @@ async function buscarCEP(cep) {
   } catch (e) {}
 }
 
-function concluirCadastro() {
+async function concluirCadastro() {
   if (!conviteAtivo) return;
   const errEl  = document.getElementById('conv-error');
   errEl.style.display = 'none';
@@ -1439,8 +1493,11 @@ function concluirCadastro() {
   if (!tel)      { erro('Informe seu telefone.'); return; }
   if (!nasc)     { erro('Informe sua data de nascimento.'); return; }
   if (!cpf)      { erro('Informe seu CPF.'); return; }
+  if (typeof folhaCpfValido === 'function' && !folhaCpfValido(cpf)) { erro('Informe um CPF válido.'); return; }
+  if (String(cep || '').replace(/\D/g, '').length !== 8) { erro('Informe um CEP válido.'); return; }
   if (!end)      { erro('Informe seu endereÃ§o.'); return; }
   if (!cidade)   { erro('Informe sua cidade.'); return; }
+  if (estado.length !== 2) { erro('Informe o estado com 2 letras.'); return; }
   if (!banco)    { erro('Informe seu banco.'); return; }
   if (!conta)    { erro('Informe sua conta bancÃ¡ria.'); return; }
   if (!tipoConta){ erro('Selecione o tipo de conta.'); return; }
@@ -1449,40 +1506,26 @@ function concluirCadastro() {
   if (!senha || senha.length < 6) { erro('A senha deve ter pelo menos 6 caracteres.'); return; }
   if (senha !== confirma)         { erro('As senhas nÃ£o coincidem.'); return; }
 
-  const dados = { nome, tel, status:'Ativo', banco, agencia, conta, tipoConta, pixTipo:pixSelCV, pix, cpf, nasc, cep, end, cidade, estado, token:null, unidade:conviteAtivo.unidade||'' };
-  const idx   = USUARIOS.findIndex(u => u.email.toLowerCase() === conviteAtivo.email.toLowerCase());
-  if (idx >= 0) {
-    const statusAnterior = USUARIOS[idx].status;
-    USUARIOS[idx] = { ...USUARIOS[idx], ...dados };
-    usuarioAplicarMudancaStatus(USUARIOS[idx], statusAnterior, USUARIOS[idx].status, {
-      por: 'Onboarding',
-      origem: 'convite'
-    });
-    dbSalvarUsuario(USUARIOS[idx], USUARIOS[idx].id).catch(e => console.error(e));
-  } else {
-    const novoU = {
-      id: nextUserId++,
-      email: conviteAtivo.email,
-      perfil: conviteAtivo.perfil,
-      rhContratacao: conviteAtivo.rhContratacao,
-      dataAtivacao: '',
-      dataInativacao: '',
-      historicoStatus: [],
-      ...dados
-    };
-    usuarioAplicarMudancaStatus(novoU, '', novoU.status, {
-      por: 'Onboarding',
-      origem: 'convite'
-    });
-    USUARIOS.push(novoU);
-    zSetState('state.ui.nextUserId', nextUserId);
-    dbSalvarUsuario(novoU, null).catch(e => console.error(e));
+  const btn = document.getElementById('cv-btn');
+  const labelOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = zUiText('Salvando cadastro...'); }
+  try {
+    if (typeof dbConcluirConviteUsuarioSeguro !== 'function') throw new Error('O serviço seguro de convites não está disponível.');
+    const resultado = await dbConcluirConviteUsuarioSeguro(conviteAtivo.token, {
+      nome, tel, nasc, cpf, cep, end, cidade, estado,
+      banco, agencia, conta, tipoConta, pixTipo:pixSelCV, pix
+    }, senha);
+    sincronizarUsuarioConviteLocal(resultado.usuario);
+    SENHAS_INDIVIDUAIS[String(conviteAtivo.email || '').toLowerCase()] = senha;
+    zSetState('state.auth.senhasIndividuais', SENHAS_INDIVIDUAIS);
+    salvarLS();
+    document.getElementById('conv-form').style.display = 'none';
+    document.getElementById('conv-success').style.display = 'block';
+  } catch (e) {
+    console.error('Falha ao concluir convite:', e);
+    erro(String(e && e.message || 'Não foi possível concluir o cadastro. Tente novamente.'));
+    if (btn) { btn.disabled = false; btn.textContent = labelOriginal || zUiText('✓ Concluir cadastro'); }
   }
-  zSetState('state.data.usuarios', USUARIOS);
-  dbSalvarSenha(conviteAtivo.email.toLowerCase(), senha).catch(e => console.error(e));
-  salvarLS();
-  document.getElementById('conv-form').style.display    = 'none';
-  document.getElementById('conv-success').style.display = 'block';
 }
 
 function irParaLogin() {

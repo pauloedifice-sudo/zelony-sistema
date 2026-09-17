@@ -86,6 +86,34 @@ function makeContext(lancamentos = fixtures()) {
   return ctx;
 }
 
+function prepararFormularioLancamento(ctx, overrides = {}) {
+  const campo = value => ({ value, disabled: false, textContent: '', focus() {} });
+  const campos = {
+    'fin-lanc-tipo': campo('saida'),
+    'fin-lanc-categoria': campo('SERVICOS'),
+    'fin-lanc-categoria-nova': campo(''),
+    'fin-lanc-descricao': campo('PAGAMENTO DE TESTE'),
+    'fin-lanc-unidade': campo('Centro'),
+    'fin-lanc-data-prevista': campo('2026-09-04'),
+    'fin-lanc-status': campo('realizado'),
+    'fin-lanc-data-realizada': campo('2026-09-04'),
+    'fin-lanc-valor': campo('123,45'),
+    'fin-lanc-observacao': campo('CONFIRMACAO OBRIGATORIA'),
+    'fin-lanc-save-btn': campo('')
+  };
+  Object.entries(overrides).forEach(([id, value]) => {
+    if (campos[id]) campos[id].value = value;
+  });
+  ctx.document = {
+    getElementById(id) {
+      if (id === 'mod-financeiro') return { classList: { contains: () => true } };
+      return campos[id] || null;
+    },
+    querySelectorAll() { return Object.values(campos); }
+  };
+  return campos;
+}
+
 test('vendas recebidas em 26/08 ou previstas nao geram novas entradas nem saidas', () => {
   const ctx = makeContext([]);
   ctx.VENDAS = ctx.VENDAS.slice(0, 2);
@@ -167,29 +195,63 @@ test('recebimento manual usa a data realizada e nao a data prevista', () => {
   assert.equal(ctx.finColetarMes(8, 2026).entradas.totalRealizado, 700);
 });
 
-test('conciliacao carrega o saldo anterior e compara banco com movimentos realizados', () => {
+test('dar como pago antecipado usa o dia da baixa e preserva a data prevista', () => {
+  const ctx = makeContext([]);
+  const campos = prepararFormularioLancamento(ctx, {
+    'fin-lanc-status': 'previsto',
+    'fin-lanc-data-prevista': '2026-09-20',
+    'fin-lanc-data-realizada': '2026-09-20'
+  });
+  ctx.finMarcarModalComoRealizado(false);
+  assert.equal(campos['fin-lanc-status'].value, 'realizado');
+  assert.equal(campos['fin-lanc-data-prevista'].value, '2026-09-20');
+  assert.equal(campos['fin-lanc-data-realizada'].value, '2026-08-26');
+});
+
+test('saldo esperado usa a abertura do mes e inclui todos os movimentos realizados do mes', () => {
   const ctx = makeContext([
     { id: 31, tipo: 'entrada', valor: 1000, status: 'realizado', dataPrevista: '2026-09-01', dataRealizada: '2026-09-01' },
     { id: 32, tipo: 'saida', valor: 200, status: 'realizado', dataPrevista: '2026-09-02', dataRealizada: '2026-09-02' },
-    { id: 33, tipo: 'saida', valor: 900, status: 'previsto', dataPrevista: '2026-09-02', dataRealizada: '' }
+    { id: 33, tipo: 'saida', valor: 900, status: 'previsto', dataPrevista: '2026-09-03', dataRealizada: '' }
   ]);
   ctx.VENDAS = [];
   ctx.FINANCEIRO_SALDOS_BANCARIOS.push(
     { id: 1, conta: 'CONTA PRINCIPAL', dataReferencia: '2026-08-31', saldo: 5000 },
     { id: 2, conta: 'CONTA PRINCIPAL', dataReferencia: '2026-09-02', saldo: 5500 }
   );
-  vm.runInContext("finMesAtual = 8; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 8, 2, 12); finFiltroUnidade = 'Cristo Rei'; finFiltroCategoria = 'ALUGUEL';", ctx);
+  vm.runInContext("finMesAtual = 8; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 8, 5, 12); finFiltroUnidade = 'Cristo Rei'; finFiltroCategoria = 'ALUGUEL';", ctx);
+  assert.equal(ctx.finConciliacaoMes(8, 2026).saldoSistema, 5800);
+
+  ctx.FINANCEIRO_LANCAMENTOS.push(
+    { id: 34, tipo: 'entrada', valor: 300, status: 'realizado', dataPrevista: '2026-09-03', dataRealizada: '2026-09-03' }
+  );
+  assert.equal(ctx.finConciliacaoMes(8, 2026).saldoSistema, 6100);
+
+  ctx.FINANCEIRO_LANCAMENTOS.push(
+    { id: 35, tipo: 'saida', valor: 50, status: 'realizado', dataPrevista: '2026-09-04', dataRealizada: '2026-09-04' }
+  );
   const conciliacao = ctx.finConciliacaoMes(8, 2026);
-  assert.equal(conciliacao.saldoAnterior.saldo, 5000);
-  assert.equal(conciliacao.movimentoSistema, 800);
-  assert.equal(conciliacao.saldoSistema, 5800);
+  assert.equal(conciliacao.saldoBase.saldo, 5000);
+  assert.equal(conciliacao.movimentoSistema, 1050);
+  assert.equal(conciliacao.saldoSistema, 6050);
   assert.equal(conciliacao.saldoBancario.saldo, 5500);
-  assert.equal(conciliacao.diferenca, -300);
+  assert.equal(conciliacao.saldoBancarioAtualizado, false);
+  assert.equal(conciliacao.diferenca, null);
   assert.equal(conciliacao.conciliado, false);
-  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Diferenca de -R\$\s?300,00/);
+  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Saldo bancario desatualizado/);
+  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Saldo esperado hoje/);
+
+  ctx.FINANCEIRO_SALDOS_BANCARIOS.push(
+    { id: 3, conta: 'CONTA PRINCIPAL', dataReferencia: '2026-09-05', saldo: 6050 }
+  );
+  const atualizado = ctx.finConciliacaoMes(8, 2026);
+  assert.equal(atualizado.saldoSistema, 6050);
+  assert.equal(atualizado.saldoBancarioAtualizado, true);
+  assert.equal(atualizado.diferenca, 0);
+  assert.equal(atualizado.conciliado, true);
 });
 
-test('primeiro saldo bancario vira base sem inventar saldo do sistema', () => {
+test('primeiro saldo bancario vira base do saldo esperado', () => {
   const ctx = makeContext([]);
   ctx.VENDAS = [];
   ctx.FINANCEIRO_SALDOS_BANCARIOS.push(
@@ -197,10 +259,10 @@ test('primeiro saldo bancario vira base sem inventar saldo do sistema', () => {
   );
   vm.runInContext("finMesAtual = 8; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 8, 2, 12);", ctx);
   const conciliacao = ctx.finConciliacaoMes(8, 2026);
-  assert.equal(conciliacao.saldoAnterior, null);
-  assert.equal(conciliacao.saldoSistema, null);
-  assert.equal(conciliacao.diferenca, null);
-  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Saldo inicial registrado/);
+  assert.equal(conciliacao.saldoBase.saldo, 5500);
+  assert.equal(conciliacao.saldoSistema, 5500);
+  assert.equal(conciliacao.diferenca, 0);
+  assert.match(ctx.finBuildConciliacaoBancaria(conciliacao), /Conciliado/);
 });
 
 test('painel financeiro renderiza conciliacao e distingue movimento mensal de saldo bancario', () => {
@@ -235,15 +297,116 @@ test('mapeamento do saldo bancario preserva data, valor negativo e auditoria', (
   assert.equal(banco.criado_por_id, 1);
 });
 
-test('automaticos antigos nao sao reenviados pela fila de sincronizacao', async () => {
+test('nenhuma falha financeira antiga e reenviada automaticamente', async () => {
   const ctx = makeContext();
   assert.equal(ctx.lancamentoFinanceiroTemSyncPendente(ctx.FINANCEIRO_LANCAMENTOS[7]), false);
-  assert.equal(ctx.lancamentoFinanceiroTemSyncPendente({ refLocal: 'fin-manual-20', syncPendente: true }), true);
+  assert.equal(ctx.lancamentoFinanceiroTemSyncPendente({ refLocal: 'fin-manual-20', syncPendente: true }), false);
   vm.runInContext(supabaseFunction('sincronizarFinanceiroPendentes'), ctx);
   const antes = JSON.stringify(ctx.FINANCEIRO_LANCAMENTOS);
   const resultado = await ctx.sincronizarFinanceiroPendentes();
   assert.equal(resultado.pendentes, 0);
+  assert.equal(resultado.desativado, true);
   assert.equal(JSON.stringify(ctx.FINANCEIRO_LANCAMENTOS), antes);
+});
+
+test('falha de gravacao nao inclui lancamento no caixa e nova tentativa reutiliza a mesma referencia', async () => {
+  const ctx = makeContext([]);
+  prepararFormularioLancamento(ctx);
+  const avisos = [];
+  const referencias = [];
+  let salvarCache = 0;
+  Object.assign(ctx, {
+    usuarioLogado: { id: 7, nome: 'FINANCEIRO', email: 'financeiro@teste.local' },
+    showToast: (_icone, mensagem) => avisos.push(mensagem),
+    salvarLS: () => { salvarCache++; },
+    dbSalvarLancamentoFinanceiro: async item => {
+      referencias.push(item.refLocal);
+      throw new Error('Supabase timeout apos 20000ms');
+    }
+  });
+  vm.runInContext("finModalAberto = true; finModalRefLocal = 'fin-tentativa-estavel';", ctx);
+
+  await ctx.finSalvarLancamento();
+
+  assert.equal(ctx.FINANCEIRO_LANCAMENTOS.length, 0);
+  assert.equal(salvarCache, 0);
+  assert.equal(vm.runInContext('finModalAberto', ctx), true);
+  assert.equal(vm.runInContext('finModalRefLocal', ctx), 'fin-tentativa-estavel');
+  assert.match(avisos.at(-1), /nao foi incluido no caixa/i);
+
+  ctx.dbSalvarLancamentoFinanceiro = async item => {
+    referencias.push(item.refLocal);
+    Object.assign(item, { id: 9001, syncPendente: false, syncErro: '' });
+    return item;
+  };
+  await ctx.finSalvarLancamento();
+
+  assert.deepEqual(referencias, ['fin-tentativa-estavel', 'fin-tentativa-estavel']);
+  assert.equal(ctx.FINANCEIRO_LANCAMENTOS.length, 1);
+  assert.equal(ctx.FINANCEIRO_LANCAMENTOS[0].id, 9001);
+  assert.equal(salvarCache, 1);
+  assert.equal(vm.runInContext('finModalAberto', ctx), false);
+});
+
+test('edicao com falha nao altera o lancamento confirmado que ja esta no caixa', async () => {
+  const original = fixtures()[2];
+  const ctx = makeContext([original]);
+  prepararFormularioLancamento(ctx, {
+    'fin-lanc-descricao': 'ALTERACAO NAO CONFIRMADA',
+    'fin-lanc-valor': '9.999,99'
+  });
+  Object.assign(ctx, {
+    usuarioLogado: { id: 7, nome: 'FINANCEIRO', email: 'financeiro@teste.local' },
+    dbSalvarLancamentoFinanceiro: async () => { throw new Error('Failed to fetch'); },
+    showToast() {}
+  });
+  vm.runInContext("finModalAberto = true; finModalLancamentoId = 'fin-manual-3'; finModalRefLocal = 'fin-manual-3';", ctx);
+
+  await ctx.finSalvarLancamento();
+
+  assert.equal(ctx.FINANCEIRO_LANCAMENTOS[0], original);
+  assert.equal(ctx.FINANCEIRO_LANCAMENTOS[0].valor, 1200);
+  assert.equal(ctx.FINANCEIRO_LANCAMENTOS[0].descricao, 'LANCAMENTO MANUAL 3');
+  assert.equal(vm.runInContext('finModalAberto', ctx), true);
+});
+
+test('mescla do financeiro descarta falha apenas local e sempre prefere o banco', () => {
+  const ctx = makeContext([]);
+  loadFinanceMappers(ctx);
+  for (const name of ['getFinanceiroLancamentoMergeKey', 'ordenarFinanceiroLancamentos', 'preferirLancamentoFinanceiroMaisRecente', 'mesclarFinanceiroLancamentosBancoComLocal']) {
+    vm.runInContext(supabaseFunction(name), ctx);
+  }
+  const banco = [{ id: 10, ref_local: 'fin-confirmado', tipo: 'saida', categoria: 'SERVICOS', descricao: 'CONFIRMADO', status: 'realizado', valor: 100, data_prevista: '2026-09-04', data_realizada: '2026-09-04', atualizado_em: '2026-09-04T12:00:00Z' }];
+  const local = [
+    { ...banco[0], refLocal: 'fin-confirmado', descricao: 'VERSAO LOCAL', valor: 999, syncPendente: true, atualizadoEm: '2026-09-04T13:00:00Z' },
+    { id: 11, refLocal: 'fin-so-local', tipo: 'saida', categoria: 'SERVICOS', descricao: 'NAO CONFIRMADO', status: 'realizado', valor: 555, dataPrevista: '2026-09-04', dataRealizada: '2026-09-04', syncPendente: true }
+  ];
+
+  const resultado = ctx.mesclarFinanceiroLancamentosBancoComLocal(banco, local);
+
+  assert.equal(resultado.length, 1);
+  assert.equal(resultado[0].refLocal, 'fin-confirmado');
+  assert.equal(resultado[0].descricao, 'CONFIRMADO');
+  assert.equal(resultado[0].valor, 100);
+  assert.equal(resultado[0].confirmadoSupabase, true);
+  assert.equal(resultado[0].syncPendente, false);
+});
+
+test('cache financeiro ignora gravacao pendente que nunca foi confirmada pelo banco', () => {
+  const ctx = makeContext([]);
+  loadFinanceMappers(ctx);
+  ctx.localStorage = {
+    getItem: () => JSON.stringify([
+      { refLocal: 'fin-falhou-local', tipo: 'saida', categoria: 'SERVICOS', descricao: 'NAO CONFIRMADO', valor: 500, dataPrevista: '2026-09-04', syncPendente: true },
+      { refLocal: 'fin-confirmado-cache', confirmadoSupabase: true, tipo: 'saida', categoria: 'SERVICOS', descricao: 'CONFIRMADO', valor: 100, dataPrevista: '2026-09-04', syncPendente: true },
+      { refLocal: 'fin-normal-cache', tipo: 'saida', categoria: 'SERVICOS', descricao: 'NORMAL', valor: 50, dataPrevista: '2026-09-04', syncPendente: false }
+    ])
+  };
+  vm.runInContext(supabaseFunction('carregarFinanceiroLancamentosLS'), ctx);
+
+  const cache = ctx.carregarFinanceiroLancamentosLS();
+
+  assert.deepEqual(Array.from(cache, item => item.refLocal), ['fin-confirmado-cache', 'fin-normal-cache']);
 });
 
 test('salvar ou atualizar venda recebida nao chama a geracao de repasses', async () => {
@@ -296,6 +459,37 @@ test('persistencia continua aceitando um repasse cadastrado manualmente', async 
   assert.equal(salvo.categoria, 'REPASSE COMISSAO');
   assert.equal(salvo.syncPendente, false);
   assert.ok(tabelas.length > 0 && tabelas.every(tabela => tabela === 'financeiro_lancamentos'));
+});
+
+test('persistencia financeira usa cliente longo e nunca grava marcador de pendencia', async () => {
+  const ctx = makeContext([]);
+  loadFinanceMappers(ctx);
+  const payloads = [];
+  const query = {
+    update(payload) { payloads.push({ operacao: 'update', payload: { ...payload } }); return query; },
+    insert(payload) { payloads.push({ operacao: 'insert', payload: { ...payload } }); return query; },
+    eq() { return query; }, select() { return query; },
+    async maybeSingle() { return { data: null }; },
+    async single() { return { data: { ...payloads.at(-1).payload, id: 777 } }; }
+  };
+  Object.assign(ctx, {
+    sb: { from() { throw new Error('cliente curto nao deveria ser usado'); } },
+    sbLong: { from: () => query }
+  });
+  vm.runInContext(supabaseFunction('dbSalvarLancamentoFinanceiro'), ctx);
+  const item = {
+    refLocal: 'fin-confirmacao-longa', tipo: 'saida', categoria: 'SERVICOS', descricao: 'TESTE',
+    status: 'realizado', valor: 50, dataPrevista: '2026-09-04', dataRealizada: '2026-09-04',
+    syncPendente: true, syncErro: 'Failed to fetch'
+  };
+
+  const salvo = await ctx.dbSalvarLancamentoFinanceiro(item);
+
+  assert.equal(salvo.id, 777);
+  assert.equal(salvo.syncPendente, false);
+  assert.equal(salvo.syncErro, '');
+  assert.ok(payloads.length >= 2);
+  assert.ok(payloads.every(({ payload }) => payload.sync_pendente === false && payload.sync_erro === ''));
 });
 
 test('resumo dos donos restaura historico, comparativo, reserva e contas vencidas', async () => {
@@ -384,7 +578,7 @@ test('baixa manual de repasse antigo atualiza por referencia sem inserir nem rea
   Object.assign(ctx, {
     sb: { from: () => query }
   });
-  assert.equal(ctx.lancamentoFinanceiroTemSyncPendente(item), true);
+  assert.equal(ctx.lancamentoFinanceiroTemSyncPendente(item), false);
   vm.runInContext(supabaseFunction('dbSalvarLancamentoFinanceiro'), ctx);
   const salvo = await ctx.dbSalvarLancamentoFinanceiro(item, item.id);
   assert.equal(salvo.id, 8);
@@ -405,7 +599,7 @@ test('marcador de baixa manual sobrevive ao cache mas nao exige coluna nova no S
   const item = { ...ctx.FINANCEIRO_LANCAMENTOS[7], edicaoManualLegado: true, syncPendente: true };
   const recarregado = ctx.mapLancamentoFinanceiroIn(JSON.parse(JSON.stringify(item)));
   assert.equal(recarregado.edicaoManualLegado, true);
-  assert.equal(ctx.lancamentoFinanceiroTemSyncPendente(recarregado), true);
+  assert.equal(ctx.lancamentoFinanceiroTemSyncPendente(recarregado), false);
   assert.equal(Object.hasOwn(ctx.mapLancamentoFinanceiroOut(recarregado), 'edicaoManualLegado'), false);
   const apenasAntigo = ctx.mapLancamentoFinanceiroIn(ctx.FINANCEIRO_LANCAMENTOS[7]);
   assert.equal(ctx.lancamentoFinanceiroTemSyncPendente(apenasAntigo), false);

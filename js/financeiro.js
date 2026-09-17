@@ -13,6 +13,7 @@ let finVisao = 'geral';
 let finDreEscopo = 'mes';
 let finModalAberto = false;
 let finModalLancamentoId = '';
+let finModalRefLocal = '';
 let finModalTipoPadrao = '';
 let finModalBaixaRapida = false;
 let finDiaDetalheAberto = false;
@@ -23,6 +24,7 @@ let finComprovanteNome = '';
 let finComprovanteMime = '';
 let finComprovanteSize = 0;
 let finComprovanteLocalId = '';
+let finComprovanteUploadTemporario = null;
 let finComprovanteRemovido = false;
 let finCategoriaNovaAtiva = false;
 let finCategoriaNovaValor = '';
@@ -711,6 +713,16 @@ function finSaldoBancarioAnterior(dataReferencia) {
     .at(-1) || null;
 }
 
+function finSaldoBancarioAte(dataReferencia) {
+  if (!(dataReferencia instanceof Date) || Number.isNaN(dataReferencia.getTime())) return null;
+  return finSaldosBancariosRegistrados()
+    .filter(item => {
+      const data = finDataIsoParaDate(item.dataReferencia);
+      return data && data.getTime() <= dataReferencia.getTime();
+    })
+    .at(-1) || null;
+}
+
 function finMovimentosRealizadosSemFiltros() {
   const registrados = finLancamentosRegistrados()
     .map(item => finNormalizarLancamentoManual(item))
@@ -734,21 +746,31 @@ function finFluxoRealizadoEntre(inicioExclusive, fimInclusive) {
 function finConciliacaoMes(mes, ano) {
   const dataPainel = finDataReferenciaPainel(mes, ano);
   const saldoBancario = finSaldoBancarioDoMes(mes, ano, dataPainel);
-  const dataReferencia = saldoBancario ? finDataIsoParaDate(saldoBancario.dataReferencia) : dataPainel;
-  const saldoAnterior = finSaldoBancarioAnterior(dataReferencia);
-  const dataSaldoAnterior = saldoAnterior ? finDataIsoParaDate(saldoAnterior.dataReferencia) : null;
-  const movimentoSistema = saldoAnterior ? finFluxoRealizadoEntre(dataSaldoAnterior, dataReferencia) : null;
-  const saldoSistema = saldoAnterior ? finValorSeguro(saldoAnterior.saldo) + movimentoSistema : null;
-  const diferenca = saldoBancario && saldoSistema != null ? finValorSeguro(saldoBancario.saldo) - saldoSistema : null;
+  const inicioMes = new Date(ano, mes, 1, 12, 0, 0, 0);
+  const saldoAberturaMes = finSaldoBancarioAnterior(inicioMes);
+  const saldoBase = saldoAberturaMes || finSaldoBancarioAte(dataPainel);
+  const dataSaldoBase = saldoBase ? finDataIsoParaDate(saldoBase.dataReferencia) : null;
+  const movimentoSistema = saldoBase ? finFluxoRealizadoEntre(dataSaldoBase, dataPainel) : null;
+  const saldoSistema = saldoBase ? finValorSeguro(saldoBase.saldo) + movimentoSistema : null;
+  const dataConciliacao = saldoBancario ? finDataIsoParaDate(saldoBancario.dataReferencia) : null;
+  const saldoBancarioAtualizado = !!(
+    dataConciliacao && dataConciliacao.getTime() === dataPainel.getTime()
+  );
+  const diferenca = saldoBancarioAtualizado && saldoSistema != null
+    ? finValorSeguro(saldoBancario.saldo) - saldoSistema
+    : null;
   return {
     dataPainel,
-    dataReferencia,
-    saldoAnterior,
+    dataReferencia: dataPainel,
+    dataConciliacao,
+    saldoAnterior: saldoBase,
+    saldoBase,
     saldoBancario,
+    saldoBancarioAtualizado,
     movimentoSistema,
     saldoSistema,
     diferenca,
-    conciliado: diferenca != null && Math.abs(diferenca) < 0.01
+    conciliado: diferenca != null && Math.abs(diferenca) < 0.05
   };
 }
 
@@ -1429,31 +1451,39 @@ function finFmtDataCurta(dataOuIso) {
 
 function finBuildConciliacaoBancaria(conciliacao) {
   if (!conciliacao) return '';
-  const temAnterior = !!conciliacao.saldoAnterior;
+  const saldoBase = conciliacao.saldoBase || conciliacao.saldoAnterior;
+  const temBase = !!saldoBase;
   const temBanco = !!conciliacao.saldoBancario;
+  const bancoAtualizado = !!conciliacao.saldoBancarioAtualizado;
   const temDiferenca = conciliacao.diferenca != null;
   let statusClasse = 'pending';
   let statusTexto = 'Aguardando saldo bancario';
-  if (!temAnterior) {
+  if (!temBase) {
     statusClasse = 'setup';
-    statusTexto = temBanco ? 'Saldo inicial registrado' : 'Cadastre o saldo anterior para iniciar';
+    statusTexto = 'Cadastre o saldo anterior para iniciar';
   } else if (temDiferenca && conciliacao.conciliado) {
     statusClasse = 'ok';
     statusTexto = 'Conciliado';
   } else if (temDiferenca) {
     statusClasse = 'warn';
     statusTexto = `Diferenca de ${finFmtAssinado(conciliacao.diferenca)}`;
+  } else if (temBanco) {
+    statusTexto = 'Saldo bancario desatualizado';
   }
 
   const referenciaTexto = finFmtDataCurta(conciliacao.dataReferencia);
-  const anteriorTexto = temAnterior ? `Conferido em ${finFmtDataCurta(conciliacao.saldoAnterior.dataReferencia)}` : 'Nenhum saldo-base anterior';
-  const movimentoTexto = temAnterior
-    ? `De ${finFmtDataCurta(conciliacao.saldoAnterior.dataReferencia)} ate ${referenciaTexto}`
+  const baseTexto = temBase ? `Informado em ${finFmtDataCurta(saldoBase.dataReferencia)}` : 'Nenhum saldo-base anterior';
+  const movimentoTexto = temBase
+    ? `Realizado no mes ate ${referenciaTexto}`
     : 'Disponivel apos informar o saldo anterior';
-  const bancoTexto = temBanco ? `Informado em ${finFmtDataCurta(conciliacao.saldoBancario.dataReferencia)}` : `Referencia sugerida: ${referenciaTexto}`;
+  const bancoTexto = temBanco
+    ? `Informado em ${finFmtDataCurta(conciliacao.saldoBancario.dataReferencia)}`
+    : `Informe o saldo de ${referenciaTexto}`;
   const diferencaTexto = temDiferenca
-    ? (conciliacao.conciliado ? 'Sistema e banco estao batendo' : 'Saldo bancario - saldo esperado')
-    : 'Informe os dois saldos para comparar';
+    ? (conciliacao.conciliado
+      ? 'Sistema e banco estao conciliados'
+      : 'Saldo bancario - saldo esperado')
+    : (bancoAtualizado ? 'Informe os dois saldos para comparar' : 'Atualize o saldo bancario de hoje para comparar');
 
   const metrica = (rotulo, valor, detalhe, classe = '') => `
     <div class="fin-recon-metric ${classe}">
@@ -1468,19 +1498,19 @@ function finBuildConciliacaoBancaria(conciliacao) {
         <div class="fin-recon-title-wrap">
           <div class="fin-recon-kicker">${zUiText('CONCILIACAO BANCARIA')}</div>
           <div class="fin-recon-title">${zUiText('Saldo da conta x saldo do sistema')}</div>
-          <div class="fin-recon-copy">${zUiText('O saldo anterior vira a base; depois o sistema soma entradas recebidas e desconta saidas pagas ate a data conferida.')}</div>
+          <div class="fin-recon-copy">${zUiText('O fechamento anterior ao mes vira a base; todas as entradas recebidas somam e todas as saidas pagas no mes subtraem do saldo esperado.')}</div>
         </div>
         <div class="fin-recon-actions">
           <span class="fin-recon-status ${statusClasse}">${zUiText(statusTexto)}</span>
-          ${!temAnterior ? `<button class="fin-recon-secondary" type="button" onclick="finAbrirModalSaldoBancario('anterior')">${zUiText('Cadastrar saldo anterior')}</button>` : ''}
+          ${!temBase ? `<button class="fin-recon-secondary" type="button" onclick="finAbrirModalSaldoBancario('anterior')">${zUiText('Cadastrar saldo anterior')}</button>` : ''}
           <button class="fin-recon-primary" type="button" onclick="finAbrirModalSaldoBancario('atual')">${zUiText(temBanco ? 'Atualizar saldo bancario' : 'Informar saldo bancario')}</button>
         </div>
       </div>
       <div class="fin-recon-grid">
-        ${metrica('Saldo anterior', temAnterior ? finFmtMoeda(conciliacao.saldoAnterior.saldo) : '—', anteriorTexto, temAnterior ? '' : 'muted')}
-        ${metrica('Movimento no sistema', temAnterior ? finFmtAssinado(conciliacao.movimentoSistema) : '—', movimentoTexto)}
-        ${metrica('Saldo esperado', conciliacao.saldoSistema != null ? finFmtMoeda(conciliacao.saldoSistema) : '—', 'Saldo anterior + movimento realizado', 'system')}
-        ${metrica('Saldo bancario', temBanco ? finFmtMoeda(conciliacao.saldoBancario.saldo) : '—', bancoTexto, 'bank')}
+        ${metrica('Saldo-base do mes', temBase ? finFmtMoeda(saldoBase.saldo) : '—', baseTexto, temBase ? '' : 'muted')}
+        ${metrica('Movimento realizado', temBase ? finFmtAssinado(conciliacao.movimentoSistema) : '—', movimentoTexto)}
+        ${metrica('Saldo esperado hoje', conciliacao.saldoSistema != null ? finFmtMoeda(conciliacao.saldoSistema) : '—', 'Saldo-base + entradas recebidas - saidas pagas', 'system')}
+        ${metrica('Saldo bancario informado', temBanco ? finFmtMoeda(conciliacao.saldoBancario.saldo) : '—', bancoTexto, 'bank')}
         ${metrica('Diferenca', temDiferenca ? finFmtAssinado(conciliacao.diferenca) : '—', diferencaTexto, temDiferenca ? (conciliacao.conciliado ? 'matched' : 'difference') : 'muted')}
       </div>
     </section>`;
@@ -1780,6 +1810,7 @@ function finResetComprovanteState() {
   finComprovanteMime = '';
   finComprovanteSize = 0;
   finComprovanteLocalId = '';
+  finComprovanteUploadTemporario = null;
   finComprovanteRemovido = false;
 }
 
@@ -1864,6 +1895,7 @@ async function finSelecionarComprovanteFile(event) {
     finComprovanteNome = file.name || 'comprovante';
     finComprovanteMime = file.type || '';
     finComprovanteSize = file.size || 0;
+    finComprovanteUploadTemporario = null;
     finComprovanteRemovido = false;
     finAtualizarComprovanteModalUi();
   } catch (erro) {
@@ -1897,6 +1929,7 @@ function finLimparComprovanteSelecionado() {
   finComprovanteNome = '';
   finComprovanteMime = '';
   finComprovanteSize = 0;
+  finComprovanteUploadTemporario = null;
   finComprovanteRemovido = true;
   finAtualizarComprovanteModalUi();
 }
@@ -1906,7 +1939,10 @@ function finMarcarModalComoRealizado(focoComprovante = false) {
   const dataRealizadaEl = document.getElementById('fin-lanc-data-realizada');
   if (!statusEl) return;
   statusEl.value = 'realizado';
-  if (dataRealizadaEl && !dataRealizadaEl.value) dataRealizadaEl.value = finDateParaIso(finHojeRef());
+  // A baixa rapida representa o pagamento/recebimento feito agora. A data
+  // prevista continua preservada no lancamento, enquanto a data realizada
+  // determina o dia em que o movimento efetivamente entra no caixa.
+  if (dataRealizadaEl) dataRealizadaEl.value = finDateParaIso(finHojeRef());
   finAtualizarCamposModalLancamento();
   if (focoComprovante) {
     const alvo = document.getElementById('fin-comprovante-trigger');
@@ -1927,6 +1963,15 @@ function finMarcarModalComoRealizado(focoComprovante = false) {
       showToast('âŒ', zUiText('Falha ao abrir o comprovante local pendente.'));
     }
   } */
+}
+
+function finHandleStatusLancamentoChange() {
+  const statusEl = document.getElementById('fin-lanc-status');
+  const dataRealizadaEl = document.getElementById('fin-lanc-data-realizada');
+  if (statusEl && statusEl.value === 'realizado' && dataRealizadaEl && !dataRealizadaEl.value) {
+    dataRealizadaEl.value = finDateParaIso(finHojeRef());
+  }
+  finAtualizarCamposModalLancamento();
 }
 
 function finAbrirBaixaLancamento(chave) {
@@ -2160,6 +2205,7 @@ function finAbrirModalLancamento(tipo = '') {
   finResetDetalheDiaState();
   finModalAberto = true;
   finModalLancamentoId = '';
+  finModalRefLocal = typeof gerarRefLocalFinanceiro === 'function' ? gerarRefLocalFinanceiro() : `fin-${Date.now()}`;
   finModalTipoPadrao = tipo || finTipoPadraoNovaAcao() || 'entrada';
   finResetCategoriaNovaState();
   finPrepararComprovanteModal(null);
@@ -2181,6 +2227,7 @@ function finEditarLancamentoManual(chave) {
   finResetDetalheDiaState();
   finModalAberto = true;
   finModalLancamentoId = String(chave || '');
+  finModalRefLocal = String(item.refLocal || item.ref_local || '');
   finModalTipoPadrao = '';
   finResetCategoriaNovaState();
   finPrepararComprovanteModal(item);
@@ -2197,6 +2244,7 @@ function finFecharModalLancamento(forcar = false) {
   if (finLancamentoSalvando && !forcar) return;
   finModalAberto = false;
   finModalLancamentoId = '';
+  finModalRefLocal = '';
   finModalTipoPadrao = '';
   finResetCategoriaNovaState();
   finResetComprovanteState();
@@ -2283,7 +2331,6 @@ async function finSalvarLancamento() {
   const dataRealizadaEl = document.getElementById('fin-lanc-data-realizada');
   const valorEl = document.getElementById('fin-lanc-valor');
   const observacaoEl = document.getElementById('fin-lanc-observacao');
-  const btn = document.getElementById('fin-lanc-save-btn');
   if (!tipoEl || !categoriaEl || !descricaoEl || !dataPrevistaEl || !statusEl || !valorEl) return;
 
   const tipo = tipoLancamentoFinanceiroNormalizado(tipoEl.value);
@@ -2310,6 +2357,7 @@ async function finSalvarLancamento() {
 
   finSetLancamentoLoading(true, 'Salvando...');
   const existente = finLancamentoAtual();
+  const indiceExistente = existente ? FINANCEIRO_LANCAMENTOS.indexOf(existente) : -1;
   const agoraIso = new Date().toISOString();
   const comprovanteAnterior = existente ? {
     nome: existente.comprovanteNome || '',
@@ -2320,15 +2368,16 @@ async function finSalvarLancamento() {
     storageBucket: existente.comprovanteStorageBucket || '',
     storagePath: existente.comprovanteStoragePath || ''
   } : null;
-  const alvo = existente || {
+  const alvo = existente ? { ...existente } : {
     id: Date.now(),
-    refLocal: typeof gerarRefLocalFinanceiro === 'function' ? gerarRefLocalFinanceiro() : `fin-${Date.now()}`,
+    refLocal: finModalRefLocal || (typeof gerarRefLocalFinanceiro === 'function' ? gerarRefLocalFinanceiro() : `fin-${Date.now()}`),
     criadoPor: usuarioLogado ? (usuarioLogado.nome || '') : 'Sistema',
     criadoPorId: usuarioLogado ? (parseInt(usuarioLogado.id, 10) || 0) : 0,
     criadoPorEmail: usuarioLogado ? (usuarioLogado.email || '') : '',
     syncPendente: false,
     syncErro: ''
   };
+  finModalRefLocal = String(alvo.refLocal || finModalRefLocal || '');
 
   alvo.tipo = tipo;
   alvo.categoria = categoria;
@@ -2354,8 +2403,8 @@ async function finSalvarLancamento() {
     alvo.comprovanteNome = finComprovanteNome || finComprovanteFile.name || 'comprovante';
     alvo.comprovanteMime = finComprovanteMime || finComprovanteFile.type || '';
     alvo.comprovanteSize = finComprovanteSize || finComprovanteFile.size || 0;
-    alvo.comprovanteLocalId = finComprovanteLocalId || alvo.refLocal || '';
-    alvo.comprovanteDataUrl = finComprovanteDataUrl || '';
+    alvo.comprovanteLocalId = '';
+    alvo.comprovanteDataUrl = '';
     alvo.comprovanteStorageBucket = '';
     alvo.comprovanteStoragePath = '';
   } else if (comprovanteAnterior) {
@@ -2376,62 +2425,49 @@ async function finSalvarLancamento() {
     alvo.comprovanteStoragePath = '';
   }
 
-  if (finComprovanteFile && alvo.comprovanteLocalId && typeof salvarFinanceiroComprovanteLocal === 'function') {
-    try {
-      await salvarFinanceiroComprovanteLocal(alvo.comprovanteLocalId, finComprovanteFile, {
-        nome: alvo.comprovanteNome,
-        mime: alvo.comprovanteMime,
-        size: alvo.comprovanteSize
-      });
-      finComprovanteLocalId = alvo.comprovanteLocalId;
-    } catch (erroComprovanteLocal) {
-      console.warn('Falha ao persistir comprovante local do financeiro. Usando fallback em dataUrl.', erroComprovanteLocal);
-      alvo.comprovanteDataUrl = finComprovanteDataUrl || '';
-      alvo.comprovanteLocalId = '';
-    }
-  } else if (finComprovanteFile) {
-    alvo.comprovanteDataUrl = finComprovanteDataUrl || '';
-  }
-
-  if (!existente) {
-    FINANCEIRO_LANCAMENTOS.push(alvo);
-  }
-  FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
-  zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
-  if (typeof salvarLS === 'function') salvarLS();
-
-  finFecharModalLancamento(true);
-  finSetLancamentoLoading(false);
-
   try {
-    if (finComprovanteFile && typeof dbUploadDocumentoArquivo === 'function') {
-      try {
+    if (typeof dbSalvarLancamentoFinanceiro !== 'function') {
+      throw new Error('Persistencia do financeiro indisponivel.');
+    }
+
+    if (finComprovanteFile) {
+      if (!finComprovanteUploadTemporario) {
+        if (typeof dbUploadDocumentoArquivo !== 'function') {
+          throw new Error('Upload de comprovante indisponivel.');
+        }
         const upload = await dbUploadDocumentoArquivo(finComprovanteFile, {
           folder: 'financeiro/comprovantes'
         });
-        alvo.comprovanteStorageBucket = upload.bucket || '';
-        alvo.comprovanteStoragePath = upload.path || '';
-        alvo.comprovanteDataUrl = '';
-        if (alvo.comprovanteLocalId && typeof excluirFinanceiroComprovanteLocal === 'function') {
-          await excluirFinanceiroComprovanteLocal(alvo.comprovanteLocalId).catch(() => true);
+        if (!upload || !upload.bucket || !upload.path) {
+          throw new Error('O Supabase nao confirmou o envio do comprovante.');
         }
-        alvo.comprovanteLocalId = '';
-      } catch (erroUploadComprovante) {
-        alvo.comprovanteDataUrl = finComprovanteDataUrl || alvo.comprovanteDataUrl || '';
-        console.warn('Falha ao enviar comprovante do financeiro. Mantendo anexo local pendente.', erroUploadComprovante);
+        finComprovanteUploadTemporario = {
+          bucket: upload.bucket,
+          path: upload.path
+        };
       }
+      alvo.comprovanteStorageBucket = finComprovanteUploadTemporario.bucket;
+      alvo.comprovanteStoragePath = finComprovanteUploadTemporario.path;
+      alvo.comprovanteDataUrl = '';
+      alvo.comprovanteLocalId = '';
     }
-    if (typeof dbSalvarLancamentoFinanceiro === 'function') {
-      await dbSalvarLancamentoFinanceiro(alvo, existente ? existente.id : 0);
-    }
-    const comprovantePendente = !!((alvo.comprovanteLocalId || alvo.comprovanteDataUrl) && !alvo.comprovanteStoragePath);
-    if (comprovantePendente) {
-      alvo.syncPendente = true;
-      alvo.syncErro = alvo.syncErro || 'Comprovante pendente de sincronizacao.';
+
+    const confirmado = await dbSalvarLancamentoFinanceiro(alvo, existente ? existente.id : 0);
+    if (confirmado && confirmado !== alvo) Object.assign(alvo, confirmado);
+    alvo.confirmadoSupabase = true;
+    alvo.syncPendente = false;
+    alvo.syncErro = '';
+
+    if (existente && indiceExistente >= 0) {
+      FINANCEIRO_LANCAMENTOS.splice(indiceExistente, 1, alvo);
     } else {
-      alvo.syncPendente = false;
-      alvo.syncErro = '';
+      FINANCEIRO_LANCAMENTOS.push(alvo);
     }
+
+    FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
+    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
+    if (typeof salvarLS === 'function') salvarLS();
+
     const trocouComprovanteStorage = !!(
       comprovanteAnterior &&
       comprovanteAnterior.storageBucket &&
@@ -2462,26 +2498,15 @@ async function finSalvarLancamento() {
         console.warn('Falha ao remover comprovante local antigo do financeiro:', erroExcluirComprovanteLocal);
       }
     }
-    FINANCEIRO_LANCAMENTOS.sort(finOrdenarLancamentosLocais);
-    zSetState('state.data.financeiroLancamentos', FINANCEIRO_LANCAMENTOS);
-    if (typeof salvarLS === 'function') salvarLS();
-    if (!document.getElementById('mod-financeiro')?.classList.contains('hidden')) renderFinanceiro();
-    if (comprovantePendente) {
-      showToast('âš ï¸', zUiText(tipo === 'saida'
-        ? 'Saida salva. O comprovante ficara pendente ate sincronizar com o storage.'
-        : 'Entrada salva. O comprovante ficara pendente ate sincronizar com o storage.'));
-    } else {
+
+    finSetLancamentoLoading(false);
+    finFecharModalLancamento(true);
     showToast('✅', zUiText(tipo === 'saida' ? 'Saida salva no caixa.' : 'Entrada salva no caixa.'));
-    }
   } catch (erro) {
-    if (typeof salvarLS === 'function') salvarLS();
-    if (!document.getElementById('mod-financeiro')?.classList.contains('hidden')) renderFinanceiro();
-    showToast('⚠️', zUiText('Lancamento salvo apenas neste navegador. O Supabase nao confirmou a gravacao.'));
+    console.warn('O Supabase nao confirmou o lancamento financeiro:', erro && (erro.message || erro));
+    showToast('⚠️', zUiText('Nao foi possivel confirmar a gravacao. O lancamento nao foi incluido no caixa. Revise a conexao e tente novamente.'));
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = zUiText(existente ? 'Salvar alteracoes' : 'Salvar lancamento');
-    }
+    if (finLancamentoSalvando) finSetLancamentoLoading(false);
   }
 }
 
@@ -3231,7 +3256,7 @@ function renderFinanceiro() {
           </div>
           <div class="f-field">
             <label>Status</label>
-            <select id="fin-lanc-status" onchange="finAtualizarCamposModalLancamento()">
+            <select id="fin-lanc-status" onchange="finHandleStatusLancamentoChange()">
               <option value="previsto" ${statusModal === 'previsto' ? 'selected' : ''}>${zUiText('Previsto')}</option>
               <option value="realizado" ${statusModal === 'realizado' ? 'selected' : ''}>${zUiText('Realizado')}</option>
             </select>
@@ -3269,7 +3294,7 @@ function renderFinanceiro() {
           </div>
           <div class="f-field" id="fin-lanc-realizada-wrap" style="display:${statusModal === 'realizado' ? 'block' : 'none'};">
             <label>Data realizada</label>
-            <input type="date" id="fin-lanc-data-realizada" value="${finEscapeAttr(itemEditando ? itemEditando.dataRealizada || itemEditando.dataPrevista || '' : '')}">
+            <input type="date" id="fin-lanc-data-realizada" value="${finEscapeAttr(itemEditando ? itemEditando.dataRealizada || '' : '')}">
           </div>
         </div>
         <div class="f-row">

@@ -75,7 +75,7 @@ function forcarDashboardInicial() {
     setMod('dashboard', btnDashboard || undefined);
     return;
   }
-  ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
+  ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro','reembolsos-ato','folha-pagamento']
     .forEach(x => document.getElementById('mod-' + x)?.classList.add('hidden'));
   document.getElementById('mod-dashboard')?.classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -236,6 +236,10 @@ function atualizarTopbar(usuario, rv) {
   }
   const sbFin = document.getElementById('sb-financeiro');
   if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(rv) ? 'flex' : 'none';
+  const sbReembolsosAto = document.getElementById('sb-reembolsos-ato');
+  if (sbReembolsosAto) sbReembolsosAto.style.display = ['dono','fin'].includes(rv) ? 'flex' : 'none';
+  const sbFolha = document.getElementById('sb-folha-pagamento');
+  if (sbFolha) sbFolha.style.display = ['dono','fin'].includes(rv) ? 'flex' : 'none';
   const sbRh = document.getElementById('sb-rh');
   if (sbRh) sbRh.style.display = ['dono','dir','fin','rh'].includes(rv) ? 'flex' : 'none';
   const sbEnvios = document.getElementById('sb-envios');
@@ -258,11 +262,23 @@ function trocaRole(novoRole = '') {
   document.getElementById('sb-urole').textContent = zUiText(d.role);
   const sbFin = document.getElementById('sb-financeiro');
   if (sbFin) sbFin.style.display = ['dono','fin','dir'].includes(role) ? 'flex' : 'none';
+  const sbReembolsosAto = document.getElementById('sb-reembolsos-ato');
+  if (sbReembolsosAto) sbReembolsosAto.style.display = ['dono','fin'].includes(role) ? 'flex' : 'none';
+  const sbFolha = document.getElementById('sb-folha-pagamento');
+  if (sbFolha) sbFolha.style.display = ['dono','fin'].includes(role) ? 'flex' : 'none';
   const sbRh = document.getElementById('sb-rh');
   if (sbRh) sbRh.style.display = ['dono','dir','fin','rh'].includes(role) ? 'flex' : 'none';
   const sbEnvios = document.getElementById('sb-envios');
   if (sbEnvios) sbEnvios.style.display = ['dono','dir','fin','rh','ger'].includes(role) ? 'flex' : 'none';
   if (!['dono','dir','fin','rh'].includes(role) && !document.getElementById('mod-rh').classList.contains('hidden')) {
+    const btnDashboard = document.getElementById('sb-dashboard');
+    setMod('dashboard', btnDashboard || undefined);
+  }
+  if (!['dono','fin'].includes(role) && !document.getElementById('mod-folha-pagamento').classList.contains('hidden')) {
+    const btnDashboard = document.getElementById('sb-dashboard');
+    setMod('dashboard', btnDashboard || undefined);
+  }
+  if (!['dono','fin'].includes(role) && !document.getElementById('mod-reembolsos-ato').classList.contains('hidden')) {
     const btnDashboard = document.getElementById('sb-dashboard');
     setMod('dashboard', btnDashboard || undefined);
   }
@@ -276,6 +292,8 @@ function trocaRole(novoRole = '') {
   if (!document.getElementById('mod-envios').classList.contains('hidden') && typeof renderEnvios === 'function') renderEnvios();
   if (!document.getElementById('mod-dashboard').classList.contains('hidden') && typeof renderDashboard === 'function') renderDashboard();
   if (!document.getElementById('mod-rh').classList.contains('hidden') && typeof renderRhDashboard === 'function') renderRhDashboard();
+  if (!document.getElementById('mod-folha-pagamento').classList.contains('hidden') && typeof renderFolhaPagamento === 'function') renderFolhaPagamento();
+  if (!document.getElementById('mod-reembolsos-ato').classList.contains('hidden') && typeof renderReembolsosAto === 'function') renderReembolsosAto();
   if (!document.getElementById('mod-usuarios').classList.contains('hidden')) renderUsuarios();
   atualizarBadgeNotificacoes();
   if (!document.getElementById('npanel').classList.contains('hidden')) renderNots();
@@ -288,7 +306,7 @@ const modTitles = {
   dashboard:'Dashboard',
   rh:'Dash RH',
   agendamentos:'Agendamentos', envios:'Envios WhatsApp', trein:'Treinamentos', documentos:'Documentos', proc:'Processos Operacionais',
-  usuarios:'Usuários', financeiro:'Financeiro'
+  usuarios:'Usuários', financeiro:'Financeiro', 'reembolsos-ato':'Reembolsos de ATO', 'folha-pagamento':'Folha de Pagamento'
 };
 
 function appMobileNavAtivo() {
@@ -328,7 +346,15 @@ function setMod(m, el) {
     showToast(zUiText('🔒'), zUiText('Somente RH, Dono, Diretor ou Financeiro podem acessar o Dash RH.'));
     return;
   }
-  ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro']
+  if (m === 'folha-pagamento' && !['dono','fin'].includes(role)) {
+    showToast(zUiText('🔒'), zUiText('Somente Dono ou Financeiro podem acessar a Folha de Pagamento.'));
+    return;
+  }
+  if (m === 'reembolsos-ato' && !['dono','fin'].includes(role)) {
+    showToast(zUiText('🔒'), zUiText('Somente Dono ou Financeiro podem acessar os Reembolsos de ATO.'));
+    return;
+  }
+  ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro','reembolsos-ato','folha-pagamento']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
   document.getElementById('mod-' + m).classList.remove('hidden');
   document.querySelectorAll('.sb-item').forEach(t => t.classList.remove('active'));
@@ -346,6 +372,8 @@ function setMod(m, el) {
   if (m === 'vendas' && vtab === 'rel') renderRel();
   if (m === 'usuarios')   renderUsuarios();
   if (m === 'financeiro') renderFinanceiro();
+  if (m === 'reembolsos-ato' && typeof renderReembolsosAto === 'function') renderReembolsosAto();
+  if (m === 'folha-pagamento' && typeof renderFolhaPagamento === 'function') renderFolhaPagamento();
 }
 
 // BIND DE EVENTOS DO LOGIN

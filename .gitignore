@@ -1,0 +1,17 @@
+# Configuracoes locais
+.netlify/
+.agents/
+.env
+.env.*
+!.env.example
+
+# Dados, backups e arquivos temporarios
+backups/
+tmp/
+tmp-*
+*.zip
+*.log
+
+# Estado local da Supabase CLI
+supabase/.temp/
+supabase/supabase/
