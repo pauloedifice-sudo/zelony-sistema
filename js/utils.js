@@ -198,6 +198,22 @@ window.zUiText = zUiText;
 window.zNormalizarAliasSistema = zNormalizarAliasSistema;
 window.zNormalizarCampoTexto = zNormalizarCampoTexto;
 
+function zEscapeHtml(valor) {
+  return String(valor == null ? '' : valor)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function zUiHtml(valor) {
+  return zEscapeHtml(zUiText(valor));
+}
+
+window.zEscapeHtml = zEscapeHtml;
+window.zUiHtml = zUiHtml;
+
 function ini(n) { return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function fmt(v) { return 'R$ ' + Math.round(v).toLocaleString('pt-BR'); }
 function fmtK(v) { return v >= 1e6 ? 'R$ '+(v/1e6).toFixed(1)+'M' : v >= 1000 ? 'R$ '+Math.round(v/1000)+'k' : fmt(v); }

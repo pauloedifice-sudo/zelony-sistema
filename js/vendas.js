@@ -1207,7 +1207,7 @@ function renderVList(){
       v.distratada?'vrow-distrato':'vrow-ativa',
       atraso&&atraso.tipo==='atrasada'?'vrow-atrasada':''
     ].filter(Boolean).join(' ');
-    return`<div class="${rowClass}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav ${v.distratada?'vav-distrato':'vav-ativa'}">${ini(v.cliente)}</div><div class="vmeta"><div class="vnome">${zUiText(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiText(v.produto)} ${zUiText('·')} ${zUiText(v.construtora)}</div><div class="vbadges">${statusBadge}<span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${pbadge}${bbadge}${bformaBadge}${abadge}</div></div></div>`;
+    return`<div class="${rowClass}" id="vr-${v.id}" onclick="showVDetail(${v.id})"><div class="vav ${v.distratada?'vav-distrato':'vav-ativa'}">${ini(v.cliente)}</div><div class="vmeta"><div class="vnome">${zUiHtml(clienteVendaTexto(v.cliente) || 'Sem cliente')}</div><div class="vsub">${zUiHtml(v.produto)} ${zUiText('·')} ${zUiHtml(v.construtora)}</div><div class="vbadges">${statusBadge}<span class="vstep${v.etapa===ETAPAS.length-1?' final':''}">${zUiText(ETAPAS[v.etapa])}</span>${ubadge}${pbadge}${bbadge}${bformaBadge}${abadge}</div></div></div>`;
   }).join('');
   if(typeof showVDetail==='function'&&curVId) showVDetail(curVId);
 }
@@ -2200,7 +2200,7 @@ function handleDocUpload(input,tipo){
     const icon=tipo==='comp'?'🧾':'📄';
     const label=tipo==='comp'?'Comprovante de pagamento':'Contrato assinado';
     box.classList.remove('erro');box.classList.add('ok');box.onclick=null;
-    inner.innerHTML=`<div style="font-size:18px;margin-bottom:3px;">${zUiText(icon)} ${zUiText('✓')}</div><div style="font-size:11px;font-weight:600;color:#2E7E5E;">${zUiText(label)}</div><div style="font-size:10px;color:#2E9E6E;margin-top:2px;">${zUiText(file.name)} ${zUiText('·')} ${fmtTamanho(file.size)}</div><button onclick="removerDoc('${tipo}',event)" style="margin-top:6px;font-size:9px;background:none;border:1px solid #2E9E6E;border-radius:4px;padding:2px 8px;color:#2E7E5E;cursor:pointer;">${zUiText('Trocar arquivo')}</button>`;
+    inner.innerHTML=`<div style="font-size:18px;margin-bottom:3px;">${zUiText(icon)} ${zUiText('✓')}</div><div style="font-size:11px;font-weight:600;color:#2E7E5E;">${zUiText(label)}</div><div style="font-size:10px;color:#2E9E6E;margin-top:2px;">${zUiHtml(file.name)} ${zUiText('·')} ${fmtTamanho(file.size)}</div><button onclick="removerDoc('${tipo}',event)" style="margin-top:6px;font-size:9px;background:none;border:1px solid #2E9E6E;border-radius:4px;padding:2px 8px;color:#2E7E5E;cursor:pointer;">${zUiText('Trocar arquivo')}</button>`;
   };
   reader.readAsDataURL(file);
 }

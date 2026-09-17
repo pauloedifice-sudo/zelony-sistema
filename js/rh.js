@@ -379,7 +379,7 @@ function rhPanelRanking(titulo, subtitulo, lista, opcoes = {}) {
     return `
       <div class="rh-rank-row">
         <div class="rh-rank-main">
-          <div class="rh-rank-name">${zUiText(item.nome)}</div>
+          <div class="rh-rank-name">${zUiHtml(item.nome)}</div>
           ${opcoes.mostrarMeta !== false ? `<div class="rh-rank-meta">${zUiText(opcoes.metaPrefix ? `${opcoes.metaPrefix}${item.meta}` : item.meta)}</div>` : ''}
           <div class="rh-rank-bar"><span style="width:${pct.toFixed(2)}%"></span></div>
         </div>
@@ -570,13 +570,13 @@ function rhPainelInsights(resumo, contexto = {}) {
       <div class="rh-insight-footer">
         <div class="rh-insight-foot-card">
           <span>${zUiText('Unidade lider')}</span>
-          <strong>${zUiText(unidadeLider ? unidadeLider.nome : 'Sem unidade')}</strong>
+          <strong>${zUiHtml(unidadeLider ? unidadeLider.nome : 'Sem unidade')}</strong>
           <p>${zUiText(unidadeLider ? `${rhNumero(unidadeLider.ativos)} ativos e ${rhNumero(unidadeLider.corretoresAtivos)} corretores em operacao.` : 'Nenhuma unidade apareceu com os filtros atuais.')}</p>
         </div>
 
         <div class="rh-insight-foot-card">
           <span>${zUiText('Equipe lider')}</span>
-          <strong>${zUiText(equipeLider ? equipeLider.nome : 'Sem equipe')}</strong>
+          <strong>${zUiHtml(equipeLider ? equipeLider.nome : 'Sem equipe')}</strong>
           <p>${zUiText(equipeLider ? `${rhNumero(equipeLider.ativos)} ativos no recorte e referencia ${equipeLider.meta || 'sem unidade definida'}.` : 'Nenhuma equipe apareceu com os filtros atuais.')}</p>
         </div>
 
@@ -593,7 +593,7 @@ function rhPainelInsights(resumo, contexto = {}) {
 function rhTabelaResumo(titulo, subtitulo, lista, opcoes = {}) {
   const linhas = lista.length ? lista.map(item => `
     <tr>
-      <td><strong>${zUiText(item.nome)}</strong></td>
+      <td><strong>${zUiHtml(item.nome)}</strong></td>
       ${opcoes.mostrarMeta ? `<td>${zUiText(item.meta)}</td>` : ''}
       <td>${rhNumero(item.total)}</td>
       <td>${rhNumero(item.ativos)}</td>
@@ -1584,7 +1584,7 @@ function rhPanelProducaoRanking(titulo, subtitulo, lista, opcoes = {}) {
     return `
       <div class="rh-rank-row">
         <div class="rh-rank-main">
-          <div class="rh-rank-name">${zUiText(item.nome || item.usuario && item.usuario.nome || 'Sem nome')}</div>
+          <div class="rh-rank-name">${zUiHtml(item.nome || item.usuario && item.usuario.nome || 'Sem nome')}</div>
           <div class="rh-rank-meta">${zUiText(meta)}</div>
           <div class="rh-rank-bar"><span style="width:${pct.toFixed(2)}%"></span></div>
         </div>
@@ -1670,7 +1670,7 @@ function rhTabelaProducao(producao) {
           <tbody>
             ${linhasAtivas.map(linha => `
               <tr>
-                <td><strong>${zUiText(linha.usuario.nome)}</strong></td>
+                <td><strong>${zUiHtml(linha.usuario.nome)}</strong></td>
                 <td>${zUiText(linha.equipe)}</td>
                 <td>${zUiText(linha.status)}</td>
                 <td>${zUiText(rhIsoParaBr(linha.ativacaoIso))}</td>
@@ -1728,7 +1728,7 @@ function rhTabelaEventosStatus(dados) {
           <tbody>
             ${dados.eventos.map(item => `
               <tr>
-                <td><strong>${zUiText(item.usuario.nome)}</strong></td>
+                <td><strong>${zUiHtml(item.usuario.nome)}</strong></td>
                 <td>${zUiText(rhEquipeValor(item.usuario))}</td>
                 <td>${zUiText(item.tipo === 'inativado' ? 'Inativado' : item.tipo === 'reativado' ? 'Reativado' : 'Ativado')}</td>
                 <td>${zUiText(item.dataBr)}</td>

@@ -141,21 +141,21 @@ function _buildUserCard(u, idx) {
     : statusPendente === 'Ativo'
       ? 'Reativando...'
       : rotuloStatus;
-  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
-  const equipeBadge = u.equipe ? `<span class="user-team-badge">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
+  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}">${zUiText('📍')} ${zUiHtml(u.unidade)}</span>` : '';
+  const equipeBadge = u.equipe ? `<span class="user-team-badge">${zUiText('👥')} ${zUiHtml(u.equipe)}</span>` : '';
   const pixCopyArg = encodeURIComponent(String(u.pix || ''));
   const bancoLabel = u.banco
-    ? `${zUiText(u.banco)} ${zUiText('·')} ${zUiText(u.tipoConta || 'Conta não informada')}`
+    ? `${zUiHtml(u.banco)} ${zUiText('·')} ${zUiHtml(u.tipoConta || 'Conta não informada')}`
     : zUiText('Dados bancários não informados');
   const pixLabel = u.pixTipo
-    ? `${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`
+    ? `${zUiText('Pix')} ${zUiHtml(u.pixTipo)}: ${zUiHtml(u.pix)}`
     : zUiText('Chave Pix não informada');
   return `<div class="user-card">
     <div class="user-card-top">
       <div class="user-card-top-main">
         <div class="user-av" style="background:${avatarColor};">${iniUser(u.nome)}</div>
         <div class="user-head-copy">
-          <div class="user-name">${zUiText(u.nome)}</div>
+          <div class="user-name">${zUiHtml(u.nome)}</div>
           <div class="user-chip-row">
             <span class="user-role-tag ${perfilMeta.tag}">${zUiText(perfilMeta.icon)} ${zUiText(perfilMeta.label)}</span>
             ${unidBadge}
@@ -167,11 +167,11 @@ function _buildUserCard(u, idx) {
     <div class="user-card-body">
       <div class="user-info-item">
         <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 5l6 5 6-5"/></svg><span>${zUiText('E-mail')}</span></div>
-        <div class="user-info-value">${zUiText(u.email)}</div>
+        <div class="user-info-value">${zUiHtml(u.email)}</div>
       </div>
       <div class="user-info-item">
         <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${zUiText('Telefone')}</span></div>
-        <div class="user-info-value">${zUiText(u.tel||'Não informado')}</div>
+        <div class="user-info-value">${zUiHtml(u.tel||'Não informado')}</div>
       </div>
       <div class="user-info-item">
         <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${zUiText('Conta')}</span></div>
@@ -591,14 +591,14 @@ function _buildMeuCadastroCard(u) {
   const statusAtual = typeof usuarioStatusNormalizado === 'function'
     ? usuarioStatusNormalizado(u)
     : zUiText(u.status || 'Ativo');
-  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}">${zUiText('📍')} ${zUiText(u.unidade)}</span>` : '';
-  const equipeBadge = u.equipe ? `<span class="user-team-badge">${zUiText('👥')} ${zUiText(u.equipe)}</span>` : '';
+  const unidBadge  = u.unidade ? `<span class="badge-unid ${u.unidade==='Centro'?'badge-centro':u.unidade==='Cristo Rei'?'badge-cristo':'badge-ambas'}">${zUiText('📍')} ${zUiHtml(u.unidade)}</span>` : '';
+  const equipeBadge = u.equipe ? `<span class="user-team-badge">${zUiText('👥')} ${zUiHtml(u.equipe)}</span>` : '';
   const pixCopyArg = encodeURIComponent(String(u.pix || ''));
   const bancoLabel = u.banco
-    ? `${zUiText(u.banco)} ${zUiText('·')} ${zUiText(u.tipoConta || 'Conta não informada')}`
+    ? `${zUiHtml(u.banco)} ${zUiText('·')} ${zUiHtml(u.tipoConta || 'Conta não informada')}`
     : zUiText('Dados bancários não informados');
   const pixLabel = u.pixTipo
-    ? `${zUiText('Pix')} ${zUiText(u.pixTipo)}: ${zUiText(u.pix)}`
+    ? `${zUiText('Pix')} ${zUiHtml(u.pixTipo)}: ${zUiHtml(u.pix)}`
     : zUiText('Chave Pix não informada');
 
   return `<div class="user-card">
@@ -606,7 +606,7 @@ function _buildMeuCadastroCard(u) {
       <div class="user-card-top-main">
         <div class="user-av" style="background:${avatarColor};">${iniUser(u.nome)}</div>
         <div class="user-head-copy">
-          <div class="user-name">${zUiText(u.nome)}</div>
+          <div class="user-name">${zUiHtml(u.nome)}</div>
           <div class="user-chip-row">
             <span class="user-role-tag ${perfilMeta.tag}">${zUiText(perfilMeta.icon)} ${zUiText(perfilMeta.label)}</span>
             ${unidBadge}
@@ -618,11 +618,11 @@ function _buildMeuCadastroCard(u) {
     <div class="user-card-body">
       <div class="user-info-item">
         <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="12" height="9" rx="1"/><path d="M2 5l6 5 6-5"/></svg><span>${zUiText('E-mail')}</span></div>
-        <div class="user-info-value">${zUiText(u.email)}</div>
+        <div class="user-info-value">${zUiHtml(u.email)}</div>
       </div>
       <div class="user-info-item">
         <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3a1 1 0 011-1h2l1 3-1.5 1a8 8 0 004.5 4.5L11 9l3 1v2a1 1 0 01-1 1A12 12 0 013 3z"/></svg><span>${zUiText('Telefone')}</span></div>
-        <div class="user-info-value">${zUiText(u.tel || 'Não informado')}</div>
+        <div class="user-info-value">${zUiHtml(u.tel || 'Não informado')}</div>
       </div>
       <div class="user-info-item">
         <div class="user-info-label"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="14" height="10" rx="1.5"/><path d="M9 9a1 1 0 110 2 1 1 0 010-2z" fill="currentColor" stroke="none"/><path d="M4 4V3a2 2 0 014 0v1"/></svg><span>${zUiText('Conta')}</span></div>
@@ -710,7 +710,7 @@ function renderUsuarios() {
       <div class="u-search-wrap">
         <span class="u-search-icon">${zUiText('🔍')}</span>
         <input type="text" id="user-search-input" placeholder="${zUiText('Buscar por nome, e-mail ou equipe...')}"
-          value="${zUiText(uBusca)}" oninput="uBusca=this.value;filtrarUsuarios()">
+          value="${zUiHtml(uBusca)}" oninput="uBusca=this.value;filtrarUsuarios()">
       </div>
       <select class="u-filter-sel" onchange="uFiltroPerfil=this.value;renderUsuarios()">
         <option value="">${zUiText('Todos os perfis')}</option>

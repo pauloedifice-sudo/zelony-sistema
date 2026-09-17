@@ -3135,7 +3135,7 @@ function atualizarCorretoresAgendamentoModal() {
     .sort((a, b) => agTexto(a.nome).localeCompare(agTexto(b.nome), 'pt-BR'));
 
   if (usuarios.length) {
-    corretor.innerHTML = usuarios.map(usuario => `<option value="${usuario.id}">${agTexto(usuario.nome)}</option>`).join('');
+    corretor.innerHTML = usuarios.map(usuario => `<option value="${usuario.id}">${zUiHtml(usuario.nome)}</option>`).join('');
     const opcaoAtual = usuarios.some(usuario => String(usuario.id) === String(atual)) ? atual : String(usuarios[0].id);
     corretor.value = opcaoAtual;
   } else {

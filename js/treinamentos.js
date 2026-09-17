@@ -690,7 +690,7 @@ function renderMtVideos(){
     return `<div class="trein-video-item">
       <div class="trein-video-item-icon">${zUiText('🎬')}</div>
       <div class="trein-video-item-main">
-        <strong>${zUiText(video.nome)}</strong>
+        <strong>${zUiHtml(video.nome)}</strong>
         <small>${detalhe}</small>
       </div>
       <span class="trein-video-item-badge ${video.id ? 'saved' : 'new'}">${zUiText(video.id ? 'Salvo' : 'Novo')}</span>
@@ -909,11 +909,11 @@ function renderTreinPainelLegacy(t, progresso, isDiretor, canDelete){
           <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
           ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatório')}</span>` : ''}
         </div>
-        <div class="trein-detail-title">${zUiText(t.titulo)}</div>
+        <div class="trein-detail-title">${zUiHtml(t.titulo)}</div>
         <div class="trein-detail-copy">${zUiText('Trilha prática para acelerar a execução da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
         <div class="trein-detail-meta">
           <span>${t.aulas} ${zUiText('aulas')}</span>
-          <span>${zUiText(t.dur)}</span>
+          <span>${zUiHtml(t.dur)}</span>
           <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluídas')}</span>
         </div>
       </div>
@@ -957,8 +957,8 @@ function renderTreinPainelLegacy(t, progresso, isDiretor, canDelete){
           return `<button class="trein-lesson ${done ? 'done' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
             <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
             <span class="trein-lesson-main">
-              <strong>${zUiText(licao.titulo)}</strong>
-              <small>${zUiText(licao.resumo)}</small>
+              <strong>${zUiHtml(licao.titulo)}</strong>
+              <small>${zUiHtml(licao.resumo)}</small>
             </span>
             <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluída') : zUiText('Marcar'))}</span>
           </button>`;
@@ -1047,8 +1047,8 @@ function renderTreinLegacy(){
               ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
               ${bloqueado ? `<span class="zbg bg-r">${zUiText('Bloqueado')}</span>` : ''}
             </div>
-            <div class="trein-card-title">${zUiText(t.titulo)}</div>
-            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div>
+            <div class="trein-card-title">${zUiHtml(t.titulo)}</div>
+            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiHtml(t.dur)}</div>
             <div class="trein-card-progress">
               <div class="pb"><div class="pf ${progresso.status==='concluido'?'done':''}" style="width:${progresso.pct}%"></div></div>
               <div class="pl">${progresso.status==='concluido' ? zUiText('Concluído') : `${progresso.pct}% ${zUiText('concluído')}`}</div>
@@ -1117,7 +1117,7 @@ function atualizarMtRegras(tAtual = null){
     .filter(t => normalizarCatTrein(t.cat) === cat && treinKey(t) !== atualKey)
     .sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || '')));
 
-  select.innerHTML = `<option value="">Nenhum</option>${opcoes.map(t => `<option value="${treinKey(t)}">${zUiText(t.titulo)}</option>`).join('')}`;
+  select.innerHTML = `<option value="">Nenhum</option>${opcoes.map(t => `<option value="${treinKey(t)}">${zUiHtml(t.titulo)}</option>`).join('')}`;
   select.disabled = !opcoes.length;
   select.value = meta.prerequisito || '';
 }
@@ -1276,7 +1276,7 @@ function renderProc(){
   Object.entries(PROC_DATA).forEach(([s, pp]) => {
     h += `<div class="proc-sec"><div class="psec-lbl">${zUiText(s)}</div>`;
     pp.forEach((p, i) => {
-      h += `<div class="pitem" onclick="showProc('${s}',${i})"><div class="picon">${zUiText(ic[s]?.[i] || '📋')}</div><div style="flex:1"><div class="pname">${zUiText(p.nome)}</div><div class="pdesc">${p.etapas} ${zUiText('etapas')}</div></div><span class="zbg ${p.badge}">${zUiText(p.status)}</span></div>`;
+      h += `<div class="pitem" onclick="showProc('${s}',${i})"><div class="picon">${zUiText(ic[s]?.[i] || '📋')}</div><div style="flex:1"><div class="pname">${zUiHtml(p.nome)}</div><div class="pdesc">${p.etapas} ${zUiText('etapas')}</div></div><span class="zbg ${p.badge}">${zUiHtml(p.status)}</span></div>`;
     });
     h += '</div>';
   });
@@ -1288,7 +1288,7 @@ function showProc(s, i){
   const p = PROC_DATA[s][i];
   const det = document.getElementById('proc-det');
   det.classList.remove('hidden');
-  det.innerHTML = `<div class="proc-d-top"><div class="proc-d-title">${zUiText(p.nome)}</div><div style="display:flex;align-items:center;gap:8px;"><span class="zbg ${p.badge}">${zUiText(p.status)}</span><button class="proc-close" onclick="document.getElementById('proc-det').classList.add('hidden')">${zUiText('✕')}</button></div></div><div class="etapa-list">${p.steps.map((s2, i2) => `<div class="etapa-item"><div class="enum">${i2 + 1}</div><div class="etxt">${zUiText(s2)}</div></div>`).join('')}</div>`;
+  det.innerHTML = `<div class="proc-d-top"><div class="proc-d-title">${zUiHtml(p.nome)}</div><div style="display:flex;align-items:center;gap:8px;"><span class="zbg ${p.badge}">${zUiHtml(p.status)}</span><button class="proc-close" onclick="document.getElementById('proc-det').classList.add('hidden')">${zUiText('✕')}</button></div></div><div class="etapa-list">${p.steps.map((s2, i2) => `<div class="etapa-item"><div class="enum">${i2 + 1}</div><div class="etxt">${zUiHtml(s2)}</div></div>`).join('')}</div>`;
   det.scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 
@@ -1357,11 +1357,11 @@ function renderTreinPainelIntermediario(t, progresso, isDiretor, canDelete){
           <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
           ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
         </div>
-        <div class="trein-detail-title">${zUiText(t.titulo)}</div>
+        <div class="trein-detail-title">${zUiHtml(t.titulo)}</div>
         <div class="trein-detail-copy">${zUiText('Trilha prática para acelerar a execução da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
         <div class="trein-detail-meta">
           <span>${t.aulas} ${zUiText('aulas')}</span>
-          <span>${zUiText(t.dur)}</span>
+          <span>${zUiHtml(t.dur)}</span>
           <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluídas')}</span>
           <span>${videos.length} ${zUiText(videos.length === 1 ? 'vídeo' : 'vídeos')}</span>
         </div>
@@ -1419,7 +1419,7 @@ function renderTreinPainelIntermediario(t, progresso, isDiretor, canDelete){
           ${videos.map(video => `<button class="trein-video-row ${video.id === videoAtivoId ? 'active' : ''}" onclick="selecionarTreinVideo('${token}', '${video.id}')">
             <span class="trein-video-row-icon">${zUiText('▶')}</span>
             <span class="trein-video-row-main">
-              <strong>${zUiText(video.nome)}</strong>
+              <strong>${zUiHtml(video.nome)}</strong>
               <small>${fmtTamanho(video.size || 0)}</small>
             </span>
           </button>`).join('')}
@@ -1439,8 +1439,8 @@ function renderTreinPainelIntermediario(t, progresso, isDiretor, canDelete){
           return `<button class="trein-lesson ${done ? 'done' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
             <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
             <span class="trein-lesson-main">
-              <strong>${zUiText(licao.titulo)}</strong>
-              <small>${zUiText(licao.resumo)}</small>
+              <strong>${zUiHtml(licao.titulo)}</strong>
+              <small>${zUiHtml(licao.resumo)}</small>
             </span>
             <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluída') : zUiText('Marcar'))}</span>
           </button>`;
@@ -1523,8 +1523,8 @@ function renderTreinIntermediario(){
               <span class="zbg ${CAT_BADGE[normalizarCatTrein(t.cat)] || 'bg-gr'}">${zUiText(normalizarCatTrein(t.cat))}</span>
               <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
             </div>
-            <div class="trein-card-title">${zUiText(t.titulo)}</div>
-            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div>
+            <div class="trein-card-title">${zUiHtml(t.titulo)}</div>
+            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiHtml(t.dur)}</div>
             <div class="trein-card-progress">
               <div class="pb"><div class="pf ${progresso.status==='concluido'?'done':''}" style="width:${progresso.pct}%"></div></div>
               <div class="pl">${progresso.status==='concluido' ? zUiText('Concluído') : `${progresso.pct}% ${zUiText('concluído')}`}</div>
@@ -1839,11 +1839,11 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
           <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
           ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
         </div>
-        <div class="trein-detail-title">${zUiText(t.titulo)}</div>
+        <div class="trein-detail-title">${zUiHtml(t.titulo)}</div>
         <div class="trein-detail-copy">${zUiText('Trilha pratica para acelerar a execucao da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
         <div class="trein-detail-meta">
           <span>${t.aulas} ${zUiText('aulas')}</span>
-          <span>${zUiText(t.dur)}</span>
+          <span>${zUiHtml(t.dur)}</span>
           <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluidas')}</span>
           <span>${videos.length} ${zUiText(videos.length === 1 ? 'video' : 'videos')}</span>
         </div>
@@ -1904,7 +1904,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
           ${videos.map(video => `<button class="trein-video-row ${video.id === videoAtivoId ? 'active' : ''}" onclick="selecionarTreinVideo('${token}', '${video.id}')">
             <span class="trein-video-row-icon">${zUiText('▶')}</span>
             <span class="trein-video-row-main">
-              <strong>${zUiText(video.nome)}</strong>
+              <strong>${zUiHtml(video.nome)}</strong>
               <small>${isTreinVideoYoutube(video) ? zUiText('YouTube') : fmtTamanho(video.size || 0)}</small>
             </span>
           </button>`).join('')}
@@ -1924,8 +1924,8 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
           return `<button class="trein-lesson ${done ? 'done' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
             <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
             <span class="trein-lesson-main">
-              <strong>${zUiText(licao.titulo)}</strong>
-              <small>${zUiText(licao.resumo)}</small>
+              <strong>${zUiHtml(licao.titulo)}</strong>
+              <small>${zUiHtml(licao.resumo)}</small>
             </span>
             <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluida') : zUiText('Concluir'))}</span>
           </button>`;
@@ -2020,7 +2020,7 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
               : `<span class="trein-video-row-fallback">${zUiText('▶')}</span>`}
           </span>
           <span class="trein-video-row-main">
-            <strong>${zUiText(video.nome)}</strong>
+            <strong>${zUiHtml(video.nome)}</strong>
             <small>${metaLinha}</small>
           </span>
           <span class="trein-video-row-status">${video.id === videoAtivoId ? zUiText('Assistindo') : `#${idx + 1}`}</span>
@@ -2033,8 +2033,8 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
     return `<button class="trein-lesson ${done ? 'done' : ''} ${atual ? 'current' : ''}" ${bloqueado ? 'disabled' : ''} ${bloqueado ? '' : `onclick="toggleAulaTrein('${token}', ${licao.idx})"`}>
       <span class="trein-lesson-check">${done ? zUiText('✓') : licao.idx + 1}</span>
       <span class="trein-lesson-main">
-        <strong>${zUiText(licao.titulo)}</strong>
-        <small>${zUiText(licao.resumo)}</small>
+        <strong>${zUiHtml(licao.titulo)}</strong>
+        <small>${zUiHtml(licao.resumo)}</small>
       </span>
       <span class="trein-lesson-state">${bloqueado ? zUiText('Bloqueado') : (done ? zUiText('Concluida') : (atual ? zUiText('Proxima') : zUiText('Concluir')))}</span>
     </button>`;
@@ -2049,11 +2049,11 @@ function renderTreinPainel(t, progresso, isDiretor, canDelete){
           <span class="trein-status-chip ${statusMeta.cls}">${zUiText(statusMeta.badge)}</span>
           ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
         </div>
-        <div class="trein-detail-title">${zUiText(t.titulo)}</div>
+        <div class="trein-detail-title">${zUiHtml(t.titulo)}</div>
         <div class="trein-detail-copy">${zUiText('Trilha pratica para acelerar a execucao da equipe com etapas simples, progresso individual e continuidade clara.')}</div>
         <div class="trein-detail-meta">
           <span>${t.aulas} ${zUiText('aulas')}</span>
-          <span>${zUiText(t.dur)}</span>
+          <span>${zUiHtml(t.dur)}</span>
           <span>${progresso.concluidas}/${progresso.total} ${zUiText('concluidas')}</span>
           <span>${videos.length} ${zUiText(videos.length === 1 ? 'video' : 'videos')}</span>
         </div>
@@ -2243,8 +2243,8 @@ function renderTrein(){
               ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
               ${bloqueado ? `<span class="zbg bg-r">${zUiText('Bloqueado')}</span>` : ''}
             </div>
-            <div class="trein-card-title">${zUiText(t.titulo)}</div>
-            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiText(t.dur)}</div>
+            <div class="trein-card-title">${zUiHtml(t.titulo)}</div>
+            <div class="trein-card-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${zUiHtml(t.dur)}</div>
             <div class="trein-card-progress">
               <div class="pb"><div class="pf ${concluidoVisual ? 'done' : ''}" style="width:${progresso.pct}%"></div></div>
               <div class="pl">${concluidoVisual ? zUiText(aprovado ? 'Certificado' : 'Concluido') : `${progresso.pct}% ${zUiText('concluido')}`}</div>
@@ -2360,7 +2360,7 @@ function renderMtVideos(){
     return `<div class="trein-video-item">
       <div class="trein-video-item-icon">${zUiText(isTreinVideoYoutube(video) ? 'YT' : 'TV')}</div>
       <div class="trein-video-item-main">
-        <strong>${zUiText(video.nome)}</strong>
+        <strong>${zUiHtml(video.nome)}</strong>
         <small>${detalhe}</small>
       </div>
       <span class="trein-video-item-badge ${video.id ? 'saved' : 'new'}">${zUiText(video.id ? 'Salvo' : 'Novo')}</span>
@@ -2889,7 +2889,7 @@ function renderTrein(){
               ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
               ${bloqueado ? `<span class="zbg bg-r">${zUiText('Bloqueado')}</span>` : ''}
             </div>
-            <div class="trein-gallery-title">${zUiText(t.titulo)}</div>
+            <div class="trein-gallery-title">${zUiHtml(t.titulo)}</div>
             <div class="trein-gallery-copy">${resumo}</div>
             <div class="trein-gallery-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${Array.isArray(t.videos) ? t.videos.length : 0} ${zUiText('video(s)')}</div>
             <div class="trein-gallery-progress">
@@ -3072,7 +3072,7 @@ function renderTrein(){
               ${meta.obrigatorio ? `<span class="zbg bg-a">${zUiText('Obrigatorio')}</span>` : ''}
               ${bloqueado ? `<span class="zbg bg-r">${zUiText('Bloqueado')}</span>` : ''}
             </div>
-            <div class="trein-gallery-title">${zUiText(t.titulo)}</div>
+            <div class="trein-gallery-title">${zUiHtml(t.titulo)}</div>
             <div class="trein-gallery-copy">${resumo}</div>
             <div class="trein-gallery-meta">${t.aulas} ${zUiText('aulas')} ${zUiText('·')} ${Array.isArray(t.videos) ? t.videos.length : 0} ${zUiText('video(s)')}</div>
             <div class="trein-gallery-progress">
