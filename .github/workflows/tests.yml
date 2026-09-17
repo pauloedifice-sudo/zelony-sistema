@@ -1,0 +1,30 @@
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Testes automatizados
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verificar sintaxe de todos os arquivos JS
+        run: |
+          for f in js/*.js; do
+            echo "node --check $f"
+            node --check "$f"
+          done
+
+      - name: Rodar a suite de testes
+        run: node --test tests/*.test.cjs
