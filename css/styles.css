@@ -2617,6 +2617,9 @@ textarea:focus,
 .ag-item,
 .trein-catalog-shell,
 .trein-selected-shell,
+.trein-card,
+.trein-showcase-point,
+.trein-detail-panel-watch,
 .trein-gallery-card,
 .trein-detail-panel,
 .trein-detail-empty,
@@ -2638,6 +2641,7 @@ textarea:focus,
 .ag-card-head,
 .modal-top,
 .modal-foot,
+.mt-top,
 .v-toolbar,
 .user-card-top,
 .anexos-h{
@@ -2756,6 +2760,7 @@ tr:hover td{
 .trein-side-count,
 .trein-gallery-pill,
 .trein-status-chip,
+.trein-rule-chip,
 .ag-badge{
   background:rgba(201,154,46,0.12) !important;
   border-color:rgba(201,154,46,0.28) !important;
@@ -2766,20 +2771,28 @@ tr:hover td{
 .cart-status-pill.success,
 .ag-badge.close,
 .ag-badge.status.done,
-.trein-status-chip.done{
+.trein-status-chip.done,
+.trein-rule-chip.done{
   background:rgba(31,138,91,0.14) !important;
   border-color:rgba(31,138,91,0.36) !important;
   color:#89D0AF !important;
 }
 .bg-r,
 .cart-status-pill.danger,
-.ag-badge.status.cancelled{
+.ag-badge.status.cancelled,
+.trein-rule-chip.locked{
   background:rgba(185,74,58,0.14) !important;
   border-color:rgba(185,74,58,0.34) !important;
   color:#D88F83 !important;
 }
+.trein-detail-delete:hover{
+  background:rgba(185,74,58,0.20) !important;
+}
 .bg-b,
 .trein-status-chip.approved,
+.trein-prereq-card.done,
+.trein-prereq-banner.done,
+.trein-video-item-badge.saved,
 .ag-badge.first{
   background:rgba(78,116,191,0.16) !important;
   border-color:rgba(78,116,191,0.34) !important;
@@ -2794,7 +2807,10 @@ tr:hover td{
 .bg-a,
 .cart-status-pill.warn,
 .ag-badge.status.pending,
-.trein-status-chip.progress{
+.trein-status-chip.progress,
+.trein-prereq-card.locked,
+.trein-prereq-banner.locked,
+.trein-video-item-badge.new{
   background:rgba(201,154,46,0.14) !important;
   border-color:rgba(201,154,46,0.32) !important;
   color:var(--gold-light) !important;
@@ -2832,6 +2848,7 @@ tr:hover td{
 .ag-day.today,
 .ag-day.selected,
 .trein-gallery-card.selected,
+.trein-card.active,
 .vrow.active,
 .trein-video-row.active,
 .trein-lesson.current{
@@ -2893,8 +2910,12 @@ tr:hover td{
   box-sizing:border-box;
   padding:26px 24px 18px !important;
 }
-.modal-foot{
+.modal-foot,
+.mt-foot{
   background:rgba(255,255,255,0.02) !important;
+}
+.mt-modal .modal-body{
+  background:linear-gradient(180deg,rgba(31,31,31,0.98) 0%,rgba(22,22,22,0.96) 100%) !important;
 }
 
 @media (max-width:900px){
@@ -2933,7 +2954,10 @@ tr:hover td{
 .fin-day-summary,
 .docs-stat,
 .mt-section,
-.mt-toggle-wrap{
+.mt-toggle-wrap,
+.mt-range-card,
+.mt-rule-card,
+.mt-section-soft{
   background:linear-gradient(180deg,rgba(27,27,27,0.98) 0%,rgba(18,18,18,0.96) 100%) !important;
   border-color:rgba(201,154,46,0.16) !important;
   box-shadow:0 18px 34px rgba(0,0,0,0.28) !important;
