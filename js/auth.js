@@ -186,7 +186,7 @@ function fazerLogout() {
   zSetState('state.auth.role', role);
   zSetState('state.ui.curVId', curVId);
   zSetState('state.auth.usuarioLogado', usuarioLogado);
-  if (typeof usuarioSelfServiceLimparSessao === 'function') usuarioSelfServiceLimparSessao();
+  if (typeof usuarioSelfServiceEncerrarSessao === 'function') usuarioSelfServiceEncerrarSessao();
   localStorage.removeItem('zel_sessao');
   atualizarBadgeNotificacoes();
   if (typeof encerrarMonitorTratativaAgendamento === 'function') encerrarMonitorTratativaAgendamento();

@@ -144,8 +144,8 @@ async function dbSalvarUsuario(u, id){
 
 async function dbTrocarSenhaProtegida(email, novaSenha){
   const emailNormalizado=String(email||'').trim().toLowerCase();
-  const sessionToken=await usuarioSelfServiceGarantirSessao(emailNormalizado,'');
-  await usuarioSelfServiceInvocar('change_password',{sessionToken,novaSenha:String(novaSenha||'')});
+  await usuarioSelfServiceGarantirSessao(emailNormalizado,'');
+  await usuarioSelfServiceInvocar('change_password',{novaSenha:String(novaSenha||'')});
 }
 
 // ── CRUD FOLHA DE PAGAMENTO ──────────────────────────────────────────────────

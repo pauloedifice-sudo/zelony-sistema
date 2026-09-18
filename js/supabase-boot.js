@@ -32,8 +32,6 @@ const SB_DOCS_BUCKET='documentos';
 const SB_FETCH_TIMEOUT_MS=8000;
 const SB_WRITE_TIMEOUT_MS=20000;
 const USER_SELF_SERVICE_FUNCTION_NAME='usuario-self-service';
-let usuarioSessaoAutoatendimentoToken='';
-let usuarioSessaoAutoatendimentoExpiraEm='';
 
 async function sbFetchComTimeout(resource, init={}){
   if(typeof fetch!=='function') throw new Error('Fetch indisponivel no ambiente atual.');
@@ -79,11 +77,13 @@ function sbFetchComTimeoutLong(resource, init={}){
 }
 
 const sb=supabase.createClient(SB_URL, SB_KEY, {
+  auth: { persistSession: false, autoRefreshToken: true },
   global: {
     fetch: sbFetchComTimeout
   }
 });
 const sbLong=supabase.createClient(SB_URL, SB_KEY, {
+  auth: { persistSession: false, autoRefreshToken: true },
   global: {
     fetch: sbFetchComTimeoutLong
   }
@@ -393,31 +393,36 @@ zSetState('state.data.financeiroSaldosBancarios', FINANCEIRO_SALDOS_BANCARIOS);
 zSetState('state.data.folhaPagamentoColaboradores', FOLHA_PAGAMENTO_COLABORADORES);
 zSetState('state.data.reembolsosAto', REEMBOLSOS_ATO);
 zSetState('state.data.usuariosPadrao', USUARIOS_PADRAO);
-zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
-zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
 
 function usuarioSelfServiceBuildFunctionUrl(){
   return `${SB_URL}/functions/v1/${USER_SELF_SERVICE_FUNCTION_NAME}`;
 }
 
-function usuarioSelfServiceSessaoValida(){
-  if(!usuarioSessaoAutoatendimentoToken||!usuarioSessaoAutoatendimentoExpiraEm) return false;
-  const expira=Date.parse(usuarioSessaoAutoatendimentoExpiraEm);
-  if(!Number.isFinite(expira)) return false;
-  return expira>(Date.now()+60*1000);
+// A partir daqui a "sessão protegida" é a sessão de verdade do Supabase Auth
+// (sb.auth) — não existe mais um token caseiro guardado à parte. sb e sbLong
+// são duas instâncias separadas do cliente Supabase (por causa do timeout
+// diferente em cada uma), então toda vez que a sessão muda numa delas, ela
+// precisa ser copiada manualmente pra outra — senão as chamadas feitas via
+// sbLong (usadas por boa parte do carregamento de vendas/usuários) ficariam
+// sem login aos olhos do banco.
+async function usuarioSelfServiceMapErroLogin(error){
+  const msg=String((error&&error.message)||'').toLowerCase();
+  if(msg.includes('invalid login credentials')||msg.includes('invalid_credentials')) return 'Senha incorreta. Tente novamente.';
+  if(msg.includes('email not confirmed')) return 'Conta ainda não confirmada. Entre em contato com o administrador.';
+  if(!msg) return 'Não foi possível entrar no sistema agora. Tente novamente em instantes.';
+  return (error&&error.message)||'Não foi possível entrar no sistema agora. Tente novamente em instantes.';
 }
 
-function usuarioSelfServiceRegistrarSessao(token='',expiraEm=''){
-  usuarioSessaoAutoatendimentoToken=String(token||'').trim();
-  usuarioSessaoAutoatendimentoExpiraEm=String(expiraEm||'').trim();
-  zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
-  zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
-  return usuarioSelfServiceSessaoValida();
+async function usuarioSelfServiceSincronizarSessaoLonga(session){
+  if(!session||typeof sbLong==='undefined'||!sbLong||!sbLong.auth||typeof sbLong.auth.setSession!=='function') return;
+  try{
+    await sbLong.auth.setSession({access_token:session.access_token,refresh_token:session.refresh_token});
+  }catch(_e){
+    // Não impede o login principal — sbLong só é usado depois, em chamadas de dados.
+  }
 }
 
 function usuarioSelfServiceLimparSessao(){
-  usuarioSessaoAutoatendimentoToken='';
-  usuarioSessaoAutoatendimentoExpiraEm='';
   if(typeof FOLHA_PAGAMENTO_COLABORADORES!=='undefined'){
     FOLHA_PAGAMENTO_COLABORADORES.splice(0,FOLHA_PAGAMENTO_COLABORADORES.length);
     zSetState('state.data.folhaPagamentoColaboradores',FOLHA_PAGAMENTO_COLABORADORES);
@@ -428,17 +433,30 @@ function usuarioSelfServiceLimparSessao(){
   }
   if(typeof folhaResetarCargaProtegida==='function') folhaResetarCargaProtegida();
   if(typeof atoResetarCargaProtegida==='function') atoResetarCargaProtegida();
-  zSetState('state.auth.usuarioSessaoAutoatendimentoToken', usuarioSessaoAutoatendimentoToken);
-  zSetState('state.auth.usuarioSessaoAutoatendimentoExpiraEm', usuarioSessaoAutoatendimentoExpiraEm);
+}
+
+async function usuarioSelfServiceEncerrarSessao(){
+  usuarioSelfServiceLimparSessao();
+  try{ await sb.auth.signOut({scope:'local'}); }catch(_e){}
+  if(typeof sbLong!=='undefined'&&sbLong&&sbLong.auth){
+    try{ await sbLong.auth.signOut({scope:'local'}); }catch(_e){}
+  }
 }
 
 async function usuarioSelfServiceInvocar(action,payload={}){
+  let bearer=SB_KEY;
+  try{
+    const {data}=await sb.auth.getSession();
+    if(data&&data.session&&data.session.access_token) bearer=data.session.access_token;
+  }catch(_e){
+    bearer=SB_KEY;
+  }
   const response=await fetch(usuarioSelfServiceBuildFunctionUrl(),{
     method:'POST',
     headers:{
       'Content-Type':'application/json',
       apikey:SB_KEY,
-      Authorization:`Bearer ${SB_KEY}`
+      Authorization:`Bearer ${bearer}`
     },
     body:JSON.stringify({
       action:String(action||'').trim(),
@@ -464,23 +482,24 @@ async function usuarioSelfServiceInvocar(action,payload={}){
 }
 
 async function usuarioSelfServiceEmitirSessao(email='',senha=''){
-  const data=await usuarioSelfServiceInvocar('issue_session',{
-    email:String(email||'').trim().toLowerCase(),
-    senha:String(senha||'')
-  });
-  usuarioSelfServiceRegistrarSessao(data&&data.sessionToken||'',data&&data.sessionExpiresAt||'');
-  return data||{};
+  const emailNormalizado=String(email||'').trim().toLowerCase();
+  const {data,error}=await sb.auth.signInWithPassword({email:emailNormalizado,password:String(senha||'')});
+  if(error||!data||!data.session){
+    throw new Error(await usuarioSelfServiceMapErroLogin(error));
+  }
+  await usuarioSelfServiceSincronizarSessaoLonga(data.session);
+  return {session:data.session};
 }
 
 async function usuarioSelfServiceGarantirSessao(email='',senhaFallback=''){
-  if(usuarioSelfServiceSessaoValida()) return usuarioSessaoAutoatendimentoToken;
+  const {data:sessaoAtual}=await sb.auth.getSession();
+  if(sessaoAtual&&sessaoAtual.session&&sessaoAtual.session.access_token) return true;
   const senha=String(senhaFallback||'');
   if(!email||!senha){
-    throw new Error('Sessão protegida indisponível. Entre novamente para atualizar seus dados.');
+    throw new Error('Sessão protegida indisponível. Entre novamente para continuar.');
   }
-  const data=await usuarioSelfServiceEmitirSessao(email,senha);
-  if(!usuarioSelfServiceSessaoValida()) throw new Error('Não foi possível proteger a sessão de autoatendimento agora.');
-  return String(data&&data.sessionToken||usuarioSessaoAutoatendimentoToken||'').trim();
+  await usuarioSelfServiceEmitirSessao(email,senha);
+  return true;
 }
 
 function usuarioSelfServiceMapUsuario(usuario){
@@ -518,9 +537,8 @@ async function usuarioSelfServiceAtualizarMe(dados={},opcoes={}){
   const senhaFallback=String(opcoes&&opcoes.senhaFallback||'');
   const tentativa=Number(opcoes&&opcoes._tentativa||0);
   try{
-    const sessionToken=await usuarioSelfServiceGarantirSessao(email,senhaFallback);
+    await usuarioSelfServiceGarantirSessao(email,senhaFallback);
     const data=await usuarioSelfServiceInvocar('update_self',{
-      sessionToken,
       updates:{
         tel:String(dados&&dados.tel||'').trim(),
         banco:String(dados&&dados.banco||'').trim(),
@@ -537,9 +555,9 @@ async function usuarioSelfServiceAtualizarMe(dados={},opcoes={}){
     };
   }catch(e){
     const msg=String(e&&e.message||e||'');
-    const expirou=/sess[aã]o|session|token/i.test(msg);
+    const expirou=/sess[aã]o|session|token|jwt/i.test(msg);
     if(expirou&&tentativa<1&&senhaFallback){
-      usuarioSelfServiceLimparSessao();
+      try{ await sb.auth.signOut({scope:'local'}); }catch(_e){}
       return usuarioSelfServiceAtualizarMe(dados,{...(opcoes||{}),_tentativa:tentativa+1});
     }
     throw e;
@@ -602,19 +620,10 @@ async function dbConcluirConviteUsuarioSeguro(token='',dados={},senha=''){
   };
 }
 
-async function folhaPagamentoInvocarProtegido(action,payload={},tentativa=0){
+async function folhaPagamentoInvocarProtegido(action,payload={}){
   const email=String((typeof usuarioLogado!=='undefined'&&usuarioLogado&&usuarioLogado.email)||'').trim().toLowerCase();
-  try{
-    const sessionToken=await usuarioSelfServiceGarantirSessao(email,'');
-    return await usuarioSelfServiceInvocar(action,{sessionToken,...(payload||{})});
-  }catch(e){
-    const msg=String(e&&e.message||e||'');
-    if(/sess[aã]o|session|token/i.test(msg)&&tentativa<1&&senha){
-      usuarioSelfServiceLimparSessao();
-      return folhaPagamentoInvocarProtegido(action,payload,tentativa+1);
-    }
-    throw e;
-  }
+  await usuarioSelfServiceGarantirSessao(email,'');
+  return await usuarioSelfServiceInvocar(action,payload||{});
 }
 
 async function recarregarFolhaPagamentoProtegida(){

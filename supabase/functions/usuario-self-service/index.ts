@@ -1,9 +1,6 @@
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { createServiceClient } from "../_shared/supabase.ts";
 
-const DEFAULT_PASSWORD = "Mudar@123";
-const DEFAULT_SESSION_HOURS = 12;
-
 type UsuarioRow = {
   id: number;
   nome: string;
@@ -26,13 +23,7 @@ type UsuarioRow = {
   cidade?: string | null;
   estado?: string | null;
   rh_contratacao?: boolean | null;
-};
-
-type SessaoRow = {
-  usuario_id: number;
-  email: string;
-  token: string;
-  expira_em: string;
+  auth_user_id?: string | null;
 };
 
 type UpdatePayload = {
@@ -102,11 +93,6 @@ const ATO_REFUND_SELECT = "id,cliente,telefone,valor,data_prevista,banco,chave_p
 const APP_PUBLIC_URL = Deno.env.get("APP_PUBLIC_URL") || "https://zelony-sistema.netlify.app/";
 const USER_INVITE_DURATION_DAYS = 7;
 const USER_INVITE_SELECT = "id,usuario_id,nome,email,perfil,equipe,unidade,rh_contratacao,expira_em,usado_em,revogado_em";
-
-function getSessionDurationHours() {
-  const hours = Number(Deno.env.get("USER_SELF_SERVICE_SESSION_HOURS") || DEFAULT_SESSION_HOURS);
-  return Number.isFinite(hours) && hours > 0 ? hours : DEFAULT_SESSION_HOURS;
-}
 
 function normalizeEmail(value: unknown) {
   return String(value || "").trim().toLowerCase();
@@ -218,12 +204,6 @@ function isValidCpf(value: unknown) {
   return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10]);
 }
 
-function generateSessionToken() {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-}
-
 function generateUserInviteToken() {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
@@ -245,11 +225,6 @@ function buildUserInviteLink(token: string) {
   url.hash = "";
   url.searchParams.set("c", token);
   return url.toString();
-}
-
-function buildSessionExpiryIso() {
-  const expiresAt = new Date(Date.now() + getSessionDurationHours() * 60 * 60 * 1000);
-  return expiresAt.toISOString();
 }
 
 function mapUsuarioResponse(usuario: UsuarioRow) {
@@ -278,37 +253,39 @@ function mapUsuarioResponse(usuario: UsuarioRow) {
   };
 }
 
-async function loadUsuarioByEmail(
+// Confere a sessão de verdade do Supabase Auth (o token JWT que o front-end
+// manda no cabeçalho Authorization) e devolve o usuário correspondente da
+// tabela `usuarios`, já checando se está ativo. Substitui o antigo esquema
+// de "sessionToken" caseiro guardado em usuario_sessoes_app.
+async function requireAuthenticatedUsuario(
+  req: Request,
   supabase: ReturnType<typeof createServiceClient>,
-  email: string,
 ) {
-  return await supabase
+  const authHeader = req.headers.get("Authorization") || "";
+  const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!jwt) {
+    return { response: jsonResponse({ error: "Sessão ausente. Entre novamente para continuar." }, { status: 401 }) };
+  }
+
+  const { data: userData, error: userError } = await supabase.auth.getUser(jwt);
+  if (userError || !userData || !userData.user) {
+    return { response: jsonResponse({ error: "Sessão inválida ou expirada. Entre novamente para continuar." }, { status: 401 }) };
+  }
+
+  const { data: usuario, error: usuarioError } = await supabase
     .from("usuarios")
-    .select("id,nome,email,perfil,status,unidade,equipe,tel,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao")
-    .eq("email", email)
+    .select("id,nome,email,perfil,status,unidade,equipe,tel,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao,auth_user_id")
+    .eq("auth_user_id", userData.user.id)
     .maybeSingle();
-}
+  if (usuarioError) throw usuarioError;
+  if (!usuario) {
+    return { response: jsonResponse({ error: "Usuário não encontrado para esta sessão." }, { status: 404 }) };
+  }
+  if (!isUsuarioAtivo(usuario.status)) {
+    return { response: jsonResponse({ error: "Usuário inativo. Não foi possível continuar." }, { status: 403 }) };
+  }
 
-async function loadSenhaByEmail(
-  supabase: ReturnType<typeof createServiceClient>,
-  email: string,
-) {
-  return await supabase
-    .from("senhas")
-    .select("email,senha")
-    .eq("email", email)
-    .maybeSingle();
-}
-
-async function loadSessionByToken(
-  supabase: ReturnType<typeof createServiceClient>,
-  token: string,
-) {
-  return await supabase
-    .from("usuario_sessoes_app")
-    .select("usuario_id,email,token,expira_em")
-    .eq("token", token)
-    .maybeSingle();
+  return { supabase, usuario };
 }
 
 function buildAllowedSelfUpdate(updates: UpdatePayload) {
@@ -323,89 +300,11 @@ function buildAllowedSelfUpdate(updates: UpdatePayload) {
   };
 }
 
-async function issueSession(body: Record<string, unknown>) {
-  const email = normalizeEmail(body.email);
-  const senha = String(body.senha || "");
-
-  if (!email || !senha) {
-    return jsonResponse({ error: "E-mail e senha são obrigatórios para liberar a sessão protegida." }, { status: 400 });
-  }
-
+async function updateSelf(req: Request, body: Record<string, unknown>) {
   const supabase = createServiceClient();
-  const { data: usuario, error: usuarioError } = await loadUsuarioByEmail(supabase, email);
-  if (usuarioError) throw usuarioError;
-  if (!usuario) {
-    return jsonResponse({ error: "Usuário não encontrado para a sessão protegida." }, { status: 404 });
-  }
-  if (!isUsuarioAtivo(usuario.status)) {
-    return jsonResponse({ error: "Usuário inativo. Sessão protegida não liberada." }, { status: 403 });
-  }
-
-  const { data: senhaRegistro, error: senhaError } = await loadSenhaByEmail(supabase, email);
-  if (senhaError) throw senhaError;
-
-  const senhaEsperada = String((senhaRegistro && senhaRegistro.senha) || DEFAULT_PASSWORD);
-  if (senha !== senhaEsperada) {
-    return jsonResponse({ error: "Não foi possível validar a sessão protegida com as credenciais informadas." }, { status: 401 });
-  }
-
-  const token = generateSessionToken();
-  const expiraEm = buildSessionExpiryIso();
-  const agora = new Date().toISOString();
-
-  const { error: upsertError } = await supabase
-    .from("usuario_sessoes_app")
-    .upsert({
-      usuario_id: usuario.id,
-      email,
-      token,
-      expira_em: expiraEm,
-      atualizado_em: agora,
-      criado_em: agora,
-    }, { onConflict: "usuario_id" });
-
-  if (upsertError) throw upsertError;
-
-  return jsonResponse({
-    ok: true,
-    sessionToken: token,
-    sessionExpiresAt: expiraEm,
-    usuario: mapUsuarioResponse(usuario),
-  });
-}
-
-async function updateSelf(body: Record<string, unknown>) {
-  const sessionToken = normalizeText(body.sessionToken, 160);
-  if (!sessionToken) {
-    return jsonResponse({ error: "Sessão protegida ausente para atualizar seus dados." }, { status: 401 });
-  }
-
-  const supabase = createServiceClient();
-  const { data: sessao, error: sessaoError } = await loadSessionByToken(supabase, sessionToken);
-  if (sessaoError) throw sessaoError;
-  if (!sessao) {
-    return jsonResponse({ error: "Sessão protegida inválida. Entre novamente para continuar." }, { status: 401 });
-  }
-
-  const expiraEmMs = Date.parse(sessao.expira_em || "");
-  if (!Number.isFinite(expiraEmMs) || expiraEmMs <= Date.now()) {
-    await supabase.from("usuario_sessoes_app").delete().eq("usuario_id", sessao.usuario_id);
-    return jsonResponse({ error: "Sessão protegida expirada. Entre novamente para atualizar seus dados." }, { status: 401 });
-  }
-
-  const { data: usuario, error: usuarioError } = await supabase
-    .from("usuarios")
-    .select("id,nome,email,perfil,status,unidade,equipe,tel,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao")
-    .eq("id", sessao.usuario_id)
-    .maybeSingle();
-
-  if (usuarioError) throw usuarioError;
-  if (!usuario) {
-    return jsonResponse({ error: "Usuário da sessão protegida não foi encontrado." }, { status: 404 });
-  }
-  if (!isUsuarioAtivo(usuario.status)) {
-    return jsonResponse({ error: "Usuário inativo. Não foi possível atualizar os dados." }, { status: 403 });
-  }
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth.response;
+  const usuario = auth.usuario;
 
   const updates = buildAllowedSelfUpdate((body.updates || {}) as UpdatePayload);
   if (!updates.tel || !updates.banco || !updates.conta || !updates.tipo_conta || !updates.pix_tipo || !updates.pix) {
@@ -421,93 +320,54 @@ async function updateSelf(body: Record<string, unknown>) {
 
   if (updateError) throw updateError;
 
-  await supabase
-    .from("usuario_sessoes_app")
-    .update({ atualizado_em: new Date().toISOString() })
-    .eq("usuario_id", usuario.id);
-
   return jsonResponse({
     ok: true,
     usuario: mapUsuarioResponse(usuarioAtualizado),
-    sessionExpiresAt: sessao.expira_em,
   });
 }
 
-async function changePassword(body: Record<string, unknown>) {
-  const sessionToken = normalizeText(body.sessionToken, 160);
-  if (!sessionToken) {
-    return jsonResponse({ error: "Sessão protegida ausente para trocar a senha." }, { status: 401 });
-  }
-
+async function changePassword(req: Request, body: Record<string, unknown>) {
   const supabase = createServiceClient();
-  const { data: sessao, error: sessaoError } = await loadSessionByToken(supabase, sessionToken);
-  if (sessaoError) throw sessaoError;
-  if (!sessao) {
-    return jsonResponse({ error: "Sessão protegida inválida. Entre novamente para trocar a senha." }, { status: 401 });
-  }
-
-  const expiraEmMs = Date.parse(sessao.expira_em || "");
-  if (!Number.isFinite(expiraEmMs) || expiraEmMs <= Date.now()) {
-    await supabase.from("usuario_sessoes_app").delete().eq("usuario_id", sessao.usuario_id);
-    return jsonResponse({ error: "Sessão protegida expirada. Entre novamente para trocar a senha." }, { status: 401 });
-  }
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth.response;
+  const usuario = auth.usuario;
 
   const novaSenha = String(body.novaSenha || "");
   if (novaSenha.length < 6) {
     return jsonResponse({ error: "A nova senha deve ter pelo menos 6 caracteres." }, { status: 400 });
   }
 
+  if (!usuario.auth_user_id) {
+    return jsonResponse({ error: "Conta sem login oficial vinculado. Fale com o administrador." }, { status: 409 });
+  }
+
+  const { error: authUpdateError } = await supabase.auth.admin.updateUserById(usuario.auth_user_id, {
+    password: novaSenha,
+  });
+  if (authUpdateError) throw authUpdateError;
+
+  // Mantido por segurança/rollback durante a transição — não é mais o que
+  // decide o login, que agora é sempre conferido pelo Supabase Auth acima.
   const { error: upsertError } = await supabase
     .from("senhas")
-    .upsert({ email: sessao.email, senha: novaSenha }, { onConflict: "email" });
+    .upsert({ email: usuario.email, senha: novaSenha }, { onConflict: "email" });
   if (upsertError) throw upsertError;
 
   return jsonResponse({ ok: true });
 }
 
-async function authorizeUserInvites(body: Record<string, unknown>) {
-  const sessionToken = normalizeText(body.sessionToken, 160);
-  if (!sessionToken) {
-    return { response: jsonResponse({ error: "Sessão protegida ausente para criar convites." }, { status: 401 }) };
-  }
-
+async function authorizeUserInvites(req: Request, _body: Record<string, unknown>) {
   const supabase = createServiceClient();
-  const { data: sessao, error: sessaoError } = await loadSessionByToken(supabase, sessionToken);
-  if (sessaoError) throw sessaoError;
-  if (!sessao) {
-    return { response: jsonResponse({ error: "Sessão protegida inválida. Entre novamente para enviar o convite." }, { status: 401 }) };
-  }
-
-  const expiraEmMs = Date.parse(sessao.expira_em || "");
-  if (!Number.isFinite(expiraEmMs) || expiraEmMs <= Date.now()) {
-    await supabase.from("usuario_sessoes_app").delete().eq("usuario_id", sessao.usuario_id);
-    return { response: jsonResponse({ error: "Sessão protegida expirada. Entre novamente para enviar o convite." }, { status: 401 }) };
-  }
-
-  const { data: usuario, error: usuarioError } = await supabase
-    .from("usuarios")
-    .select("id,nome,email,perfil,status")
-    .eq("id", sessao.usuario_id)
-    .maybeSingle();
-
-  if (usuarioError) throw usuarioError;
-  if (!usuario || !isUsuarioAtivo(usuario.status)) {
-    return { response: jsonResponse({ error: "Usuário inativo ou não encontrado." }, { status: 403 }) };
-  }
-  if (!canManageUserInvites(usuario.perfil)) {
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth;
+  if (!canManageUserInvites(auth.usuario.perfil)) {
     return { response: jsonResponse({ error: "Seu perfil não possui permissão para enviar convites." }, { status: 403 }) };
   }
-
-  await supabase
-    .from("usuario_sessoes_app")
-    .update({ atualizado_em: new Date().toISOString() })
-    .eq("usuario_id", usuario.id);
-
-  return { supabase, usuario };
+  return auth;
 }
 
-async function createUserInvite(body: Record<string, unknown>) {
-  const auth = await authorizeUserInvites(body);
+async function createUserInvite(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeUserInvites(req, body);
   if ("response" in auth) return auth.response;
 
   const invite = (body.convite || {}) as UserInvitePayload;
@@ -678,49 +538,18 @@ async function completeUserInvite(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, usuario: mapUsuarioResponse(usuario) });
 }
 
-async function authorizePayroll(body: Record<string, unknown>) {
-  const sessionToken = normalizeText(body.sessionToken, 160);
-  if (!sessionToken) {
-    return { response: jsonResponse({ error: "Sessão protegida ausente para acessar a folha de pagamento." }, { status: 401 }) };
-  }
-
+async function authorizePayroll(req: Request, _body: Record<string, unknown>) {
   const supabase = createServiceClient();
-  const { data: sessao, error: sessaoError } = await loadSessionByToken(supabase, sessionToken);
-  if (sessaoError) throw sessaoError;
-  if (!sessao) {
-    return { response: jsonResponse({ error: "Sessão protegida inválida. Entre novamente para continuar." }, { status: 401 }) };
-  }
-
-  const expiraEmMs = Date.parse(sessao.expira_em || "");
-  if (!Number.isFinite(expiraEmMs) || expiraEmMs <= Date.now()) {
-    await supabase.from("usuario_sessoes_app").delete().eq("usuario_id", sessao.usuario_id);
-    return { response: jsonResponse({ error: "Sessão protegida expirada. Entre novamente para continuar." }, { status: 401 }) };
-  }
-
-  const { data: usuario, error: usuarioError } = await supabase
-    .from("usuarios")
-    .select("id,nome,email,perfil,status")
-    .eq("id", sessao.usuario_id)
-    .maybeSingle();
-
-  if (usuarioError) throw usuarioError;
-  if (!usuario || !isUsuarioAtivo(usuario.status)) {
-    return { response: jsonResponse({ error: "Usuário inativo ou não encontrado." }, { status: 403 }) };
-  }
-  if (!canManagePayroll(usuario.perfil)) {
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth;
+  if (!canManagePayroll(auth.usuario.perfil)) {
     return { response: jsonResponse({ error: "Seu perfil não possui acesso à folha de pagamento." }, { status: 403 }) };
   }
-
-  await supabase
-    .from("usuario_sessoes_app")
-    .update({ atualizado_em: new Date().toISOString() })
-    .eq("usuario_id", usuario.id);
-
-  return { supabase, usuario };
+  return auth;
 }
 
-async function listPayroll(body: Record<string, unknown>) {
-  const auth = await authorizePayroll(body);
+async function listPayroll(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizePayroll(req, body);
   if ("response" in auth) return auth.response;
 
   const { data, error } = await auth.supabase
@@ -732,8 +561,8 @@ async function listPayroll(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, colaboradores: data || [] });
 }
 
-async function savePayroll(body: Record<string, unknown>) {
-  const auth = await authorizePayroll(body);
+async function savePayroll(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizePayroll(req, body);
   if ("response" in auth) return auth.response;
 
   const colaborador = (body.colaborador || {}) as PayrollPayload;
@@ -779,8 +608,8 @@ async function savePayroll(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, colaborador: data });
 }
 
-async function deletePayroll(body: Record<string, unknown>) {
-  const auth = await authorizePayroll(body);
+async function deletePayroll(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizePayroll(req, body);
   if ("response" in auth) return auth.response;
   const id = Number(body.id || 0);
   if (!Number.isInteger(id) || id <= 0) {
@@ -795,49 +624,18 @@ async function deletePayroll(body: Record<string, unknown>) {
   return jsonResponse({ ok: true });
 }
 
-async function authorizeAtoRefunds(body: Record<string, unknown>) {
-  const sessionToken = normalizeText(body.sessionToken, 160);
-  if (!sessionToken) {
-    return { response: jsonResponse({ error: "Sessão protegida ausente para acessar os reembolsos de ATO." }, { status: 401 }) };
-  }
-
+async function authorizeAtoRefunds(req: Request, _body: Record<string, unknown>) {
   const supabase = createServiceClient();
-  const { data: sessao, error: sessaoError } = await loadSessionByToken(supabase, sessionToken);
-  if (sessaoError) throw sessaoError;
-  if (!sessao) {
-    return { response: jsonResponse({ error: "Sessão protegida inválida. Entre novamente para continuar." }, { status: 401 }) };
-  }
-
-  const expiraEmMs = Date.parse(sessao.expira_em || "");
-  if (!Number.isFinite(expiraEmMs) || expiraEmMs <= Date.now()) {
-    await supabase.from("usuario_sessoes_app").delete().eq("usuario_id", sessao.usuario_id);
-    return { response: jsonResponse({ error: "Sessão protegida expirada. Entre novamente para continuar." }, { status: 401 }) };
-  }
-
-  const { data: usuario, error: usuarioError } = await supabase
-    .from("usuarios")
-    .select("id,nome,email,perfil,status")
-    .eq("id", sessao.usuario_id)
-    .maybeSingle();
-
-  if (usuarioError) throw usuarioError;
-  if (!usuario || !isUsuarioAtivo(usuario.status)) {
-    return { response: jsonResponse({ error: "Usuário inativo ou não encontrado." }, { status: 403 }) };
-  }
-  if (!canManageAtoRefunds(usuario.perfil)) {
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth;
+  if (!canManageAtoRefunds(auth.usuario.perfil)) {
     return { response: jsonResponse({ error: "Seu perfil não possui acesso aos reembolsos de ATO." }, { status: 403 }) };
   }
-
-  await supabase
-    .from("usuario_sessoes_app")
-    .update({ atualizado_em: new Date().toISOString() })
-    .eq("usuario_id", usuario.id);
-
-  return { supabase, usuario };
+  return auth;
 }
 
-async function listAtoRefunds(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function listAtoRefunds(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
 
   const { data, error } = await auth.supabase
@@ -849,8 +647,8 @@ async function listAtoRefunds(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, reembolsos: data || [] });
 }
 
-async function saveAtoRefund(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function saveAtoRefund(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
 
   const reembolso = (body.reembolso || {}) as AtoRefundPayload;
@@ -899,8 +697,8 @@ async function saveAtoRefund(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, reembolso: data });
 }
 
-async function deleteAtoRefund(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function deleteAtoRefund(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
   const id = Number(body.id || 0);
   if (!Number.isInteger(id) || id <= 0) {
@@ -933,8 +731,8 @@ async function deleteAtoRefund(body: Record<string, unknown>) {
   });
 }
 
-async function markAtoRefunded(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function markAtoRefunded(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
   const id = Number(body.id || 0);
   const requestedDate = normalizeIsoDate(body.data_reembolso);
@@ -1011,8 +809,8 @@ async function markAtoRefunded(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, reembolso: atualizado, lancamento });
 }
 
-async function createAtoReceiptUpload(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function createAtoReceiptUpload(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
   const id = Number(body.id || 0);
   const name = normalizeReceiptName(body.nome);
@@ -1053,8 +851,8 @@ async function createAtoReceiptUpload(body: Record<string, unknown>) {
   });
 }
 
-async function confirmAtoReceiptUpload(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function confirmAtoReceiptUpload(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
   const id = Number(body.id || 0);
   const name = normalizeReceiptName(body.nome);
@@ -1114,8 +912,8 @@ async function confirmAtoReceiptUpload(body: Record<string, unknown>) {
   return jsonResponse({ ok: true, reembolso: atualizado });
 }
 
-async function getAtoReceiptUrl(body: Record<string, unknown>) {
-  const auth = await authorizeAtoRefunds(body);
+async function getAtoReceiptUrl(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeAtoRefunds(req, body);
   if ("response" in auth) return auth.response;
   const id = Number(body.id || 0);
   if (!Number.isInteger(id) || id <= 0) {
@@ -1154,20 +952,16 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const action = String(body?.action || "").trim().toLowerCase();
 
-    if (action === "issue_session") {
-      return await issueSession(body);
-    }
-
     if (action === "change_password") {
-      return await changePassword(body);
+      return await changePassword(req, body);
     }
 
     if (action === "update_self") {
-      return await updateSelf(body);
+      return await updateSelf(req, body);
     }
 
     if (action === "create_user_invite") {
-      return await createUserInvite(body);
+      return await createUserInvite(req, body);
     }
 
     if (action === "get_user_invite") {
@@ -1179,43 +973,43 @@ Deno.serve(async (req) => {
     }
 
     if (action === "list_payroll") {
-      return await listPayroll(body);
+      return await listPayroll(req, body);
     }
 
     if (action === "save_payroll") {
-      return await savePayroll(body);
+      return await savePayroll(req, body);
     }
 
     if (action === "delete_payroll") {
-      return await deletePayroll(body);
+      return await deletePayroll(req, body);
     }
 
     if (action === "list_ato_refunds") {
-      return await listAtoRefunds(body);
+      return await listAtoRefunds(req, body);
     }
 
     if (action === "save_ato_refund") {
-      return await saveAtoRefund(body);
+      return await saveAtoRefund(req, body);
     }
 
     if (action === "delete_ato_refund") {
-      return await deleteAtoRefund(body);
+      return await deleteAtoRefund(req, body);
     }
 
     if (action === "mark_ato_refunded") {
-      return await markAtoRefunded(body);
+      return await markAtoRefunded(req, body);
     }
 
     if (action === "create_ato_receipt_upload") {
-      return await createAtoReceiptUpload(body);
+      return await createAtoReceiptUpload(req, body);
     }
 
     if (action === "confirm_ato_receipt_upload") {
-      return await confirmAtoReceiptUpload(body);
+      return await confirmAtoReceiptUpload(req, body);
     }
 
     if (action === "get_ato_receipt_url") {
-      return await getAtoReceiptUrl(body);
+      return await getAtoReceiptUrl(req, body);
     }
 
     return jsonResponse({ error: "Ação inválida para o autoatendimento." }, { status: 400 });
