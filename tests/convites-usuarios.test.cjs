@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const usuariosSource = fs.readFileSync(path.join(root, 'js/usuarios.js'), 'utf8').replace(/\r\n/g, '\n');
-const supabaseSource = fs.readFileSync(path.join(root, 'js/supabase.js'), 'utf8').replace(/\r\n/g, '\n');
+const SUPABASE_PARTES = ['js/supabase-boot.js', 'js/supabase-mappers.js', 'js/supabase-mappers2.js', 'js/supabase-crud.js'];
+const supabaseSource = SUPABASE_PARTES.map(p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n')).join('\n');
 const edgeSource = fs.readFileSync(path.join(root, 'supabase/functions/usuario-self-service/index.ts'), 'utf8').replace(/\r\n/g, '\n');
 const migration = fs.readFileSync(path.join(root, 'supabase/migrations/20260914120000_convites_usuarios_seguros.sql'), 'utf8').replace(/\r\n/g, '\n');
 const completionFixMigration = fs.readFileSync(path.join(root, 'supabase/migrations/20260914140000_corrige_conclusao_convite_usuario.sql'), 'utf8').replace(/\r\n/g, '\n');
@@ -53,10 +54,10 @@ test('convite e cadastrado no servidor antes do envio do email', () => {
 });
 
 test('pagina forca assets atuais e bloqueia convite enviado por aba desatualizada', () => {
-  assert.equal(versionInfo.version, '20260918.4');
-  assert.match(indexSource, /js\/supabase\.js\?v=20260918\.4/);
-  assert.match(indexSource, /js\/usuarios\.js\?v=20260918\.4/);
-  assert.match(indexSource, /css\/styles\.css\?v=20260918\.4/);
+  assert.equal(versionInfo.version, '20260918.5');
+  assert.match(indexSource, /js\/supabase-boot\.js\?v=20260918\.5/);
+  assert.match(indexSource, /js\/usuarios\.js\?v=20260918\.5/);
+  assert.match(indexSource, /css\/styles\.css\?v=20260918\.5/);
   assert.match(sourceFunction(usuariosSource, 'garantirVersaoAtualConvites'), /cache:\s*'no-store'/);
   assert.match(sourceFunction(usuariosSource, 'garantirVersaoAtualConvites'), /O sistema foi atualizado/);
   assert.match(netlifyHeaders, /\/index\.html[\s\S]*Cache-Control: no-store, max-age=0/);

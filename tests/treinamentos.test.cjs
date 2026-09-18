@@ -6,7 +6,12 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const utilsSource = fs.readFileSync(path.join(root, 'js/utils.js'), 'utf8').replace(/\r\n/g, '\n');
-const treinSource = fs.readFileSync(path.join(root, 'js/treinamentos.js'), 'utf8').replace(/\r\n/g, '\n');
+const TREIN_PARTES = ['js/treinamentos-nucleo.js', 'js/treinamentos-paineis-legado.js', 'js/treinamentos-paineis.js', 'js/treinamentos-catalogo.js'];
+const treinSources = TREIN_PARTES.map(p => ({
+  filename: p,
+  code: fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n')
+}));
+const treinSource = treinSources.map(s => s.code).join('\n');
 
 function sourceFunction(source, name) {
   const declarations = [...source.matchAll(new RegExp('^(?:async )?function ' + name + '\\(', 'gm'))];
@@ -35,7 +40,7 @@ function makeContext(overrides = {}) {
     ...overrides
   });
   vm.runInContext(utilsSource, ctx, { filename: 'js/utils.js' });
-  vm.runInContext(treinSource, ctx, { filename: 'js/treinamentos.js' });
+  vm.runInContext(treinSource, ctx, { filename: 'js/treinamentos-nucleo.js' });
   return ctx;
 }
 

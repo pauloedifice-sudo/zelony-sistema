@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const folhaSource = fs.readFileSync(path.join(root, 'js/folha-pagamento.js'), 'utf8');
-const supabaseSource = fs.readFileSync(path.join(root, 'js/supabase.js'), 'utf8').replace(/\r\n/g, '\n');
+const SUPABASE_PARTES = ['js/supabase-boot.js', 'js/supabase-mappers.js', 'js/supabase-mappers2.js', 'js/supabase-crud.js'];
+const supabaseSource = SUPABASE_PARTES.map(p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n')).join('\n');
 
 function sourceFunction(source, name) {
   const declarations = [...source.matchAll(new RegExp('^(?:async )?function ' + name + '\\(', 'gm'))];

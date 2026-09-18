@@ -6,8 +6,10 @@ const vm = require('node:vm');
 const { pathToFileURL } = require('node:url');
 
 const root = path.resolve(__dirname, '..');
-const financeiroSource = fs.readFileSync(path.join(root, 'js/financeiro.js'), 'utf8');
-const supabaseSource = fs.readFileSync(path.join(root, 'js/supabase.js'), 'utf8').replace(/\r\n/g, '\n');
+const FINANCEIRO_PARTES = ['js/financeiro-base.js', 'js/financeiro-kpis.js', 'js/financeiro-lancamentos.js', 'js/financeiro-render.js'];
+const financeiroSource = FINANCEIRO_PARTES.map(p => fs.readFileSync(path.join(root, p), 'utf8')).join('\n');
+const SUPABASE_PARTES = ['js/supabase-boot.js', 'js/supabase-mappers.js', 'js/supabase-mappers2.js', 'js/supabase-crud.js'];
+const supabaseSource = SUPABASE_PARTES.map(p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n')).join('\n');
 const utilsSource = fs.readFileSync(path.join(root, 'js/utils.js'), 'utf8').replace(/\r\n/g, '\n');
 const vendasSource = fs.readFileSync(path.join(root, 'js/vendas.js'), 'utf8').replace(/\r\n/g, '\n');
 
@@ -81,7 +83,7 @@ function makeContext(lancamentos = fixtures()) {
   for (const name of ['tipoLancamentoFinanceiroNormalizado', 'statusLancamentoFinanceiroNormalizado', 'lancamentoFinanceiroAutomaticoLegado', 'lancamentoFinanceiroTemSyncPendente']) {
     vm.runInContext(supabaseFunction(name), ctx);
   }
-  vm.runInContext(financeiroSource, ctx, { filename: 'js/financeiro.js' });
+  vm.runInContext(financeiroSource, ctx, { filename: 'js/financeiro-base.js' });
   vm.runInContext("finMesAtual = 7; finAnoAtual = 2026; finHojeRef = () => new Date(2026, 7, 26, 12);", ctx);
   return ctx;
 }

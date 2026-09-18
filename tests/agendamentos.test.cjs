@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const utilsSource = fs.readFileSync(path.join(root, 'js/utils.js'), 'utf8').replace(/\r\n/g, '\n');
-const agSource = fs.readFileSync(path.join(root, 'js/agendamentos.js'), 'utf8').replace(/\r\n/g, '\n')
+const AGENDAMENTOS_PARTES = ['js/agendamentos-base.js', 'js/agendamentos-relatorio-docs.js', 'js/agendamentos-calendario.js', 'js/agendamentos-render.js'];
+const agSource = AGENDAMENTOS_PARTES.map(p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n')).join('\n')
   // let torna essas variaveis inacessiveis para o teste ajustar o estado do modulo antes de chamar
   // uma funcao; convertendo so essas duas declaracoes de topo de arquivo para var elas passam a
   // ser propriedades reais do contexto vm, que o teste pode ler/escrever entre as chamadas.
@@ -38,7 +39,7 @@ function makeContext(overrides = {}) {
     ...overrides
   });
   vm.runInContext(utilsSource, ctx, { filename: 'js/utils.js' });
-  vm.runInContext(agSource, ctx, { filename: 'js/agendamentos.js' });
+  vm.runInContext(agSource, ctx, { filename: 'js/agendamentos-base.js' });
   return ctx;
 }
 
