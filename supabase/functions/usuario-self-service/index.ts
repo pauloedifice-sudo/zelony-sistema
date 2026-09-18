@@ -460,6 +460,31 @@ async function createUserInvite(req: Request, body: Record<string, unknown>) {
   });
 }
 
+// Checagem "segura" para a tela de login: confere se o e-mail existe e qual
+// o status da conta, SEM devolver nenhum dado sensível (nome, telefone,
+// dados bancários, CPF, etc.). Não exige sessão — é chamada antes do login
+// de verdade acontecer, então precisa ser deliberadamente mínima.
+async function checkLoginEmail(body: Record<string, unknown>) {
+  const email = normalizeEmail(body.email);
+  if (!email) {
+    return jsonResponse({ ok: true, existe: false, status: "" });
+  }
+
+  const supabase = createServiceClient();
+  const { data: usuario, error } = await supabase
+    .from("usuarios")
+    .select("status")
+    .eq("email", email)
+    .maybeSingle();
+  if (error) throw error;
+
+  return jsonResponse({
+    ok: true,
+    existe: !!usuario,
+    status: usuario ? String(usuario.status || "Ativo") : "",
+  });
+}
+
 async function getUserInvite(body: Record<string, unknown>) {
   const token = normalizeText(body.token, 160).toLowerCase();
   if (!/^[0-9a-f]{64}$/.test(token)) {
@@ -995,6 +1020,10 @@ Deno.serve(async (req) => {
 
     if (action === "create_user_invite") {
       return await createUserInvite(req, body);
+    }
+
+    if (action === "check_login_email") {
+      return await checkLoginEmail(body);
     }
 
     if (action === "get_user_invite") {
