@@ -775,7 +775,12 @@ async function carregarComRetry(tentativa=1){
   if(tentativa===1) carregarLS();
   if(st) st.textContent=tentativa>1?`Tentativa ${tentativa} de ${MAX}...`:'Validando acesso';
   try{
-    await promiseComTimeout(carregarDB({somenteCredenciais:true}), TIMEOUT, 'Autenticacao inicial do Supabase');
+    // Antes, essa etapa baixava a lista completa de usuários (com dados
+    // bancários/PIX/CPF) para QUALQUER visitante, mesmo sem login — só pra
+    // "acordar" o projeto do Supabase. Agora é só uma checagem leve, sem
+    // dados sensíveis; a lista completa só é carregada depois do login de
+    // verdade, em fazerLogin() (js/auth.js).
+    await promiseComTimeout(dbVerificarEmailLoginSeguro('ping@zelony-sistema.local'), TIMEOUT, 'Autenticacao inicial do Supabase');
     setAppConectividadeStatus({
       somenteLeitura:false,
       origem:'supabase',

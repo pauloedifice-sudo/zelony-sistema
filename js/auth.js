@@ -124,13 +124,22 @@ function fazerLogin() {
   btn.classList.add('loading'); btn.textContent = zUiText('Verificando...');
 
   setTimeout(async () => {
-    const usuario = USUARIOS.find(u => u.email.toLowerCase() === email);
     const resetBtn = () => { btn.classList.remove('loading'); btn.textContent = zUiText('Entrar no sistema'); };
     const showErr = (msg) => { document.getElementById('lg-error-msg').textContent = zUiText(msg); errEl.classList.add('show'); resetBtn(); };
 
-    if (!usuario) return showErr('E-mail nao cadastrado no sistema.');
+    // Checagem segura: confere se o e-mail existe e o status da conta sem
+    // baixar a lista completa de usuarios (que agora só carrega DEPOIS do
+    // login de verdade, mais abaixo).
+    let checagem;
+    try {
+      checagem = await dbVerificarEmailLoginSeguro(email);
+    } catch (erroChecagem) {
+      return showErr('Nao foi possivel verificar o e-mail agora. Tente novamente em instantes.');
+    }
 
-    const st = usuarioStatusNormalizado(usuario);
+    if (!checagem.existe) return showErr('E-mail nao cadastrado no sistema.');
+
+    const st = usuarioStatusNormalizado({ status: checagem.status });
     if (st === 'Pendente') return showErr('Cadastro pendente. Verifique o e-mail de convite para completar.');
     if (st === 'Inativo')  return showErr('Conta inativa. Entre em contato com o administrador.');
 
@@ -143,6 +152,21 @@ function fazerLogin() {
       document.getElementById('lg-senha').value = '';
       document.getElementById('lg-senha').focus();
       return showErr((erroSenha && erroSenha.message) || 'Senha incorreta. Tente novamente.');
+    }
+
+    // Só agora, com sessao de verdade, carregamos a lista completa de
+    // usuarios (antes isso acontecia ANTES do login, exposto a qualquer
+    // visitante sem conta).
+    try {
+      await carregarCredenciaisDB();
+    } catch (erroCredenciais) {
+      if (typeof usuarioSelfServiceEncerrarSessao === 'function') usuarioSelfServiceEncerrarSessao();
+      return showErr('Nao foi possivel carregar os dados do sistema. Tente novamente em instantes.');
+    }
+    const usuario = USUARIOS.find(u => u.email.toLowerCase() === email);
+    if (!usuario) {
+      if (typeof usuarioSelfServiceEncerrarSessao === 'function') usuarioSelfServiceEncerrarSessao();
+      return showErr('Nao foi possivel carregar seus dados. Tente novamente em instantes.');
     }
 
     aplicarSessaoUsuario(usuario);

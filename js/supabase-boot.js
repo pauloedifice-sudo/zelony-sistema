@@ -583,6 +583,20 @@ async function dbCriarConviteUsuarioProtegido(convite={}){
   };
 }
 
+// Checagem segura usada pela tela de login (antes de existir sessão): só
+// confere se o e-mail existe e qual o status da conta, sem baixar a lista
+// completa de usuários (isso só acontece depois do login de verdade, em
+// carregarCredenciaisDB()).
+async function dbVerificarEmailLoginSeguro(email=''){
+  const data=await usuarioSelfServiceInvocar('check_login_email',{
+    email:String(email||'').trim().toLowerCase()
+  });
+  return{
+    existe:!!(data&&data.existe),
+    status:String((data&&data.status)||'')
+  };
+}
+
 async function dbObterConviteUsuarioSeguro(token=''){
   const data=await usuarioSelfServiceInvocar('get_user_invite',{
     token:String(token||'').trim()
