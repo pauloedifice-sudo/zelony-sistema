@@ -21,25 +21,25 @@ const ENVIOS_ROLES_ACESSO = ['dono', 'dir', 'fin', 'rh', 'ger'];
 const ENVIOS_MAX_VENDAS_SEM_DISPARO = 24;
 const ENVIOS_JANELA_VENDAS_SEM_DISPARO_DIAS = 14;
 const ENVIOS_STATUS_META = {
-  pendente: { label: 'Pendente', color: '#8A6A25', bg: '#FFF7E3', bd: '#E8D39B' },
-  pendente_local: { label: 'Pendente local', color: '#B15B1F', bg: '#FFF3E3', bd: '#E8C49B' },
-  nao_disparado: { label: 'Sem disparo', color: '#C05030', bg: '#FFF1EB', bd: '#E7B4A5' },
-  sem_telefone: { label: 'Sem telefone', color: '#B15B1F', bg: '#FFF1E7', bd: '#EAB89A' },
-  usuario_inativo: { label: 'Usuario inativo', color: '#A25A3C', bg: '#FFF0EB', bd: '#E5B2A2' },
-  ignorado: { label: 'Ignorado', color: '#6E6E6E', bg: '#F4F4F4', bd: '#D9D9D9' },
-  enfileirada: { label: 'Enfileirada', color: '#1E5BB8', bg: '#EDF4FF', bd: '#A7C4F1' },
-  enviada: { label: 'Enviada', color: '#2D7A59', bg: '#ECF8F1', bd: '#A8DCBE' },
-  recebida: { label: 'Recebida', color: '#1D7D8F', bg: '#EAF8FB', bd: '#A4D9E3' },
-  lida: { label: 'Lida', color: '#4F46E5', bg: '#EEF1FF', bd: '#C3BFF8' },
-  falha: { label: 'Falha', color: '#B94E2C', bg: '#FFF2EE', bd: '#E8B1A1' }
+  pendente: { label: 'Pendente', color: '#E8C46A', bg: 'rgba(201,154,46,0.14)', bd: 'rgba(201,154,46,0.32)' },
+  pendente_local: { label: 'Pendente local', color: '#E8C46A', bg: 'rgba(201,154,46,0.14)', bd: 'rgba(201,154,46,0.32)' },
+  nao_disparado: { label: 'Sem disparo', color: '#D88F83', bg: 'rgba(185,74,58,0.14)', bd: 'rgba(185,74,58,0.34)' },
+  sem_telefone: { label: 'Sem telefone', color: '#D88F83', bg: 'rgba(185,74,58,0.14)', bd: 'rgba(185,74,58,0.34)' },
+  usuario_inativo: { label: 'Usuario inativo', color: '#D1C6AF', bg: 'rgba(255,255,255,0.04)', bd: 'rgba(255,255,255,0.08)' },
+  ignorado: { label: 'Ignorado', color: '#D1C6AF', bg: 'rgba(255,255,255,0.04)', bd: 'rgba(255,255,255,0.08)' },
+  enfileirada: { label: 'Enfileirada', color: '#A9C2FF', bg: 'rgba(78,116,191,0.16)', bd: 'rgba(78,116,191,0.34)' },
+  enviada: { label: 'Enviada', color: '#89D0AF', bg: 'rgba(31,138,91,0.14)', bd: 'rgba(31,138,91,0.36)' },
+  recebida: { label: 'Recebida', color: '#A9C2FF', bg: 'rgba(78,116,191,0.16)', bd: 'rgba(78,116,191,0.34)' },
+  lida: { label: 'Lida', color: '#C9B7FF', bg: 'rgba(120,100,177,0.16)', bd: 'rgba(120,100,177,0.32)' },
+  falha: { label: 'Falha', color: '#D88F83', bg: 'rgba(185,74,58,0.14)', bd: 'rgba(185,74,58,0.34)' }
 };
 const ENVIOS_PAPEL_META = {
-  corretor: { label: 'Corretor', color: '#1A56C4', bg: '#EEF4FE', bd: '#A6C2F0' },
-  capitao: { label: 'Capitao', color: '#7A5A24', bg: '#FBF6EA', bd: '#DEC896' },
-  gerente: { label: 'Gerente', color: '#2E7E5E', bg: '#EDF8F1', bd: '#A9DDBE' },
-  diretor: { label: 'Diretor', color: '#8C5A17', bg: '#FFF7E5', bd: '#E5D09A' },
-  diretor2: { label: 'Diretor 2', color: '#7A4BA8', bg: '#F4EEFF', bd: '#D6C1F0' },
-  sistema: { label: 'Sistema', color: '#B15B1F', bg: '#FFF3E3', bd: '#E8C49B' }
+  corretor: { label: 'Corretor', color: '#A9C2FF', bg: 'rgba(78,116,191,0.16)', bd: 'rgba(78,116,191,0.34)' },
+  capitao: { label: 'Capitao', color: '#E8C46A', bg: 'rgba(201,154,46,0.14)', bd: 'rgba(201,154,46,0.32)' },
+  gerente: { label: 'Gerente', color: '#89D0AF', bg: 'rgba(31,138,91,0.14)', bd: 'rgba(31,138,91,0.36)' },
+  diretor: { label: 'Diretor', color: '#E8C46A', bg: 'rgba(201,154,46,0.14)', bd: 'rgba(201,154,46,0.32)' },
+  diretor2: { label: 'Diretor 2', color: '#C9B7FF', bg: 'rgba(120,100,177,0.16)', bd: 'rgba(120,100,177,0.32)' },
+  sistema: { label: 'Sistema', color: '#D1C6AF', bg: 'rgba(255,255,255,0.04)', bd: 'rgba(255,255,255,0.08)' }
 };
 
 function enviosSyncState() {
@@ -1073,6 +1073,7 @@ function enviosGarantirStyles() {
     .envios-card.active{border-color:rgba(232,201,117,.52)!important;box-shadow:0 18px 34px rgba(0,0,0,.34)!important;}
     .envios-alert{background:rgba(87,34,25,.38)!important;border-color:rgba(201,118,89,.34)!important;}
     .envios-alert-copy{color:#F5C6B7!important;}
+    .envios-side-status{background:rgba(78,116,191,0.16)!important;color:#A9C2FF!important;border-color:rgba(78,116,191,0.34)!important;}
     @media (max-width:1120px){
       .envios-hero{grid-template-columns:1fr;}
       .envios-shell{grid-template-columns:1fr;}
@@ -1202,7 +1203,7 @@ function renderEnvios() {
                   <div class="envios-list-title">${zUiText('Ultimos envios')}</div>
                   <div class="envios-list-sub">${zUiText(`Registros reais e alertas sem disparo das ultimas ${ENVIOS_JANELA_VENDAS_SEM_DISPARO_DIAS} dias`)}</div>
                 </div>
-                ${enviosErro ? `<span class="envios-chip" style="color:#B65239;background:#FFF2EE;border-color:#E8B1A1;">${enviosEsc(zUiText('Cache em uso'))}</span>` : ''}
+                ${enviosErro ? `<span class="envios-chip" style="color:#D88F83;background:rgba(185,74,58,0.14);border-color:rgba(185,74,58,0.34);">${enviosEsc(zUiText('Cache em uso'))}</span>` : ''}
               </div>
               <div class="envios-list-body">
                 ${lista.map(item => enviosRenderCardAtualizado(item, selecionado && enviosIdToken(item) === enviosIdToken(selecionado))).join('')}

@@ -186,11 +186,11 @@ function atualizarBannerConectividadeApp(){
   if(!banner){
     banner=document.createElement('div');
     banner.id='app-readonly-banner';
-    banner.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100000;max-width:min(920px,calc(100vw - 32px));background:#FFF7E8;border:1px solid #E3C98C;color:#6F5720;border-radius:14px;box-shadow:0 14px 32px rgba(111,87,32,0.16);padding:12px 16px;font:600 12px/1.45 Arial,sans-serif;';
+    banner.style.cssText='position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100000;max-width:min(920px,calc(100vw - 32px));background:linear-gradient(180deg,rgba(31,31,31,0.98) 0%,rgba(19,19,19,0.96) 100%);border:1px solid rgba(201,154,46,0.32);color:#E8C46A;border-radius:14px;box-shadow:0 14px 32px rgba(0,0,0,0.4);padding:12px 16px;font:600 12px/1.45 \'Inter\',sans-serif;';
     docBody.appendChild(banner);
   }
   const motivo=String(APP_CONECTIVIDADE_STATUS.motivo||'').trim()||'Modo consulta ativo. Cadastros e alterações estão bloqueados até a conexão com o Supabase voltar.';
-  banner.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span>${zUiText('Modo consulta')}</span><span style="font-weight:500;color:#8C7340;">${zUiText(motivo)}</span><button type="button" onclick="window.location.reload()" style="margin-left:auto;background:#C9A646;color:#fff;border:0;border-radius:999px;padding:8px 14px;font:600 12px Arial,sans-serif;cursor:pointer;">${zUiText('Recarregar')}</button></div>`;
+  banner.innerHTML=`<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;"><span>${zUiText('Modo consulta')}</span><span style="font-weight:500;color:#C9BDA4;">${zUiText(motivo)}</span><button type="button" onclick="window.location.reload()" style="margin-left:auto;background:var(--gold);color:#0B0B0B;border:0;border-radius:999px;padding:8px 14px;font:600 12px 'Inter',sans-serif;cursor:pointer;">${zUiText('Recarregar')}</button></div>`;
 }
 function setAppConectividadeStatus(parcial={}){
   Object.assign(APP_CONECTIVIDADE_STATUS,parcial||{});
