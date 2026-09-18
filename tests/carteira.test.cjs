@@ -6,7 +6,11 @@ const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
 const utilsSource = fs.readFileSync(path.join(root, 'js/utils.js'), 'utf8').replace(/\r\n/g, '\n');
-const carteiraSource = fs.readFileSync(path.join(root, 'js/carteira.js'), 'utf8').replace(/\r\n/g, '\n');
+const CARTEIRA_PARTES = ['js/carteira-resumo.js', 'js/carteira-distratos.js', 'js/carteira-andamento.js', 'js/carteira-tabela.js'];
+const carteiraSources = CARTEIRA_PARTES.map(p => ({
+  filename: p,
+  code: fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n')
+}));
 
 const ETAPAS = ['Aguardando demanda', 'Entrevista', 'Ass. formulários', 'Envio CEHOP', 'Entrevista Caixa', 'Aguard. Ass. CEF', 'Assinado CEF', 'Nota emitida', 'Comissão recebida'];
 
@@ -22,7 +26,9 @@ function makeContext(overrides = {}) {
     ...overrides
   });
   vm.runInContext(utilsSource, ctx, { filename: 'js/utils.js' });
-  vm.runInContext(carteiraSource, ctx, { filename: 'js/carteira.js' });
+  for (const { filename, code } of carteiraSources) {
+    vm.runInContext(code, ctx, { filename });
+  }
   return ctx;
 }
 

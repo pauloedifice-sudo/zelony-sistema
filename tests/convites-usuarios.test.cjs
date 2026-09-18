@@ -53,10 +53,10 @@ test('convite e cadastrado no servidor antes do envio do email', () => {
 });
 
 test('pagina forca assets atuais e bloqueia convite enviado por aba desatualizada', () => {
-  assert.equal(versionInfo.version, '20260918.3');
-  assert.match(indexSource, /js\/supabase\.js\?v=20260918\.3/);
-  assert.match(indexSource, /js\/usuarios\.js\?v=20260918\.3/);
-  assert.match(indexSource, /css\/styles\.css\?v=20260918\.3/);
+  assert.equal(versionInfo.version, '20260918.4');
+  assert.match(indexSource, /js\/supabase\.js\?v=20260918\.4/);
+  assert.match(indexSource, /js\/usuarios\.js\?v=20260918\.4/);
+  assert.match(indexSource, /css\/styles\.css\?v=20260918\.4/);
   assert.match(sourceFunction(usuariosSource, 'garantirVersaoAtualConvites'), /cache:\s*'no-store'/);
   assert.match(sourceFunction(usuariosSource, 'garantirVersaoAtualConvites'), /O sistema foi atualizado/);
   assert.match(netlifyHeaders, /\/index\.html[\s\S]*Cache-Control: no-store, max-age=0/);
