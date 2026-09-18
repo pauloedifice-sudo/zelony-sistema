@@ -809,11 +809,11 @@ function agAtualizarResumoTipoRelatorio(registro, item) {
   if (situacao === 'cliente cancelou') registro[`${prefixo}Cancelada`] += 1;
 }
 
-function agResumoRelatorioPorCampo(lista, obterNome) {
+function agResumoRelatorioPorCampo(lista, obterNome, obterChave) {
   const mapa = new Map();
   (Array.isArray(lista) ? lista : []).forEach(item => {
     const nome = agTexto(obterNome(item)) || 'Nao informado';
-    const chave = agNormalizarTexto(nome) || nome;
+    const chave = (obterChave && agTexto(obterChave(item))) || agNormalizarTexto(nome) || nome;
     if (!mapa.has(chave)) {
       mapa.set(chave, agNovoResumoTipoRelatorio(nome));
     }
@@ -824,7 +824,7 @@ function agResumoRelatorioPorCampo(lista, obterNome) {
 }
 
 function agResumoPorCorretor(lista) {
-  return agResumoRelatorioPorCampo(lista, item => item && item.corretor);
+  return agResumoRelatorioPorCampo(lista, item => item && item.corretor, item => agCorretorFiltroValor(item));
 }
 
 function agResumoPorEquipe(lista) {
@@ -979,11 +979,11 @@ function agColetarDadosRelatorioDocumentacao() {
   };
 }
 
-function agResumoDocumentacaoPorCampo(lista, obterNome) {
+function agResumoDocumentacaoPorCampo(lista, obterNome, obterChave) {
   const mapa = new Map();
   (Array.isArray(lista) ? lista : []).forEach(item => {
     const nome = agTexto(obterNome(item)) || 'Não informado';
-    const chave = agNormalizarTexto(nome) || nome;
+    const chave = (obterChave && agTexto(obterChave(item))) || agNormalizarTexto(nome) || nome;
     if (!mapa.has(chave)) {
       mapa.set(chave, {
         nome,
@@ -1112,7 +1112,7 @@ function exportarRelatorioDocumentacoes() {
       const H = doc.internal.pageSize.getHeight();
       const filtrosLinha = dados.filtrosResumo.join(' | ');
       const resumoEquipe = agResumoDocumentacaoPorCampo(dados.lista, item => agEquipeValor(item));
-      const resumoCorretor = agResumoDocumentacaoPorCampo(dados.lista, item => item && item.corretor);
+      const resumoCorretor = agResumoDocumentacaoPorCampo(dados.lista, item => item && item.corretor, item => agCorretorFiltroValor(item));
 
       doc.setFillColor(184, 93, 31);
       doc.rect(0, 0, W, 24, 'F');
@@ -1320,11 +1320,11 @@ function agColetarDadosRelatorioFechamento() {
   };
 }
 
-function agResumoFechamentoPorCampo(lista, obterNome) {
+function agResumoFechamentoPorCampo(lista, obterNome, obterChave) {
   const mapa = new Map();
   (Array.isArray(lista) ? lista : []).forEach(item => {
     const nome = agTexto(obterNome(item)) || 'Não informado';
-    const chave = agNormalizarTexto(nome) || nome;
+    const chave = (obterChave && agTexto(obterChave(item))) || agNormalizarTexto(nome) || nome;
     if (!mapa.has(chave)) {
       mapa.set(chave, {
         nome,
@@ -1453,7 +1453,7 @@ function exportarRelatorioFechamentos() {
       const H = doc.internal.pageSize.getHeight();
       const filtrosLinha = dados.filtrosResumo.join(' | ');
       const resumoEquipe = agResumoFechamentoPorCampo(dados.lista, item => agEquipeValor(item));
-      const resumoCorretor = agResumoFechamentoPorCampo(dados.lista, item => item && item.corretor);
+      const resumoCorretor = agResumoFechamentoPorCampo(dados.lista, item => item && item.corretor, item => agCorretorFiltroValor(item));
 
       doc.setFillColor(35, 122, 82);
       doc.rect(0, 0, W, 24, 'F');

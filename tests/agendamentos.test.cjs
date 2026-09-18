@@ -162,3 +162,60 @@ test('atualizarCorretoresAgendamentoModal escapa o nome do corretor contra XSS a
   assert.match(body, /zUiHtml\(usuario\.nome\)/);
   assert.doesNotMatch(body, /\$\{agTexto\(usuario\.nome\)\}<\/option>/);
 });
+
+test('agResumoPorCorretor agrupa por corretorId, mesmo com grafias diferentes do nome (migracao nome->id)', () => {
+  const ctx = makeContext();
+  const lista = [
+    { situacao: 'agendado', corretorId: 7, corretor: 'Ana Souza' },
+    { situacao: 'concluida', corretorId: 7, corretor: 'ana  souza' },
+    { situacao: 'agendado', corretorId: 9, corretor: 'Bruno Lima' }
+  ];
+  const resumo = ctx.agResumoPorCorretor(lista);
+  assert.equal(resumo.length, 2);
+  const ana = resumo.find(item => item.nome === 'Ana Souza');
+  assert.ok(ana, 'os dois registros do corretorId 7 deveriam virar uma unica linha');
+  assert.equal(ana.primeiraTotal, 2);
+  assert.equal(ana.totalGeral, 2);
+});
+
+test('agResumoPorCorretor cai de volta para o nome normalizado quando o registro nao tem corretorId (legado)', () => {
+  const ctx = makeContext();
+  const lista = [
+    { situacao: 'agendado', corretor: 'Carla Reis' },
+    { situacao: 'agendado', corretor: 'carla  reis' },
+    { situacao: 'agendado', corretor: 'Outra Pessoa' }
+  ];
+  const resumo = ctx.agResumoPorCorretor(lista);
+  assert.equal(resumo.length, 2);
+  const carla = resumo.find(item => item.nome === 'Carla Reis');
+  assert.equal(carla.totalGeral, 2);
+});
+
+test('agResumoPorEquipe continua agrupando so por nome normalizado (sem id de equipe)', () => {
+  const ctx = makeContext();
+  const lista = [
+    { situacao: 'agendado', equipe: 'Equipe A' },
+    { situacao: 'agendado', equipe: 'equipe  a' }
+  ];
+  const resumo = ctx.agResumoPorEquipe(lista);
+  assert.equal(resumo.length, 1);
+  assert.equal(resumo[0].totalGeral, 2);
+});
+
+test('agResumoDocumentacaoPorCampo e agResumoFechamentoPorCampo agrupam corretor por id quando informado', () => {
+  const ctx = makeContext();
+  const lista = [
+    { corretorId: 3, corretor: 'Duda Alves', rendaBrutaFamiliar: '5000' },
+    { corretorId: 3, corretor: 'Duda  Alves', rendaBrutaFamiliar: '7000' }
+  ];
+  const obterNome = item => item && item.corretor;
+  const obterChave = item => ctx.agCorretorFiltroValor(item);
+
+  const resumoDoc = ctx.agResumoDocumentacaoPorCampo(lista, obterNome, obterChave);
+  assert.equal(resumoDoc.length, 1);
+  assert.equal(resumoDoc[0].total, 2);
+
+  const resumoFec = ctx.agResumoFechamentoPorCampo(lista, obterNome, obterChave);
+  assert.equal(resumoFec.length, 1);
+  assert.equal(resumoFec[0].total, 2);
+});
