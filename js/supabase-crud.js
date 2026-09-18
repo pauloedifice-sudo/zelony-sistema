@@ -884,7 +884,6 @@ zRegisterModule('supabase', {
   carregarAnexosVenda,
   dbSalvarUsuario,
   dbExcluirUsuario,
-  dbSalvarSenha,
   dbSalvarFolhaPagamentoColaborador,
   dbExcluirFolhaPagamentoColaborador,
   dbSalvarReembolsoAto,
