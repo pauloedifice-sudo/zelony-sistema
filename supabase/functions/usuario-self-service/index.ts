@@ -1,5 +1,38 @@
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { createServiceClient } from "../_shared/supabase.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+// Este arquivo é autocontido de propósito (sem importar `_shared/*` de
+// outras funções): o editor do painel do Supabase publica só este arquivo,
+// sem acesso aos helpers em supabase/functions/_shared/. Ver
+// supabase/functions/migrate-create-auth-users (etapa 1) para o mesmo
+// motivo. Quando este código também puder ser publicado via CLI, pode
+// voltar a importar de "../_shared/cors.ts" e "../_shared/supabase.ts".
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(body: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers || {});
+  Object.entries(corsHeaders).forEach(([key, value]) => headers.set(key, value));
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers,
+  });
+}
+
+function createServiceClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceRoleKey) {
+    throw new Error("Supabase service role environment variables are missing.");
+  }
+  return createClient(url, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 type UsuarioRow = {
   id: number;
