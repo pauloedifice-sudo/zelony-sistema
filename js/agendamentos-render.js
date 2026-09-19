@@ -2,6 +2,11 @@
 function renderAgendamentos() {
   const cont = document.getElementById('agendamentos-content');
   if (!cont) return;
+  // Guarda a posição de rolagem antes de reconstruir a tela: essa função
+  // recria todo o conteúdo (cont.innerHTML) a cada atualização automática
+  // (a cada poucos segundos), e sem isso o navegador jogava a tela para o
+  // topo mesmo com o usuário navegando mais embaixo.
+  const scrollAnterior = cont.scrollTop;
   if (agModuloVisivel()) {
     agAtualizarDadosCompartilhadosEmSegundoPlano({
       cooldownMs: AG_REFRESH_COOLDOWN_MS,
@@ -381,6 +386,10 @@ function renderAgendamentos() {
       </div>
     </div>
   </div>`;
+
+  // Restaura a posição de rolagem salva acima, para o usuário não ser
+  // jogado de volta ao topo a cada atualização automática da tela.
+  cont.scrollTop = scrollAnterior;
 }
 
 function agAtualizarFiltroPeriodo(campo, valor) {
