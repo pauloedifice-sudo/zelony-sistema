@@ -35,8 +35,12 @@ zSetState('state.ui.uFiltroStatus', uFiltroStatus);
 const EJS_SERVICE  = 'service_wirqv1v';
 const EJS_TEMPLATE = 'template_ylfp3ad';
 const EJS_PUBKEY   = 'GEXIho24PuM7N3RTZ';
-const CONVITE_URL_PUBLICA = 'https://zelony-sistema.netlify.app/';
-const CONVITE_CLIENT_VERSION = '20260919.2';
+const CONVITE_URL_PUBLICA = 'https://www.zelonyimoveisapp.com.br/';
+// Enquanto a função do servidor (Supabase) ainda não foi reimplantada com o
+// novo domínio, ela pode responder com o link antigo do Netlify. Aceitamos
+// as duas origens aqui para o convite não quebrar durante a transição.
+const CONVITE_ORIGENS_ACEITAS = ['https://www.zelonyimoveisapp.com.br', 'https://zelony-sistema.netlify.app'];
+const CONVITE_CLIENT_VERSION = '20260920.1';
 const CONVITES_PENDENTES = {};
 const EXCLUSOES_PENDENTES = {};
 const STATUS_PENDENTES_USUARIOS = {};
@@ -1355,9 +1359,8 @@ async function enviarConvite() {
     sincronizarUsuarioConviteLocal(conviteCriado.usuario);
     link = String(conviteCriado.link || '').trim();
     const linkUrl = new URL(link);
-    const origemOficial = new URL(CONVITE_URL_PUBLICA);
     const tokenLink = String(linkUrl.searchParams.get('c') || '').toLowerCase();
-    if (linkUrl.origin !== origemOficial.origin || !/^[0-9a-f]{64}$/.test(tokenLink)) {
+    if (!CONVITE_ORIGENS_ACEITAS.includes(linkUrl.origin) || !/^[0-9a-f]{64}$/.test(tokenLink)) {
       throw new Error('O servidor retornou um endereço de convite inválido.');
     }
 

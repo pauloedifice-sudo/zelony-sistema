@@ -123,7 +123,7 @@ type UserInviteCompletionPayload = {
 const ATO_RECEIPT_BUCKET = "reembolsos-ato";
 const ATO_RECEIPT_MAX_SIZE = 10 * 1024 * 1024;
 const ATO_REFUND_SELECT = "id,cliente,telefone,valor,data_prevista,banco,chave_pix,status,data_reembolso,financeiro_lancamento_id,comprovante_nome,comprovante_mime,comprovante_size,comprovante_storage_bucket,comprovante_storage_path,criado_por,criado_por_id,criado_por_email,atualizado_em";
-const APP_PUBLIC_URL = Deno.env.get("APP_PUBLIC_URL") || "https://zelony-sistema.netlify.app/";
+const APP_PUBLIC_URL = Deno.env.get("APP_PUBLIC_URL") || "https://www.zelonyimoveisapp.com.br/";
 const USER_INVITE_DURATION_DAYS = 7;
 const USER_INVITE_SELECT = "id,usuario_id,nome,email,perfil,equipe,unidade,rh_contratacao,expira_em,usado_em,revogado_em";
 
