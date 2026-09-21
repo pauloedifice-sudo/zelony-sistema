@@ -1,5 +1,35 @@
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { createServiceClient } from "../_shared/supabase.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+// Função autocontida (sem imports de ../_shared/*): este projeto publica as
+// Edge Functions colando o código diretamente no editor do painel do
+// Supabase (não via CLI), que não tem acesso aos arquivos irmãos da pasta
+// _shared/. Mesmo padrão já usado em usuario-self-service/index.ts.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(body: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers || {});
+  Object.entries(corsHeaders).forEach(([key, value]) => headers.set(key, value));
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers,
+  });
+}
+
+function createServiceClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceRoleKey) {
+    throw new Error("Supabase service role environment variables are missing.");
+  }
+  return createClient(url, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 // Recebe as notificações do Clicksign quando o contrato de parceria
 // (Corretor PJ) é finalizado — todas as assinaturas concluídas — e então
