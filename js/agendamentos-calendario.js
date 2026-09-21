@@ -301,6 +301,15 @@ function agRenderCalendario(listaMes) {
   return `<div class="ag-calendar-scroll"><div class="ag-calendar-shell"><div class="ag-weekdays">${cabecalho}</div><div class="ag-grid">${corpo}</div></div></div>`;
 }
 
+// Ícones inline (substituem os emojis antigos, que renderizavam de forma
+// inconsistente/quebrada em alguns aparelhos — ex.: o ícone de corretor).
+const AG_ICON_PIN = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-7.58 7-12A7 7 0 0 0 5 10c0 4.42 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>';
+const AG_ICON_TEAM = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+const AG_ICON_PERSON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+const AG_ICON_PHONE = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+const AG_ICON_COPY = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+const AG_ICON_CLOCK = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#171512" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+
 function agRenderItem(item, opcoes = {}) {
   const mostrarData = !!opcoes.mostrarData;
   const telefoneExibicao = agFormatarTelefone(item.telefone || '') || agTexto(item.telefone || 'Telefone nÃ£o informado');
@@ -313,37 +322,33 @@ function agRenderItem(item, opcoes = {}) {
   const dataLabel = dataRef
     ? dataRef.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).replace('.', '')
     : '';
-  return `<div class="ag-item ${podeTratar ? 'clickable' : ''}" ${podeTratar ? `role="button" tabindex="0" onclick="abrirTratativaAgendamentoManual(${itemId})" onkeydown="handleAgendamentoCardKeydown(event,${itemId})"` : ''}>
-    <div class="ag-item-main">
-      <div class="ag-item-timebox">
-        <div class="ag-item-kicker">${mostrarData ? 'Data' : 'Horário'}</div>
-        ${mostrarData ? `<div class="ag-item-date">${agTexto(dataLabel || '—')}</div>` : ''}
-        <div class="ag-item-hour">${agTexto(item.horarioAgendamento || '—')}</div>
+  const pendente = agTratativaPendente(item);
+  return `<div class="ag-item ${podeTratar ? 'clickable' : ''} ${pendente ? 'pending' : ''}" ${podeTratar ? `role="button" tabindex="0" onclick="abrirTratativaAgendamentoManual(${itemId})" onkeydown="handleAgendamentoCardKeydown(event,${itemId})"` : ''}>
+    ${pendente ? `<div class="ag-pending-ribbon">${AG_ICON_CLOCK}Aguardando retorno</div>` : ''}
+    <div class="ag-item-head">
+      <div class="ag-item-head-time">
+        <span class="ag-time-dot ${tipoClass}"></span>
+        <span class="ag-item-hour">${agTexto(item.horarioAgendamento || '—')}</span>
+        ${mostrarData ? `<span class="ag-item-date-inline">· ${agTexto(dataLabel || '—')}</span>` : ''}
       </div>
-      <div class="ag-item-body">
-        <div class="ag-item-top">
-          <div class="ag-client">${agTexto(item.cliente || 'Cliente não informado')}</div>
-          <div class="ag-item-badges">
-            <span class="ag-badge ${tipoClass}">${agTipoBadgeRotulo(item)}</span>
-            <span class="ag-badge channel ${agCanalBadgeClasse(item)}">${agCanalBadgeRotulo(item)}</span>
-            <span class="ag-badge status ${situacaoClasse}">${agSituacaoExibicao(item)}</span>
-            ${agTratativaPendente(item) ? `<span class="ag-badge warn">Tratativa pendente</span>` : ''}
-          </div>
-        </div>
-        <div class="ag-meta">
-          <span>📍 ${agTexto(item.unidade || '—')}</span>
-          <span>👥 ${agTexto(agEquipeValor(item))}</span>
-          <span>🧑‍💼 ${agTexto(item.corretor || '—')}</span>
-        </div>
-        <div class="ag-item-actions">
-          <div class="ag-phone">
-            <span class="ag-phone-text">📞 ${agTexto(item.telefone || 'Telefone não informado')}</span>
-          </div>
-          ${item.telefone ? `<button class="ag-copy-btn" type="button" onclick="event.stopPropagation();copiarTexto(decodeURIComponent('${telefoneEncoded}'),'Telefone do cliente')">Copiar telefone</button>` : ''}
-        </div>
-        ${podeTratar ? `<div class="ag-item-hint">${agHintTratativa(item)}</div>` : ''}
-      </div>
+      <span class="ag-badge status ${situacaoClasse}">${agSituacaoExibicao(item)}</span>
     </div>
+    <div class="ag-client">${agTexto(item.cliente || 'Cliente não informado')}</div>
+    <div class="ag-type-row">
+      <span class="ag-type-label ${tipoClass}">${agTipoBadgeRotulo(item)}</span>
+      <span class="ag-channel-label">${agCanalBadgeRotulo(item)}</span>
+    </div>
+    <div class="ag-meta-icons">
+      <span class="ag-meta-item">${AG_ICON_PIN}${agTexto(item.unidade || '—')}</span>
+      <span class="ag-meta-item">${AG_ICON_TEAM}${agTexto(agEquipeValor(item))}</span>
+      <span class="ag-meta-item">${AG_ICON_PERSON}${agTexto(item.corretor || '—')}</span>
+    </div>
+    <div class="ag-phone-row">
+      ${AG_ICON_PHONE}
+      <span class="ag-phone-text">${agTexto(item.telefone || 'Telefone não informado')}</span>
+      ${item.telefone ? `<button class="ag-copy-icon-btn" type="button" aria-label="Copiar telefone" onclick="event.stopPropagation();copiarTexto(decodeURIComponent('${telefoneEncoded}'),'Telefone do cliente')">${AG_ICON_COPY}</button>` : ''}
+    </div>
+    ${podeTratar ? `<div class="ag-item-hint">${agHintTratativa(item)}</div>` : ''}
   </div>`;
 }
 

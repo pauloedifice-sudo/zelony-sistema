@@ -2150,6 +2150,46 @@ textarea::placeholder{color:#B8A880;}
 .ag-phone-text{display:block;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ag-copy-btn{background:none;border:1px solid var(--gold-bd);border-radius:999px;padding:5px 10px;font-size:10px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;}
 .ag-copy-btn:hover{background:var(--gold-bg);}
+
+/* Card de agendamento — layout compacto agrupado por dia, com destaque para
+   compromissos com tratativa pendente. Usa variáveis de cor que já resolvem
+   para os tons do tema escuro do sistema (definidas mais abaixo em :root). */
+.ag-day-group{display:flex;flex-direction:column;gap:10px;}
+.ag-day-group-head{display:flex;align-items:center;gap:10px;padding:2px 2px 0;}
+.ag-day-group-label{font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold-light);font-weight:700;white-space:nowrap;}
+.ag-day-group-line{flex-grow:1;height:1px;background:rgba(201,154,46,0.18);}
+.ag-day-group-count{font-size:10px;color:var(--tm);white-space:nowrap;}
+
+.ag-item{position:relative;padding:14px;display:flex;flex-direction:column;gap:9px;overflow:visible;}
+.ag-item.pending{border-color:rgba(201,154,46,0.5) !important;box-shadow:0 0 0 1px rgba(201,154,46,0.5),0 12px 26px rgba(201,154,46,0.14) !important;margin-top:14px;}
+.ag-pending-ribbon{position:absolute;top:-11px;right:14px;background:var(--gold);color:#171512;font-size:10px;font-weight:700;padding:4px 10px 4px 8px;border-radius:999px;display:flex;align-items:center;gap:4px;box-shadow:0 4px 10px rgba(201,154,46,0.4);}
+.ag-pending-ribbon svg{flex-shrink:0;}
+
+.ag-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.ag-item-head-time{display:flex;align-items:baseline;gap:7px;min-width:0;}
+.ag-time-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#4E74BF;}
+.ag-time-dot.close{background:#1F8A5B;}
+.ag-time-dot.docs{background:#C97A2E;}
+.ag-item-hour{font-family:'Playfair Display',serif;font-size:20px;line-height:1;color:var(--gold-light);}
+.ag-item-date-inline{font-size:12px;color:var(--tm);white-space:nowrap;}
+
+.ag-type-row{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;}
+.ag-type-label{font-weight:600;color:var(--gold-light);}
+.ag-type-label.first{color:#A9C2FF;}
+.ag-type-label.close{color:#89D0AF;}
+.ag-type-label.docs{color:#F2B27A;}
+.ag-channel-label{color:var(--tm);}
+
+.ag-meta-icons{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--tm);}
+.ag-meta-item{display:inline-flex;align-items:center;gap:5px;}
+.ag-meta-item svg{flex-shrink:0;opacity:0.85;}
+
+.ag-phone-row{display:flex;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);padding-top:8px;color:var(--ts);}
+.ag-phone-row svg{flex-shrink:0;}
+.ag-phone-text{font-size:12px;color:var(--ts);flex-grow:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ag-copy-icon-btn{width:28px;height:28px;flex:none;border-radius:50%;border:1px solid var(--gold-bd);background:none;color:var(--gold);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;}
+.ag-copy-icon-btn:hover{background:var(--gold-bg);}
+
 .ag-empty{padding:24px 18px;text-align:center;color:var(--tm);border:1px dashed rgba(184,144,42,0.22);border-radius:14px;background:rgba(255,252,244,0.65);font-size:12px;line-height:1.55;}
 .ag-empty strong{display:block;font-family:'Playfair Display',serif;font-size:18px;color:var(--tx);margin-bottom:6px;}
 .ag-modal{max-width:620px !important;}

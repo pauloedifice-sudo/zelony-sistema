@@ -40,7 +40,7 @@ const CONVITE_URL_PUBLICA = 'https://www.zelonyimoveisapp.com.br/';
 // novo domínio, ela pode responder com o link antigo do Netlify. Aceitamos
 // as duas origens aqui para o convite não quebrar durante a transição.
 const CONVITE_ORIGENS_ACEITAS = ['https://www.zelonyimoveisapp.com.br', 'https://zelony-sistema.netlify.app'];
-const CONVITE_CLIENT_VERSION = '20260920.1';
+const CONVITE_CLIENT_VERSION = '20260920.2';
 const CONVITES_PENDENTES = {};
 const EXCLUSOES_PENDENTES = {};
 const STATUS_PENDENTES_USUARIOS = {};

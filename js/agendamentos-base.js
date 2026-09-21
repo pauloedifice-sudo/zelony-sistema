@@ -396,6 +396,23 @@ function agEquipeValor(item) {
   return agTexto(item && item.equipe) || 'Sem equipe';
 }
 
+// Agrupa uma lista já ordenada por data/hora em blocos por dia, para exibir
+// um cabeçalho de data uma única vez por grupo em vez de repeti-la em cada
+// card (usado na lista "Próximos compromissos", que mistura várias datas).
+function agAgruparPorDia(lista) {
+  const grupos = [];
+  let atual = null;
+  (Array.isArray(lista) ? lista : []).forEach(item => {
+    const chave = agTexto(item && item.dataAgendamento);
+    if (!atual || atual.chave !== chave) {
+      atual = { chave, items: [] };
+      grupos.push(atual);
+    }
+    atual.items.push(item);
+  });
+  return grupos;
+}
+
 function agCorretorFiltroValor(item) {
   if (!item) return '';
   const id = parseInt(item.corretorId || item.id, 10) || 0;

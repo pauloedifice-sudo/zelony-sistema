@@ -378,7 +378,16 @@ function renderAgendamentos() {
                 </div>
               </div>
               <div class="ag-list">
-                ${proximos.length ? proximos.map(item => agRenderItem(item, { mostrarData: true })).join('') : `<div class="ag-empty"><strong>Nenhum agendamento ativo no período</strong>Assim que houver novos compromissos futuros, eles aparecem aqui.</div>`}
+                ${proximos.length ? agAgruparPorDia(proximos).map(grupo => `
+                  <div class="ag-day-group">
+                    <div class="ag-day-group-head">
+                      <span class="ag-day-group-label">${agTexto(agFormatarDiaPainel(grupo.chave))}</span>
+                      <span class="ag-day-group-line"></span>
+                      <span class="ag-day-group-count">${grupo.items.length} compromisso${grupo.items.length !== 1 ? 's' : ''}</span>
+                    </div>
+                    ${grupo.items.map(item => agRenderItem(item)).join('')}
+                  </div>
+                `).join('') : `<div class="ag-empty"><strong>Nenhum agendamento ativo no período</strong>Assim que houver novos compromissos futuros, eles aparecem aqui.</div>`}
               </div>
             </div>
           </div>
