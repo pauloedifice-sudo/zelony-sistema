@@ -907,6 +907,7 @@ zRegisterModule('supabase', {
   usuarioSelfServiceAtualizarMe,
   usuarioSelfServiceLimparSessao,
   dbCriarConviteUsuarioProtegido,
+  dbCriarContratoUsuarioProtegido,
   dbObterConviteUsuarioSeguro,
   dbConcluirConviteUsuarioSeguro,
   recarregarFolhaPagamentoProtegida,

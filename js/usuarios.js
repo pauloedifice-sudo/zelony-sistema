@@ -1260,7 +1260,7 @@ function abrirConvite() {
     showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem enviar convites.'));
     return;
   }
-  ['inv-nome','inv-email','inv-equipe'].forEach(id => {
+  ['inv-nome','inv-email','inv-equipe','inv-nome-empresa','inv-cnpj-empresa','inv-endereco-empresa'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1274,6 +1274,8 @@ function abrirConvite() {
   if (invError) invError.style.display = 'none';
   const invBtn = document.getElementById('inv-btn');
   if (invBtn) { invBtn.textContent = zUiText('✉️ Enviar convite'); invBtn.disabled = false; }
+  const invSubtitulo = document.getElementById('inv-subtitulo');
+  if (invSubtitulo) invSubtitulo.textContent = zUiText('Um e-mail será enviado com link para cadastro');
   toggleInvRH();
   document.getElementById('m-convite').classList.add('show');
   setTimeout(() => { const el = document.getElementById('inv-nome'); if (el) el.focus(); }, 100);
@@ -1298,6 +1300,25 @@ function toggleInvRH() {
         ? 'Registra a origem histórica da contratação. Não gera comissão de RH em novas vendas'
         : 'Essa origem fica registrada apenas para o histórico do RH'
     );
+  }
+
+  // Corretor é o único perfil com contrato de parceria via Clicksign: pede
+  // os dados do MEI e, ao enviar, substitui o convite direto por e-mail
+  // (que continua valendo para todos os outros perfis, sem alteração).
+  const ehCorretor = p === 'Corretor';
+  const corretorFields = document.getElementById('inv-corretor-fields');
+  if (corretorFields) corretorFields.style.display = ehCorretor ? 'flex' : 'none';
+  const invSubtitulo = document.getElementById('inv-subtitulo');
+  if (invSubtitulo) {
+    invSubtitulo.textContent = zUiText(
+      ehCorretor
+        ? 'Um contrato de parceria será enviado para assinatura antes de liberar o acesso'
+        : 'Um e-mail será enviado com link para cadastro'
+    );
+  }
+  const invBtn = document.getElementById('inv-btn');
+  if (invBtn && !invBtn.disabled) {
+    invBtn.textContent = zUiText(ehCorretor ? '📄 Enviar contrato' : '✉️ Enviar convite');
   }
 }
 
@@ -1343,6 +1364,43 @@ async function enviarConvite() {
 
   const btn = document.getElementById('inv-btn');
   const diretor = usuarioLogado ? usuarioLogado.nome : 'Diretor Zelony';
+
+  // Corretor é o único perfil com contrato de parceria via Clicksign: em vez
+  // do convite de acesso direto (por e-mail via EmailJS), gera o contrato e
+  // só libera o acesso — automaticamente, pelo webhook — depois que o
+  // corretor assinar. Os demais perfis seguem exatamente o fluxo de sempre,
+  // abaixo, sem nenhuma alteração.
+  if (perfil === 'Corretor') {
+    const nomeEmpresa     = document.getElementById('inv-nome-empresa').value.trim();
+    const cnpjEmpresa     = document.getElementById('inv-cnpj-empresa').value.trim();
+    const enderecoEmpresa = document.getElementById('inv-endereco-empresa').value.trim();
+    if (!nomeEmpresa)     { document.getElementById('inv-nome-empresa').focus();     erro('Informe o nome da empresa (MEI) do corretor.'); return; }
+    if (!cnpjEmpresa)     { document.getElementById('inv-cnpj-empresa').focus();     erro('Informe o CNPJ do MEI.'); return; }
+    if (!enderecoEmpresa) { document.getElementById('inv-endereco-empresa').focus(); erro('Informe o endereço da empresa.'); return; }
+
+    btn.textContent = zUiText('Enviando contrato...');
+    btn.disabled = true;
+    try {
+      await garantirVersaoAtualConvites();
+      if (typeof dbCriarContratoUsuarioProtegido !== 'function') {
+        throw new Error('O serviço de contrato de parceria não está disponível.');
+      }
+      await dbCriarContratoUsuarioProtegido({
+        nome, email, perfil, equipe, unidade, rhContratacao,
+        nomeEmpresa, cnpjEmpresa, enderecoEmpresa
+      });
+      fecharConvite();
+      showToast(zUiText('📄'), zUiText(`Contrato enviado para ${nome} assinar. O acesso ao sistema é liberado automaticamente assim que ele assinar.`));
+    } catch (err) {
+      console.error('Contrato de parceria (Corretor):', err);
+      erro(String(err && err.message || 'Não foi possível enviar o contrato. Tente novamente.'));
+    } finally {
+      btn.textContent = zUiText('📄 Enviar contrato');
+      btn.disabled = false;
+    }
+    return;
+  }
+
   let conviteCriado = null;
   let link = '';
   btn.textContent = zUiText(usuarioExistente ? 'Reenviando...' : 'Criando convite...');

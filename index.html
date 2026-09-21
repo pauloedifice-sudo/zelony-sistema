@@ -184,7 +184,7 @@
     <div class="modal-top">
       <div>
         <div class="modal-title">✉️ Convidar novo usuário</div>
-        <div style="font-size:10px;color:var(--tm);margin-top:2px;">Um e-mail será enviado com link para cadastro</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="inv-subtitulo">Um e-mail será enviado com link para cadastro</div>
       </div>
       <button class="mclose" onclick="fecharConvite()">✕</button>
     </div>
@@ -215,6 +215,14 @@
           <option value="Cristo Rei">🟢 Cristo Rei</option>
           <option value="Ambas">⚡ Ambas as unidades</option>
         </select>
+      </div>
+      <div id="inv-corretor-fields" style="display:none;flex-direction:column;gap:12px;">
+        <div class="conv-divider"></div>
+        <div class="convite-step">📄 Dados do MEI (contrato de parceria)</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:-6px;">Esses dados preenchem o contrato de parceria enviado para assinatura no Clicksign.</div>
+        <div class="f-field"><label>Nome da empresa (MEI) *</label><input type="text" id="inv-nome-empresa" placeholder="RAZÃO SOCIAL DO MEI" maxlength="160"></div>
+        <div class="f-field"><label>CNPJ *</label><input type="text" id="inv-cnpj-empresa" placeholder="00.000.000/0000-00" maxlength="20"></div>
+        <div class="f-field"><label>Endereço da empresa *</label><input type="text" id="inv-endereco-empresa" placeholder="Endereço completo do MEI" maxlength="240"></div>
       </div>
       <div id="inv-rh-field">
         <div class="rh-toggle-wrap">

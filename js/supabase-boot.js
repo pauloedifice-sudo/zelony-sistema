@@ -583,6 +583,30 @@ async function dbCriarConviteUsuarioProtegido(convite={}){
   };
 }
 
+// Fluxo exclusivo do perfil Corretor: em vez de criar o convite de acesso
+// na hora, gera o contrato de parceria (PJ/MEI) no Clicksign e devolve o
+// identificador do envelope. O usuário/convite de acesso só é criado depois,
+// pelo webhook do Clicksign, quando o corretor assina — ver
+// supabase/functions/clicksign-webhook.
+async function dbCriarContratoUsuarioProtegido(convite={}){
+  appExigirModoOnline({avisar:false, erro:'Modo consulta local ativo para contratos de parceria.'});
+  const data=await folhaPagamentoInvocarProtegido('create_user_contract',{
+    convite:{
+      nome:String(convite&&convite.nome||'').trim(),
+      email:String(convite&&convite.email||'').trim().toLowerCase(),
+      perfil:String(convite&&convite.perfil||'').trim(),
+      equipe:String(convite&&convite.equipe||'').trim(),
+      unidade:String(convite&&convite.unidade||'').trim(),
+      rhContratacao:!!(convite&&convite.rhContratacao),
+      nomeEmpresa:String(convite&&convite.nomeEmpresa||'').trim(),
+      cnpjEmpresa:String(convite&&convite.cnpjEmpresa||'').trim(),
+      enderecoEmpresa:String(convite&&convite.enderecoEmpresa||'').trim()
+    }
+  });
+  if(!data||!data.envelopeId) throw new Error('O serviço protegido não confirmou o envio do contrato.');
+  return data;
+}
+
 // Checagem segura usada pela tela de login (antes de existir sessão): só
 // confere se o e-mail existe e qual o status da conta, sem baixar a lista
 // completa de usuários (isso só acontece depois do login de verdade, em
