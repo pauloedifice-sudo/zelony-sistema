@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.zapi-webhook-status]
 verify_jwt = false
+
+[functions.clicksign-webhook]
+verify_jwt = false

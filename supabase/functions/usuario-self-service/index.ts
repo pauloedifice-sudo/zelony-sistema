@@ -100,6 +100,12 @@ type UserInvitePayload = {
   rh_contratacao?: boolean;
 };
 
+type UserContractPayload = UserInvitePayload & {
+  nomeEmpresa?: string;
+  cnpjEmpresa?: string;
+  enderecoEmpresa?: string;
+};
+
 type UserInviteCompletionPayload = {
   nome?: string;
   tel?: string;
@@ -126,6 +132,142 @@ const ATO_REFUND_SELECT = "id,cliente,telefone,valor,data_prevista,banco,chave_p
 const APP_PUBLIC_URL = Deno.env.get("APP_PUBLIC_URL") || "https://www.zelonyimoveisapp.com.br/";
 const USER_INVITE_DURATION_DAYS = 7;
 const USER_INVITE_SELECT = "id,usuario_id,nome,email,perfil,equipe,unidade,rh_contratacao,expira_em,usado_em,revogado_em";
+
+// --- Contrato de parceria (Corretor PJ) via Clicksign ----------------------
+// Documento gerado a partir do modelo "Contrato Corretor" (chave abaixo),
+// cadastrado no painel do Clicksign. Ver supabase/migrations/20260921120000_*.
+const CLICKSIGN_BASE_URL = "https://app.clicksign.com/api/v3";
+const CLICKSIGN_TEMPLATE_KEY = "C776EA72-F872-4C08-A2EF-B9CAD92856A8";
+const CLICKSIGN_ZELONY_SIGNER_NOME = "Zelony Imóveis";
+const CLICKSIGN_ZELONY_SIGNER_EMAIL = "contato@zelonyimoveis.com.br";
+
+async function clicksignRequest(path: string, method: string, body?: unknown) {
+  const token = Deno.env.get("CLICKSIGN_API_TOKEN");
+  if (!token) throw new Error("CLICKSIGN_API_TOKEN não configurado nas secrets do projeto.");
+  const response = await fetch(`${CLICKSIGN_BASE_URL}${path}`, {
+    method,
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/vnd.api+json",
+      "Accept": "application/vnd.api+json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await response.text();
+  let parsed: any = null;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch {
+    parsed = null;
+  }
+  if (!response.ok) {
+    const detail = parsed ? JSON.stringify(parsed).slice(0, 600) : text.slice(0, 600);
+    throw new Error(`Clicksign ${method} ${path} falhou (HTTP ${response.status}): ${detail}`);
+  }
+  return parsed;
+}
+
+async function criarContratoClicksign(params: {
+  nomeCorretor: string;
+  emailCorretor: string;
+  nomeEmpresa: string;
+  cnpjEmpresa: string;
+  enderecoEmpresa: string;
+}) {
+  const dataEnvio = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" });
+
+  const envelope = await clicksignRequest("/envelopes", "POST", {
+    data: {
+      type: "envelopes",
+      attributes: {
+        name: `Contrato de Parceria - ${params.nomeCorretor}`.slice(0, 255),
+        locale: "pt-BR",
+        auto_close: true,
+      },
+    },
+  });
+  const envelopeId = envelope?.data?.id;
+  if (!envelopeId) throw new Error(`Clicksign não retornou o id do envelope. Resposta: ${JSON.stringify(envelope).slice(0, 400)}`);
+
+  const documento = await clicksignRequest(`/envelopes/${envelopeId}/documents`, "POST", {
+    data: {
+      type: "documents",
+      attributes: {
+        filename: `Contrato - ${params.nomeCorretor}.docx`.slice(0, 180),
+        template: {
+          key: CLICKSIGN_TEMPLATE_KEY,
+          data: {
+            nome_empresa: params.nomeEmpresa,
+            cnpj: params.cnpjEmpresa,
+            endereco: params.enderecoEmpresa,
+            data_envio: dataEnvio,
+          },
+        },
+      },
+    },
+  });
+  const documentId = documento?.data?.id;
+  if (!documentId) throw new Error(`Clicksign não retornou o id do documento gerado a partir do modelo. Resposta: ${JSON.stringify(documento).slice(0, 400)}`);
+
+  const signerZelony = await clicksignRequest(`/envelopes/${envelopeId}/signers`, "POST", {
+    data: {
+      type: "signers",
+      attributes: {
+        name: CLICKSIGN_ZELONY_SIGNER_NOME,
+        email: CLICKSIGN_ZELONY_SIGNER_EMAIL,
+      },
+    },
+  });
+  const signerZelonyId = signerZelony?.data?.id;
+
+  const signerCorretor = await clicksignRequest(`/envelopes/${envelopeId}/signers`, "POST", {
+    data: {
+      type: "signers",
+      attributes: {
+        name: params.nomeCorretor,
+        email: params.emailCorretor,
+      },
+    },
+  });
+  const signerCorretorId = signerCorretor?.data?.id;
+
+  if (!signerZelonyId || !signerCorretorId) {
+    throw new Error("Clicksign não retornou o id de um dos signatários.");
+  }
+
+  for (const signerId of [signerZelonyId, signerCorretorId]) {
+    await clicksignRequest(`/envelopes/${envelopeId}/requirements`, "POST", {
+      data: {
+        type: "requirements",
+        attributes: { action: "provide_evidence", auth: "email" },
+        relationships: {
+          document: { data: { type: "documents", id: documentId } },
+          signer: { data: { type: "signers", id: signerId } },
+        },
+      },
+    });
+    await clicksignRequest(`/envelopes/${envelopeId}/requirements`, "POST", {
+      data: {
+        type: "requirements",
+        attributes: { action: "agree" },
+        relationships: {
+          document: { data: { type: "documents", id: documentId } },
+          signer: { data: { type: "signers", id: signerId } },
+        },
+      },
+    });
+  }
+
+  await clicksignRequest(`/envelopes/${envelopeId}`, "PATCH", {
+    data: {
+      id: envelopeId,
+      type: "envelopes",
+      attributes: { status: "running" },
+    },
+  });
+
+  return { envelopeId: String(envelopeId), documentId: String(documentId) };
+}
 
 function normalizeEmail(value: unknown) {
   return String(value || "").trim().toLowerCase();
@@ -458,6 +600,81 @@ async function createUserInvite(req: Request, body: Record<string, unknown>) {
     expiresAt: expiraEm,
     usuario: mapUsuarioResponse(usuario),
   });
+}
+
+async function createUserContract(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeUserInvites(req, body);
+  if ("response" in auth) return auth.response;
+
+  const invite = (body.convite || {}) as UserContractPayload;
+  const nome = normalizeText(invite.nome, 80).toUpperCase();
+  const email = normalizeEmail(invite.email);
+  const perfil = canonicalInviteProfile(invite.perfil);
+  const equipe = normalizeText(invite.equipe, 100);
+  const unidade = canonicalInviteUnit(invite.unidade);
+  const rhContratacao = Boolean(invite.rhContratacao ?? invite.rh_contratacao);
+  const nomeEmpresa = normalizeText(invite.nomeEmpresa, 160);
+  const cnpjEmpresa = normalizeText(invite.cnpjEmpresa, 20);
+  const enderecoEmpresa = normalizeText(invite.enderecoEmpresa, 240);
+
+  if (!nome || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !unidade) {
+    return jsonResponse({ error: "Nome, e-mail válido e unidade são obrigatórios para o contrato." }, { status: 400 });
+  }
+  if (perfil !== "Corretor") {
+    return jsonResponse({ error: "O fluxo de contrato via Clicksign é exclusivo para o perfil Corretor." }, { status: 400 });
+  }
+  if (!nomeEmpresa || !cnpjEmpresa || !enderecoEmpresa) {
+    return jsonResponse({ error: "Informe o nome do MEI, o CNPJ e o endereço da empresa do corretor." }, { status: 400 });
+  }
+
+  const usuarioExistente = await auth.supabase
+    .from("usuarios")
+    .select("id,status")
+    .ilike("email", email)
+    .maybeSingle();
+  if (usuarioExistente.error) throw usuarioExistente.error;
+  if (usuarioExistente.data && String(usuarioExistente.data.status || "").toLowerCase() !== "pendente") {
+    return jsonResponse({ error: "Este e-mail já possui um usuário ativo ou inativo." }, { status: 409 });
+  }
+
+  const contratoExistente = await auth.supabase
+    .from("contratos_clicksign_pendentes")
+    .select("id")
+    .ilike("email", email)
+    .eq("status", "aguardando_assinatura")
+    .maybeSingle();
+  if (contratoExistente.error) throw contratoExistente.error;
+  if (contratoExistente.data) {
+    return jsonResponse({ error: "Já existe um contrato aguardando assinatura para este e-mail." }, { status: 409 });
+  }
+
+  const { envelopeId, documentId } = await criarContratoClicksign({
+    nomeCorretor: nome,
+    emailCorretor: email,
+    nomeEmpresa,
+    cnpjEmpresa,
+    enderecoEmpresa,
+  });
+
+  const { error: insertError } = await auth.supabase.from("contratos_clicksign_pendentes").insert({
+    nome,
+    email,
+    perfil,
+    equipe,
+    unidade,
+    rh_contratacao: rhContratacao,
+    nome_empresa: nomeEmpresa,
+    cnpj_empresa: cnpjEmpresa,
+    endereco_empresa: enderecoEmpresa,
+    clicksign_envelope_key: envelopeId,
+    clicksign_document_key: documentId,
+    criado_por: auth.usuario.nome,
+    criado_por_id: auth.usuario.id,
+    criado_por_email: auth.usuario.email,
+  });
+  if (insertError) throw insertError;
+
+  return jsonResponse({ ok: true, envelopeId, documentId });
 }
 
 // Checagem "segura" para a tela de login: confere se o e-mail existe e qual
@@ -1020,6 +1237,10 @@ Deno.serve(async (req) => {
 
     if (action === "create_user_invite") {
       return await createUserInvite(req, body);
+    }
+
+    if (action === "create_user_contract") {
+      return await createUserContract(req, body);
     }
 
     if (action === "check_login_email") {
