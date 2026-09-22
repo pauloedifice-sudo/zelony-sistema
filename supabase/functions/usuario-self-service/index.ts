@@ -147,7 +147,9 @@ async function clicksignRequest(path: string, method: string, body?: unknown) {
   const response = await fetch(`${CLICKSIGN_BASE_URL}${path}`, {
     method,
     headers: {
-      "Authorization": `Bearer ${token}`,
+      // A API v3 do Clicksign espera o token puro no cabeçalho Authorization
+      // (sem o prefixo "Bearer "), diferente do padrão OAuth mais comum.
+      "Authorization": token,
       "Content-Type": "application/vnd.api+json",
       "Accept": "application/vnd.api+json",
     },
