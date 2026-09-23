@@ -807,10 +807,42 @@ async function completeUserInvite(body: Record<string, unknown>) {
 
   const { data: usuario, error: userError } = await supabase
     .from("usuarios")
-    .select("id,nome,email,perfil,status,unidade,equipe,tel,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao")
+    .select("id,nome,email,perfil,status,unidade,equipe,tel,banco,agencia,conta,tipo_conta,pix_tipo,pix,cpf,nasc,cep,endereco,cidade,estado,rh_contratacao,auth_user_id")
     .eq("id", usuarioId)
     .single();
   if (userError) throw userError;
+
+  // Garante a conta oficial de login no Supabase Auth (`auth.users`) para
+  // este usuário. Sem isso o cadastro fica "Ativo" na tabela `usuarios`
+  // (e a senha fica salva na tabela legada `senhas`), mas o login sempre
+  // falha com "Senha incorreta", pois `signInWithPassword` verifica a senha
+  // contra o Auth — não contra a tabela `senhas`. Mesma lógica usada pela
+  // migração `migrate-create-auth-users` para os usuários que já existiam.
+  const emailAuth = String(usuario.email || "").trim().toLowerCase();
+  if (usuario.auth_user_id) {
+    const { error: authUpdateError } = await supabase.auth.admin.updateUserById(usuario.auth_user_id, {
+      password: senha,
+    });
+    if (authUpdateError) throw authUpdateError;
+  } else {
+    const { data: created, error: createError } = await supabase.auth.admin.createUser({
+      email: emailAuth,
+      password: senha,
+      email_confirm: true,
+      user_metadata: { usuario_id: usuario.id, nome: usuario.nome },
+    });
+    if (createError) throw createError;
+
+    const authUserId = created.user?.id;
+    if (authUserId) {
+      const { error: linkError } = await supabase
+        .from("usuarios")
+        .update({ auth_user_id: authUserId })
+        .eq("id", usuario.id);
+      if (linkError) throw linkError;
+      usuario.auth_user_id = authUserId;
+    }
+  }
 
   return jsonResponse({ ok: true, usuario: mapUsuarioResponse(usuario) });
 }
