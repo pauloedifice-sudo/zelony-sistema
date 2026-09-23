@@ -46,6 +46,7 @@ const EXCLUSOES_PENDENTES = {};
 const STATUS_PENDENTES_USUARIOS = {};
 let conviteAtivo = null;
 let pixSelCV = '';
+let modoTrocaSenha = 'admin';
 zSetState('state.ui.convitesPendentes', CONVITES_PENDENTES);
 zSetState('state.ui.exclusoesPendentesUsuarios', EXCLUSOES_PENDENTES);
 zSetState('state.ui.statusPendentesUsuarios', STATUS_PENDENTES_USUARIOS);
@@ -1175,7 +1176,9 @@ async function salvarUsuario() {
   }
 }
 
-function abrirTS(fromLogin) {
+function abrirTS(modo) {
+  modoTrocaSenha = modo === 'recuperacao' ? 'recuperacao' : 'admin';
+
   document.getElementById('ts-nova').value    = '';
   document.getElementById('ts-confirma').value = '';
   const errEl    = document.getElementById('ts-error');
@@ -1183,28 +1186,95 @@ function abrirTS(fromLogin) {
   if (errEl)  errEl.style.display = 'none';
   if (errMsg) errMsg.textContent  = '';
 
+  // O campo de e-mail existe no modal por herança de uma versão antiga, mas
+  // nunca é preenchido pelo usuário: nos dois modos a identidade já é
+  // conhecida (sessão de login ou sessão de recuperação vinda do link do
+  // e-mail), então ele fica sempre oculto.
   const emailField = document.getElementById('ts-email-field');
   const emailInput = document.getElementById('ts-email');
   const subtitulo  = document.getElementById('ts-subtitulo');
+  if (emailField) emailField.style.display = 'none';
 
-  if (fromLogin) {
-    emailField.style.display = 'block';
-    emailInput.value         = '';
-    if (subtitulo) subtitulo.textContent = zUiText('Informe seu e-mail e crie uma nova senha');
+  if (modoTrocaSenha === 'recuperacao') {
+    if (emailInput) emailInput.value = '';
+    if (subtitulo) subtitulo.textContent = zUiText('Defina sua nova senha para continuar');
   } else {
-    emailField.style.display = 'none';
-    emailInput.value = usuarioLogado ? usuarioLogado.email : '';
+    if (emailInput) emailInput.value = usuarioLogado ? usuarioLogado.email : '';
     if (subtitulo) subtitulo.textContent = zUiText(`Alterando senha de: ${usuarioLogado ? usuarioLogado.email : ''}`);
   }
   document.getElementById('m-trocar-senha').classList.add('show');
   setTimeout(() => {
-    const first = fromLogin ? emailInput : document.getElementById('ts-nova');
+    const first = document.getElementById('ts-nova');
     if (first) first.focus();
   }, 100);
 }
 
 function fecharTS() { document.getElementById('m-trocar-senha').classList.remove('show'); }
 function handleBackdropTS(e) { if (e.target === document.getElementById('m-trocar-senha')) fecharTS(); }
+
+function abrirEsqueciSenha() {
+  const emailInput = document.getElementById('es-email');
+  const errEl      = document.getElementById('es-error');
+  const sucessoEl  = document.getElementById('es-sucesso');
+  const btn        = document.getElementById('es-btn');
+  if (emailInput) emailInput.value = document.getElementById('lg-email') ? document.getElementById('lg-email').value.trim() : '';
+  if (errEl) errEl.style.display = 'none';
+  if (sucessoEl) sucessoEl.style.display = 'none';
+  if (btn) { btn.disabled = false; btn.style.display = ''; }
+  if (emailInput) emailInput.disabled = false;
+  document.getElementById('m-esqueci-senha').classList.add('show');
+  setTimeout(() => { if (emailInput) emailInput.focus(); }, 100);
+}
+
+function fecharEsqueciSenha() { document.getElementById('m-esqueci-senha').classList.remove('show'); }
+function handleBackdropEsqueciSenha(e) { if (e.target === document.getElementById('m-esqueci-senha')) fecharEsqueciSenha(); }
+
+async function enviarLinkRecuperacaoSenha() {
+  const emailInput = document.getElementById('es-email');
+  const errEl      = document.getElementById('es-error');
+  const errMsg     = document.getElementById('es-error-msg');
+  const sucessoEl  = document.getElementById('es-sucesso');
+  const btn        = document.getElementById('es-btn');
+  const mostrarErro = (msg) => { if (errMsg) errMsg.textContent = zUiText(msg); if (errEl) errEl.style.display = 'flex'; };
+
+  if (errEl) errEl.style.display = 'none';
+  if (sucessoEl) sucessoEl.style.display = 'none';
+
+  const email = String(emailInput ? emailInput.value : '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (emailInput) emailInput.focus();
+    mostrarErro('Informe um e-mail válido.');
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: CONVITE_URL_PUBLICA
+    });
+    if (error) throw error;
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    mostrarErro((e && e.message) || 'Não foi possível enviar o link agora. Tente novamente em instantes.');
+    return;
+  }
+
+  if (sucessoEl) sucessoEl.style.display = 'flex';
+  if (btn) btn.style.display = 'none';
+  if (emailInput) emailInput.disabled = true;
+}
+
+// Disparado pelo listener de auth (supabase-boot.js) quando o usuário chega
+// ao app pelo link de redefinição enviado por e-mail. A sessão de
+// recuperação já prova quem é o usuário, então pulamos direto para o
+// formulário de nova senha (sem pedir e-mail nem senha atual).
+function onPasswordRecoveryDetectada() {
+  try { document.getElementById('m-esqueci-senha').classList.remove('show'); } catch (_e) {}
+  try { document.getElementById('convite-screen').classList.remove('show'); } catch (_e) {}
+  const loginScreen = document.getElementById('login-screen');
+  if (loginScreen) { loginScreen.style.display = 'flex'; loginScreen.classList.remove('hidden'); }
+  abrirTS('recuperacao');
+}
 
 function toggleSenhaField(inputId, btnId) {
   const inp = document.getElementById(inputId);
@@ -1223,15 +1293,39 @@ async function salvarNovaSenha() {
   const mostrarErro = (msg) => { if (errMsg) errMsg.textContent = zUiText(msg); if (errEl) errEl.style.display = 'flex'; };
   if (errEl) errEl.style.display = 'none';
 
+  if (!nova) { document.getElementById('ts-nova').focus(); mostrarErro('Informe a nova senha.'); return; }
+  if (nova.length < 6) { document.getElementById('ts-nova').focus(); mostrarErro('A senha deve ter pelo menos 6 caracteres.'); return; }
+  if (nova !== confirma) { document.getElementById('ts-confirma').focus(); mostrarErro('As senhas não coincidem.'); return; }
+
+  if (modoTrocaSenha === 'recuperacao') {
+    // Aqui não existe usuarioLogado (o usuário não fez login normal — ele
+    // chegou pelo link do e-mail de recuperação). A prova de identidade é a
+    // sessão de recuperação que o Supabase já validou; change_password usa
+    // essa sessão para achar o usuário e trocar a senha oficial no Auth.
+    if (btnSalvarTS) btnSalvarTS.disabled = true;
+    try {
+      await usuarioSelfServiceInvocar('change_password', { novaSenha: nova });
+    } catch (e) {
+      if (btnSalvarTS) btnSalvarTS.disabled = false;
+      mostrarErro((e && e.message) || 'Não foi possível redefinir a senha agora. Solicite um novo link e tente novamente.');
+      return;
+    }
+    if (btnSalvarTS) btnSalvarTS.disabled = false;
+
+    fecharTS();
+    showToast(zUiText('✅'), zUiText('Senha redefinida com sucesso!'));
+    setTimeout(() => {
+      showToast(zUiText('ℹ️'), zUiText('Entre novamente com sua nova senha.'));
+      if (typeof fazerLogout === 'function') fazerLogout();
+    }, 1500);
+    return;
+  }
+
   if (!usuarioLogado || !usuarioLogado.email) {
     mostrarErro('Faça login para trocar sua senha.');
     return;
   }
   const emailAlvo = usuarioLogado.email.toLowerCase();
-
-  if (!nova) { document.getElementById('ts-nova').focus(); mostrarErro('Informe a nova senha.'); return; }
-  if (nova.length < 6) { document.getElementById('ts-nova').focus(); mostrarErro('A senha deve ter pelo menos 6 caracteres.'); return; }
-  if (nova !== confirma) { document.getElementById('ts-confirma').focus(); mostrarErro('As senhas não coincidem.'); return; }
 
   if (btnSalvarTS) btnSalvarTS.disabled = true;
   try {
@@ -1610,6 +1704,11 @@ zRegisterModule('usuarios', {
   salvarUsuario,
   abrirTS,
   salvarNovaSenha,
+  abrirEsqueciSenha,
+  fecharEsqueciSenha,
+  handleBackdropEsqueciSenha,
+  enviarLinkRecuperacaoSenha,
+  onPasswordRecoveryDetectada,
   abrirConvite,
   fecharConvite,
   enviarConvite,

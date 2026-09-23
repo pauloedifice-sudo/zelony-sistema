@@ -412,10 +412,7 @@ function setMod(m, el) {
     senhaInp.addEventListener('keydown', e => { if (e.key === 'Enter') fazerLogin(); });
     const btnTS = document.getElementById('lg-trocar-senha');
     if (btnTS) btnTS.addEventListener('click', () => {
-      const errElLg = document.getElementById('lg-error');
-      const errMsgLg = document.getElementById('lg-error-msg');
-      if (errMsgLg) errMsgLg.textContent = zUiText('Redefinicao de senha sem login esta temporariamente indisponivel. Peca para um administrador redefinir sua senha.');
-      if (errElLg) errElLg.classList.add('show');
+      if (typeof abrirEsqueciSenha === 'function') abrirEsqueciSenha();
     });
     emailInp.focus();
   }

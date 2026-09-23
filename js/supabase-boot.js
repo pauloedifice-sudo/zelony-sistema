@@ -90,6 +90,17 @@ const sbLong=supabase.createClient(SB_URL, SB_KEY, {
 });
 zSetState('config.supabase', { url: SB_URL, key: SB_KEY });
 zSetState('modules.supabase', { client: sb });
+
+// Detecta o link de redefinição de senha ("esqueci minha senha") quando o
+// usuário abre o app a partir do e-mail enviado pelo Supabase Auth. O SDK lê
+// o token da própria URL e dispara este evento antes de qualquer outro
+// código do app rodar — por isso o listener é registrado aqui, logo após
+// criar o client, e não em algum arquivo carregado mais tarde.
+sb.auth.onAuthStateChange((event) => {
+  if (event === 'PASSWORD_RECOVERY') {
+    if (typeof onPasswordRecoveryDetectada === 'function') onPasswordRecoveryDetectada();
+  }
+});
 const VENDAS=[];
 let TREIN=[];
 const DOCUMENTOS=[];
