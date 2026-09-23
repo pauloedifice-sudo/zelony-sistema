@@ -243,14 +243,23 @@ window.mascararCnpjInput = mascararCnpjInput;
 // digitado (separador de milhar "." e decimal ",") — nunca reinterpreta
 // os dígitos (digitar "248000" continua significando 248.000, nunca vira
 // centavos). Suporta um "-" inicial (ex.: saldo bancário negativo no
-// Financeiro). Mantém a posição do cursor com base em quantos dígitos
-// existiam antes dele.
+// Financeiro). Mantém a posição do cursor com base na sequência de
+// dígitos + vírgula (a primeira) que existia antes dele — contar só os
+// dígitos e ignorar a vírgula fazia o cursor "esquecer" dela e voltar
+// pra antes, empurrando a vírgula pro final a cada tecla digitada.
 function zMascararValorMonetario(input) {
   if (!input) return;
   const cursorPos = input.selectionStart == null ? input.value.length : input.selectionStart;
   const raw = String(input.value || '');
-  const digitosAntesDoCursor = (raw.slice(0, cursorPos).match(/[0-9]/g) || []).length;
   const negativo = /^\s*-/.test(raw);
+
+  const antesDoCursor = raw.slice(0, cursorPos);
+  const relevantesAntes = [];
+  let virgulaVista = false;
+  for (const ch of antesDoCursor) {
+    if (/[0-9]/.test(ch)) relevantesAntes.push(ch);
+    else if (ch === ',' && !virgulaVista) { relevantesAntes.push(','); virgulaVista = true; }
+  }
 
   const texto = raw.replace(/[^0-9,]/g, '');
   const primeiraVirgula = texto.indexOf(',');
@@ -263,12 +272,19 @@ function zMascararValorMonetario(input) {
   if (negativo) novoValor = '-' + novoValor;
   input.value = novoValor;
 
-  let contados = 0, novaPos = novoValor.length;
+  // Reencontra, no texto reformatado, a posição logo depois de já termos
+  // visto a mesma sequência de dígitos (+ vírgula) que existia antes do
+  // cursor — em vez de só contar dígitos, o que perdia a vírgula de vista.
+  let idx = 0, novaPos = novoValor.length;
   for (let i = 0; i < novoValor.length; i++) {
-    if (/[0-9]/.test(novoValor[i])) contados++;
-    if (contados === digitosAntesDoCursor) { novaPos = i + 1; break; }
+    const ch = novoValor[i];
+    if (!/[0-9]/.test(ch) && ch !== ',') continue;
+    if (idx < relevantesAntes.length && ch === relevantesAntes[idx]) {
+      idx++;
+      if (idx === relevantesAntes.length) { novaPos = i + 1; break; }
+    }
   }
-  if (digitosAntesDoCursor === 0) novaPos = negativo ? 1 : 0;
+  if (relevantesAntes.length === 0) novaPos = negativo ? 1 : 0;
   try { input.setSelectionRange(novaPos, novaPos); } catch (e) {}
 }
 window.zMascararValorMonetario = zMascararValorMonetario;
