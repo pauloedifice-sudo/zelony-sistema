@@ -462,7 +462,7 @@ function renderTratativaAgendamentoModal() {
             <label for="agt-renda-bruta-familiar">Qual é a renda bruta familiar? *</label>
             <div class="agt-money-input">
               <span>R$</span>
-              <input type="text" id="agt-renda-bruta-familiar" value="${agAttr(rendaBrutaFamiliar)}" placeholder="Ex.: 8.500,00" inputmode="decimal" maxlength="18" onblur="formatarRendaBrutaFamiliarAgendamento(this)" required>
+              <input type="text" id="agt-renda-bruta-familiar" value="${agAttr(rendaBrutaFamiliar)}" placeholder="Ex.: 8.500,00" inputmode="decimal" maxlength="18" oninput="zMascararValorMonetario(this)" onblur="formatarRendaBrutaFamiliarAgendamento(this)" required>
             </div>
           </div>
           <div class="f-field">
@@ -499,7 +499,7 @@ function renderTratativaAgendamentoModal() {
             <label for="agt-renda-bruta-familiar">Qual é a renda bruta? *</label>
             <div class="agt-money-input">
               <span>R$</span>
-              <input type="text" id="agt-renda-bruta-familiar" value="${agAttr(rendaBrutaFamiliar)}" placeholder="Ex.: 8.500,00" inputmode="decimal" maxlength="18" onblur="formatarRendaBrutaFamiliarAgendamento(this)" required>
+              <input type="text" id="agt-renda-bruta-familiar" value="${agAttr(rendaBrutaFamiliar)}" placeholder="Ex.: 8.500,00" inputmode="decimal" maxlength="18" oninput="zMascararValorMonetario(this)" onblur="formatarRendaBrutaFamiliarAgendamento(this)" required>
             </div>
           </div>
           <div class="f-field">

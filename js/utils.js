@@ -238,6 +238,77 @@ function mascararCnpjInput(input) {
 }
 window.mascararCnpjInput = mascararCnpjInput;
 
+// Mascara "ao vivo" de valores em R$, para usar no oninput de qualquer
+// campo de valor do sistema. Só reformata visualmente o que já foi
+// digitado (separador de milhar "." e decimal ",") — nunca reinterpreta
+// os dígitos (digitar "248000" continua significando 248.000, nunca vira
+// centavos). Suporta um "-" inicial (ex.: saldo bancário negativo no
+// Financeiro). Mantém a posição do cursor com base em quantos dígitos
+// existiam antes dele.
+function zMascararValorMonetario(input) {
+  if (!input) return;
+  const cursorPos = input.selectionStart == null ? input.value.length : input.selectionStart;
+  const raw = String(input.value || '');
+  const digitosAntesDoCursor = (raw.slice(0, cursorPos).match(/[0-9]/g) || []).length;
+  const negativo = /^\s*-/.test(raw);
+
+  const texto = raw.replace(/[^0-9,]/g, '');
+  const primeiraVirgula = texto.indexOf(',');
+  let parteInteira = primeiraVirgula >= 0 ? texto.slice(0, primeiraVirgula) : texto;
+  const parteDecimal = primeiraVirgula >= 0 ? texto.slice(primeiraVirgula + 1).replace(/,/g, '').slice(0, 2) : null;
+  parteInteira = parteInteira.replace(/^0+(?=\d)/, '');
+  const inteiraFormatada = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  let novoValor = parteDecimal !== null ? `${inteiraFormatada},${parteDecimal}` : (primeiraVirgula >= 0 ? `${inteiraFormatada},` : inteiraFormatada);
+  if (negativo) novoValor = '-' + novoValor;
+  input.value = novoValor;
+
+  let contados = 0, novaPos = novoValor.length;
+  for (let i = 0; i < novoValor.length; i++) {
+    if (/[0-9]/.test(novoValor[i])) contados++;
+    if (contados === digitosAntesDoCursor) { novaPos = i + 1; break; }
+  }
+  if (digitosAntesDoCursor === 0) novaPos = negativo ? 1 : 0;
+  try { input.setSelectionRange(novaPos, novaPos); } catch (e) {}
+}
+window.zMascararValorMonetario = zMascararValorMonetario;
+
+// Lê um texto de valor em R$ digitado pelo usuário (aceita "1234",
+// "1234,56", "1.234,56", "-1.234,56"...) e devolve o número — mesma
+// tolerância de formato já usada nas telas de Vendas/Financeiro.
+function zLerValorMonetario(valor, padrao) {
+  padrao = padrao || 0;
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : padrao;
+  let texto = String(valor == null ? '' : valor).trim();
+  if (!texto) return padrao;
+  texto = texto.replace(/\s+/g, '').replace(/^R\$/i, '').replace(/[^0-9,.\-]/g, '');
+  if (!texto || texto === '-' || texto === ',' || texto === '.') return padrao;
+  if (/^-?\d{1,3}(\.\d{3})+$/.test(texto)) texto = texto.replace(/\./g, '');
+  else if (/^-?\d{1,3}(,\d{3})+$/.test(texto)) texto = texto.replace(/,/g, '');
+  else {
+    const ultimoPonto = texto.lastIndexOf('.');
+    const ultimaVirgula = texto.lastIndexOf(',');
+    if (ultimoPonto >= 0 && ultimaVirgula >= 0) texto = ultimaVirgula > ultimoPonto ? texto.replace(/\./g, '').replace(/,/g, '.') : texto.replace(/,/g, '');
+    else if (ultimaVirgula >= 0) texto = texto.replace(/\./g, '').replace(/,/g, '.');
+  }
+  const numero = Number(texto);
+  return Number.isFinite(numero) ? numero : padrao;
+}
+window.zLerValorMonetario = zLerValorMonetario;
+
+// Reformata um campo de R$ para "1.234,56" (ou "-1.234,56") ao sair do
+// campo — o toque final depois do zMascararValorMonetario, que só
+// formata enquanto o usuário ainda está digitando.
+function zFinalizarValorMonetario(input, permitirNegativo) {
+  if (!input) return;
+  const texto = String(input.value || '').trim();
+  if (!texto) { input.value = ''; return; }
+  let numero = zLerValorMonetario(texto, 0);
+  if (!permitirNegativo) numero = Math.abs(numero);
+  input.value = numero.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+window.zFinalizarValorMonetario = zFinalizarValorMonetario;
+
 function hoje() {
   const d = new Date();
   return d.getDate().toString().padStart(2,'0') + '/'

@@ -1776,7 +1776,7 @@ function abrirEditVenda(id){
   document.getElementById('ev-construtora').value=v.construtora;
   document.getElementById('ev-origem').value=v.origem||'IndicaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o';
   document.getElementById('ev-unidade').value=v.unidade||'Centro';
-  document.getElementById('ev-valor').value=v.valor;
+  document.getElementById('ev-valor').value=Number(v.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
   document.getElementById('ev-pct').value=formatarNumeroInput(v.pct*100,2);
   document.getElementById('ev-imp').value=formatarNumeroInput((v.imp??0.11)*100,1);
   document.getElementById('ev-pct-cor').value=formatarNumeroInput((v.pct_cor||0)*100,2);
@@ -1788,7 +1788,7 @@ function abrirEditVenda(id){
   preencherDiretor2Edit(v.diretor2||'');
   document.getElementById('ev-diretor2').onchange=function(){toggleDiretor2EditPct(true);};
   document.getElementById('ev-unidade').onchange=function(){preencherDiretor2Edit();};
-  document.getElementById('ev-bonus').value=v.bonus||0;
+  document.getElementById('ev-bonus').value=v.bonus?Number(v.bonus).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
   document.getElementById('ev-bonus-dir').value=formatarNumeroInput(v.bonus_pct_dir||0,0);
   document.getElementById('ev-bonus-dir2').value=formatarNumeroInput(v.bonus_pct_dir2||0,0);
   document.getElementById('ev-bonus-ger').value=formatarNumeroInput(v.bonus_pct_ger||0,0);

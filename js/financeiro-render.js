@@ -593,7 +593,7 @@ function renderFinanceiro() {
         </div>
         <div class="f-field">
           <label>${zUiText('Saldo bancario (R$)')}</label>
-          <input type="text" id="fin-saldo-valor" inputmode="decimal" placeholder="0,00" value="${saldoModalRegistro ? finEscapeAttr(finValorParaInput(saldoModalRegistro.saldo)) : ''}">
+          <input type="text" id="fin-saldo-valor" inputmode="decimal" placeholder="0,00" value="${saldoModalRegistro ? finEscapeAttr(finValorParaInput(saldoModalRegistro.saldo)) : ''}" oninput="zMascararValorMonetario(this)" onblur="zFinalizarValorMonetario(this,true)">
           <div class="fin-inline-help">${zUiText('Pode ser positivo, zero ou negativo. Use exatamente o valor exibido pelo banco.')}</div>
         </div>
         <div class="f-field">
@@ -683,7 +683,7 @@ function renderFinanceiro() {
         <div class="f-row">
           <div class="f-field">
             <label>Valor (R$)</label>
-            <input type="text" id="fin-lanc-valor" inputmode="decimal" placeholder="0,00" value="${itemEditando ? finEscapeAttr(finValorParaInput(itemEditando.valor)) : ''}">
+            <input type="text" id="fin-lanc-valor" inputmode="decimal" placeholder="0,00" value="${itemEditando ? finEscapeAttr(finValorParaInput(itemEditando.valor)) : ''}" oninput="zMascararValorMonetario(this)" onblur="zFinalizarValorMonetario(this,false)">
           </div>
         </div>
         <div class="f-field">

@@ -323,7 +323,7 @@ function folhaModalHtml(){
         </label>
         <label class="folha-field">
           <span>Salário</span>
-          <div class="folha-money-input"><b>R$</b><input id="folha-salario" type="text" inputmode="decimal" value="${folhaEscape(item?folhaValorCampo(item.salario):'')}" placeholder="0,00" autocomplete="off" required></div>
+          <div class="folha-money-input"><b>R$</b><input id="folha-salario" type="text" inputmode="decimal" value="${folhaEscape(item?folhaValorCampo(item.salario):'')}" placeholder="0,00" autocomplete="off" required oninput="zMascararValorMonetario(this)" onblur="zFinalizarValorMonetario(this,false)"></div>
         </label>
         <label class="folha-field">
           <span>Banco</span>
