@@ -223,6 +223,21 @@ function fmtTamanho(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
 }
 
+// Mascara de CNPJ em tempo real: usuário digita só os números
+// (ex.: 12983189276391) e o campo já formata sozinho para
+// "12.983.189/2763-91" a cada tecla digitada.
+function mascararCnpjInput(input) {
+  if (!input) return;
+  const digitos = String(input.value || '').replace(/\D/g, '').slice(0, 14);
+  let formatado = digitos;
+  if (digitos.length > 12) formatado = digitos.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})$/, '$1.$2.$3/$4-$5');
+  else if (digitos.length > 8) formatado = digitos.replace(/^(\d{2})(\d{3})(\d{3})(\d{0,4})$/, '$1.$2.$3/$4');
+  else if (digitos.length > 5) formatado = digitos.replace(/^(\d{2})(\d{3})(\d{0,3})$/, '$1.$2.$3');
+  else if (digitos.length > 2) formatado = digitos.replace(/^(\d{2})(\d{0,3})$/, '$1.$2');
+  input.value = formatado;
+}
+window.mascararCnpjInput = mascararCnpjInput;
+
 function hoje() {
   const d = new Date();
   return d.getDate().toString().padStart(2,'0') + '/'
