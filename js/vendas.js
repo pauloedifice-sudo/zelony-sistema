@@ -292,6 +292,16 @@ function lerPercentualTexto(valor,padrao=0){
 function formatarNumeroInput(valor,casas=2){
   return numSeguro(valor,0).toFixed(casas).replace('.',',');
 }
+// Reformata um campo de valor em R$ (ex.: mv-valor, mv-bonus) para o padrão
+// "248.000,00" assim que o usuário sai do campo — ele continua podendo
+// digitar o número "cru" (sem separador de milhar/decimal), sem precisar
+// disso: quem formata é o próprio campo. Mesmo padrão já usado em outros
+// módulos (ver folhaValorCampo / agFormatarRendaBrutaFamiliar).
+function formatarValorMonetarioInput(input){
+  if(!input) return;
+  const numero=lerNumeroTexto(input.value,0);
+  input.value=numero>0?numero.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'';
+}
 function normalizarBonusGestaoVenda(v){
   if(!v||typeof v!=='object') return v;
   const bonusTotal=numSeguro(v.bonus,0);
@@ -1961,6 +1971,11 @@ function abrirModalVenda(){
     calcularPrevV();
   };
   ['mv-cliente','mv-produto','mv-construtora','mv-valor','mv-pct','mv-pct-cor','mv-pct-cap','mv-pct-ger','mv-pct-dir','mv-pct-dir2','mv-cca','mv-bonus','mv-bonus-dir','mv-bonus-dir2','mv-bonus-ger','mv-bonus-cor','mv-corretor-ext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  // Limpa os anexos (comprovante/contrato) da venda anterior — sem isso,
+  // mvDocs e as caixas de upload continuavam mostrando o arquivo já
+  // anexado no lançamento anterior ao abrir o modal para uma nova venda.
+  resetDocBox('comp');
+  resetDocBox('cont');
   const f=document.getElementById('mv-dir2-pct-field');
   if(f) f.style.display='none';
   const bonusDir2Field=document.getElementById('mv-bonus-dir2-field');
@@ -2204,17 +2219,26 @@ function handleDocUpload(input,tipo){
   };
   reader.readAsDataURL(file);
 }
-function removerDoc(tipo,e){
-  e.stopPropagation();
+// Volta a caixa de upload ('comp' ou 'cont') para o estado vazio inicial —
+// usada tanto pelo botão "Trocar arquivo" quanto para limpar o modal ao
+// abrir uma nova venda (ver abrirModalVenda), já que antes o anexo da
+// venda anterior ficava "preso" ali.
+function resetDocBox(tipo){
   mvDocs[tipo]=null;
   const box=document.getElementById('dbox-'+tipo);
   const inner=document.getElementById('dbox-'+tipo+'-inner');
+  if(!box||!inner) return;
   const icon=tipo==='comp'?'🧾':'📄';
   const label=tipo==='comp'?'Comprovante de pagamento':'Contrato assinado';
   box.classList.remove('ok','erro');
   box.onclick=()=>document.getElementById('mv-'+tipo+'-input').click();
-  document.getElementById('mv-'+tipo+'-input').value='';
+  const inputEl=document.getElementById('mv-'+tipo+'-input');
+  if(inputEl) inputEl.value='';
   inner.innerHTML=`<div style="font-size:22px;margin-bottom:4px;">${zUiText(icon)}</div><div style="font-size:12px;font-weight:600;color:var(--ts);">${zUiText(label)} <span style="color:#C05030;">*</span></div><div style="font-size:10px;color:var(--tm);margin-top:3px;">${zUiText('Clique para selecionar · PDF, JPG, PNG')}</div>`;
+}
+function removerDoc(tipo,e){
+  if(e&&typeof e.stopPropagation==='function') e.stopPropagation();
+  resetDocBox(tipo);
 }
 
 // Navegar do financeiro para uma venda

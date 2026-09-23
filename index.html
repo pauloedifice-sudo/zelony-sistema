@@ -1035,7 +1035,7 @@
           <!-- Valores -->
           <div class="mv-section">Valores e Comissões</div>
           <div class="f-row">
-            <div class="f-field"><label>Valor de venda (R$) *</label><input type="number" id="mv-valor" placeholder="Ex: 248000" min="0" oninput="calcularPrevV()"></div>
+            <div class="f-field"><label>Valor de venda (R$) *</label><input type="text" inputmode="decimal" id="mv-valor" placeholder="Ex: 248.000,00" oninput="calcularPrevV()" onblur="formatarValorMonetarioInput(this)"></div>
             <div class="f-field"><label>% Comissão total *</label><input type="text" id="mv-pct" inputmode="decimal" placeholder="Ex: 5" oninput="calcularPrevV()"></div>
           </div>
           <div class="f-field"><label>Imposto (%) — padrão 11%</label><input type="text" id="mv-imp" value="11" inputmode="decimal" oninput="calcularPrevV()"></div>
@@ -1064,7 +1064,7 @@
           <div class="mv-section">Bônus <span style="font-size:9px;color:var(--tm);font-weight:400;">(opcional)</span></div>
           <div class="f-field">
             <label>Valor do bônus (R$)</label>
-            <input type="number" id="mv-bonus" placeholder="Ex: 2000" min="0" oninput="calcularPrevBonus()">
+            <input type="text" inputmode="decimal" id="mv-bonus" placeholder="Ex: 2.000,00" oninput="calcularPrevBonus()" onblur="formatarValorMonetarioInput(this)">
           </div>
           <div class="mv-section" style="margin-top:8px;font-size:9px;">Distribuição do bônus (%)</div>
           <div class="pct-row">
