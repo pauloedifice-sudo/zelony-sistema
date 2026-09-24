@@ -693,6 +693,42 @@ async function createUserContract(req: Request, body: Record<string, unknown>) {
   return jsonResponse({ ok: true, envelopeId, documentId });
 }
 
+// Reenvia manualmente a notificação por e-mail de um contrato Clicksign que
+// já está com o envelope criado e "running", mas cujo signatário não
+// recebeu o e-mail (ex.: contratos criados antes da correção que passou a
+// chamar POST /envelopes/{id}/notifications automaticamente). Não cria nada
+// novo -- só localiza o envelope pendente pelo e-mail e pede à Clicksign
+// para notificar de novo.
+async function resendContractNotification(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeUserInvites(req, body);
+  if ("response" in auth) return auth.response;
+
+  const email = normalizeEmail(body.email);
+  if (!email) {
+    return jsonResponse({ error: "Informe o e-mail do corretor para reenviar a notificação." }, { status: 400 });
+  }
+
+  const { data: contrato, error: contratoError } = await auth.supabase
+    .from("contratos_clicksign_pendentes")
+    .select("id,email,clicksign_envelope_key,status")
+    .ilike("email", email)
+    .eq("status", "aguardando_assinatura")
+    .maybeSingle();
+  if (contratoError) throw contratoError;
+  if (!contrato || !contrato.clicksign_envelope_key) {
+    return jsonResponse({ error: "Nenhum contrato aguardando assinatura encontrado para este e-mail." }, { status: 404 });
+  }
+
+  await clicksignRequest(`/envelopes/${contrato.clicksign_envelope_key}/notifications`, "POST", {
+    data: {
+      type: "notifications",
+      attributes: {},
+    },
+  });
+
+  return jsonResponse({ ok: true, envelopeId: contrato.clicksign_envelope_key });
+}
+
 // Checagem "segura" para a tela de login: confere se o e-mail existe e qual
 // o status da conta, SEM devolver nenhum dado sensível (nome, telefone,
 // dados bancários, CPF, etc.). Não exige sessão — é chamada antes do login
@@ -1289,6 +1325,10 @@ Deno.serve(async (req) => {
 
     if (action === "create_user_contract") {
       return await createUserContract(req, body);
+    }
+
+    if (action === "resend_contract_notification") {
+      return await resendContractNotification(req, body);
     }
 
     if (action === "check_login_email") {
