@@ -251,7 +251,7 @@ async function criarContratoClicksign(params: {
     await clicksignRequest(`/envelopes/${envelopeId}/requirements`, "POST", {
       data: {
         type: "requirements",
-        attributes: { action: "agree" },
+        attributes: { action: "agree", role: "sign" },
         relationships: {
           document: { data: { type: "documents", id: documentId } },
           signer: { data: { type: "signers", id: signerId } },
