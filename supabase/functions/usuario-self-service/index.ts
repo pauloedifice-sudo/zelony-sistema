@@ -217,6 +217,7 @@ async function criarContratoClicksign(params: {
       attributes: {
         name: CLICKSIGN_ZELONY_SIGNER_NOME,
         email: CLICKSIGN_ZELONY_SIGNER_EMAIL,
+        communicate_events: { signature_request: "email", signature_reminder: "email", document_signed: "email" },
       },
     },
   });
@@ -228,6 +229,7 @@ async function criarContratoClicksign(params: {
       attributes: {
         name: params.nomeCorretor,
         email: params.emailCorretor,
+        communicate_events: { signature_request: "email", signature_reminder: "email", document_signed: "email" },
       },
     },
   });
@@ -265,6 +267,18 @@ async function criarContratoClicksign(params: {
       id: envelopeId,
       type: "envelopes",
       attributes: { status: "running" },
+    },
+  });
+
+  // A Clicksign não dispara o e-mail de "assine este documento" sozinha ao
+  // colocar o envelope em "running" — é preciso pedir explicitamente o
+  // envio da notificação (só funciona com o envelope já em running, por
+  // isso vem depois do PATCH acima). Sem essa chamada o envelope fica
+  // criado e pronto para assinatura, mas os signatários nunca recebem nada.
+  await clicksignRequest(`/envelopes/${envelopeId}/notifications`, "POST", {
+    data: {
+      type: "notifications",
+      attributes: {},
     },
   });
 
