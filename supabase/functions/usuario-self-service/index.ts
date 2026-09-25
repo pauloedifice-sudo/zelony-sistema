@@ -329,6 +329,10 @@ function canManageUserInvites(profile: unknown) {
   return ["dono", "diretor", "financeiro", "rh"].includes(normalizeProfile(profile));
 }
 
+function canManageZapiQueue(profile: unknown) {
+  return ["dono", "diretor"].includes(normalizeProfile(profile));
+}
+
 function canonicalInviteProfile(value: unknown) {
   const profiles: Record<string, string> = {
     dono: "Dono",
@@ -727,6 +731,75 @@ async function resendContractNotification(req: Request, body: Record<string, unk
   });
 
   return jsonResponse({ ok: true, envelopeId: contrato.clicksign_envelope_key });
+}
+
+// Cancela a fila de mensagens pendentes na Z-API (mensagens ja aceitas pela
+// Z-API -- status "enfileirada" -- mas ainda nao confirmadas como entregues).
+// Usado antes de reconectar um numero de WhatsApp que foi desconectado por
+// suspeita de spam: sem isso, ao reconectar, a Z-API despeja de uma vez todo
+// o backlog acumulado, o que pode disparar um novo bloqueio. Chama
+// DELETE /queue da Z-API (apaga a fila inteira do lado deles) e marca como
+// "cancelada" os registros correspondentes na nossa tabela de notificacoes.
+async function cancelarFilaZapiPendente(req: Request, body: Record<string, unknown>) {
+  const supabase = createServiceClient();
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth.response;
+  if (!canManageZapiQueue(auth.usuario.perfil)) {
+    return jsonResponse({ error: "Seu perfil não possui acesso para cancelar a fila do WhatsApp." }, { status: 403 });
+  }
+
+  const instanceId = Deno.env.get("ZAPI_INSTANCE_ID");
+  const token = Deno.env.get("ZAPI_INSTANCE_TOKEN");
+  const clientToken = Deno.env.get("ZAPI_CLIENT_TOKEN");
+  if (!instanceId || !token || !clientToken) {
+    return jsonResponse({ error: "As secrets da Z-API não estão configuradas neste projeto." }, { status: 500 });
+  }
+  const apiBase = `https://api.z-api.io/instances/${instanceId}/token/${token}`;
+  const zapiHeaders = { "Content-Type": "application/json", "Client-Token": clientToken };
+
+  // Só para informar quantas mensagens existiam na fila -- não é crítico se
+  // essa leitura falhar (o endpoint de listagem está marcado como obsoleto
+  // pela própria Z-API), o importante é o DELETE abaixo.
+  let pendentesNaZapiAntes: number | null = null;
+  try {
+    const listResp = await fetch(`${apiBase}/queue?page=1&pageSize=1000`, { headers: zapiHeaders });
+    if (listResp.ok) {
+      const listData = await listResp.json().catch(() => null);
+      const messages = Array.isArray(listData?.messages)
+        ? listData.messages
+        : Array.isArray(listData)
+        ? listData
+        : null;
+      if (Array.isArray(messages)) pendentesNaZapiAntes = messages.length;
+    }
+  } catch {
+    // segue mesmo se a leitura falhar
+  }
+
+  const deleteResp = await fetch(`${apiBase}/queue`, { method: "DELETE", headers: zapiHeaders });
+  const deleteText = await deleteResp.text();
+  if (!deleteResp.ok) {
+    return jsonResponse({
+      error: `Falha ao limpar a fila na Z-API (HTTP ${deleteResp.status}): ${deleteText.slice(0, 300)}`,
+    }, { status: 502 });
+  }
+
+  const { data: canceladas, error: updateError } = await supabase
+    .from("venda_notificacoes_zapi")
+    .update({
+      status: "cancelada",
+      erro: "Fila cancelada manualmente antes de reconectar o WhatsApp.",
+      atualizado_em: new Date().toISOString(),
+    })
+    .eq("status", "enfileirada")
+    .select("id");
+  if (updateError) throw updateError;
+
+  return jsonResponse({
+    ok: true,
+    pendentesNaZapiAntes,
+    canceladasNoBanco: Array.isArray(canceladas) ? canceladas.length : 0,
+  });
 }
 
 // Checagem "segura" para a tela de login: confere se o e-mail existe e qual
@@ -1329,6 +1402,10 @@ Deno.serve(async (req) => {
 
     if (action === "resend_contract_notification") {
       return await resendContractNotification(req, body);
+    }
+
+    if (action === "cancelar_fila_zapi_pendente") {
+      return await cancelarFilaZapiPendente(req, body);
     }
 
     if (action === "check_login_email") {
