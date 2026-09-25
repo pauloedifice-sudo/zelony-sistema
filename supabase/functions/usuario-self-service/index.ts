@@ -787,7 +787,7 @@ async function cancelarFilaZapiPendente(req: Request, body: Record<string, unkno
   const { data: canceladas, error: updateError } = await supabase
     .from("venda_notificacoes_zapi")
     .update({
-      status: "cancelada",
+      status: "ignorado",
       erro: "Fila cancelada manualmente antes de reconectar o WhatsApp.",
       atualizado_em: new Date().toISOString(),
     })
