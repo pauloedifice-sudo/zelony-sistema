@@ -199,83 +199,52 @@ function renderCarteira() {
       analiseAndamento,
       analiseDistratos
     );
-    const alertas = [];
+    const terceiroCard = carteiraFiltros.situacao === 'distratos'
+      ? {
+          tag: 'Ticket médio distratado',
+          valor: fmtK(analiseDistratos.ticketDistrato),
+          meta: zUiText('valor médio por venda distratada no recorte')
+        }
+      : {
+          tag: 'Impacto distratos',
+          valor: fmtK(dados.valorPerdidoDistrato),
+          meta: dados.distratadas.length
+            ? `${fmtPctCarteira(dados.taxaDistrato)} ${zUiText('do recorte')} • ${fmtK(dados.impactoDistrato)} ${zUiText('de lucro Zelony perdido')}`
+            : zUiText('sem perdas por distrato no recorte')
+        };
+    const quartoCard = carteiraFiltros.situacao === 'andamento'
+      ? {
+          tag: 'Retenção da empresa',
+          valor: fmtPctCarteira(dados.pctEmpresa),
+          meta: `${fmtPctCarteira(dados.pctComercial)} ${zUiText('está com a equipe comercial neste recorte')}`
+        }
+      : {
+          tag: 'Pipeline em aberto',
+          valor: `${dados.emAndamento.length} ${zUiText(`venda${dados.emAndamento.length !== 1 ? 's' : ''}`)}`,
+          meta: `${fmtK(dados.vgvPipeline)} ${zUiText('de VGV ainda em aberto no recorte')}`
+        };
 
-    if (dados.distratadas.length) {
-      alertas.push({
-        tipo: 'danger',
-        tag: 'Risco de distrato',
-        titulo: `${fmtPctCarteira(dados.taxaDistrato)} ${zUiText('em distratos')}`,
-        meta: `${dados.distratadas.length} ${zUiText(`venda${dados.distratadas.length !== 1 ? 's' : ''}`)} • ${fmtK(dados.valorPerdidoDistrato)} ${zUiText('de comissão líquida que deixou de entrar')}`
-      });
-    }
-    if (dados.pctEmpresa < 45 && dados.cLiq > 0) {
-      alertas.push({
-        tipo: 'warn',
-        tag: 'Retenção da empresa',
-        titulo: `${fmtPctCarteira(dados.pctEmpresa)} ${zUiText('fica com a empresa')}`,
-        meta: `${fmtPctCarteira(dados.pctComercial)} ${zUiText('está com a equipe comercial neste recorte')}`
-      });
-    }
-    if (dados.topConstrutora && concentracaoTopConstr >= 35) {
-      alertas.push({
-        tipo: 'info',
-        tag: 'Concentração',
-        titulo: `${zUiText(dados.topConstrutora[0])} ${zUiText('responde por')} ${fmtPctCarteira(concentracaoTopConstr)}`,
-        meta: `${fmtK(dados.topConstrutora[1].vgv)} ${zUiText('do VGV do recorte está concentrado na construtora líder')}`
-      });
-    }
-    if (dados.emAndamento.length) {
-      alertas.push({
-        tipo: 'good',
-        tag: 'Pipeline',
-        titulo: `${dados.emAndamento.length} ${zUiText(`venda${dados.emAndamento.length !== 1 ? 's' : ''}`)} ${zUiText('em andamento')}`,
-        meta: `${fmtK(dados.vgvPipeline)} ${zUiText('de VGV ainda em aberto no recorte')}`
-      });
-    }
-    if (!alertas.length) {
-      alertas.push({
-        tipo: 'good',
-        tag: 'Sem alertas críticos',
-        titulo: zUiText('Recorte saudável'),
-        meta: zUiText('Sem concentração excessiva, sem distratos e com retenção equilibrada para a empresa.')
-      });
-    }
-
-    const insights = [
+    const leituraExecutiva = [
       dados.topConstrutora ? {
-        tag: 'Top construtora',
+        tag: 'Concentração',
         valor: zUiText(dados.topConstrutora[0]),
-        meta: `${dados.topConstrutora[1].n} ${zUiText(`venda${dados.topConstrutora[1].n !== 1 ? 's' : ''}`)} • ${fmtK(dados.topConstrutora[1].vgv)}`
+        meta: `${fmtPctCarteira(concentracaoTopConstr)} ${zUiText('do VGV do recorte')} • ${fmtK(dados.topConstrutora[1].vgv)}`
       } : null,
       dados.topUnidade ? {
         tag: 'Unidade líder',
         valor: zUiText(dados.topUnidade[0]),
         meta: `${dados.topUnidade[1].n} ${zUiText(`venda${dados.topUnidade[1].n !== 1 ? 's' : ''}`)} • ${fmtK(dados.topUnidade[1].vgv)}`
       } : null,
-      {
-        tag: '% médio construtoras',
-        valor: fmtPctCarteira(dados.taxaConstrutoras),
-        meta: zUiText('média recebida sobre o VGV')
-      },
-      {
-        tag: 'Impacto distratos',
-        valor: fmtK(dados.valorPerdidoDistrato),
-        meta: dados.distratadas.length
-          ? `${fmtPctCarteira(dados.taxaDistrato)} ${zUiText('do recorte')} • ${fmtK(dados.impactoDistrato)} ${zUiText('de lucro Zelony perdido')}`
-          : zUiText('sem perdas por distrato no recorte')
-      },
-      {
-        tag: 'Margem Zelony',
-        valor: fmtPctCarteira(dados.margemZelony),
-        meta: zUiText('fatia da Zelony sobre a comissão líquida')
-      }
+      terceiroCard,
+      quartoCard
     ].filter(Boolean);
 
     const distribuicao = [
       {
         grupo: 'Equipe comercial',
         destaque: 'Quem captura a maior fatia da comissão líquida.',
+        pct: dados.pctComercial,
+        total: dados.totalComercial,
         itens: [
           { label: 'Corretores', valor: dados.cCor, cor: '#B8902A' },
           { label: 'Capitães', valor: dados.cCap, cor: '#D7A949' },
@@ -286,6 +255,9 @@ function renderCarteira() {
       {
         grupo: 'Empresa',
         destaque: 'Parcela da operação que fica com estrutura e resultado da empresa.',
+        pct: dados.pctEmpresa,
+        total: dados.totalEmpresa,
+        company: true,
         itens: [
           { label: 'RH', valor: dados.cRH, cor: '#2E9E6E' },
           { label: 'Zelony', valor: dados.zelony, cor: '#1F7A54', forte: true }
@@ -300,7 +272,7 @@ function renderCarteira() {
           <div class="cart-admin-title">${zUiText(role === 'dono' ? 'Lucro líquido Zelony' : 'Comissão líquida total')}</div>
           <div class="cart-admin-value">${fmtK(role === 'dono' ? dados.zelony : dados.cLiq)}</div>
           <div class="cart-admin-sub">${zUiText(`${dados.ativas.length} venda${dados.ativas.length !== 1 ? 's' : ''} ativas no recorte`)} ${zUiText('•')} ${fmtK(dados.vgv)} ${zUiText('de VGV')}</div>
-          <div class="ch-badge"><div class="ch-dot"></div> ${zUiText('Atualizado agora')}</div>
+          <div class="ch-badge"><div class="ch-dot"></div> ${carteiraTempoAtualizado()}</div>
           <div class="cart-admin-signals">
             <div class="cart-admin-signal">
               <span>${zUiText('Margem Zelony')}</span>
@@ -381,9 +353,9 @@ function renderCarteira() {
       <div class="cart-quick">
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'todos' ? 'active' : ''}" onclick="setCarteiraSituacao('todos')">${zUiText('Todas')} <span>${baseSemSituacao.length}</span></button>
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'ativas' ? 'active' : ''}" onclick="setCarteiraSituacao('ativas')">${zUiText('Ativas')} <span>${chips.ativas.length}</span></button>
-        <button class="cart-quick-btn ${carteiraFiltros.situacao === 'concluidas' ? 'active' : ''}" onclick="setCarteiraSituacao('concluidas')">${zUiText('Concluídas')} <span>${chips.concluidas.length}</span></button>
+        <button class="cart-quick-btn ${carteiraFiltros.situacao === 'concluidas' ? 'active' : ''}" onclick="setCarteiraSituacao('concluidas')">${zUiText('Concluídas')} <span>${chips.concluidas.length}</span><small>${fmtPctCarteira(chips.taxaConclusao)}</small></button>
         <button class="cart-quick-btn ${carteiraFiltros.situacao === 'andamento' ? 'active' : ''}" onclick="setCarteiraSituacao('andamento')">${zUiText('Em andamento')} <span>${chips.emAndamento.length}</span></button>
-        <button class="cart-quick-btn ${carteiraFiltros.situacao === 'distratos' ? 'active danger' : ''}" onclick="setCarteiraSituacao('distratos')">${zUiText('Distratos')} <span>${chips.distratadas.length}</span></button>
+        <button class="cart-quick-btn ${carteiraFiltros.situacao === 'distratos' ? 'active danger' : ''}" onclick="setCarteiraSituacao('distratos')">${zUiText('Distratos')} <span>${chips.distratadas.length}</span><small>${fmtPctCarteira(chips.taxaDistrato)}</small></button>
       </div>
       </div>
 
@@ -392,59 +364,8 @@ function renderCarteira() {
       ${concluidaBoard}
       ${distratoBoard}
 
-      <div class="cart-admin-kpis">
-        <button type="button" class="cmc a ${carteiraFiltros.situacao === 'concluidas' ? 'cart-card-active' : ''}" onclick="setCarteiraSituacao('concluidas')">
-          <div class="cmc-l">${zUiText('Concluídas')}</div>
-          <div class="cmc-v go">${dados.concluidas.length}</div>
-          <div class="cmc-s">${dados.taxaConclusao.toFixed(1)}% ${zUiText('das ativas')}</div>
-        </button>
-        <button type="button" class="cmc g ${carteiraFiltros.situacao === 'andamento' ? 'cart-card-active' : ''}" onclick="setCarteiraSituacao('andamento')">
-          <div class="cmc-l">${zUiText('Em andamento')}</div>
-          <div class="cmc-v gr">${dados.emAndamento.length}</div>
-          <div class="cmc-s">${zUiText('pipeline aberto')}</div>
-        </button>
-        <button type="button" class="cmc ${carteiraFiltros.situacao === 'distratos' ? 'cart-card-active cart-card-danger' : ''}" onclick="setCarteiraSituacao('distratos')">
-          <div class="cmc-l">${zUiText('Distratos')}</div>
-          <div class="cmc-v" style="color:#C06030;">${dados.distratadas.length}</div>
-          <div class="cmc-s">${dados.taxaDistrato.toFixed(1)}% ${zUiText('do recorte')}</div>
-          <div class="cmc-s">${fmtK(dados.valorPerdidoDistrato)} ${zUiText('não recebidos')}</div>
-        </button>
-        <div class="cmc">
-          <div class="cmc-l">${zUiText('Bônus líquido')}</div>
-          <div class="cmc-v" style="color:#2E9E6E;">${fmtK(dados.bonus)}</div>
-          <div class="cmc-s">${zUiText('após imposto')}</div>
-          <div class="cmc-s">${zUiText('Bruto')} ${fmtK(dados.bonusBruto)} ${zUiText('· Imposto')} ${fmtK(dados.bonusImposto)}</div>
-        </div>
-      </div>
-
-      <div class="cart-share-banner">
-        <div class="cart-share-card">
-          <span>${zUiText('Equipe comercial')}</span>
-          <strong>${fmtPctCarteira(dados.pctComercial)}</strong>
-          <small>${fmtK(dados.totalComercial)} ${zUiText('da comissão líquida')}</small>
-          <div class="cart-share-track"><div class="cart-share-fill" style="width:${Math.max(6, Math.min(100, Number(dados.pctComercial || 0)))}%;"></div></div>
-        </div>
-        <div class="cart-share-divider">${zUiText('vs')}</div>
-        <div class="cart-share-card company">
-          <span>${zUiText('Empresa')}</span>
-          <strong>${fmtPctCarteira(dados.pctEmpresa)}</strong>
-          <small>${fmtK(dados.totalEmpresa)} ${zUiText('da comissão líquida')}</small>
-          <div class="cart-share-track"><div class="cart-share-fill" style="width:${Math.max(6, Math.min(100, Number(dados.pctEmpresa || 0)))}%;"></div></div>
-        </div>
-      </div>
-
-      <div class="cart-alerts">
-        ${alertas.slice(0, 4).map(item => `
-          <div class="cart-alert ${item.tipo}">
-            <div class="cart-alert-tag">${zUiText(item.tag)}</div>
-            <div class="cart-alert-title">${zUiText(item.titulo)}</div>
-            <div class="cart-alert-copy">${zUiText(item.meta)}</div>
-          </div>
-        `).join('')}
-      </div>
-
       <div class="cart-insights">
-        ${insights.map(item => `
+        ${leituraExecutiva.map(item => `
           <div class="cart-insight">
             <div class="cart-insight-tag">${zUiText(item.tag)}</div>
             <div class="cart-insight-value">${zUiText(item.valor)}</div>
@@ -502,13 +423,22 @@ function renderCarteira() {
       <div class="cart-dist-wrap">
         <div class="ctbl-h">
           <span class="ctbl-t">${zUiText('Distribuição da comissão líquida')}</span>
-          <span style="font-size:10px;color:var(--tm);">${zUiText('mesma lógica atual, com leitura executiva')}</span>
+          <span style="font-size:10px;color:var(--tm);">${zUiText('total por grupo e quebra por cargo, na mesma leitura')}</span>
         </div>
         <div class="cart-dist-grid">
           ${distribuicao.map(bloco => `
-            <div class="cart-dist-card">
-              <div class="cart-dist-title">${zUiText(bloco.grupo)}</div>
-              <div class="cart-dist-copy">${zUiText(bloco.destaque)}</div>
+            <div class="cart-dist-card ${bloco.company ? 'company' : ''}">
+              <div class="cart-dist-card-head">
+                <div>
+                  <div class="cart-dist-title">${zUiText(bloco.grupo)}</div>
+                  <div class="cart-dist-copy">${zUiText(bloco.destaque)}</div>
+                </div>
+                <div class="cart-dist-headline">
+                  <strong>${fmtPctCarteira(bloco.pct)}</strong>
+                  <small>${fmtK(bloco.total)} ${zUiText('da com. líquida')}</small>
+                </div>
+              </div>
+              <div class="cart-share-track"><div class="cart-share-fill" style="width:${Math.max(6, Math.min(100, Number(bloco.pct || 0)))}%;"></div></div>
               ${bloco.itens.map(item => {
                 const pct = dados.cLiq > 0 ? Math.round((item.valor / dados.cLiq) * 100) : 0;
                 return `
@@ -567,7 +497,7 @@ function renderCarteira() {
 
   const rows = renderCarteiraTabelaRows(lMinhas, cols);
   document.getElementById('carteira-content').innerHTML = `
-    <div class="ch"><div class="ch-lbl">${zUiText(saldoLabel)}</div><div class="ch-val">${fmtCarteiraValor(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> ${zUiText('Atualizado agora')}</div></div>
+    <div class="ch"><div class="ch-lbl">${zUiText(saldoLabel)}</div><div class="ch-val">${fmtCarteiraValor(saldo)}</div><div class="ch-sub">${saldoSub}</div><div class="ch-badge"><div class="ch-dot"></div> ${carteiraTempoAtualizado()}</div></div>
     <div class="c3">
       <div class="cmc a"><div class="cmc-l">${zUiText('Minhas vendas')}</div><div class="cmc-v go">${lMinhas.filter(v => !v.distratada).length}</div><div class="cmc-s">${zUiText(`${lMinhas.filter(v => !v.distratada && v.etapa === ETAPAS.length - 1).length} concluídas`)}</div></div>
       <div class="cmc g"><div class="cmc-l">${zUiText('Já recebido')}</div><div class="cmc-v gr">${fmtCarteiraValor(rec)}</div><div class="cmc-s">${zUiText('comissões recebidas + bônus pagos')}</div></div>

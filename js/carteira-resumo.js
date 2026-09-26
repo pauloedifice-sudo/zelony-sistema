@@ -275,6 +275,21 @@ function fmtPctCarteira(valor) {
   return `${Number(valor || 0).toFixed(1).replace('.', ',')}%`;
 }
 
+function carteiraTempoAtualizado() {
+  const iso = typeof dashUltimaAtualizacao !== 'undefined' ? dashUltimaAtualizacao : '';
+  if (!iso) return zUiText('Sincronizado no login');
+  const alvo = new Date(iso).getTime();
+  if (!Number.isFinite(alvo)) return zUiText('Atualizado agora');
+  const diffMs = Date.now() - alvo;
+  if (diffMs < 60000) return zUiText('Atualizado agora');
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 60) return zUiText(`Atualizado há ${diffMin} min`);
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return zUiText(`Atualizado há ${diffH}h`);
+  const diffDias = Math.floor(diffH / 24);
+  return zUiText(`Atualizado há ${diffDias}d`);
+}
+
 function carteiraHeaderMap() {
   return {
     data: 'Data',
