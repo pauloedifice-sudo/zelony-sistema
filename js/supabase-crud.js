@@ -638,6 +638,9 @@ function salvarLS(){
     if(typeof renderReembolsosAto==='function'&&!document.getElementById('mod-reembolsos-ato')?.classList.contains('hidden')){
       renderReembolsosAto();
     }
+    if(typeof renderCarteira==='function'&&!document.getElementById('mod-carteira')?.classList.contains('hidden')){
+      renderCarteira();
+    }
     return true;
   }catch(e){
     console.warn('Falha ao salvar cache local:',e.message||e);
