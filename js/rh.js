@@ -11,6 +11,16 @@ let rhFiltroCadastro = 'todos';
 let rhAbaAtiva = 'visao_geral';
 let rhFiltroPeriodo = 'all';
 let rhBuscaRenderTimer = null;
+let rhFiltrosSecundariosVisiveis = [];
+let rhAddFiltroMenuAberto = false;
+
+const RH_FILTROS_SECUNDARIOS = [
+  { key: 'equipe', label: 'Equipe' },
+  { key: 'perfil', label: 'Perfil' },
+  { key: 'origem', label: 'Origem' },
+  { key: 'cadastro', label: 'Cadastro' },
+  { key: 'periodo', label: 'Período' }
+];
 
 const RH_ATIVACAO_LEGADO_SEM_VENDA_ISO = '2026-07-01';
 
@@ -523,7 +533,6 @@ function rhPanelSaude(alertas, totalAtivos) {
 }
 
 function rhPainelInsights(resumo, contexto = {}) {
-  const maiorGargalo = rhMaiorGargaloCadastro(resumo.alertas);
   const ativosPct = rhPercentual(resumo.ativos.length, resumo.total || 0);
   const origemRhPct = rhPercentual(contexto.origemRhAtiva || 0, resumo.ativos.length || 0);
   const prontosPct = rhPercentual(resumo.prontos.length, resumo.ativos.length || 0);
@@ -578,94 +587,6 @@ function rhPainelInsights(resumo, contexto = {}) {
           <span>${zUiText('Equipe lider')}</span>
           <strong>${zUiHtml(equipeLider ? equipeLider.nome : 'Sem equipe')}</strong>
           <p>${zUiText(equipeLider ? `${rhNumero(equipeLider.ativos)} ativos no recorte e referencia ${equipeLider.meta || 'sem unidade definida'}.` : 'Nenhuma equipe apareceu com os filtros atuais.')}</p>
-        </div>
-
-        <div class="rh-insight-foot-card warn">
-          <span>${zUiText('Principal ajuste agora')}</span>
-          <strong>${zUiText(maiorGargalo.titulo)}</strong>
-          <p>${zUiText(maiorGargalo.valor ? `${rhNumero(maiorGargalo.valor)} ativo(s): ${maiorGargalo.copy}` : maiorGargalo.copy)}</p>
-        </div>
-      </div>
-    </section>
-  `;
-}
-
-function rhTabelaResumo(titulo, subtitulo, lista, opcoes = {}) {
-  const linhas = lista.length ? lista.map(item => `
-    <tr>
-      <td><strong>${zUiHtml(item.nome)}</strong></td>
-      ${opcoes.mostrarMeta ? `<td>${zUiText(item.meta)}</td>` : ''}
-      <td>${rhNumero(item.total)}</td>
-      <td>${rhNumero(item.ativos)}</td>
-      <td>${rhNumero(item.inativos)}</td>
-      <td>${rhNumero(item.pendentes)}</td>
-      <td>${rhNumero(item.corretoresAtivos)}</td>
-      <td>${rhNumero(item.prontos)}</td>
-      <td>${rhPercentual(item.ativos, item.total)}</td>
-    </tr>
-  `).join('') : `
-    <tr>
-      <td colspan="${opcoes.mostrarMeta ? 9 : 8}">${zUiText('Nenhum registro encontrado com os filtros atuais.')}</td>
-    </tr>
-  `;
-
-  return `
-    <section class="rh-panel rh-panel-wide rh-future-panel">
-      <div class="rh-panel-head">
-        <div>
-          <h3>${zUiText(titulo)}</h3>
-          <p>${zUiText(subtitulo)}</p>
-        </div>
-        <div class="rh-panel-count">${rhNumero(lista.length)}</div>
-      </div>
-      <div class="rh-table-wrap">
-        <table class="rh-table">
-          <thead>
-            <tr>
-              <th>${zUiText(opcoes.colunaNome || 'Grupo')}</th>
-              ${opcoes.mostrarMeta ? `<th>${zUiText(opcoes.colunaMeta || 'Meta')}</th>` : ''}
-              <th>${zUiText('Total')}</th>
-              <th>${zUiText('Ativos')}</th>
-              <th>${zUiText('Inativos')}</th>
-              <th>${zUiText('Pendentes')}</th>
-              <th>${zUiText('Corretores ativos')}</th>
-              <th>${zUiText('Prontos')}</th>
-              <th>${zUiText('% ativo')}</th>
-            </tr>
-          </thead>
-          <tbody>${linhas}</tbody>
-        </table>
-      </div>
-    </section>
-  `;
-}
-
-function rhPainelHistoricoFuturoLegacy() {
-  return `
-    <section class="rh-panel">
-      <div class="rh-panel-head">
-        <div>
-          <h3>${zUiText('Próxima etapa do Dash RH')}</h3>
-          <p>${zUiText('O módulo já entrega a fotografia atual da estrutura. Os indicadores históricos entram na próxima camada de dados.')}</p>
-        </div>
-        <div class="rh-panel-count">${zUiText('Fase 2')}</div>
-      </div>
-      <div class="rh-note">
-        <strong>${zUiText('Turnover e contratações por período ainda não estão ativos aqui.')}</strong>
-        ${zUiText('Para calcular esses números sem distorção, o sistema precisa gravar data de admissão, data de desligamento e movimentações como troca de equipe, troca de unidade e reativação.')}
-      </div>
-      <div class="rh-future-grid">
-        <div class="rh-note-item">
-          <strong>${zUiText('Contratações')}</strong>
-          ${zUiText('Entram quando passarmos a registrar a data efetiva de entrada do usuário na operação.')}
-        </div>
-        <div class="rh-note-item">
-          <strong>${zUiText('Desligamentos e turnover')}</strong>
-          ${zUiText('Serão calculados sobre eventos reais de inativação, e não apenas sobre o status atual do cadastro.')}
-        </div>
-        <div class="rh-note-item">
-          <strong>${zUiText('Movimentações')}</strong>
-          ${zUiText('Também poderemos mostrar reativações, transferências entre unidades e histórico por equipe.')}
         </div>
       </div>
     </section>
@@ -761,162 +682,115 @@ function rhLimparFiltros() {
   rhFiltroOrigem = 'todos';
   rhFiltroCadastro = 'todos';
   rhFiltroPeriodo = 'all';
+  rhFiltrosSecundariosVisiveis = [];
+  rhAddFiltroMenuAberto = false;
   rhSyncState();
   renderRhDashboard();
 }
 
-function renderRhDashboardLegacy() {
-  const cont = document.getElementById('rh-dashboard-content');
-  if (!cont) return;
-  const estadoBusca = rhCapturarEstadoBusca();
-
-  if (!rhDashboardPodeAcessar()) {
-    cont.innerHTML = `<div class="rh-locked">
-      <div class="rh-locked-icon">${zUiText('🔒')}</div>
-      <div class="rh-locked-title">${zUiText('Acesso restrito')}</div>
-      <div class="rh-locked-sub">${zUiText('O Dash RH fica disponível somente para RH, Dono, Diretor e Financeiro, porque reúne estrutura da equipe, situação cadastral e leitura gerencial dos usuários.')}</div>
-    </div>`;
-    return;
-  }
-
-  const opcoes = rhOpcoesFiltros();
-  rhGarantirFiltrosValidos(opcoes);
-  const listaTotal = rhListaUsuarios();
-  const base = rhBaseFiltrada();
-  const resumo = rhResumoBase(base);
-  const filtrosAtivos = rhFiltrosAtivosCount();
-  const cardProntos = resumo.ativos.length ? rhPercentual(resumo.prontos.length, resumo.ativos.length) : '0%';
-  const origemRhAtiva = resumo.ativos.filter(usuario => !!(usuario && usuario.rhContratacao)).length;
-  const origemDiretaAtiva = resumo.ativos.length - origemRhAtiva;
-
-  cont.innerHTML = `
-    <div class="rh-hero">
-      <div class="rh-hero-copy">
-        <div class="rh-eyebrow">${zUiText('Dash RH')}</div>
-        <h2>${zUiText('Estrutura viva da operação')}</h2>
-        <p>${zUiText('Leitura em tempo real dos usuários, com visão por unidade, equipe, perfil e saúde cadastral. Esta primeira versão é totalmente confiável para o quadro atual e já prepara o terreno para contratações e turnover históricos.')}</p>
-        <div class="rh-hero-highlights">
-          <div class="rh-highlight-chip"><span>${zUiText('Usuários no recorte')}</span> <strong>${rhNumero(resumo.total)}</strong></div>
-          <div class="rh-highlight-chip"><span>${zUiText('Origem RH ativa')}</span> <strong>${rhNumero(origemRhAtiva)}</strong></div>
-          <div class="rh-highlight-chip"><span>${zUiText('Origem direta ativa')}</span> <strong>${rhNumero(origemDiretaAtiva)}</strong></div>
-          <div class="rh-highlight-chip"><span>${zUiText('Cadastros prontos')}</span> <strong>${cardProntos}</strong></div>
-        </div>
-      </div>
-
-      <div class="rh-filter-card">
-        <div class="rh-filter-head">
-          <div>
-            <h3>${zUiText('Filtros do módulo')}</h3>
-            <p>${zUiText('Os cards, rankings e tabelas respeitam os filtros abaixo.')}</p>
-          </div>
-          <span class="rh-badge">${rhNumero(filtrosAtivos)} ${zUiText('ativos')}</span>
-        </div>
-        <div class="rh-filter-grid">
-          <div class="rh-filter-field rh-filter-search">
-            <label>${zUiText('Busca')}</label>
-            <input type="text" id="rh-busca" value="${rhAttr(rhBusca)}" placeholder="${zUiText('Nome, e-mail, equipe ou unidade...')}" oninput="rhSetFiltro('busca', this.value)">
-          </div>
-          <div class="rh-filter-field">
-            <label>${zUiText('Status')}</label>
-            <select onchange="rhSetFiltro('status', this.value)">
-              ${Object.entries(RH_STATUS_LABELS).map(([valor, rotulo]) => `<option value="${valor}" ${rhFiltroStatus === valor ? 'selected' : ''}>${zUiText(rotulo)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="rh-filter-field">
-            <label>${zUiText('Unidade')}</label>
-            <select onchange="rhSetFiltro('unidade', this.value)">
-              <option value="">${zUiText('Todas')}</option>
-              ${opcoes.unidades.map(unidade => `<option value="${rhAttr(unidade)}" ${rhFiltroUnidade === unidade ? 'selected' : ''}>${zUiText(unidade)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="rh-filter-field">
-            <label>${zUiText('Equipe')}</label>
-            <select onchange="rhSetFiltro('equipe', this.value)">
-              <option value="">${zUiText('Todas')}</option>
-              ${opcoes.equipes.map(equipe => `<option value="${rhAttr(equipe)}" ${rhFiltroEquipe === equipe ? 'selected' : ''}>${zUiText(equipe)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="rh-filter-field">
-            <label>${zUiText('Perfil')}</label>
-            <select onchange="rhSetFiltro('perfil', this.value)">
-              <option value="">${zUiText('Todos')}</option>
-              ${opcoes.perfis.map(perfil => `<option value="${perfil}" ${rhFiltroPerfil === perfil ? 'selected' : ''}>${zUiText(rhPerfilLabel(perfil))}</option>`).join('')}
-            </select>
-          </div>
-          <div class="rh-filter-field">
-            <label>${zUiText('Origem')}</label>
-            <select onchange="rhSetFiltro('origem', this.value)">
-              <option value="todos" ${rhFiltroOrigem === 'todos' ? 'selected' : ''}>${zUiText('Todos')}</option>
-              <option value="rh" ${rhFiltroOrigem === 'rh' ? 'selected' : ''}>${zUiText('RH')}</option>
-              <option value="direto" ${rhFiltroOrigem === 'direto' ? 'selected' : ''}>${zUiText('Direto')}</option>
-            </select>
-          </div>
-          <div class="rh-filter-field">
-            <label>${zUiText('Cadastro')}</label>
-            <select onchange="rhSetFiltro('cadastro', this.value)">
-              ${Object.entries(RH_CADASTRO_LABELS).map(([valor, rotulo]) => `<option value="${valor}" ${rhFiltroCadastro === valor ? 'selected' : ''}>${zUiText(rotulo)}</option>`).join('')}
-            </select>
-          </div>
-        </div>
-        <div class="rh-filter-actions">
-          <div class="rh-filter-meta">${zUiText(`Mostrando ${rhNumero(resumo.total)} de ${rhNumero(listaTotal.length)} usuário(s).`)}</div>
-          <button type="button" class="rh-filter-btn ghost" onclick="rhLimparFiltros()">${zUiText('Limpar filtros')}</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="rh-kpis">
-      ${rhCardKpi('Headcount total', rhNumero(resumo.total), zUiText('Todos os usuários no recorte atual'), true)}
-      ${rhCardKpi('Ativos', rhNumero(resumo.ativos.length), zUiText('Cadastros liberados para operar'))}
-      ${rhCardKpi('Inativos', rhNumero(resumo.inativos.length), zUiText('Fora dos novos lançamentos e do acesso'))}
-      ${rhCardKpi('Pendentes', rhNumero(resumo.pendentes.length), zUiText('Convites ou cadastros ainda não concluídos'))}
-      ${rhCardKpi('Corretores totais', rhNumero(resumo.corretores.length), zUiText('Base total de corretores no filtro'))}
-      ${rhCardKpi('Corretores ativos', rhNumero(resumo.corretoresAtivos.length), zUiText('Corretores hoje em operação'))}
-      ${rhCardKpi('Equipes com ativos', rhNumero(resumo.equipesAtivas), zUiText('Equipes com pelo menos um usuário ativo'))}
-      ${rhCardKpi('Prontos para recebimento', rhNumero(resumo.prontos.length), zUiText(`${cardProntos} dos ativos com telefone, banco/conta e Pix`))}
-    </div>
-
-    <div class="rh-grid">
-      ${rhPanelRanking('Quadro por unidade', 'Leitura consolidada por unidade', resumo.porUnidade, { mostrarMeta: false, limite: 6 })}
-      ${rhPanelRanking('Quadro por equipe', 'Onde a base está concentrada hoje', resumo.porEquipe, { metaPrefix: 'Unidade: ', limite: 8 })}
-      ${rhPanelRanking('Distribuição por perfil', 'Composição de acessos e liderança', resumo.porPerfil, { mostrarMeta: false, limite: 7 })}
-      ${rhPanelRanking('Origem do cadastro', 'Leitura entre RH e entrada direta', resumo.porOrigem, { mostrarMeta: false, limite: 4 })}
-      ${rhPanelSaude(resumo.alertas, resumo.ativos.length)}
-    </div>
-
-    ${rhTabelaResumo('Resumo por unidade', 'Comparativo executivo do quadro atual por unidade.', resumo.porUnidade, { colunaNome: 'Unidade' })}
-    ${rhTabelaResumo('Resumo por equipe', 'Leitura das equipes com unidade de referência e prontidão cadastral.', resumo.porEquipe, { colunaNome: 'Equipe', mostrarMeta: true, colunaMeta: 'Unidade' })}
-    ${rhPainelHistoricoFuturo()}
-  `;
-  rhRestaurarEstadoBusca(estadoBusca);
+function rhCampoSecundarioValor(chave) {
+  if (chave === 'equipe') return rhFiltroEquipe;
+  if (chave === 'perfil') return rhFiltroPerfil;
+  if (chave === 'origem') return rhFiltroOrigem;
+  if (chave === 'cadastro') return rhFiltroCadastro;
+  if (chave === 'periodo') return rhFiltroPeriodo;
+  return '';
 }
 
-function rhPainelHistoricoFuturo() {
-  return `
-    <section class="rh-panel rh-panel-wide rh-future-panel">
-      <div class="rh-panel-head">
-        <div>
-          <h3>${zUiText('Proxima camada do Dash RH')}</h3>
-          <p>${zUiText('O modulo atual resolve bem a fotografia do quadro. O passo seguinte e adicionar historico real de movimentacoes.')}</p>
-        </div>
-        <div class="rh-panel-count">${zUiText('Fase 2')}</div>
-      </div>
-      <div class="rh-future-grid">
-        <div class="rh-note-item">
-          <strong>${zUiText('Contratacoes')}</strong>
-          ${zUiText('Entram quando o sistema passar a registrar a data efetiva de entrada do usuario na operacao.')}
-        </div>
-        <div class="rh-note-item">
-          <strong>${zUiText('Turnover real')}</strong>
-          ${zUiText('Vai considerar desligamentos, reativacoes e a janela correta de tempo, sem depender so do status atual.')}
-        </div>
-        <div class="rh-note-item">
-          <strong>${zUiText('Movimentacoes internas')}</strong>
-          ${zUiText('Tambem podemos mostrar trocas de equipe, unidade e evolucao de cada lideranca ao longo do tempo.')}
-        </div>
-      </div>
-    </section>
-  `;
+function rhCampoSecundarioAtivo(chave) {
+  const valor = rhCampoSecundarioValor(chave);
+  if (chave === 'origem' || chave === 'cadastro') return !!valor && valor !== 'todos';
+  if (chave === 'periodo') return !!valor && valor !== 'all';
+  return !!valor;
+}
+
+function rhCampoSecundarioDisponivel(chave) {
+  // O período só faz sentido fora da Visão geral (Produção e Histórico de status são as
+  // abas que de fato recortam por período; a Visão geral sempre olha o recorte atual).
+  if (chave === 'periodo') return rhAbaAtiva !== 'visao_geral';
+  return true;
+}
+
+function rhCampoSecundarioVisivel(chave) {
+  if (!rhCampoSecundarioDisponivel(chave)) return false;
+  return rhFiltrosSecundariosVisiveis.includes(chave) || rhCampoSecundarioAtivo(chave);
+}
+
+function rhAdicionarFiltroSecundario(chave) {
+  if (!rhFiltrosSecundariosVisiveis.includes(chave)) {
+    rhFiltrosSecundariosVisiveis = [...rhFiltrosSecundariosVisiveis, chave];
+  }
+  rhAddFiltroMenuAberto = false;
+  renderRhDashboard();
+}
+
+function rhRemoverFiltroSecundario(chave) {
+  rhFiltrosSecundariosVisiveis = rhFiltrosSecundariosVisiveis.filter(item => item !== chave);
+  const valorPadrao = chave === 'origem' || chave === 'cadastro' ? 'todos' : (chave === 'periodo' ? 'all' : '');
+  rhSetFiltro(chave, valorPadrao);
+}
+
+function rhToggleAddFiltroMenu(force) {
+  rhAddFiltroMenuAberto = typeof force === 'boolean' ? force : !rhAddFiltroMenuAberto;
+  renderRhDashboard();
+}
+
+function rhCampoSecundarioHtml(chave, opcoes) {
+  if (chave === 'equipe') {
+    return `
+      <div class="rh-field">
+        <label>${zUiText('Equipe')}</label>
+        <select onchange="rhSetFiltro('equipe', this.value)">
+          <option value="">${zUiText('Todas')}</option>
+          ${opcoes.equipes.map(equipe => `<option value="${rhAttr(equipe)}" ${rhFiltroEquipe === equipe ? 'selected' : ''}>${zUiText(equipe)}</option>`).join('')}
+        </select>
+        <button type="button" class="rh-field-x" onclick="rhRemoverFiltroSecundario('equipe')">×</button>
+      </div>`;
+  }
+  if (chave === 'perfil') {
+    return `
+      <div class="rh-field">
+        <label>${zUiText('Perfil')}</label>
+        <select onchange="rhSetFiltro('perfil', this.value)">
+          <option value="">${zUiText('Todos')}</option>
+          ${opcoes.perfis.map(perfil => `<option value="${perfil}" ${rhFiltroPerfil === perfil ? 'selected' : ''}>${zUiText(rhPerfilLabel(perfil))}</option>`).join('')}
+        </select>
+        <button type="button" class="rh-field-x" onclick="rhRemoverFiltroSecundario('perfil')">×</button>
+      </div>`;
+  }
+  if (chave === 'origem') {
+    return `
+      <div class="rh-field">
+        <label>${zUiText('Origem')}</label>
+        <select onchange="rhSetFiltro('origem', this.value)">
+          <option value="todos" ${rhFiltroOrigem === 'todos' ? 'selected' : ''}>${zUiText('Todos')}</option>
+          <option value="rh" ${rhFiltroOrigem === 'rh' ? 'selected' : ''}>${zUiText('RH')}</option>
+          <option value="direto" ${rhFiltroOrigem === 'direto' ? 'selected' : ''}>${zUiText('Direto')}</option>
+        </select>
+        <button type="button" class="rh-field-x" onclick="rhRemoverFiltroSecundario('origem')">×</button>
+      </div>`;
+  }
+  if (chave === 'cadastro') {
+    return `
+      <div class="rh-field">
+        <label>${zUiText('Cadastro')}</label>
+        <select onchange="rhSetFiltro('cadastro', this.value)">
+          ${Object.entries(RH_CADASTRO_LABELS).map(([valor, rotulo]) => `<option value="${valor}" ${rhFiltroCadastro === valor ? 'selected' : ''}>${zUiText(rotulo)}</option>`).join('')}
+        </select>
+        <button type="button" class="rh-field-x" onclick="rhRemoverFiltroSecundario('cadastro')">×</button>
+      </div>`;
+  }
+  if (chave === 'periodo') {
+    return `
+      <div class="rh-field">
+        <label>${zUiText('Período')}</label>
+        <select onchange="rhSetFiltro('periodo', this.value)">
+          ${Object.entries(RH_PERIODO_LABELS).map(([valor, rotulo]) => `<option value="${valor}" ${rhFiltroPeriodo === valor ? 'selected' : ''}>${zUiText(rotulo)}</option>`).join('')}
+        </select>
+        <button type="button" class="rh-field-x" onclick="rhRemoverFiltroSecundario('periodo')">×</button>
+      </div>`;
+  }
+  return '';
 }
 
 function rhPad2(valor) {
@@ -1424,7 +1298,10 @@ function rhDescricaoAba() {
 
 function rhToolbarHtml(opcoes, resumo, totalUsuarios) {
   const filtrosAtivos = rhFiltrosAtivosCount();
-  const mostraPeriodo = rhAbaAtiva !== 'visao_geral';
+  const disponiveis = RH_FILTROS_SECUNDARIOS.filter(item => rhCampoSecundarioDisponivel(item.key));
+  const visiveis = disponiveis.filter(item => rhCampoSecundarioVisivel(item.key));
+  const escondidos = disponiveis.filter(item => !rhCampoSecundarioVisivel(item.key));
+
   return `
     <div class="rh-toolbar">
       <div class="rh-toolbar-head">
@@ -1436,7 +1313,7 @@ function rhToolbarHtml(opcoes, resumo, totalUsuarios) {
         <span class="rh-badge gray">${rhNumero(filtrosAtivos)} ${zUiText('filtros ativos')}</span>
       </div>
 
-      <div class="rh-toolbar-grid rh-toolbar-grid--wide">
+      <div class="rh-toolbar-row">
         <div class="rh-filter-field rh-filter-search">
           <label>${zUiText('Busca')}</label>
           <input type="text" id="rh-busca" value="${rhAttr(rhBusca)}" placeholder="${zUiText('Nome, e-mail, equipe ou unidade...')}" oninput="rhSetFiltro('busca', this.value)">
@@ -1454,43 +1331,17 @@ function rhToolbarHtml(opcoes, resumo, totalUsuarios) {
             ${opcoes.unidades.map(unidade => `<option value="${rhAttr(unidade)}" ${rhFiltroUnidade === unidade ? 'selected' : ''}>${zUiText(unidade)}</option>`).join('')}
           </select>
         </div>
-        <div class="rh-filter-field">
-          <label>${zUiText('Equipe')}</label>
-          <select onchange="rhSetFiltro('equipe', this.value)">
-            <option value="">${zUiText('Todas')}</option>
-            ${opcoes.equipes.map(equipe => `<option value="${rhAttr(equipe)}" ${rhFiltroEquipe === equipe ? 'selected' : ''}>${zUiText(equipe)}</option>`).join('')}
-          </select>
-        </div>
-        <div class="rh-filter-field">
-          <label>${zUiText('Perfil')}</label>
-          <select onchange="rhSetFiltro('perfil', this.value)">
-            <option value="">${zUiText('Todos')}</option>
-            ${opcoes.perfis.map(perfil => `<option value="${perfil}" ${rhFiltroPerfil === perfil ? 'selected' : ''}>${zUiText(rhPerfilLabel(perfil))}</option>`).join('')}
-          </select>
-        </div>
-        <div class="rh-filter-field">
-          <label>${zUiText('Origem')}</label>
-          <select onchange="rhSetFiltro('origem', this.value)">
-            <option value="todos" ${rhFiltroOrigem === 'todos' ? 'selected' : ''}>${zUiText('Todos')}</option>
-            <option value="rh" ${rhFiltroOrigem === 'rh' ? 'selected' : ''}>${zUiText('RH')}</option>
-            <option value="direto" ${rhFiltroOrigem === 'direto' ? 'selected' : ''}>${zUiText('Direto')}</option>
-          </select>
-        </div>
-        <div class="rh-filter-field">
-          <label>${zUiText('Cadastro')}</label>
-          <select onchange="rhSetFiltro('cadastro', this.value)">
-            ${Object.entries(RH_CADASTRO_LABELS).map(([valor, rotulo]) => `<option value="${valor}" ${rhFiltroCadastro === valor ? 'selected' : ''}>${zUiText(rotulo)}</option>`).join('')}
-          </select>
-        </div>
-        ${mostraPeriodo ? `
-          <div class="rh-filter-field">
-            <label>${zUiText('Periodo')}</label>
-            <select onchange="rhSetFiltro('periodo', this.value)">
-              ${Object.entries(RH_PERIODO_LABELS).map(([valor, rotulo]) => `<option value="${valor}" ${rhFiltroPeriodo === valor ? 'selected' : ''}>${zUiText(rotulo)}</option>`).join('')}
-            </select>
+        <div class="rh-addwrap">
+          <button type="button" class="rh-more-btn${rhAddFiltroMenuAberto ? ' active' : ''}" onclick="rhToggleAddFiltroMenu()">${escondidos.length ? zUiText('+ Adicionar filtro') : zUiText('Filtros adicionados')}</button>
+          <div class="rh-add-menu${rhAddFiltroMenuAberto ? '' : ' hidden'}">
+            ${escondidos.length
+              ? escondidos.map(item => `<button type="button" class="rh-add-menu-item" onclick="rhAdicionarFiltroSecundario('${item.key}')">${zUiText(item.label)}</button>`).join('')
+              : `<div class="rh-add-menu-empty">${zUiText('Todos os filtros já estão visíveis')}</div>`}
           </div>
-        ` : ''}
+        </div>
       </div>
+
+      ${visiveis.length ? `<div class="rh-toolbar-row rh-toolbar-row--secondary">${visiveis.map(item => rhCampoSecundarioHtml(item.key, opcoes)).join('')}</div>` : ''}
 
       <div class="rh-toolbar-foot">
         <div class="rh-toolbar-meta">${zUiText(`Mostrando ${rhNumero(resumo.total)} de ${rhNumero(totalUsuarios)} usuario(s).`)}</div>
@@ -1498,6 +1349,35 @@ function rhToolbarHtml(opcoes, resumo, totalUsuarios) {
       </div>
     </div>
   `;
+}
+
+function rhHeroSpotlight(resumo, producao, historicoStatus) {
+  if (rhAbaAtiva === 'producao') {
+    const nome = producao.topOperador ? producao.topOperador.usuario.nome : null;
+    const vendas = producao.topOperador ? producao.topOperador.totalVendas : 0;
+    return {
+      titulo: 'Destaque em producao',
+      valor: nome ? zUiText(nome) : zUiText('Sem base'),
+      copy: nome ? zUiText(`${rhNumero(vendas)} venda(s) validas no recorte atual.`) : zUiText('Nenhum operador com venda valida neste recorte.'),
+      tone: nome ? 'ok' : 'neutral'
+    };
+  }
+  if (rhAbaAtiva === 'historico_status') {
+    const saldo = historicoStatus.saldo || 0;
+    return {
+      titulo: 'Saldo do periodo',
+      valor: `${saldo > 0 ? '+' : ''}${rhNumero(saldo)}`,
+      copy: zUiText(`${rhNumero(historicoStatus.ativados)} ativacao(oes) e ${rhNumero(historicoStatus.reativados)} reativacao(oes) contra ${rhNumero(historicoStatus.inativados)} inativacao(oes).`),
+      tone: saldo > 0 ? 'ok' : (saldo < 0 ? 'warn' : 'neutral')
+    };
+  }
+  const gargalo = rhMaiorGargaloCadastro(resumo.alertas);
+  return {
+    titulo: 'Maior alerta agora',
+    valor: gargalo.valor ? `${rhNumero(gargalo.valor)} ${zUiText(gargalo.titulo)}` : zUiText(gargalo.titulo),
+    copy: zUiText(gargalo.copy),
+    tone: gargalo.valor ? 'warn' : 'ok'
+  };
 }
 
 function rhHeroResumoHtml(resumo, producao, historicoStatus) {
@@ -1530,6 +1410,8 @@ function rhHeroResumoHtml(resumo, producao, historicoStatus) {
     ];
   }
 
+  const spot = rhHeroSpotlight(resumo, producao, historicoStatus);
+
   return `
     <div class="rh-stage">
       <div class="rh-stage-main">
@@ -1541,35 +1423,10 @@ function rhHeroResumoHtml(resumo, producao, historicoStatus) {
         </div>
       </div>
 
-      <div class="rh-stage-side">
-        <div class="rh-stage-total">
-          <span>${zUiText('Headcount do recorte')}</span>
-          <strong>${rhNumero(resumo.total)}</strong>
-          <p>${zUiText(`${rhNumero(resumo.ativos.length)} ativos, ${rhNumero(resumo.inativos.length)} inativos e ${rhNumero(resumo.pendentes.length)} pendentes neste momento.`)}</p>
-        </div>
-
-        <div class="rh-spot-grid">
-          <article class="rh-spot-card">
-            <span>${zUiText('Ativos')}</span>
-            <strong>${rhNumero(resumo.ativos.length)}</strong>
-            <small>${zUiText('Base liberada para operar')}</small>
-          </article>
-          <article class="rh-spot-card">
-            <span>${zUiText('Corretores ativos')}</span>
-            <strong>${rhNumero(resumo.corretoresAtivos.length)}</strong>
-            <small>${zUiText('Forca comercial ativa')}</small>
-          </article>
-          <article class="rh-spot-card">
-            <span>${zUiText('Prontos')}</span>
-            <strong>${rhNumero(resumo.prontos.length)}</strong>
-            <small>${zUiText('Aptos para recebimento')}</small>
-          </article>
-          <article class="rh-spot-card">
-            <span>${zUiText('Equipes com ativos')}</span>
-            <strong>${rhNumero(resumo.equipesAtivas)}</strong>
-            <small>${zUiText('Equipes vivas no recorte')}</small>
-          </article>
-        </div>
+      <div class="rh-spotlight rh-spotlight--${spot.tone}">
+        <span class="rh-spotlight-eyebrow">${zUiText(spot.titulo)}</span>
+        <strong>${spot.valor}</strong>
+        <p>${spot.copy}</p>
       </div>
     </div>
   `;
@@ -1745,17 +1602,12 @@ function rhTabelaEventosStatus(dados) {
 
 function rhConteudoVisaoGeral(resumo, origemRhAtiva, producao) {
   const cardProntos = resumo.ativos.length ? rhPercentual(resumo.prontos.length, resumo.ativos.length) : '0%';
-  const equipeLider = producao.topEquipe ? producao.topEquipe.nome : 'Sem equipe';
   return `
     <div class="rh-kpis rh-kpis-compact">
       ${rhCardKpi('Inativos', rhNumero(resumo.inativos.length), zUiText('Fora da operacao ou sem acesso liberado'))}
       ${rhCardKpi('Pendentes', rhNumero(resumo.pendentes.length), zUiText('Convites ou cadastros ainda nao concluidos'))}
       ${rhCardKpi('Corretores totais', rhNumero(resumo.corretores.length), zUiText('Base comercial no recorte atual'))}
       ${rhCardKpi('Origem RH ativa', rhNumero(origemRhAtiva), zUiText('Usuarios ativos marcados como entrada via RH'), true)}
-      ${rhCardKpi('Vendas validas no periodo', rhNumero(producao.totalVendas), zUiText('Producao liquida sem distratos'))}
-      ${rhCardKpi('Media mensal/operador', String(producao.mediaMensalOperadores).replace('.', ','), zUiText('Media de vendas por corretor ou capitao no recorte'))}
-      ${rhCardKpi('Equipe lider', zUiText(equipeLider), zUiText('Equipe com maior volume de vendas validas'))}
-      ${rhCardKpi('Operadores sem venda', rhNumero(producao.operadoresSemVenda), zUiText('Corretores e capitoes sem venda valida no recorte'))}
       ${rhCardKpi('Prontos para recebimento', rhNumero(resumo.prontos.length), zUiText(`${cardProntos} dos ativos com telefone, banco/conta e Pix`))}
     </div>
 
@@ -1764,18 +1616,7 @@ function rhConteudoVisaoGeral(resumo, origemRhAtiva, producao) {
       ${rhPanelRanking('Quadro por unidade', 'Leitura consolidada da estrutura por unidade', resumo.porUnidade, { mostrarMeta: false, limite: 6 })}
       ${rhPanelRanking('Quadro por equipe', 'Onde o quadro esta concentrado hoje', resumo.porEquipe, { metaPrefix: 'Unidade: ', limite: 8, className: 'rh-panel-wide' })}
       ${rhPanelSaude(resumo.alertas, resumo.ativos.length)}
-      ${rhPanelProducaoRanking('Operadores com mais producao', 'Volume liquido de vendas no recorte atual', producao.linhas, {
-        limite: 6,
-        meta: item => `${item.equipe} · ${rhIsoParaBr(item.ativacaoIso)}`
-      })}
-      ${rhPanelProducaoRanking('Equipes com mais producao', 'Resumo por equipe da base filtrada', producao.equipes, {
-        limite: 6,
-        meta: item => `${rhNumero(item.corretores)} operador(es) · ${rhNumero(item.semVenda)} sem venda`
-      })}
     </div>
-
-    ${rhTabelaResumo('Resumo por unidade', 'Comparativo executivo do quadro atual por unidade.', resumo.porUnidade, { colunaNome: 'Unidade' })}
-    ${rhTabelaResumo('Resumo por equipe', 'Leitura das equipes com unidade de referencia e prontidao cadastral.', resumo.porEquipe, { colunaNome: 'Equipe', mostrarMeta: true, colunaMeta: 'Unidade' })}
   `;
 }
 
@@ -1925,5 +1766,8 @@ zRegisterModule('rhDashboard', {
   renderRhDashboard,
   rhSetFiltro,
   rhLimparFiltros,
-  rhDashboardPodeAcessar
+  rhDashboardPodeAcessar,
+  rhToggleAddFiltroMenu,
+  rhAdicionarFiltroSecundario,
+  rhRemoverFiltroSecundario
 });
