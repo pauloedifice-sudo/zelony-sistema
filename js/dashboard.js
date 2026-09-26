@@ -82,8 +82,15 @@ function dashMesAtualNome() {
   return typeof normalizarMesVenda === 'function' ? normalizarMesVenda(mes) : mes;
 }
 
+function dashPeriodoLiberado() {
+  // Somente o Dono pode escolher um período customizado (semestre, trimestre etc.)
+  // e assim ver quem lidera o ranking fora do mês atual. Os demais perfis
+  // (corretor, capitão, gerente, diretor...) ficam sempre travados no mês atual.
+  return role === 'dono';
+}
+
 function dashPeriodoLabel() {
-  if (dashDataDe || dashDataAte) {
+  if (dashPeriodoLiberado() && (dashDataDe || dashDataAte)) {
     const de = dashDataDe ? dashFormatarDataISO(dashDataDe) : 'início';
     const ate = dashDataAte ? dashFormatarDataISO(dashDataAte) : 'hoje';
     return `${de} até ${ate}`;
@@ -124,7 +131,9 @@ function dashDataVenda(v) {
 function dashVendaNoPeriodo(v) {
   if (v && v.distratada) return false;
 
-  if (!dashDataDe && !dashDataAte) {
+  const periodoCustomizado = dashPeriodoLiberado() && (dashDataDe || dashDataAte);
+
+  if (!periodoCustomizado) {
     const dataAtual = dashDataVenda(v);
     if (dataAtual) {
       const agora = new Date();
@@ -283,6 +292,7 @@ function dashRanking(titulo, subtitulo, lista, tipo) {
 }
 
 function dashSetPeriodo(campo, valor) {
+  if (!dashPeriodoLiberado()) return;
   if (campo === 'de') dashDataDe = valor || '';
   if (campo === 'ate') dashDataAte = valor || '';
   dashSyncState();
@@ -394,19 +404,9 @@ function renderDashboard() {
     : zUiText('Aguardando movimento');
   const topCorretor = resumo.topCorretor ? `${zUiText(resumo.topCorretor.nome)} - ${dashMoney(resumo.topCorretor.vgv)}` : zUiText('Sem vendas');
   const topEquipe = resumo.topEquipe ? `${zUiText(resumo.topEquipe.nome)} - ${dashMoney(resumo.topEquipe.vgv)}` : zUiText('Sem vendas');
+  const periodoLiberado = dashPeriodoLiberado();
 
-  cont.innerHTML = `
-    <div class="dash-hero">
-      <div class="dash-hero-copy">
-        <div class="dash-eyebrow">${zUiText('Dashboard comercial')}</div>
-        <h2>${zUiText('Resultado de vendas em tempo real')}</h2>
-        <p>${zUiText('Foco no mês atual por padrão. Use o período personalizado para analisar qualquer janela de datas.')}</p>
-        <div class="dash-live-row">
-          <span class="dash-live-dot"></span>
-          <strong>${zUiText(liveLabel)}</strong>
-          <span>${ultima}</span>
-        </div>
-      </div>
+  const filtroCardHtml = periodoLiberado ? `
       <div class="dash-filter-card">
         <div class="dash-filter-title">${zUiText('Período')}</div>
         <div class="dash-filter-current">${zUiText(dashPeriodoLabel())}</div>
@@ -425,6 +425,21 @@ function renderDashboard() {
           <button type="button" class="primary" onclick="dashRecarregarVendasBanco()">${zUiText('Atualizar agora')}</button>
         </div>
       </div>
+  ` : '';
+
+  cont.innerHTML = `
+    <div class="dash-hero${periodoLiberado ? '' : ' sem-filtro'}">
+      <div class="dash-hero-copy">
+        <div class="dash-eyebrow">${zUiText('Dashboard comercial')}</div>
+        <h2>${zUiText('Resultado de vendas em tempo real')}</h2>
+        <p>${zUiText(periodoLiberado ? 'Foco no mês atual por padrão. Use o período personalizado para analisar qualquer janela de datas.' : 'Resultado do mês atual.')}</p>
+        <div class="dash-live-row">
+          <span class="dash-live-dot"></span>
+          <strong>${zUiText(liveLabel)}</strong>
+          <span>${ultima}</span>
+        </div>
+      </div>
+      ${filtroCardHtml}
     </div>
 
     <div class="dash-kpis">
