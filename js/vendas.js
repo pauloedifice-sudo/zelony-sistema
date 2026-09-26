@@ -1031,7 +1031,14 @@ function renderFiltros(){
   const selCca=document.getElementById('vf-cca');
   if(!selMes) return;
   const curMes=selMes.value,curConst=selConst.value,curEq=selEquipe.value,curCorretor=selCorretor?.value||'',curCca=selCca.value;
-  const meses=[...new Set(todasVendas.map(v=>v.mes).filter(Boolean))].sort();
+  const mesesOrdemCalendario=['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+  const meses=[...new Set(todasVendas.map(v=>v.mes).filter(Boolean))].sort((a,b)=>{
+    const ia=mesesOrdemCalendario.indexOf(a),ib=mesesOrdemCalendario.indexOf(b);
+    if(ia===-1&&ib===-1) return a.localeCompare(b);
+    if(ia===-1) return 1;
+    if(ib===-1) return -1;
+    return ia-ib;
+  });
   const construtoras=[...new Set(todasVendas.map(v=>v.construtora).filter(Boolean))].sort();
   const corretores=[...new Set(todasVendas.map(v=>v.corretor).filter(Boolean))].sort();
   const ccas=[...new Set(todasVendas.map(v=>v.cca).filter(Boolean))].sort();
