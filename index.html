@@ -704,20 +704,24 @@
             <select id="vf-mes" class="vf-main-select" onchange="renderVList()">
               <option value="">📅 Mês</option>
             </select>
-            <select id="vf-situacao" class="vf-main-select" onchange="renderFiltros();renderVList()">
-              <option value="">📂 Situação</option>
-              <option value="ativas">Ativas</option>
-              <option value="distratos">Distratos</option>
+            <div class="vf-situacao-toggle" id="vf-situacao-toggle">
+              <button type="button" class="uf vfs-btn active" data-val="" onclick="setSituacao('')">Todas</button>
+              <button type="button" class="uf vfs-btn" data-val="ativas" onclick="setSituacao('ativas')">Ativas</button>
+              <button type="button" class="uf vfs-btn" data-val="distratos" onclick="setSituacao('distratos')">Distratos</button>
+            </div>
+            <select id="vf-situacao" class="vf-situacao-hidden" onchange="renderFiltros();renderVList()">
+              <option value=""></option>
+              <option value="ativas"></option>
+              <option value="distratos"></option>
             </select>
-            <button id="vf-more-btn" class="vf-more-btn" type="button" onclick="toggleMaisFiltros()">Mais filtros</button>
+            <div class="vf-addwrap">
+              <button id="vf-more-btn" class="vf-more-btn" type="button" onclick="toggleAddFiltroMenu()">+ Adicionar filtro</button>
+              <div id="vf-add-menu" class="vf-add-menu vf-stage-panel hidden"></div>
+            </div>
           </div>
           <div class="v-toolbar-sub">
             <div class="vf-quick" id="vf-quick">
-              <button class="vf-quick-btn vf-quick-situacao" id="qf-ativas" type="button" onclick="setFiltroSituacaoRapido('ativas')">Ativas</button>
-              <button class="vf-quick-btn vf-quick-distrato" id="qf-distratos" type="button" onclick="setFiltroSituacaoRapido('distratos')">Distratos</button>
               <button class="vf-quick-btn vf-quick-pend" id="qf-pendencia" type="button" onclick="setFiltroPendenciaRapido('com')">Pend. comercial</button>
-              <button class="vf-quick-btn vf-quick-alerta" id="qf-atrasadas" type="button" onclick="setFiltroPrazoRapido('atrasada')">Atrasadas</button>
-              <button class="vf-quick-btn vf-quick-ok" id="qf-prazo" type="button" onclick="setFiltroPrazoRapido('ok')">No prazo</button>
             </div>
             <div class="unid-filter hidden" id="unid-filter">
               <button class="uf active-all" id="uf-all" onclick="setUnidade('all',this)">🏢 Todas</button>
@@ -726,36 +730,57 @@
             </div>
           </div>
           <div id="v-adv-filters" class="vf-advanced">
-            <div class="vf-advanced-grid">
-              <select id="vf-construtora" onchange="renderVList()">
-                <option value="">🏗️ Construtora</option>
-              </select>
-              <select id="vf-equipe" onchange="renderVList()">
-                <option value="">👥 Equipe</option>
-              </select>
-              <select id="vf-corretor" class="vf-field-wide" onchange="renderVList()">
-                <option value="">🧑‍💼 Corretor</option>
-              </select>
-              <select id="vf-cca" onchange="renderVList()">
-                <option value="">🧑‍💼 CCA</option>
-              </select>
-              <select id="vf-pend-comercial" onchange="renderFiltros();renderVList()">
-                <option value="">🟠 Pendência comercial</option>
-                <option value="com">Com pendência</option>
-                <option value="sem">Sem pendência</option>
-              </select>
-              <select id="vf-bonus-status" onchange="renderFiltros();renderVList()">
-                <option value="">🎁 Status do bonus</option>
-                <option value="pendente">Pendente</option>
-                <option value="nota_gerada">Nota gerada</option>
-                <option value="pago">Pago</option>
-              </select>
-              <select id="vf-origem" class="vf-field-wide" onchange="renderVList()">
-                <option value="">📌 Origem</option>
-                <option value="IndicaÃ§Ã£o">Indicação</option>
-                <option value="MKT">MKT</option>
-                <option value="Oferta Ativa">Oferta Ativa</option>
-              </select>
+            <div class="vf-advanced-grid" id="vf-advanced-grid">
+              <div class="vf-field hidden" data-field="construtora" id="vff-construtora">
+                <select id="vf-construtora" onchange="renderVList()">
+                  <option value="">🏗️ Construtora</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('construtora')">×</button>
+              </div>
+              <div class="vf-field hidden" data-field="equipe" id="vff-equipe">
+                <select id="vf-equipe" onchange="renderVList()">
+                  <option value="">👥 Equipe</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('equipe')">×</button>
+              </div>
+              <div class="vf-field hidden vf-field-wide" data-field="corretor" id="vff-corretor">
+                <select id="vf-corretor" class="vf-field-wide" onchange="renderVList()">
+                  <option value="">🧑‍💼 Corretor</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('corretor')">×</button>
+              </div>
+              <div class="vf-field hidden" data-field="cca" id="vff-cca">
+                <select id="vf-cca" onchange="renderVList()">
+                  <option value="">🧑‍💼 CCA</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('cca')">×</button>
+              </div>
+              <div class="vf-field hidden" data-field="pend-comercial" id="vff-pend-comercial">
+                <select id="vf-pend-comercial" onchange="renderFiltros();renderVList()">
+                  <option value="">🟠 Pendência comercial</option>
+                  <option value="com">Com pendência</option>
+                  <option value="sem">Sem pendência</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('pend-comercial')">×</button>
+              </div>
+              <div class="vf-field hidden" data-field="bonus-status" id="vff-bonus-status">
+                <select id="vf-bonus-status" onchange="renderFiltros();renderVList()">
+                  <option value="">🎁 Status do bonus</option>
+                  <option value="pendente">Pendente</option>
+                  <option value="nota_gerada">Nota gerada</option>
+                  <option value="pago">Pago</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('bonus-status')">×</button>
+              </div>
+              <div class="vf-field hidden vf-field-wide" data-field="origem" id="vff-origem">
+                <select id="vf-origem" class="vf-field-wide" onchange="renderVList()">
+                  <option value="">📌 Origem</option>
+                  <option value="IndicaÃ§Ã£o">Indicação</option>
+                  <option value="MKT">MKT</option>
+                  <option value="Oferta Ativa">Oferta Ativa</option>
+                </select>
+                <button type="button" class="vf-field-x" onclick="removerFiltroSecundario('origem')">×</button>
+              </div>
             </div>
           </div>
           <div class="vf-active-wrap hidden" id="vf-active-wrap">

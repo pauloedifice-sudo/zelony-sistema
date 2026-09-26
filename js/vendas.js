@@ -51,6 +51,7 @@ const PROC_DATA={
 
 // ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ ESTADO ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬
 let curVId=null, pendId=null, fEtapa='all', fEtapaModo='incluir', fEtapasSelecionadas=[], filtroEtapaMenuAberto=false, relMes='TODOS', vtab='acomp', filtroUnidade='all', fPrazo='all', maisFiltrosAbertos=false;
+let filtrosSecundariosVisiveis=[];
 let nextVendaId=1;
 let mvDocs={comp:null,cont:null};
 let distratoVendaId=null;
@@ -883,33 +884,91 @@ function renderBtnNovaVenda(){
     wrap.innerHTML='';
   }
 }
-function toggleMaisFiltros(force){
-  maisFiltrosAbertos=typeof force==='boolean'?force:!maisFiltrosAbertos;
-  zSetState('state.ui.maisFiltrosAbertos', maisFiltrosAbertos);
-  const box=document.getElementById('v-adv-filters');
-  if(box) box.classList.toggle('open', maisFiltrosAbertos);
+const FILTROS_SECUNDARIOS=[
+  {key:'construtora',label:'🏗️ Construtora'},
+  {key:'equipe',label:'👥 Equipe'},
+  {key:'corretor',label:'🧑‍💼 Corretor'},
+  {key:'cca',label:'🧑‍💼 CCA'},
+  {key:'pend-comercial',label:'🟠 Pendência comercial'},
+  {key:'bonus-status',label:'🎁 Status do bônus'},
+  {key:'origem',label:'📌 Origem'}
+];
+function campoSecundarioAtivo(key){
+  const el=document.getElementById('vf-'+key);
+  return !!(el&&el.value);
+}
+function campoSecundarioVisivel(key){
+  return filtrosSecundariosVisiveis.includes(key)||campoSecundarioAtivo(key);
+}
+function renderFiltrosSecundarios(){
+  let algumVisivel=false;
+  FILTROS_SECUNDARIOS.forEach(f=>{
+    const wrap=document.getElementById('vff-'+f.key);
+    if(!wrap) return;
+    const visivel=campoSecundarioVisivel(f.key);
+    wrap.classList.toggle('hidden',!visivel);
+    if(visivel) algumVisivel=true;
+  });
+  const advBox=document.getElementById('v-adv-filters');
+  if(advBox) advBox.classList.toggle('hidden',!algumVisivel);
+  renderMenuAddFiltro();
   atualizarBotaoMaisFiltros();
+}
+function renderMenuAddFiltro(){
+  const menu=document.getElementById('vf-add-menu');
+  if(!menu) return;
+  const escondidos=FILTROS_SECUNDARIOS.filter(f=>!campoSecundarioVisivel(f.key));
+  if(!escondidos.length){
+    menu.innerHTML=`<div class="vf-add-menu-empty">${zUiText('Todos os filtros já estão visíveis')}</div>`;
+    return;
+  }
+  menu.innerHTML=`<div class="vf-add-menu-hint">${zUiText('Adicionar filtro')}</div>`+escondidos.map(f=>`<button type="button" class="vf-add-menu-item" onclick="adicionarFiltroSecundario('${f.key}')">${zUiText(f.label)}</button>`).join('');
+}
+function adicionarFiltroSecundario(key){
+  if(!filtrosSecundariosVisiveis.includes(key)) filtrosSecundariosVisiveis=[...filtrosSecundariosVisiveis,key];
+  toggleAddFiltroMenu(false);
+  renderFiltrosSecundarios();
+  const sel=document.getElementById('vf-'+key);
+  if(sel) sel.focus();
+}
+function removerFiltroSecundario(key){
+  filtrosSecundariosVisiveis=filtrosSecundariosVisiveis.filter(k=>k!==key);
+  const sel=document.getElementById('vf-'+key);
+  if(sel&&sel.value) sel.value='';
+  renderFiltrosSecundarios();
+  renderFiltros();
+  renderVList();
+}
+function toggleAddFiltroMenu(force){
+  const menu=document.getElementById('vf-add-menu');
+  if(!menu) return;
+  const abrir=typeof force==='boolean'?force:menu.classList.contains('hidden');
+  if(abrir) renderMenuAddFiltro();
+  menu.classList.toggle('hidden',!abrir);
+  const btn=document.getElementById('vf-more-btn');
+  if(btn) btn.classList.toggle('active',abrir);
 }
 function atualizarBotaoMaisFiltros(){
   const btn=document.getElementById('vf-more-btn');
   if(!btn) return;
-  const ativos=['vf-construtora','vf-equipe','vf-corretor','vf-cca','vf-pend-comercial','vf-bonus-status','vf-origem'].reduce((n,id)=>n+(document.getElementById(id)?.value?1:0),0);
-  btn.classList.toggle('active', maisFiltrosAbertos);
-  btn.textContent=ativos?zUiText(`Mais filtros (${ativos})`):(maisFiltrosAbertos?zUiText('Ocultar filtros'):zUiText('Mais filtros'));
+  const escondidos=FILTROS_SECUNDARIOS.filter(f=>!campoSecundarioVisivel(f.key)).length;
+  btn.textContent=escondidos?zUiText('+ Adicionar filtro'):zUiText('Filtros adicionados');
+}
+function atualizarSituacaoToggle(){
+  const valorAtual=document.getElementById('vf-situacao')?.value||'';
+  document.querySelectorAll('#vf-situacao-toggle .vfs-btn').forEach(btn=>{
+    btn.classList.toggle('active',(btn.getAttribute('data-val')||'')===valorAtual);
+  });
 }
 function atualizarFiltrosRapidos(){
-  const vfSituacao=document.getElementById('vf-situacao')?.value||'';
   const vfPend=document.getElementById('vf-pend-comercial')?.value||'';
-  document.getElementById('qf-ativas')?.classList.toggle('active',vfSituacao==='ativas');
-  document.getElementById('qf-distratos')?.classList.toggle('active',vfSituacao==='distratos');
   document.getElementById('qf-pendencia')?.classList.toggle('active',vfPend==='com');
-  document.getElementById('qf-atrasadas')?.classList.toggle('active',fPrazo==='atrasada');
-  document.getElementById('qf-prazo')?.classList.toggle('active',fPrazo==='ok');
+  atualizarSituacaoToggle();
 }
-function setFiltroSituacaoRapido(valor){
+function setSituacao(valor){
   const el=document.getElementById('vf-situacao');
   if(!el) return;
-  el.value=el.value===valor?'':valor;
+  el.value=valor;
   renderFiltros();
   renderVList();
 }
@@ -934,13 +993,15 @@ function limparTodosFiltrosVendas(){
   filtroEtapaMenuAberto=false;
   fPrazo='all';
   filtroUnidade='all';
+  filtrosSecundariosVisiveis=[];
   syncFiltroEtapaState();
   zSetState('state.ui.fPrazo', fPrazo);
   zSetState('state.ui.filtroUnidade', filtroUnidade);
-  document.querySelectorAll('.uf').forEach(b=>{b.className='uf';});
+  document.querySelectorAll('#unid-filter .uf').forEach(b=>{b.className='uf';});
   const ufAll=document.getElementById('uf-all');
   if(ufAll) ufAll.classList.add('active-all');
-  toggleMaisFiltros(false);
+  toggleAddFiltroMenu(false);
+  renderFiltrosSecundarios();
   renderFiltros();
   renderVList();
 }
@@ -1056,6 +1117,7 @@ function renderFiltros(){
   if(selCorretor) selCorretor.innerHTML=`<option value="">${zUiText('🧑‍💼 Todos os corretores')}</option>`+corretores.map(c=>`<option value="${c}" ${curCorretor===c?'selected':''}>${zUiText(c)}</option>`).join('');
   selCca.innerHTML=`<option value="">${zUiText('🧑‍💼 Todos os CCA')}</option>`+ccas.map(c=>`<option value="${c}" ${curCca===c?'selected':''}>${zUiText(c)}</option>`).join('');
   atualizarTagsFiltros();
+  renderFiltrosSecundarios();
 }
 function atualizarTagsFiltros(){
   const wrap=document.getElementById('vf-active-tags');
@@ -1075,11 +1137,11 @@ function atualizarTagsFiltros(){
   const vfBonusStatus=document.getElementById('vf-bonus-status')?.value;
   if(busca) tags.push({label:zUiText(`🔎 ${busca}`),clear:()=>{document.getElementById('vsearch').value='';renderVList();}});
   if(vfMes) tags.push({label:zUiText(`📅 ${vfMes}`),clear:()=>{document.getElementById('vf-mes').value='';renderVList();}});
-  if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderVList();}});
-  if(vfEq) tags.push({label:zUiText(`👥 ${vfEq}`),clear:()=>{document.getElementById('vf-equipe').value='';renderVList();}});
-  if(vfCorretor) tags.push({label:zUiText(`🧑‍💼 ${vfCorretor}`),clear:()=>{document.getElementById('vf-corretor').value='';renderVList();}});
-  if(vfCca) tags.push({label:zUiText(`🧑‍💼 ${vfCca}`),clear:()=>{document.getElementById('vf-cca').value='';renderVList();}});
-  if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderVList();}});
+  if(vfConst) tags.push({label:zUiText(`🏗️ ${vfConst}`),clear:()=>{document.getElementById('vf-construtora').value='';renderFiltrosSecundarios();renderVList();}});
+  if(vfEq) tags.push({label:zUiText(`👥 ${vfEq}`),clear:()=>{document.getElementById('vf-equipe').value='';renderFiltrosSecundarios();renderVList();}});
+  if(vfCorretor) tags.push({label:zUiText(`🧑‍💼 ${vfCorretor}`),clear:()=>{document.getElementById('vf-corretor').value='';renderFiltrosSecundarios();renderVList();}});
+  if(vfCca) tags.push({label:zUiText(`🧑‍💼 ${vfCca}`),clear:()=>{document.getElementById('vf-cca').value='';renderFiltrosSecundarios();renderVList();}});
+  if(vfOrigem) tags.push({label:zUiText(`📌 ${vfOrigem}`),clear:()=>{document.getElementById('vf-origem').value='';renderFiltrosSecundarios();renderVList();}});
   if(vfSituacao) tags.push({label:zUiText(`📂 ${vfSituacao==='ativas'?'Ativas':'Distratos'}`),clear:()=>{document.getElementById('vf-situacao').value='';renderFiltros();renderVList();}});
   if(vfPend) tags.push({label:zUiText(`🟠 ${vfPend==='com'?'Com pendência comercial':'Sem pendência comercial'}`),clear:()=>{document.getElementById('vf-pend-comercial').value='';renderFiltros();renderVList();}});
   if(vfBonusStatus) tags.push({label:zUiText(`🎁 ${bonusStatusLabel(vfBonusStatus)}`),clear:()=>{document.getElementById('vf-bonus-status').value='';renderFiltros();renderVList();}});
