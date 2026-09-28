@@ -183,6 +183,7 @@ function getHistVisual(h){
   if(h.tipo==='pend_comercial_editada') return {label:'🟠 Pendência comercial atualizada',color:'#C08020'};
   if(h.tipo==='pend_comercial_resolvida') return {label:'✅ Pendência comercial resolvida',color:'#2E7E5E'};
   if(h.tipo==='corretor_vinculo') return {label:'🧑‍💼 Corretor marcado como externo',color:'#2E7E5E'};
+  if(h.tipo==='corretor_troca') return {label:'🔁 Corretor da venda alterado',color:'#3060B8'};
   if(h.tipo==='prev_receb_manual') return {label:`📅 Previsão manual: ${zUiText(h.prevData||'—')}`,color:'#2E7E5E'};
   if(h.tipo==='prev_receb_editada') return {label:`📅 Previsão atualizada: ${zUiText(h.prevAnterior?`${h.prevAnterior} → ${h.prevData||'—'}`:(h.prevData||'—'))}`,color:'#3060B8'};
   return {label:ETAPAS[h.e],color:'var(--gold)'};
@@ -373,7 +374,7 @@ function showVDetail(id){
           ${bonusFormaInfo?`<span class="zbg" style="background:${bonusFormaInfo.bg};color:${bonusFormaInfo.color};border:1px solid ${bonusFormaInfo.border};">${zUiText(bonusFormaInfo.label)}</span>`:''}
         </div>
       </div>
-      ${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;"><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">${zUiText('✏️ Editar')}</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">${zUiText('⚠️ Distrato')}</button></div>`:''}
+      ${['dir','fin','dono'].includes(role)&&!v.distratada?`<div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;"><button onclick="abrirEditVenda(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">${zUiText('✏️ Editar')}</button><button onclick="abrirTrocarCorretor(${v.id})" style="background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--ts);cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--bd)'">${zUiText('🔁 Trocar corretor')}</button><button onclick="abrirDistrato(${v.id})" style="background:#FEF0EC;border:1px solid #E0A090;border-radius:6px;padding:5px 12px;font-size:11px;color:#C05030;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;">${zUiText('⚠️ Distrato')}</button></div>`:''}
     </div>
   </div>
   <div class="mets">${mH}</div>

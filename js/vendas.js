@@ -60,6 +60,8 @@ let distratoSalvando=false;
 let distratoCategoriaNovaAtiva=false;
 let distratoCategoriaNovaValor='';
 let editVendaSalvando=false;
+let trocarCorretorVendaId=null;
+let trocarCorretorSalvando=false;
 let previsaoRecebVendaId=null;
 let previsaoRecebSalvando=false;
 let bonusGestaoVendaId=null;
@@ -1955,6 +1957,133 @@ function salvarEditVenda(){
     renderFiltros(); renderVList(); showVDetail(v.id);
     console.error('Erro ao atualizar venda:', e);
     showToast(zUiText('❌'),zUiText('Falha ao salvar alteração no banco. Tente novamente.'));
+  });
+}
+
+// ── TROCAR CORRETOR DE UMA VENDA EXISTENTE ──
+function montarOpcoesCorretorSelect(){
+  const filtrarUnid=(u)=>['dono','fin','rh'].includes(role)||(usuarioLogado&&usuarioLogado.unidade==='Ambas')||!u.unidade||u.unidade===usuarioLogado.unidade;
+  const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
+  const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
+  const todos=USUARIOS.filter(u=>filtrarUnid(u)&&usuarioAtivo(u));
+  const perfilOrdem=[
+    {label:'Dono', role:'dono'},
+    {label:'Diretor', role:'dir'},
+    {label:'Gerente', role:'ger'},
+    {label:'Capitão', role:'cap'},
+    {label:'Corretor', role:'cor'},
+    {label:'Financeiro', role:'fin'},
+    {label:'RH', role:'rh'}
+  ];
+  const optCor=perfilOrdem.flatMap(({label,role:perfilKey})=>{
+    const lista=todos.filter(u=>perfilRole(u)===perfilKey);
+    if(!lista.length) return [];
+    return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`),'</optgroup>'];
+  }).join('');
+  const optExterno=`<optgroup label="${zUiText('— Sem usuário vinculado —')}"><option value="__externo__">${zUiText('✏️ Digitar nome (ex: ZELONY)...')}</option></optgroup>`;
+  return `<option value="">Selecione...</option>${optCor}${optExterno}`;
+}
+function abrirTrocarCorretor(id){
+  if(!['dir','fin','dono'].includes(role)){showToast(zUiText('⚠️'),zUiText('Sem permissão para trocar o corretor desta venda.'));return;}
+  const v=VENDAS.find(x=>x.id===id);
+  if(!v)return;
+  trocarCorretorVendaId=id;
+  zSetState('state.ui.trocarCorretorVendaId', trocarCorretorVendaId);
+  document.getElementById('tc-subtitulo').textContent=zUiText(`Venda: ${clienteVendaTexto(v.cliente) || 'Sem cliente'} · ${v.produto}`);
+  document.getElementById('tc-atual').value=v.corretor||'—';
+  document.getElementById('tc-corretor').innerHTML=montarOpcoesCorretorSelect();
+  document.getElementById('tc-corretor').value='';
+  document.getElementById('tc-corretor-ext-wrap').style.display='none';
+  document.getElementById('tc-corretor-ext').value='';
+  document.getElementById('tc-corretor').onchange=function(){
+    const extField=document.getElementById('tc-corretor-ext-wrap');
+    if(this.value==='__externo__'){extField.style.display='block';document.getElementById('tc-corretor-ext').focus();}
+    else{extField.style.display='none';document.getElementById('tc-corretor-ext').value='';}
+  };
+  document.getElementById('tc-motivo').value='';
+  setTrocarCorretorLoading(false);
+  document.getElementById('m-trocar-corretor').classList.add('show');
+  setTimeout(()=>document.getElementById('tc-corretor').focus(),100);
+}
+function setTrocarCorretorLoading(loading){
+  trocarCorretorSalvando=loading;
+  zSetState('state.ui.trocarCorretorSalvando', trocarCorretorSalvando);
+  ['tc-corretor','tc-corretor-ext','tc-motivo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled=loading;
+  });
+  const cancelar=document.getElementById('tc-cancel-btn');
+  const fechar=document.getElementById('tc-close-btn');
+  const salvar=document.getElementById('tc-save-btn');
+  const status=document.getElementById('tc-status');
+  if(cancelar) cancelar.disabled=loading;
+  if(fechar) fechar.disabled=loading;
+  if(salvar){
+    salvar.disabled=loading;
+    salvar.textContent=loading?zUiText('⏳ Salvando...'):zUiText('✓ Confirmar troca');
+    salvar.style.opacity=loading?'0.75':'1';
+    salvar.style.cursor=loading?'wait':'pointer';
+  }
+  if(status) status.style.display=loading?'flex':'none';
+}
+function fecharTrocarCorretor(){
+  if(trocarCorretorSalvando) return;
+  setTrocarCorretorLoading(false);
+  document.getElementById('m-trocar-corretor').classList.remove('show');
+  trocarCorretorVendaId=null;
+  zSetState('state.ui.trocarCorretorVendaId', trocarCorretorVendaId);
+}
+function salvarTrocarCorretor(){
+  if(typeof appPodePersistirNoSupabase==='function'&&!appPodePersistirNoSupabase({mensagem:'Sem conexão com o Supabase. A troca de corretor está bloqueada no modo consulta.'})) return;
+  if(trocarCorretorSalvando) return;
+  if(!['dir','fin','dono'].includes(role)){showToast(zUiText('⚠️'),zUiText('Sem permissão para trocar o corretor desta venda.'));return;}
+  const v=VENDAS.find(x=>x.id===trocarCorretorVendaId);
+  if(!v)return;
+  const selecao=document.getElementById('tc-corretor').value;
+  const motivo=document.getElementById('tc-motivo').value.trim();
+  if(!selecao){document.getElementById('tc-corretor').focus();showToast(zUiText('⚠️'),zUiText('Selecione o novo corretor.'));return;}
+  if(!motivo){document.getElementById('tc-motivo').focus();showToast(zUiText('⚠️'),zUiText('Informe o motivo da troca.'));return;}
+  const externo=selecao==='__externo__';
+  let novoNome='', refId=null;
+  if(externo){
+    novoNome=document.getElementById('tc-corretor-ext').value.trim().toUpperCase();
+    if(!novoNome){document.getElementById('tc-corretor-ext').focus();showToast(zUiText('⚠️'),zUiText('Informe o nome do novo corretor.'));return;}
+  }else{
+    const usuarioSel=USUARIOS.find(u=>String(u.id)===String(selecao));
+    if(!usuarioSel){showToast(zUiText('⚠️'),zUiText('Corretor selecionado não encontrado.'));return;}
+    novoNome=usuarioSel.nome;
+    refId=usuarioSel.id;
+  }
+  const nomeAnterior=String(v.corretor||'').trim()||'—';
+  if(novoNome===String(v.corretor||'').trim()){showToast(zUiText('ℹ️'),zUiText('O corretor selecionado já é o corretor atual desta venda.'));return;}
+  if(!confirm(zUiText(`Trocar o corretor desta venda de "${nomeAnterior}" para "${novoNome}"? Os percentuais e valores de comissão não serão alterados.`))) return;
+  const original=JSON.parse(JSON.stringify(v));
+  const quem=usuarioLogado?usuarioLogado.nome.split(' ')[0]:'Sistema';
+  v.corretor=novoNome;
+  if(typeof pctRhNovaVenda==='function'){
+    v.pct_rh=pctRhNovaVenda(externo?null:USUARIOS.find(u=>String(u.id)===String(refId)),{corretorExterno:externo});
+  }
+  registrarVinculoCorretorVenda(v,{
+    origem:externo?'externo':'usuario',
+    refId:externo?null:refId,
+    quem,
+    tipo:'corretor_troca',
+    obs:`Corretor alterado de "${nomeAnterior}" para "${novoNome}". Motivo: ${motivo}`
+  });
+  setTrocarCorretorLoading(true);
+  dbAtualizarVenda(v).then(()=>{
+    setTrocarCorretorLoading(false);
+    fecharTrocarCorretor();
+    salvarLS();
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    if(!document.getElementById('mod-carteira').classList.contains('hidden')&&typeof renderCarteira==='function') renderCarteira();
+    showToast(zUiText('✅'),zUiText('Corretor da venda atualizado com sucesso.'));
+  }).catch(e=>{
+    Object.assign(v, original);
+    setTrocarCorretorLoading(false);
+    renderFiltros(); renderVList(); showVDetail(v.id);
+    console.error('Erro ao trocar corretor da venda:', e);
+    showToast(zUiText('❌'),zUiText('Falha ao salvar a troca de corretor no banco. Tente novamente.'));
   });
 }
 

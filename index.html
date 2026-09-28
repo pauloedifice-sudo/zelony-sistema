@@ -977,6 +977,48 @@
       </div>
     </div>
 
+    <!-- MODAL TROCAR CORRETOR -->
+    <div class="modal-backdrop" id="m-trocar-corretor" onclick="if(event.target===this)fecharTrocarCorretor()">
+      <div class="modal" style="max-width:460px;">
+        <div class="modal-top">
+          <div>
+            <div class="modal-title">🔁 Trocar corretor da venda</div>
+            <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="tc-subtitulo">Ajusta quem é o corretor responsável, sem alterar valores ou percentuais de comissão</div>
+          </div>
+          <button class="mclose" id="tc-close-btn" onclick="fecharTrocarCorretor()">✕</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+          <div style="background:#EEF4FE;border:1px solid #90B8E8;border-radius:8px;padding:12px;font-size:11px;color:#3060B8;">
+            ℹ️ <strong>Atenção:</strong> Esta troca altera apenas quem é o corretor da venda. Os percentuais e valores de comissão de todos os envolvidos permanecem exatamente como estão.
+          </div>
+          <div class="f-field">
+            <label>Corretor atual</label>
+            <input type="text" id="tc-atual" disabled style="opacity:0.7;">
+          </div>
+          <div class="f-field">
+            <label>Novo corretor *</label>
+            <select id="tc-corretor"><option value="">Selecione...</option></select>
+            <div id="tc-corretor-ext-wrap" style="display:none;margin-top:6px;">
+              <input type="text" id="tc-corretor-ext" placeholder="Nome completo (ex: ZELONY)..." style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+              <div style="font-size:9px;color:var(--tm);margin-top:3px;">⚠️ Sem vínculo com usuário do sistema (ex: venda atribuída à imobiliária)</div>
+            </div>
+          </div>
+          <div class="f-field">
+            <label>Motivo da troca *</label>
+            <textarea id="tc-motivo" placeholder="Descreva o motivo da correção para registro no histórico..." style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:10px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;resize:vertical;min-height:70px;"></textarea>
+          </div>
+        </div>
+        <div id="tc-status" style="display:none;padding:0 18px 12px;font-size:11px;color:var(--tm);align-items:center;gap:8px;">
+          <span style="font-size:13px;">⏳</span>
+          <span>Salvando troca de corretor...</span>
+        </div>
+        <div class="modal-foot">
+          <button class="btn-c" id="tc-cancel-btn" onclick="fecharTrocarCorretor()">Cancelar</button>
+          <button class="btn-s" id="tc-save-btn" onclick="salvarTrocarCorretor()">✓ Confirmar troca</button>
+        </div>
+      </div>
+    </div>
+
     <!-- MODAL GESTAO DO BONUS -->
     <div class="modal-backdrop" id="m-bonus-gestao" onclick="if(event.target===this)fecharGestaoBonus()">
       <div class="modal" style="max-width:520px;">
