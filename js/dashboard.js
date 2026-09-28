@@ -83,10 +83,10 @@ function dashMesAtualNome() {
 }
 
 function dashPeriodoLiberado() {
-  // Somente o Dono pode escolher um período customizado (semestre, trimestre etc.)
+  // Dono e Diretor podem escolher um período customizado (semestre, trimestre etc.)
   // e assim ver quem lidera o ranking fora do mês atual. Os demais perfis
-  // (corretor, capitão, gerente, diretor...) ficam sempre travados no mês atual.
-  return role === 'dono';
+  // (corretor, capitão, gerente...) ficam sempre travados no mês atual.
+  return ['dono', 'dir'].includes(role);
 }
 
 function dashPeriodoLabel() {
