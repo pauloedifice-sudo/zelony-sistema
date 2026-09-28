@@ -183,7 +183,7 @@ function mapUsuarioIn(u){
 
 function mapUsuarioOut(u){
   return{
-    nome:normalizarCampoSistema(u.nome),email:u.email,tel:u.tel||'',perfil:u.perfil,
+    nome:normalizarCampoSistema(u.nome),email:String(u.email||'').trim().toLowerCase(),tel:u.tel||'',perfil:u.perfil,
     status:u.status||'Ativo',unidade:u.unidade||'',equipe:u.equipe||'',
     banco:u.banco||'',agencia:u.agencia||'',conta:u.conta||'',
     tipo_conta:u.tipoConta||'',pix_tipo:u.pixTipo||'',pix:u.pix||'',

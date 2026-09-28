@@ -999,7 +999,7 @@ async function salvarUsuario() {
     return;
   }
   const nome      = document.getElementById('mu-nome').value.trim().toUpperCase();
-  const email     = document.getElementById('mu-email').value.trim();
+  const email     = document.getElementById('mu-email').value.trim().toLowerCase();
   const tel       = document.getElementById('mu-tel').value.trim();
   const perfil    = document.getElementById('mu-perfil').value;
   const status    = document.getElementById('mu-status').value;
