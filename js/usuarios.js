@@ -198,6 +198,7 @@ function _buildUserCard(u, idx) {
       <div class="user-actions">
         ${podeAlternarStatus ? `<button class="btn-user-status ${statusAtual === 'Inativo' ? 'reactivate' : ''}" onclick="alternarStatusUsuario(${idx})" ${statusPendente ? 'disabled' : ''}>${zUiText(rotuloStatusLoading)}</button>` : ''}
         <button class="btn-user-edit" onclick="editarUsuario(${idx})">${zUiText('✏️ Editar')}</button>
+        <button class="btn-user-edit" onclick="abrirResetSenhaUsuario(${idx})">${zUiText('🔑 Redefinir senha')}</button>
         <button class="btn-user-del"  onclick="excluirUsuario(${idx})">${zUiText('🗑 Excluir')}</button>
       </div>
     </div>
@@ -1390,6 +1391,73 @@ async function salvarNovaSenha() {
 }
 
 const confirmarTrocaSenha = salvarNovaSenha;
+
+// --- Redefinir senha de outro usuário (ação de admin/dono) ---------------
+// Diferente de "Trocar senha" (que só permite ao usuário logado trocar a
+// própria senha), isto deixa dono/diretor/financeiro/RH definirem a senha
+// de QUALQUER usuário diretamente, sem depender do e-mail de recuperação do
+// Supabase (que tem limite de envio e pode falhar/expirar). Ver ação
+// "admin_reset_password" no edge function usuario-self-service.
+let resetSenhaUsuarioIdx = -1;
+
+function abrirResetSenhaUsuario(idx) {
+  if (!usuarioPodeGerirEquipe()) {
+    showToast(zUiText('🔒'), zUiText('Somente perfis administrativos podem redefinir a senha de outro usuário.'));
+    return;
+  }
+  const u = USUARIOS[idx];
+  if (!u) return;
+  resetSenhaUsuarioIdx = idx;
+
+  const novaEl     = document.getElementById('rsu-nova');
+  const confirmaEl = document.getElementById('rsu-confirma');
+  const errEl      = document.getElementById('rsu-error');
+  const errMsg     = document.getElementById('rsu-error-msg');
+  const subtitulo  = document.getElementById('rsu-subtitulo');
+  if (novaEl) novaEl.value = '';
+  if (confirmaEl) confirmaEl.value = '';
+  if (errEl) errEl.style.display = 'none';
+  if (errMsg) errMsg.textContent = '';
+  if (subtitulo) subtitulo.textContent = zUiText(`Definir nova senha para: ${u.nome} (${u.email})`);
+
+  document.getElementById('m-reset-senha-usuario').classList.add('show');
+  setTimeout(() => { if (novaEl) novaEl.focus(); }, 100);
+}
+
+function fecharResetSenhaUsuario() {
+  document.getElementById('m-reset-senha-usuario').classList.remove('show');
+  resetSenhaUsuarioIdx = -1;
+}
+
+async function confirmarResetSenhaUsuario() {
+  const u = USUARIOS[resetSenhaUsuarioIdx];
+  const nova       = document.getElementById('rsu-nova').value.trim();
+  const confirma   = document.getElementById('rsu-confirma').value.trim();
+  const errEl      = document.getElementById('rsu-error');
+  const errMsg     = document.getElementById('rsu-error-msg');
+  const btnSalvar  = document.getElementById('rsu-save-btn');
+
+  const mostrarErro = (msg) => { if (errMsg) errMsg.textContent = zUiText(msg); if (errEl) errEl.style.display = 'flex'; };
+  if (errEl) errEl.style.display = 'none';
+
+  if (!u) { mostrarErro('Usuário não encontrado.'); return; }
+  if (!nova) { document.getElementById('rsu-nova').focus(); mostrarErro('Informe a nova senha.'); return; }
+  if (nova.length < 6) { document.getElementById('rsu-nova').focus(); mostrarErro('A senha deve ter pelo menos 6 caracteres.'); return; }
+  if (nova !== confirma) { document.getElementById('rsu-confirma').focus(); mostrarErro('As senhas não coincidem.'); return; }
+
+  if (btnSalvar) btnSalvar.disabled = true;
+  try {
+    await usuarioSelfServiceInvocar('admin_reset_password', { usuarioId: u.id, novaSenha: nova });
+  } catch (e) {
+    if (btnSalvar) btnSalvar.disabled = false;
+    mostrarErro((e && e.message) || 'Não foi possível redefinir a senha agora. Tente novamente.');
+    return;
+  }
+  if (btnSalvar) btnSalvar.disabled = false;
+
+  fecharResetSenhaUsuario();
+  showToast(zUiText('✅'), zUiText(`Senha de ${u.nome} redefinida com sucesso!`));
+}
 
 function abrirConvite() {
   if (!usuarioPodeGerirEquipe()) {

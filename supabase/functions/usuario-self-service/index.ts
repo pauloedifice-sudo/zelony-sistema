@@ -551,6 +551,78 @@ async function changePassword(req: Request, body: Record<string, unknown>) {
   return jsonResponse({ ok: true });
 }
 
+// Permite que dono/diretor/financeiro/rh redefinam a senha de OUTRO usuário
+// diretamente, sem depender do fluxo de e-mail "esqueci minha senha" (que
+// usa o serviço de e-mail padrão do Supabase e tem um limite de envios bem
+// baixo — sujeito a "email rate limit exceeded" quando há várias tentativas
+// seguidas, como visto em casos de suporte reais). Usa a mesma API
+// administrativa (`auth.admin`) já usada em completeUserInvite/changePassword.
+async function adminResetPassword(req: Request, body: Record<string, unknown>) {
+  const supabase = createServiceClient();
+  const auth = await requireAuthenticatedUsuario(req, supabase);
+  if ("response" in auth) return auth.response;
+  if (!canManageUserInvites(auth.usuario.perfil)) {
+    return jsonResponse({ error: "Seu perfil não possui permissão para redefinir a senha de outro usuário." }, { status: 403 });
+  }
+
+  const usuarioId = Number(body.usuarioId || 0);
+  const novaSenha = String(body.novaSenha || "");
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) {
+    return jsonResponse({ error: "Usuário inválido." }, { status: 400 });
+  }
+  if (novaSenha.length < 6 || novaSenha.length > 200) {
+    return jsonResponse({ error: "A nova senha deve ter entre 6 e 200 caracteres." }, { status: 400 });
+  }
+
+  const { data: alvo, error: alvoError } = await supabase
+    .from("usuarios")
+    .select("id,nome,email,auth_user_id")
+    .eq("id", usuarioId)
+    .maybeSingle();
+  if (alvoError) throw alvoError;
+  if (!alvo) {
+    return jsonResponse({ error: "Usuário não encontrado." }, { status: 404 });
+  }
+
+  const emailAuth = String(alvo.email || "").trim().toLowerCase();
+  if (alvo.auth_user_id) {
+    const { error: authUpdateError } = await supabase.auth.admin.updateUserById(alvo.auth_user_id, {
+      password: novaSenha,
+    });
+    if (authUpdateError) throw authUpdateError;
+  } else {
+    // Usuário nunca teve a conta oficial de login criada no Auth (ex.:
+    // convite antigo que nunca chegou a ser concluído). Cria agora, já com
+    // a senha definida — mesma lógica usada em completeUserInvite.
+    if (!emailAuth) {
+      return jsonResponse({ error: "Usuário sem e-mail cadastrado. Corrija o e-mail antes de redefinir a senha." }, { status: 409 });
+    }
+    const { data: created, error: createError } = await supabase.auth.admin.createUser({
+      email: emailAuth,
+      password: novaSenha,
+      email_confirm: true,
+      user_metadata: { usuario_id: alvo.id, nome: alvo.nome },
+    });
+    if (createError) throw createError;
+    const authUserId = created.user?.id;
+    if (authUserId) {
+      const { error: linkError } = await supabase
+        .from("usuarios")
+        .update({ auth_user_id: authUserId })
+        .eq("id", alvo.id);
+      if (linkError) throw linkError;
+    }
+  }
+
+  // Mantido por segurança/rollback durante a transição — mesma prática de changePassword.
+  const { error: upsertError } = await supabase
+    .from("senhas")
+    .upsert({ email: emailAuth, senha: novaSenha }, { onConflict: "email" });
+  if (upsertError) throw upsertError;
+
+  return jsonResponse({ ok: true });
+}
+
 async function authorizeUserInvites(req: Request, _body: Record<string, unknown>) {
   const supabase = createServiceClient();
   const auth = await requireAuthenticatedUsuario(req, supabase);
@@ -1386,6 +1458,10 @@ Deno.serve(async (req) => {
 
     if (action === "change_password") {
       return await changePassword(req, body);
+    }
+
+    if (action === "admin_reset_password") {
+      return await adminResetPassword(req, body);
     }
 
     if (action === "update_self") {

@@ -374,6 +374,47 @@
   </div>
 </div>
 
+<!-- MODAL REDEFINIR SENHA DE OUTRO USUÁRIO (admin) -->
+<div class="modal-backdrop" id="m-reset-senha-usuario" style="z-index:10000;" onclick="if(event.target===this)fecharResetSenhaUsuario()">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-top">
+      <div>
+        <div class="modal-title">🔑 Redefinir senha</div>
+        <div style="font-size:10px;color:var(--tm);margin-top:2px;" id="rsu-subtitulo">Defina uma nova senha para o usuário</div>
+      </div>
+      <button class="mclose" id="rsu-close-btn" onclick="fecharResetSenhaUsuario()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;padding:18px;">
+      <div style="background:#EEF4FE;border:1px solid #90B8E8;border-radius:8px;padding:12px;font-size:11px;color:#3060B8;">
+        ℹ️ Isso define a senha na hora, sem depender de e-mail. Avise o usuário da nova senha por um canal seguro.
+      </div>
+      <div class="f-field">
+        <label>Nova senha *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">🔒</span>
+          <input type="password" id="rsu-nova" placeholder="Mínimo 6 caracteres" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 36px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+          <button onclick="toggleSenhaField('rsu-nova','rsu-tog1')" id="rsu-tog1" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--tm);" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="f-field">
+        <label>Confirmar nova senha *</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;">🔒</span>
+          <input type="password" id="rsu-confirma" placeholder="Repita a nova senha" style="background:var(--bg2);border:1px solid var(--bd);border-radius:7px;padding:9px 36px 9px 36px;font-size:12px;color:var(--tx);outline:none;width:100%;font-family:'Inter',sans-serif;">
+          <button onclick="toggleSenhaField('rsu-confirma','rsu-tog2')" id="rsu-tog2" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;color:var(--tm);" tabindex="-1">👁</button>
+        </div>
+      </div>
+      <div class="login-error" id="rsu-error" style="display:none;margin:0;">
+        <span>⚠️</span><span id="rsu-error-msg"></span>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-c" id="rsu-cancel-btn" onclick="fecharResetSenhaUsuario()">Cancelar</button>
+      <button class="btn-s" id="rsu-save-btn" onclick="confirmarResetSenhaUsuario()">✓ Redefinir senha</button>
+    </div>
+  </div>
+</div>
+
 <div class="app" id="main-app" style="opacity:0;transition:opacity 0.2s ease;">
 <div class="topbar">
   <div class="tb-left">
