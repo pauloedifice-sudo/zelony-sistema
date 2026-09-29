@@ -208,6 +208,43 @@ function usuarioPodeGerirEquipe() {
   return ['dir','dono','fin','rh'].includes(String(role || '').toLowerCase());
 }
 
+// Detecta usuários cujo e-mail salvo no banco tem espaços ou letras
+// maiúsculas (herdados de antes da normalização em salvarUsuario/
+// mapUsuarioOut). Esses casos travam o login, pois a checagem de
+// e-mail compara sempre em minúsculas.
+function usuariosComEmailPendenteNormalizacao() {
+  return USUARIOS.filter(u => {
+    const bruto = String(u && u.email || '');
+    return bruto && bruto !== bruto.trim().toLowerCase();
+  });
+}
+
+async function corrigirEmailsUsuarios() {
+  if (typeof appPodePersistirNoSupabase === 'function' && !appPodePersistirNoSupabase({ mensagem: 'Sem conexão com o Supabase. A correção de e-mails está bloqueada no modo consulta.' })) return;
+  if (!usuarioPodeGerirEquipe()) { showToast(zUiText('🔒'), zUiText('Sem permissão para corrigir cadastros de usuários.')); return; }
+  const afetados = usuariosComEmailPendenteNormalizacao();
+  if (!afetados.length) { showToast(zUiText('ℹ️'), zUiText('Nenhum e-mail precisa de correção no momento.')); return; }
+  const nomes = afetados.slice(0, 8).map(u => u.nome.split(' ')[0]).join(', ') + (afetados.length > 8 ? ` e mais ${afetados.length - 8}` : '');
+  if (!confirm(zUiText(`Corrigir o e-mail de login de ${afetados.length} usuário${afetados.length !== 1 ? 's' : ''} (${nomes})? Isso apenas ajusta o e-mail para minúsculas — nenhum outro dado é alterado.`))) return;
+
+  const btn = document.getElementById('btn-corrigir-emails');
+  if (btn) { btn.disabled = true; btn.textContent = zUiText('⏳ Corrigindo...'); }
+
+  const resultados = await Promise.allSettled(afetados.map(u => dbSalvarUsuario(u, u.id)));
+  const falhas = resultados.filter(r => r.status === 'rejected').length;
+  const sucesso = resultados.length - falhas;
+
+  salvarLS();
+  renderUsuarios();
+
+  if (falhas) {
+    console.error('Falha ao corrigir e-mails de usuários:', resultados.filter(r => r.status === 'rejected').map(r => r.reason));
+    showToast(zUiText('⚠️'), zUiText(`${sucesso} e-mail${sucesso !== 1 ? 's' : ''} corrigido${sucesso !== 1 ? 's' : ''}, ${falhas} falharam. Tente novamente para os que faltaram.`));
+  } else {
+    showToast(zUiText('✅'), zUiText(`${sucesso} e-mail${sucesso !== 1 ? 's' : ''} corrigido${sucesso !== 1 ? 's' : ''} com sucesso.`));
+  }
+}
+
 function obterIndiceUsuarioLogado() {
   const emailLogado = usuarioLogado ? zUiText(usuarioLogado.email).trim().toLowerCase() : '';
   if (!emailLogado) return -1;
@@ -696,11 +733,16 @@ function renderUsuarios() {
     ? usuarioStatusNormalizado(u) === 'Inativo'
     : zUiText(u.status || 'Ativo') === 'Inativo').length;
   const cards   = lista.map(u => _buildUserCard(u, USUARIOS.indexOf(u))).join('');
+  const emailsPendentes = usuariosComEmailPendenteNormalizacao();
 
   cont.innerHTML = `<div class="usuarios-wrap">
     <div class="usuarios-top">
       <div style="font-family:'Playfair Display',serif;font-size:16px;font-weight:500;">${zUiText('UsuÃ¡rios do Sistema')}</div>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+        ${emailsPendentes.length ? `<button class="btn-add-trein" style="background:#FEF6EC;border:1px solid #F0D2A8;color:#A05010;" onclick="corrigirEmailsUsuarios()" id="btn-corrigir-emails">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v5l3 2"/><circle cx="8" cy="8" r="6.5"/></svg>
+          ${zUiText(`🔧 Corrigir e-mail (${emailsPendentes.length})`)}
+        </button>` : ''}
         <button class="btn-add-trein" style="background:var(--bg);border:1px solid var(--gold-bd);color:var(--gold);" onclick="abrirConvite()">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 8.5V13a1 1 0 01-1 1H3a1 1 0 01-1-1V3a1 1 0 011-1h4.5"/><path d="M9 1h6v6"/><path d="M15 1L8 8"/></svg>
           ${zUiText('Convidar usuÃ¡rio')}
