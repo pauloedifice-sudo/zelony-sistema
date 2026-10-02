@@ -20,6 +20,15 @@ const TEAM_RANKING_MIN_BASE = 5;
 const UNIT_RANKING_MIN_BASE = 2;
 const DISTRATO_RANKING_MIN_BASE = 3;
 const FINAL_STAGE = ETAPAS_VENDA.length - 1;
+// Nomes de gestor a excluir do ranking de "lideranca ativa com numero mais
+// preocupante" (secao de distratos). Pedido do proprio Cesar (dono): ele nao
+// quer aparecer nesse comparativo, mesmo quando o campo "gerente" de alguma
+// venda aponta para ele. Comparacao via normalizeText (maiusculas, sem
+// acento), entao cobre "Cesar Jr", "CÉSAR JR.", etc.
+const OWNER_REPORT_EXCLUDED_MANAGER_NAMES = new Set(["CESAR JR", "CESAR JUNIOR"]);
+function isExcludedReportManagerName(name: unknown) {
+  return OWNER_REPORT_EXCLUDED_MANAGER_NAMES.has(normalizeText(name));
+}
 // Mesmo corte do Financeiro: recebimentos anteriores preservados, novos manuais.
 const FINANCE_MANUAL_START = "2026-08-26";
 
@@ -1049,6 +1058,7 @@ function computeDistratos(vendas: OwnerReportVenda[], users: OwnerReportUsuario[
   const activeManagers = groupBy(
     (venda) => String(venda.gerente || "").trim() || "Nao informado",
     (venda) => {
+      if (isExcludedReportManagerName(venda.gerente)) return false;
       const manager = findUserByName(users, venda.gerente);
       return countsAsActiveManager(manager);
     },
@@ -1154,8 +1164,26 @@ function buildExecutiveInputs(snapshot: Record<string, unknown>) {
   const appointments = snapshot.appointments as Record<string, unknown>;
   const positives = buildPositiveBullets(snapshot);
 
+  // Frase curta (nao a sentenca inteira de "MANDANDO BEM") para encaixar
+  // naturalmente em "Hoje a operacao mostra forca em X, mas pede atencao...".
+  // Antes disso, o codigo usava positives[0].text (a sentenca completa, ja
+  // pontuada) direto aqui, o que produzia um texto quebrado tipo "mostra
+  // forca em Cristo Rei lidera o mes com 9 venda(s) e VGV de R$ 2.459.346.,
+  // mas pede atencao...".
+  const bestUnitForStrongestPoint = dashboard.best_unit as Record<string, unknown> | null;
+  const bestTeamForStrongestPoint = appointments.best_team as Record<string, unknown> | null;
+  const strongestPointByArea: Record<string, string> = {
+    dashboard: bestUnitForStrongestPoint?.name ? String(bestUnitForStrongestPoint.name) : "volume comercial",
+    appointments: bestTeamForStrongestPoint?.name
+      ? `a conversao da equipe ${String(bestTeamForStrongestPoint.name)}`
+      : "conversao de agendamentos",
+    distratos: "o controle da taxa de distrato",
+    finance: "o caixa",
+    wallet: "a carteira sem vendas travadas",
+  };
+
   let strongestPoint = "volume comercial";
-  if (positives.length) strongestPoint = positives[0].text;
+  if (positives.length) strongestPoint = strongestPointByArea[positives[0].area] || "volume comercial";
 
   let mainBottleneck = "conversao operacional";
   let mainRisk = "conversao";
