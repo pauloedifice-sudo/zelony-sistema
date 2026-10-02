@@ -805,6 +805,83 @@ async function resendContractNotification(req: Request, body: Record<string, unk
   return jsonResponse({ ok: true, envelopeId: contrato.clicksign_envelope_key });
 }
 
+// Lista os contratos de parceria (Corretor PJ) ainda aguardando assinatura
+// no Clicksign. Enquanto o corretor não assina, não existe linha em
+// `usuarios` para ele (só é criada pelo webhook, ao concluir a assinatura),
+// então é essa consulta que permite ao admin localizar/gerenciar um convite
+// que travou antes da assinatura -- caso contrário ele fica "invisível" no
+// módulo Usuários.
+async function listPendingUserContracts(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeUserInvites(req, body);
+  if ("response" in auth) return auth.response;
+
+  const { data, error } = await auth.supabase
+    .from("contratos_clicksign_pendentes")
+    .select("id,nome,email,perfil,equipe,unidade,nome_empresa,cnpj_empresa,clicksign_envelope_key,criado_por,criado_em")
+    .eq("status", "aguardando_assinatura")
+    .order("criado_em", { ascending: false });
+  if (error) throw error;
+
+  return jsonResponse({ ok: true, contratos: data || [] });
+}
+
+// Cancela um contrato aguardando assinatura: tenta cancelar o envelope no
+// Clicksign (o link que o corretor recebeu passa a mostrar "cancelado" em
+// vez de permitir assinatura) e marca o registro local como "cancelado".
+// Isso libera o e-mail para um novo convite -- hoje createUserContract
+// recusa criar um segundo contrato enquanto existir um
+// "aguardando_assinatura" para o mesmo e-mail.
+async function cancelUserContract(req: Request, body: Record<string, unknown>) {
+  const auth = await authorizeUserInvites(req, body);
+  if ("response" in auth) return auth.response;
+
+  const contratoId = Number(body.contratoId || 0);
+  if (!Number.isInteger(contratoId) || contratoId <= 0) {
+    return jsonResponse({ error: "Contrato inválido." }, { status: 400 });
+  }
+
+  const { data: contrato, error: contratoError } = await auth.supabase
+    .from("contratos_clicksign_pendentes")
+    .select("id,email,clicksign_envelope_key,status")
+    .eq("id", contratoId)
+    .maybeSingle();
+  if (contratoError) throw contratoError;
+  if (!contrato) {
+    return jsonResponse({ error: "Contrato não encontrado." }, { status: 404 });
+  }
+  if (contrato.status !== "aguardando_assinatura") {
+    return jsonResponse({ error: "Este contrato não está mais aguardando assinatura." }, { status: 409 });
+  }
+
+  let clicksignCancelado = false;
+  let avisoClicksign: string | null = null;
+  if (contrato.clicksign_envelope_key) {
+    try {
+      await clicksignRequest(`/envelopes/${contrato.clicksign_envelope_key}`, "PATCH", {
+        data: {
+          id: contrato.clicksign_envelope_key,
+          type: "envelopes",
+          attributes: { status: "canceled" },
+        },
+      });
+      clicksignCancelado = true;
+    } catch (e) {
+      avisoClicksign = normalizeErrorMessage(e);
+    }
+  }
+
+  const { error: updateError } = await auth.supabase
+    .from("contratos_clicksign_pendentes")
+    .update({
+      status: "cancelado",
+      erro: avisoClicksign ? `Cancelado no sistema; Clicksign: ${avisoClicksign}` : null,
+    })
+    .eq("id", contratoId);
+  if (updateError) throw updateError;
+
+  return jsonResponse({ ok: true, clicksignCancelado, aviso: avisoClicksign });
+}
+
 // Cancela a fila de mensagens pendentes na Z-API (mensagens ja aceitas pela
 // Z-API -- status "enfileirada" -- mas ainda nao confirmadas como entregues).
 // Usado antes de reconectar um numero de WhatsApp que foi desconectado por
@@ -1478,6 +1555,14 @@ Deno.serve(async (req) => {
 
     if (action === "resend_contract_notification") {
       return await resendContractNotification(req, body);
+    }
+
+    if (action === "list_pending_user_contracts") {
+      return await listPendingUserContracts(req, body);
+    }
+
+    if (action === "cancel_user_contract") {
+      return await cancelUserContract(req, body);
     }
 
     if (action === "cancelar_fila_zapi_pendente") {

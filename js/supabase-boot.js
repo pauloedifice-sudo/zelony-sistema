@@ -618,6 +618,32 @@ async function dbCriarContratoUsuarioProtegido(convite={}){
   return data;
 }
 
+// Lista contratos de parceria (Corretor PJ) ainda aguardando assinatura no
+// Clicksign -- usado para o admin localizar/cancelar um convite que travou
+// antes da assinatura (nesse meio-tempo o corretor não aparece em
+// Usuários, porque o cadastro só é criado depois, pelo webhook).
+async function dbListarContratosPendentesProtegido(){
+  const data=await folhaPagamentoInvocarProtegido('list_pending_user_contracts',{});
+  return Array.isArray(data&&data.contratos)?data.contratos:[];
+}
+
+// Cancela um contrato aguardando assinatura: cancela o envelope no
+// Clicksign (invalida o link que o corretor recebeu) e marca o registro
+// como cancelado, liberando o e-mail para um novo convite.
+async function dbCancelarContratoUsuarioProtegido(contratoId){
+  const data=await folhaPagamentoInvocarProtegido('cancel_user_contract',{contratoId});
+  if(!data||!data.ok) throw new Error('O serviço protegido não confirmou o cancelamento do contrato.');
+  return data;
+}
+
+// Reenvia a notificação por e-mail de um contrato já criado (mesmo
+// envelope, sem gerar um novo documento).
+async function dbReenviarContratoProtegido(email){
+  const data=await folhaPagamentoInvocarProtegido('resend_contract_notification',{email});
+  if(!data||!data.ok) throw new Error('O serviço protegido não confirmou o reenvio da notificação.');
+  return data;
+}
+
 // Checagem segura usada pela tela de login (antes de existir sessão): só
 // confere se o e-mail existe e qual o status da conta, sem baixar a lista
 // completa de usuários (isso só acontece depois do login de verdade, em

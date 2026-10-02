@@ -10,6 +10,14 @@ const USUARIO_ATIVACAO_LEGADO_BASE_ISO = '2026-07-01';
 const PERFIL_TAG  = { Dono:'tag-dono', Corretor:'tag-cor', Capitao:'tag-cap', Capitão:'tag-cap', Gerente:'tag-ger', Diretor:'tag-dir', Financeiro:'tag-fin', RH:'tag-rh' };
 const PERFIL_ICON = { Dono:'👑', Corretor:'👤', Capitao:'⭐', Capitão:'⭐', Gerente:'🏆', Diretor:'💼', Financeiro:'💰', RH:'🤝' };
 let uBusca = '', uFiltroUnidade = '', uFiltroEquipe = '', uFiltroPerfil = '', uFiltroStatus = '';
+// Contratos de parceria (Corretor PJ) aguardando assinatura no Clicksign.
+// Enquanto o corretor não assina, não existe linha em USUARIOS para ele
+// (só é criada pelo webhook, ao concluir a assinatura) -- por isso esses
+// convites "travados" não aparecem na lista normal, e precisam desse
+// carregamento à parte para o admin conseguir localizar/cancelar.
+let CONTRATOS_PENDENTES_CLICKSIGN = [];
+let contratosPendentesClicksignCarregado = false;
+let contratosPendentesClicksignCarregando = false;
 function iniUser(n) { return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase(); }
 function perfilRoleUsuario(u) { return typeof getPerfil==='function' ? getPerfil(u && u.perfil) : String((u && u.perfil) || '').toLowerCase(); }
 const PERFIL_META = {
@@ -207,6 +215,63 @@ function _buildUserCard(u, idx) {
 
 function usuarioPodeGerirEquipe() {
   return ['dir','dono','fin','rh'].includes(String(role || '').toLowerCase());
+}
+
+// Carrega (uma vez) os contratos de parceria aguardando assinatura no
+// Clicksign, para exibir no painel do módulo Usuários. Chamado a partir de
+// renderUsuarios(); quando termina, re-renderiza para mostrar o resultado.
+async function garantirContratosPendentesClicksignCarregados() {
+  if (contratosPendentesClicksignCarregado || contratosPendentesClicksignCarregando) return;
+  if (!usuarioPodeGerirEquipe()) return;
+  contratosPendentesClicksignCarregando = true;
+  try {
+    CONTRATOS_PENDENTES_CLICKSIGN = await dbListarContratosPendentesProtegido();
+  } catch (e) {
+    console.error(e);
+    CONTRATOS_PENDENTES_CLICKSIGN = [];
+  } finally {
+    contratosPendentesClicksignCarregando = false;
+    contratosPendentesClicksignCarregado = true;
+    if (typeof renderUsuarios === 'function') renderUsuarios();
+  }
+}
+
+async function reenviarContratoPendente(contratoId) {
+  const contrato = CONTRATOS_PENDENTES_CLICKSIGN.find(c => c.id === contratoId);
+  if (!contrato) return;
+  const btn = document.getElementById(`btn-reenviar-contrato-${contratoId}`);
+  if (btn) { btn.disabled = true; btn.textContent = zUiText('Enviando...'); }
+  try {
+    await dbReenviarContratoProtegido(contrato.email);
+    showToast(zUiText('✅'), zUiText(`Notificação reenviada para ${contrato.email}.`));
+  } catch (e) {
+    showToast(zUiText('❌'), zUiText((e && e.message) || 'Não foi possível reenviar a notificação.'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = zUiText('✉️ Reenviar'); }
+  }
+}
+
+async function cancelarContratoPendente(contratoId) {
+  const contrato = CONTRATOS_PENDENTES_CLICKSIGN.find(c => c.id === contratoId);
+  if (!contrato) return;
+  if (!confirm(zUiText(`Cancelar o contrato de ${contrato.nome} (${contrato.email})? O link de assinatura enviado a ele deixará de funcionar, e você poderá enviar um novo convite para este e-mail.`))) return;
+
+  const btn = document.getElementById(`btn-cancelar-contrato-${contratoId}`);
+  if (btn) { btn.disabled = true; btn.textContent = zUiText('Cancelando...'); }
+  try {
+    const resultado = await dbCancelarContratoUsuarioProtegido(contratoId);
+    CONTRATOS_PENDENTES_CLICKSIGN = CONTRATOS_PENDENTES_CLICKSIGN.filter(c => c.id !== contratoId);
+    renderUsuarios();
+    showToast(
+      zUiText('✅'),
+      resultado && resultado.clicksignCancelado === false
+        ? zUiText('Contrato cancelado no sistema. Não foi possível cancelar automaticamente no Clicksign — se necessário, cancele por lá também.')
+        : zUiText(`Contrato de ${contrato.nome} cancelado. Já pode enviar um novo convite para este e-mail.`)
+    );
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = zUiText('✕ Cancelar'); }
+    showToast(zUiText('❌'), zUiText((e && e.message) || 'Não foi possível cancelar o contrato.'));
+  }
 }
 
 // Detecta usuários cujo e-mail salvo no banco tem espaços ou letras
@@ -721,6 +786,7 @@ function renderUsuarios() {
     renderMeuCadastroUsuario();
     return;
   }
+  garantirContratosPendentesClicksignCarregados();
   const equipes = [...new Set(USUARIOS.map(u => u.equipe||'').filter(Boolean))].sort();
   const lista   = _filtrarUsuarios();
   const total   = USUARIOS.length;
@@ -798,6 +864,23 @@ function renderUsuarios() {
       <div class="mc" style="border-top-color:#C06030;"><div class="mc-l">${zUiText('Inativos')}</div><div class="mc-v" style="color:#C06030;">${inativos}</div></div>
       <div class="mc"><div class="mc-l">${zUiText('Mostrando')}</div><div class="mc-v" id="u-mostrando">${lista.length}</div></div>
     </div>
+    ${CONTRATOS_PENDENTES_CLICKSIGN.length ? `<div style="background:#FEF6EC;border:1px solid #F0D2A8;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:600;color:#A05010;margin-bottom:10px;">${zUiText(`📄 Contratos aguardando assinatura (${CONTRATOS_PENDENTES_CLICKSIGN.length})`)}</div>
+      <div style="font-size:10px;color:#A05010;margin-bottom:10px;">${zUiText('Esses convites de Corretor ainda não têm cadastro em Usuários porque o corretor ainda não assinou o contrato. Cancele aqui antes de enviar um novo convite para o mesmo e-mail.')}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${CONTRATOS_PENDENTES_CLICKSIGN.map(c => `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:10px 12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--tx);">${zUiHtml(c.nome)}</div>
+            <div style="font-size:10px;color:var(--tm);">${zUiHtml(c.email)}${c.unidade?` ${zUiText('·')} ${zUiHtml(c.unidade)}`:''}${c.equipe?` ${zUiText('·')} ${zUiHtml(c.equipe)}`:''}</div>
+            <div style="font-size:10px;color:var(--tm);">${zUiText('Enviado em')} ${zUiHtml(formatarDataLocal(c.criado_em, {comAno:true, comHora:true}))}${c.criado_por?` ${zUiText('por')} ${zUiHtml(c.criado_por)}`:''}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn-user-edit" onclick="reenviarContratoPendente(${c.id})" id="btn-reenviar-contrato-${c.id}">${zUiText('✉️ Reenviar')}</button>
+            <button class="btn-user-del" onclick="cancelarContratoPendente(${c.id})" id="btn-cancelar-contrato-${c.id}">${zUiText('✕ Cancelar')}</button>
+          </div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
     <div class="user-grid" id="u-cards-grid">
       ${cards || `<div style="grid-column:1/-1;padding:40px;text-align:center;color:var(--tm);"><div style="font-size:28px;margin-bottom:8px;">${zUiText('🔍')}</div><div style="font-size:13px;">${zUiText('Nenhum usuário encontrado.')}</div></div>`}
     </div>
