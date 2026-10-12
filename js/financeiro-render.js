@@ -542,7 +542,7 @@ function renderFinanceiro() {
           <div class="modal-title">${zUiText(detalheDiaAtivo ? finTituloDetalheDia(finDiaDetalheAtual) : '')}</div>
           <div style="font-size:10px;color:var(--tm);margin-top:2px;">${zUiText(detalheDiaAtivo ? finSubtituloDetalheDia(finDiaDetalheAtual, mes, ano, detalheDiaItens) : '')}</div>
         </div>
-        <button class="mclose" onclick="finFecharDetalheDia()">âœ•</button>
+        <button class="mclose" onclick="finFecharDetalheDia()">✕</button>
       </div>
       <div class="modal-body fin-day-modal-body">
         <div class="fin-day-summary">
