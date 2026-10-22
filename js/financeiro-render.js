@@ -277,7 +277,7 @@ function renderFinanceiro() {
     .fcal-events{display:flex;flex-direction:column;gap:4px;min-height:0;overflow:hidden;}
     .fcal-ev{background:#fff;border:1px solid rgba(184,144,42,0.16);border-left:3px solid transparent;border-radius:9px;padding:5px 6px;display:flex;flex-direction:column;gap:3px;cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease;min-height:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.7);}
     .fcal-ev:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(184,144,42,0.08);}
-    .fcal-ev-ok{background:#EBF8F1;border-left-color:#15803D;}
+    .fcal-ev-ok{background:#EAF1FC;border-left-color:#3060B8;}
     .fcal-ev-soon{background:#EEF5FF;border-left-color:#7DB3FF;}
     .fcal-ev-invoice{background:#E7F0FF;border-left-color:#1D4ED8;}
     .fcal-ev-delay{background:#FFF4E5;border-left-color:#D97706;}
@@ -286,7 +286,7 @@ function renderFinanceiro() {
     .fcal-ev-out-delay{background:#FAD9D5;border-left-color:#B42318;}
     .fcal-ev-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
     .fcal-ev-top strong{font-size:10px;color:var(--gold);line-height:1.1;white-space:nowrap;}
-    .fcal-ev-ok .fcal-ev-top strong{color:#15803D;}
+    .fcal-ev-ok .fcal-ev-top strong{color:#3060B8;}
     .fcal-ev-soon .fcal-ev-top strong{color:#4A86E8;}
     .fcal-ev-invoice .fcal-ev-top strong{color:#1D4ED8;}
     .fcal-ev-delay .fcal-ev-top strong{color:#D97706;}
@@ -294,7 +294,7 @@ function renderFinanceiro() {
     .fcal-ev-paid .fcal-ev-top strong{color:#2F8F5B;}
     .fcal-ev-out-delay .fcal-ev-top strong{color:#B42318;}
     .fcal-ev-status{display:inline-flex;align-items:center;min-height:18px;padding:1px 5px;border-radius:999px;background:rgba(184,144,42,0.1);font-size:7px;text-transform:uppercase;letter-spacing:0.08em;color:var(--tm);font-weight:700;white-space:nowrap;}
-    .fcal-ev-ok .fcal-ev-status{background:#DDF3E5;color:#15803D;}
+    .fcal-ev-ok .fcal-ev-status{background:#D7E4F7;color:#3060B8;}
     .fcal-ev-soon .fcal-ev-status{background:#DCEBFF;color:#4A86E8;}
     .fcal-ev-invoice .fcal-ev-status{background:#D9E8FF;color:#1D4ED8;}
     .fcal-ev-delay .fcal-ev-status{background:#FDE9CC;color:#D97706;}
@@ -406,14 +406,16 @@ function renderFinanceiro() {
     .fin-day-item-paid .fin-day-item-main{background:#F3FAF5;border-left-color:#2F8F5B;}
     .fin-day-item-out .fin-day-item-main{background:#FFF6F3;border-left-color:#D65145;}
     .fin-day-item-out-delay .fin-day-item-main{background:#FBE0DC;border-left-color:#B42318;}
-    .fin-day-item-ok .fin-day-item-main{background:#F0FAF4;border-left-color:#15803D;}
+    .fin-day-item-ok .fin-day-item-main{background:#EAF1FC;border-left-color:#3060B8;}
     .fin-day-item-soon .fin-day-item-main{background:#F3F8FF;border-left-color:#7DB3FF;}
     .fin-day-item-invoice .fin-day-item-main{background:#EBF2FF;border-left-color:#1D4ED8;}
     .fin-day-item-delay .fin-day-item-main{background:#FFF4E5;border-left-color:#D97706;}
     .fin-day-item-paid .fin-day-item-top strong{color:#2F8F5B;}
+    .fin-day-item-ok .fin-day-item-top strong{color:#3060B8;}
     .fin-day-item-out .fin-day-item-top strong{color:#D65145;}
     .fin-day-item-out-delay .fin-day-item-top strong{color:#B42318;}
     .fin-day-item-paid .fin-day-item-status{background:#DCEFE1;color:#2F8F5B;}
+    .fin-day-item-ok .fin-day-item-status{background:#D7E4F7;color:#3060B8;}
     .fin-day-item-out .fin-day-item-status{background:#FCD9D4;color:#D65145;}
     .fin-day-item-out-delay .fin-day-item-status{background:#F6C2BC;color:#B42318;}
     .fin-modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
