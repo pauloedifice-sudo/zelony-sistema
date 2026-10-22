@@ -3146,14 +3146,18 @@ tr:hover td{
 }
 
 .fcal-day-total.pos,
-.fcal-ev-ok,
 .fcal-ev-paid,
-.fcal-side-item.ok,
 .fcal-side-item.paid,
-.fin-day-item-paid .fin-day-item-main,
-.fin-day-item-ok .fin-day-item-main{
+.fin-day-item-paid .fin-day-item-main{
   background:rgba(31,138,91,0.12) !important;
   border-color:rgba(31,138,91,0.30) !important;
+}
+
+.fcal-ev-ok,
+.fcal-side-item.ok,
+.fin-day-item-ok .fin-day-item-main{
+  background:rgba(37,99,235,0.20) !important;
+  border-color:rgba(37,99,235,0.42) !important;
 }
 
 .fcal-day-total.neg,
@@ -3184,12 +3188,16 @@ tr:hover td{
   border-color:rgba(201,154,46,0.28) !important;
 }
 
-.fcal-ev-ok .fcal-ev-top strong,
 .fcal-ev-paid .fcal-ev-top strong,
-.fcal-side-item.ok .fcal-side-item-top span,
 .fcal-side-item.paid .fcal-side-item-top span,
 .fin-day-item-paid .fin-day-item-top strong{
   color:#89D0AF !important;
+}
+
+.fcal-ev-ok .fcal-ev-top strong,
+.fcal-side-item.ok .fcal-side-item-top span,
+.fin-day-item-ok .fin-day-item-top strong{
+  color:#9FC0FF !important;
 }
 
 .fcal-ev-out .fcal-ev-top strong,
@@ -3213,11 +3221,16 @@ tr:hover td{
   color:var(--gold-l) !important;
 }
 
-.fcal-ev-ok .fcal-ev-status,
 .fcal-ev-paid .fcal-ev-status,
 .fin-day-item-paid .fin-day-item-status{
   background:rgba(31,138,91,0.14) !important;
   color:#89D0AF !important;
+}
+
+.fcal-ev-ok .fcal-ev-status,
+.fin-day-item-ok .fin-day-item-status{
+  background:rgba(37,99,235,0.22) !important;
+  color:#9FC0FF !important;
 }
 
 .fcal-ev-out .fcal-ev-status,
