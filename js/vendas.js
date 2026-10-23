@@ -1976,7 +1976,7 @@ function montarOpcoesCorretorSelect(){
     {label:'RH', role:'rh'}
   ];
   const optCor=perfilOrdem.flatMap(({label,role:perfilKey})=>{
-    const lista=todos.filter(u=>perfilRole(u)===perfilKey);
+    const lista=todos.filter(u=>perfilRole(u)===perfilKey).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
     if(!lista.length) return [];
     return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`),'</optgroup>'];
   }).join('');
@@ -2121,9 +2121,10 @@ function abrirModalVenda(){
   const perfilRole=(u)=>typeof getPerfil==='function'?getPerfil(u.perfil):String(u.perfil||'').toLowerCase();
   const usuarioAtivo=(u)=>typeof usuarioEstaAtivo==='function'?usuarioEstaAtivo(u):String(u&&u.status||'Ativo')==='Ativo';
   const todos=USUARIOS.filter(u=>filtrarUnid(u)&&usuarioAtivo(u));
-  const capitaes=todos.filter(u=>perfilRole(u)==='cap');
-  const gerentes=todos.filter(u=>['ger','dir','cap','dono'].includes(perfilRole(u)));
-  const diretores=todos.filter(u=>perfilRole(u)==='dir');
+  const nomeOrdenar=(a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+  const capitaes=todos.filter(u=>perfilRole(u)==='cap').sort(nomeOrdenar);
+  const gerentes=todos.filter(u=>['ger','dir','cap','dono'].includes(perfilRole(u))).sort(nomeOrdenar);
+  const diretores=todos.filter(u=>perfilRole(u)==='dir').sort(nomeOrdenar);
   const perfilOrdem=[
     {label:'Dono', role:'dono'},
     {label:'Diretor', role:'dir'},
@@ -2134,7 +2135,7 @@ function abrirModalVenda(){
     {label:'RH', role:'rh'}
   ];
   const optCor=perfilOrdem.flatMap(({label,role:perfilKey})=>{
-    const lista=todos.filter(u=>perfilRole(u)===perfilKey);
+    const lista=todos.filter(u=>perfilRole(u)===perfilKey).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
     if(!lista.length) return [];
     return [`<optgroup label="${zUiText(label)}">`,...lista.map(u=>`<option value="${u.id}">${zUiText(u.nome)}</option>`),'</optgroup>'];
   }).join('');
