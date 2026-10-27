@@ -7,8 +7,35 @@
 // entao esta funcao roda com a service role (no servidor, nunca exposta ao
 // navegador) e devolve apenas um numero agregado — nunca as linhas de vendas
 // em si (nada de valores, comissoes, nomes de clientes etc).
-import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
-import { createServiceClient } from "../_shared/supabase.ts";
+//
+// Arquivo autossuficiente (sem imports de ../_shared) de proposito, para
+// poder ser colado direto no editor do painel do Supabase sem precisar
+// subir mais arquivos junto.
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(body: unknown, init: ResponseInit = {}) {
+  const headers = new Headers(init.headers || {});
+  Object.entries(corsHeaders).forEach(([key, value]) => headers.set(key, value));
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify(body), { ...init, headers });
+}
+
+function createServiceClient() {
+  const url = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceRoleKey) {
+    throw new Error("Supabase service role environment variables are missing.");
+  }
+  return createClient(url, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 function isDataIsoValida(valor: unknown): valor is string {
   return typeof valor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(valor);
