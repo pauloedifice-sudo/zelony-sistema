@@ -141,6 +141,10 @@ function renderAgendamentos() {
         <button class="ag-clear-btn ag-report-btn ag-close-report-btn" id="ag-close-report-btn" type="button" onclick="exportarRelatorioFechamentos()">
           Relatório fechamentos
         </button>
+        <button class="ag-clear-btn ag-report-btn" id="ag-dash-tv-btn" type="button" onclick="copiarLinkDashTV()" title="Copiar o link do painel de TV (sem login)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="width:14px;height:14px;margin-right:6px;vertical-align:-2px;"><path d="M6.5 9.5 9.5 6.5"/><path d="M7.2 4.3 8 3.5a2.3 2.3 0 0 1 3.3 3.3l-.9.9"/><path d="M8.8 11.7 8 12.5a2.3 2.3 0 0 1-3.3-3.3l.9-.9"/></svg>
+          Copiar link do dash
+        </button>
         <button class="btn-add-trein" type="button" onclick="abrirAgendamentoModal('${agDataSelecionada || agHojeIso()}')" ${mutacaoBloqueada ? 'disabled' : ''} style="${mutacaoBloqueada ? 'opacity:0.55;cursor:not-allowed;' : ''}">
           <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/></svg>
           Novo compromisso
@@ -423,6 +427,11 @@ function agAtualizarFiltroPeriodo(campo, valor) {
   zSetState('state.ui.agFiltroDataDe', agFiltroDataDe);
   zSetState('state.ui.agFiltroDataAte', agFiltroDataAte);
   renderAgendamentos();
+}
+
+function copiarLinkDashTV() {
+  const url = `${location.origin}/dash-tv.html`;
+  copiarTexto(url, 'URL do painel de TV');
 }
 
 function limparFiltrosAgendamento() {
