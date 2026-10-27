@@ -8,6 +8,15 @@
 // navegador) e devolve apenas um numero agregado — nunca as linhas de vendas
 // em si (nada de valores, comissoes, nomes de clientes etc).
 //
+// Importante sobre a coluna `vendas.data`: ela guarda so "DD/MM", sem ano
+// (confirmado em js/vendas.js, onde a propria tela de edicao monta e le a
+// data assim). Por isso o filtro de periodo nao pode ser feito no banco com
+// um simples gte/lte na coluna `data` (a comparacao de texto "DD/MM" nao
+// segue a ordem cronologica quando o periodo cruza um mes, ex: "05/11"
+// viria antes de "27/10" em ordem de texto). A funcao busca as vendas nao
+// distratadas e recalcula a data completa (assumindo o ano do periodo
+// pedido) para comparar corretamente.
+//
 // Arquivo autossuficiente (sem imports de ../_shared) de proposito, para
 // poder ser colado direto no editor do painel do Supabase sem precisar
 // subir mais arquivos junto.
@@ -41,6 +50,33 @@ function isDataIsoValida(valor: unknown): valor is string {
   return typeof valor === "string" && /^\d{4}-\d{2}-\d{2}$/.test(valor);
 }
 
+function parseDiaMes(valor: unknown): { dia: number; mes: number } | null {
+  const texto = String(valor || "").trim();
+  const m = /^(\d{1,2})\/(\d{1,2})$/.exec(texto);
+  if (!m) return null;
+  const dia = parseInt(m[1], 10);
+  const mes = parseInt(m[2], 10);
+  if (!(dia >= 1 && dia <= 31) || !(mes >= 1 && mes <= 12)) return null;
+  return { dia, mes };
+}
+
+// Reconstroi a data completa da venda (so temos DD/MM) testando o(s) ano(s)
+// do periodo pedido, e diz se ela cai dentro de [dataDe, dataAte].
+function vendaDentroDoPeriodo(dataVenda: unknown, dataDe: string, dataAte: string): boolean {
+  const partes = parseDiaMes(dataVenda);
+  if (!partes) return false;
+  const anoDe = parseInt(dataDe.slice(0, 4), 10);
+  const anoAte = parseInt(dataAte.slice(0, 4), 10);
+  const anosCandidatos = anoDe === anoAte ? [anoDe] : [anoDe, anoAte];
+  const mm = String(partes.mes).padStart(2, "0");
+  const dd = String(partes.dia).padStart(2, "0");
+  for (const ano of anosCandidatos) {
+    const isoCandidato = `${ano}-${mm}-${dd}`;
+    if (isoCandidato >= dataDe && isoCandidato <= dataAte) return true;
+  }
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -67,18 +103,21 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createServiceClient();
-    const { count, error } = await supabase
+    const { data: linhas, error } = await supabase
       .from("vendas")
-      .select("id", { count: "exact", head: true })
-      .gte("data", dataDe)
-      .lte("data", dataAte)
-      .or("distratada.eq.false,distratada.is.null");
+      .select("data,distratada")
+      .or("distratada.eq.false,distratada.is.null")
+      .limit(20000);
 
     if (error) {
       return jsonResponse({ error: error.message || "Erro ao consultar vendas." }, { status: 500 });
     }
 
-    return jsonResponse({ totalVendas: count || 0, dataDe, dataAte });
+    const totalVendas = (linhas || []).filter((linha) =>
+      vendaDentroDoPeriodo((linha as { data?: unknown }).data, dataDe, dataAte)
+    ).length;
+
+    return jsonResponse({ totalVendas, dataDe, dataAte });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Erro inesperado.";
     return jsonResponse({ error: message }, { status: 500 });
