@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel de Agendamentos — TV — Zelony Imóveis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0; height:100%; background:#0A0908; overflow:hidden;}
+  *{font-family:'Inter', system-ui, sans-serif; box-sizing:border-box;}
+  .num{font-family:'Fraunces', serif; font-optical-sizing:auto;}
+  .grad-gold{
+    background:linear-gradient(135deg, #F3D581 0%, #C9972F 55%, #9C6E17 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .grad-ivory{
+    background:linear-gradient(170deg, #FFFDF6 0%, #E7E1D2 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #stage-wrap{position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:#0A0908;}
+  #stage{width:1920px; height:1080px; position:relative; transform-origin:center center;}
+  .periodo-btn{padding:10px 22px; border-radius:999px; color:#817C6E; font-size:14px; font-weight:600; letter-spacing:2px; text-transform:uppercase; border:none; background:transparent; cursor:pointer; font-family:'Inter', sans-serif;}
+  .periodo-btn.ativo{background:linear-gradient(135deg, #E8C26B, #B8862A); color:#161208; font-weight:800; box-shadow:0 4px 18px rgba(201,151,47,0.35);}
+  .rank-row{display:flex; flex-direction:row; align-items:center; gap:22px;}
+  .rank-badge{width:42px; height:42px; border-radius:50%; background:linear-gradient(150deg, rgba(201,151,47,0.18), rgba(201,151,47,0.02)); border:1px solid rgba(201,151,47,0.45); color:#D8A849; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; flex-shrink:0;}
+  .rank-nome{font-size:23px; font-weight:600; color:#EDEAE0; width:300px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; letter-spacing:0.2px;}
+  .rank-bar-track{flex:1; height:12px; background:rgba(255,255,255,0.045); border-radius:999px; overflow:hidden;}
+  .rank-bar-fill{height:100%; background:linear-gradient(90deg, #8A6213, #E8C26B); border-radius:999px; transition:width 0.6s ease;}
+  .rank-total{font-size:27px; font-weight:700; width:58px; text-align:right; flex-shrink:0;}
+  .rank-vazio{font-size:17px; color:#716D63; padding:14px 0;}
+</style>
+</head>
+<body>
+
+<div id="stage-wrap">
+<div id="stage">
+
+  <!-- ambient wash -->
+  <div style="position:absolute; inset:0; pointer-events:none; background:
+    radial-gradient(1100px 680px at -6% -14%, rgba(216,168,73,0.16), transparent 62%),
+    radial-gradient(1200px 760px at 106% 108%, rgba(201,151,47,0.14), transparent 62%);"></div>
+
+  <!-- corner ray bursts -->
+  <div style="position:absolute; top:-140px; left:-140px; width:780px; height:780px; pointer-events:none; opacity:0.6; background:repeating-conic-gradient(from 205deg at 0% 0%, rgba(232,194,107,0.5) 0deg 1deg, transparent 1deg 6.5deg); mask-image:radial-gradient(circle at 0% 0%, black 0%, black 28%, transparent 66%); -webkit-mask-image:radial-gradient(circle at 0% 0%, black 0%, black 28%, transparent 66%);"></div>
+  <div style="position:absolute; top:30px; left:-200px; width:560px; height:190px; pointer-events:none; opacity:0.55; transform:rotate(-38deg); background:linear-gradient(90deg, transparent, rgba(216,168,73,0.16) 42%, rgba(216,168,73,0.26) 58%, transparent); border-top:1px solid rgba(216,168,73,0.4); border-bottom:1px solid rgba(216,168,73,0.14);"></div>
+  <div style="position:absolute; bottom:-140px; right:-140px; width:780px; height:780px; pointer-events:none; opacity:0.5; background:repeating-conic-gradient(from 25deg at 100% 100%, rgba(232,194,107,0.42) 0deg 1deg, transparent 1deg 6.5deg); mask-image:radial-gradient(circle at 100% 100%, black 0%, black 28%, transparent 66%); -webkit-mask-image:radial-gradient(circle at 100% 100%, black 0%, black 28%, transparent 66%);"></div>
+  <div style="position:absolute; bottom:20px; right:-200px; width:560px; height:190px; pointer-events:none; opacity:0.45; transform:rotate(-38deg); background:linear-gradient(90deg, transparent, rgba(216,168,73,0.13) 42%, rgba(216,168,73,0.2) 58%, transparent); border-top:1px solid rgba(216,168,73,0.32); border-bottom:1px solid rgba(216,168,73,0.1);"></div>
+
+  <div style="position:absolute; inset:0; pointer-events:none; opacity:0.5; background-image:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size:64px 64px; mask-image:radial-gradient(1400px 850px at 50% 15%, black, transparent 78%);"></div>
+
+  <div style="position:relative; width:1920px; height:1080px; padding:60px 76px 36px 76px; display:flex; flex-direction:column; gap:30px; color:#F3F1EA; background:linear-gradient(165deg, #171009 0%, #0D0A06 45%, #0A0908 100%);">
+
+  <!-- Header -->
+  <div style="position:relative; display:flex; flex-direction:column; gap:22px;">
+    <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:flex-end;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; flex-direction:row; align-items:center; gap:14px;">
+          <div style="width:15px; height:15px; border:2px solid #D8A849; transform:rotate(45deg); flex-shrink:0;"></div>
+          <span style="font-size:19px; font-weight:700; letter-spacing:6px; color:#D8A849; text-transform:uppercase;">Zelony Imóveis</span>
+        </div>
+        <h1 class="num grad-ivory" style="margin:0; font-size:46px; font-weight:600; letter-spacing:-0.5px;">Painel de Agendamentos</h1>
+      </div>
+      <div style="display:flex; flex-direction:row; align-items:center; gap:18px;">
+        <div id="periodo-toggle" style="display:flex; flex-direction:row; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(201,151,47,0.28); border-radius:999px; padding:5px; gap:2px; backdrop-filter:blur(6px);">
+          <button class="periodo-btn" data-periodo="dia">Dia</button>
+          <button class="periodo-btn" data-periodo="semana">Semana</button>
+          <button class="periodo-btn" data-periodo="mes">Mês</button>
+        </div>
+        <div style="text-align:right; padding-left:6px; border-left:1px solid rgba(255,255,255,0.08);">
+          <div id="dataLabel" style="font-size:18px; color:#C9C4B6; font-weight:500; padding-left:18px;">—</div>
+          <div style="font-size:13px; color:#716D63; letter-spacing:0.5px; padding-left:18px;">Atualizado às <span id="horaAtualizacao">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:1px; background:linear-gradient(90deg, rgba(201,151,47,0.55), rgba(201,151,47,0.05) 40%, transparent 70%);"></div>
+  </div>
+
+  <!-- Hero stats -->
+  <div style="position:relative; display:flex; flex-direction:row; background:linear-gradient(175deg, rgba(26,21,14,0.78), rgba(14,11,8,0.86)); backdrop-filter:blur(2px); border:1.5px solid rgba(220,175,90,0.4); border-radius:26px; box-shadow:0 24px 60px rgba(0,0,0,0.45), 0 0 0 1px rgba(0,0,0,0.2); overflow:hidden;">
+
+      <div style="flex:1; padding:34px 42px; display:flex; flex-direction:row; align-items:flex-start; gap:20px; min-width:0;">
+        <div style="width:56px; height:56px; flex-shrink:0; border-radius:14px; border:1.5px solid rgba(220,175,90,0.45); background:rgba(216,168,73,0.08); display:flex; align-items:center; justify-content:center; color:#D8A849;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2.5"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8" y1="2.5" x2="8" y2="6.5"></line><line x1="16" y1="2.5" x2="16" y2="6.5"></line></svg>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; min-width:0;">
+          <span style="font-size:15px; font-weight:700; letter-spacing:3px; color:#8A8679; text-transform:uppercase;">Agendamentos</span>
+          <span id="totalGeral" class="num grad-ivory" style="font-size:96px; font-weight:600; line-height:0.95;">—</span>
+          <span style="font-size:14.5px; color:#716D63;">Primeiro atendimento + Fechamento</span>
+        </div>
+      </div>
+
+      <div style="width:1px; margin:30px 0; background:linear-gradient(180deg, transparent, rgba(201,151,47,0.35), transparent);"></div>
+
+      <div style="flex:1; padding:34px 42px; display:flex; flex-direction:row; align-items:flex-start; gap:20px; min-width:0; position:relative;">
+        <div style="width:56px; height:56px; flex-shrink:0; border-radius:14px; border:1.5px solid rgba(220,175,90,0.45); background:rgba(216,168,73,0.08); display:flex; align-items:center; justify-content:center; color:#D8A849;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"></circle><path d="M8 12.5l2.5 2.5 5.5-5.5"></path></svg>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; min-width:0; flex:1;">
+          <span style="font-size:15px; font-weight:700; letter-spacing:3px; color:#8A8679; text-transform:uppercase;">Concluídos</span>
+          <div style="display:flex; flex-direction:row; align-items:baseline; gap:16px;">
+            <span id="totalConcluido" class="num grad-gold" style="font-size:96px; font-weight:700; line-height:0.95; filter:drop-shadow(0 0 26px rgba(201,151,47,0.28));">—</span>
+            <span style="font-size:23px; font-weight:700; color:#B39A5A;">(<span id="percentConcluido">—</span>%)</span>
+          </div>
+          <div style="height:9px; width:100%; background:rgba(255,255,255,0.05); border-radius:999px; overflow:hidden; margin-top:2px;">
+            <div id="barraConcluido" style="height:100%; width:0%; background:linear-gradient(90deg, #9C6E17, #E8C26B); border-radius:999px; box-shadow:0 0 14px rgba(201,151,47,0.45); transition:width 0.6s ease;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:1px; margin:30px 0; background:linear-gradient(180deg, transparent, rgba(201,151,47,0.35), transparent);"></div>
+
+      <div style="flex:1; padding:34px 42px; display:flex; flex-direction:row; align-items:flex-start; gap:20px; min-width:0;">
+        <div style="width:56px; height:56px; flex-shrink:0; border-radius:14px; border:1.5px solid rgba(220,175,90,0.45); background:rgba(216,168,73,0.08); display:flex; align-items:center; justify-content:center; color:#D8A849;">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="13"></line><line x1="12" y1="20" x2="12" y2="8"></line><line x1="18" y1="20" x2="18" y2="4"></line></svg>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px; min-width:0;">
+          <span style="font-size:15px; font-weight:700; letter-spacing:3px; color:#8A8679; text-transform:uppercase;">Vendas</span>
+          <span id="totalVendas" class="num grad-ivory" style="font-size:96px; font-weight:600; line-height:0.95;">—</span>
+          <span style="font-size:14.5px; color:#716D63;">Lançadas no período · sem distratos</span>
+        </div>
+      </div>
+
+  </div>
+
+  <!-- Rankings -->
+  <div style="position:relative; display:flex; flex-direction:row; gap:28px; flex:1; min-height:0;">
+
+    <div style="flex:1; background:linear-gradient(175deg, rgba(23,19,13,0.75), rgba(11,10,9,0.85)); border:1.5px solid rgba(220,175,90,0.3); border-radius:26px; box-shadow:0 18px 44px rgba(0,0,0,0.4); padding:30px 36px; display:flex; flex-direction:column; gap:22px; min-height:0;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; flex-direction:row; align-items:center; gap:11px; color:#D8A849;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 5 18.5V20"></path><circle cx="9.5" cy="7.5" r="3.5"></circle><path d="M16 15a3 3 0 0 0 2-5.24"></path><path d="M14.5 4.2a3 3 0 0 1 0 5.6"></path></svg>
+            <span style="font-size:17px; font-weight:700; letter-spacing:2.5px; color:#A6A295; text-transform:uppercase;">Top 5 Corretores</span>
+          </div>
+          <div style="width:46px; height:3px; border-radius:2px; background:linear-gradient(90deg, #D8A849, transparent);"></div>
+        </div>
+        <div id="listaCorretores" style="display:flex; flex-direction:column; gap:14px; flex:1; justify-content:space-between;"></div>
+    </div>
+
+    <div style="flex:1; background:linear-gradient(175deg, rgba(23,19,13,0.75), rgba(11,10,9,0.85)); border:1.5px solid rgba(220,175,90,0.3); border-radius:26px; box-shadow:0 18px 44px rgba(0,0,0,0.4); padding:30px 36px; display:flex; flex-direction:column; gap:22px; min-height:0;">
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; flex-direction:row; align-items:center; gap:11px; color:#D8A849;">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20v-1.2A4.5 4.5 0 0 1 7.5 14.3h3A4.5 4.5 0 0 1 15 18.8V20"></path><path d="M9 11a3.3 3.3 0 1 0 0-6.6A3.3 3.3 0 0 0 9 11Z"></path><path d="M16 14.6a4.1 4.1 0 0 1 4.5 4.1V20"></path><path d="M15.2 4.6a3.1 3.1 0 0 1 0 6"></path></svg>
+            <span style="font-size:17px; font-weight:700; letter-spacing:2.5px; color:#A6A295; text-transform:uppercase;">Top 5 Equipes</span>
+          </div>
+          <div style="width:46px; height:3px; border-radius:2px; background:linear-gradient(90deg, #D8A849, transparent);"></div>
+        </div>
+        <div id="listaEquipes" style="display:flex; flex-direction:column; gap:14px; flex:1; justify-content:space-between;"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div style="position:relative; display:flex; flex-direction:column; gap:16px;">
+    <div style="height:1px; background:linear-gradient(90deg, transparent, rgba(201,151,47,0.3), transparent);"></div>
+    <div style="display:flex; flex-direction:row; justify-content:space-between; align-items:center;">
+      <span style="font-size:14.5px; color:#5C584E; letter-spacing:0.3px;">Zelony Imóveis · Painel atualizado automaticamente</span>
+      <div style="display:flex; flex-direction:row; align-items:center; gap:10px;">
+        <div id="statusDot" style="width:8px; height:8px; border-radius:50%; background:#3FBF6A; box-shadow:0 0 8px rgba(63,191,106,0.7); transition:background 0.4s ease;"></div>
+        <span style="font-size:14px; color:#8A8679; letter-spacing:2px;">ATUALIZAÇÃO AUTOMÁTICA</span>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/utils.js"></script>
+<script src="js/agendamentos-base.js"></script>
+<script src="js/dash-tv.js"></script>
+</body>
+</html>
