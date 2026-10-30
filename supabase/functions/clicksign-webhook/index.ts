@@ -145,7 +145,7 @@ function montarPayloadEmailConvite(params: {
   };
 }
 
-const CLICKSIGN_ZELONY_SIGNER_EMAIL = "contato@zelonyimoveis.com.br";
+const CLICKSIGN_ZELONY_SIGNER_EMAIL = "contato@zelonyimoveis.com";
 
 async function enviarEmailConviteAcesso(params: {
   nome: string;

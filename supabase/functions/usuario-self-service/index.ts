@@ -139,7 +139,7 @@ const USER_INVITE_SELECT = "id,usuario_id,nome,email,perfil,equipe,unidade,rh_co
 const CLICKSIGN_BASE_URL = "https://app.clicksign.com/api/v3";
 const CLICKSIGN_TEMPLATE_KEY = "C776EA72-F872-4C08-A2EF-B9CAD92856A8";
 const CLICKSIGN_ZELONY_SIGNER_NOME = "Zelony Imóveis";
-const CLICKSIGN_ZELONY_SIGNER_EMAIL = "contato@zelonyimoveis.com.br";
+const CLICKSIGN_ZELONY_SIGNER_EMAIL = "contato@zelonyimoveis.com";
 
 async function clicksignRequest(path: string, method: string, body?: unknown) {
   const token = Deno.env.get("CLICKSIGN_API_TOKEN");
