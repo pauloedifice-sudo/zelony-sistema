@@ -76,13 +76,15 @@ function podeGerirDocumentos(){
 }
 
 function getDocumentoPerfisSelecionaveis(){
-  return Object.keys(RD).map(codigo => ({ codigo, nome: RD[codigo].nome }));
+  // RD[codigo].nome e o primeiro nome da pessoa (usado no avatar), nao o
+  // perfil — o rotulo do checkbox precisa do perfil (RD[codigo].role).
+  return Object.keys(RD).map(codigo => ({ codigo, nome: RD[codigo].role }));
 }
 
 function getDocumentoPerfisLabel(perfisPermitidos){
   const lista = Array.isArray(perfisPermitidos) ? perfisPermitidos : [];
   if(!lista.length) return zUiText('Todos os perfis');
-  return lista.map(codigo => (RD[codigo] && RD[codigo].nome) || codigo).join(', ');
+  return lista.map(codigo => (RD[codigo] && RD[codigo].role) || codigo).join(', ');
 }
 
 function documentoVisivelParaPerfilAtual(doc){
