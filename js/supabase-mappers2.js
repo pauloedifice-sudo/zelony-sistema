@@ -521,7 +521,8 @@ function mapDocumentoIn(d){
     storagePath:d.storage_path||d.storagePath||(storageInfo&&storageInfo.path)||'',
     criadoPor:d.criado_por||d.criadoPor||'',
     atualizadoEm:d.atualizado_em||d.atualizadoEm||'',
-    publicado:typeof d.publicado==='boolean'?d.publicado:true
+    publicado:typeof d.publicado==='boolean'?d.publicado:true,
+    perfisPermitidos:Array.isArray(d.perfis_permitidos)?d.perfis_permitidos:(Array.isArray(d.perfisPermitidos)?d.perfisPermitidos:[])
   };
 }
 
@@ -537,7 +538,8 @@ function mapDocumentoOut(d){
     data_url:storageRef,
     criado_por:d.criadoPor||'',
     atualizado_em:d.atualizadoEm||new Date().toISOString(),
-    publicado:typeof d.publicado==='boolean'?d.publicado:true
+    publicado:typeof d.publicado==='boolean'?d.publicado:true,
+    perfis_permitidos:Array.isArray(d.perfisPermitidos)?d.perfisPermitidos:[]
   };
 }
 

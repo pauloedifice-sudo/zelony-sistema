@@ -75,6 +75,22 @@ function podeGerirDocumentos(){
   return DOCUMENTO_ROLES_GESTAO.includes(role);
 }
 
+function getDocumentoPerfisSelecionaveis(){
+  return Object.keys(RD).map(codigo => ({ codigo, nome: RD[codigo].nome }));
+}
+
+function getDocumentoPerfisLabel(perfisPermitidos){
+  const lista = Array.isArray(perfisPermitidos) ? perfisPermitidos : [];
+  if(!lista.length) return zUiText('Todos os perfis');
+  return lista.map(codigo => (RD[codigo] && RD[codigo].nome) || codigo).join(', ');
+}
+
+function documentoVisivelParaPerfilAtual(doc){
+  const lista = Array.isArray(doc && doc.perfisPermitidos) ? doc.perfisPermitidos : [];
+  if(!lista.length) return true;
+  return lista.includes(role);
+}
+
 function fmtDocumentoData(value){
   if(!value) return zUiText('Sem data');
   const data = new Date(value);
@@ -108,6 +124,7 @@ function getDocumentosVisiveis(){
   const busca = docsNorm(dBusca);
   const categoria = docsNorm(dCategoria);
   return getDocumentosBase().filter(doc => {
+    if(!podeGerirDocumentos() && !documentoVisivelParaPerfilAtual(doc)) return false;
     if(categoria !== 'todos' && docsNorm(doc.categoria) !== categoria) return false;
     if(!busca) return true;
     const alvo = [
@@ -159,7 +176,10 @@ function renderDocumentoCard(doc, ativo){
       ? `<span class="docs-card-tag cat">${escHtml(zUiText('Storage'))}</span>`
       : !doc.id
         ? `<span class="docs-card-tag local">${escHtml(zUiText('Local'))}</span>`
-        : ''
+        : '',
+    (Array.isArray(doc.perfisPermitidos) && doc.perfisPermitidos.length)
+      ? `<span class="docs-card-tag local">${escHtml(zUiText('Restrito'))}</span>`
+      : ''
   ].join('');
 
   return `
@@ -206,6 +226,7 @@ function renderDocumentoPainel(doc){
             <span>${escHtml(statusArquivo)}</span>
             <span>${escHtml(`${zUiText('Atualizado em')} ${fmtDocumentoData(doc.atualizadoEm)}`)}</span>
             ${criadoPor ? `<span>${escHtml(`${zUiText('Publicado por')} ${criadoPor}`)}</span>` : ''}
+            <span>${escHtml(`${zUiText('Visivel para')}: ${getDocumentoPerfisLabel(doc.perfisPermitidos)}`)}</span>
           </div>
         </div>
       </div>
@@ -339,6 +360,7 @@ function preencherModalDocumento(doc){
   document.getElementById('md-titulo').value = doc ? (doc.titulo || '') : '';
   document.getElementById('md-categoria').value = doc ? (doc.categoria || '') : '';
   document.getElementById('md-descricao').value = doc ? (doc.descricao || '') : '';
+  renderPerfisCheckboxesDocumento(doc ? (doc.perfisPermitidos || []) : []);
   dFileObj = null;
   dFileDataUrl = doc ? (doc.dataUrl || '') : '';
   dFileMeta = doc ? {
@@ -348,6 +370,24 @@ function preencherModalDocumento(doc){
   } : null;
   document.getElementById('md-arquivo').value = '';
   renderResumoArquivoDocumento();
+}
+
+function renderPerfisCheckboxesDocumento(selecionados = []){
+  const wrap = document.getElementById('md-perfis-wrap');
+  if(!wrap) return;
+  const marcados = new Set(Array.isArray(selecionados) ? selecionados : []);
+  wrap.innerHTML = getDocumentoPerfisSelecionaveis().map(perfil => `
+    <label class="md-perfil-chip">
+      <input type="checkbox" value="${escHtml(perfil.codigo)}" ${marcados.has(perfil.codigo) ? 'checked' : ''}>
+      <span>${escHtml(perfil.nome)}</span>
+    </label>
+  `).join('');
+}
+
+function lerPerfisSelecionadosDocumento(){
+  const wrap = document.getElementById('md-perfis-wrap');
+  if(!wrap) return [];
+  return Array.from(wrap.querySelectorAll('input[type="checkbox"]:checked')).map(input => input.value);
 }
 
 function abrirModalDocumento(token = ''){
@@ -550,7 +590,8 @@ async function salvarDocumento(){
     storagePath: arquivoAtual ? arquivoAtual.storagePath : '',
     criadoPor: atual && atual.criadoPor ? atual.criadoPor : (usuarioLogado && usuarioLogado.nome ? usuarioLogado.nome : 'Sistema'),
     atualizadoEm: new Date().toISOString(),
-    publicado: true
+    publicado: true,
+    perfisPermitidos: lerPerfisSelecionadosDocumento()
   });
 
   if(fileFoiAlterado){

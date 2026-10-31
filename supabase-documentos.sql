@@ -27,6 +27,7 @@ alter table public.documentos add column if not exists data_url text;
 alter table public.documentos add column if not exists criado_por text;
 alter table public.documentos add column if not exists atualizado_em timestamptz default now();
 alter table public.documentos add column if not exists publicado boolean default true;
+alter table public.documentos add column if not exists perfis_permitidos text[] default '{}'::text[];
 
 create index if not exists idx_documentos_categoria
   on public.documentos (categoria);
