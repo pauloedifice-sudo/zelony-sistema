@@ -1713,7 +1713,9 @@ textarea::placeholder{color:#B8A880;}
 .md-perfis-wrap{display:flex;flex-wrap:wrap;gap:8px;}
 .md-perfil-chip{display:flex;align-items:center;gap:6px;background:var(--bg2);border:1px solid var(--bd);border-radius:999px;padding:7px 12px;font-size:11px;color:var(--tx);cursor:pointer;user-select:none;transition:border-color .12s, background .12s;white-space:nowrap;flex:0 0 auto;}
 .md-perfil-chip:has(input:checked){border-color:var(--gold-l);background:rgba(184,144,42,0.12);}
-.md-perfil-chip input{accent-color:var(--gold-l);}
+.md-perfil-chip input[type="checkbox"]{width:auto;height:auto;flex:0 0 auto;padding:0;margin:0;background:none;border:none;border-radius:0;outline:none;accent-color:var(--gold-l);}
+.md-perfil-chip input[type="checkbox"]:focus{background:none;box-shadow:none;}
+.md-perfil-chip span{flex:1 1 auto;}
 .doc-view-modal{max-width:980px !important;}
 .doc-view-top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .doc-view-body{padding:0;background:var(--bg2);}
