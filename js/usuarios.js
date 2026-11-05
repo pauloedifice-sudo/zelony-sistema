@@ -787,7 +787,8 @@ function renderUsuarios() {
     return;
   }
   garantirContratosPendentesClicksignCarregados();
-  const equipes = [...new Set(USUARIOS.map(u => u.equipe||'').filter(Boolean))].sort();
+  const usuariosParaEquipes = uFiltroStatus ? USUARIOS.filter(u => (typeof usuarioStatusNormalizado === 'function' ? usuarioStatusNormalizado(u) : zUiText(u.status || 'Ativo')) === uFiltroStatus) : USUARIOS;
+  const equipes = [...new Set(usuariosParaEquipes.map(u => u.equipe||'').filter(Boolean))].sort();
   const lista   = _filtrarUsuarios();
   const total   = USUARIOS.length;
   const ativos = USUARIOS.filter(u => typeof usuarioStatusNormalizado === 'function'
