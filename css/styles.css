@@ -1851,6 +1851,7 @@ textarea::placeholder{color:#B8A880;}
 .anexo-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:3px;white-space:nowrap;}
 .badge-comp{background:#E8F5EE;color:#2E7E5E;border:1px solid #80C8A0;}
 .badge-cont{background:#EEF4FE;color:#3060B8;border:1px solid #90B8E8;}
+.badge-nota{background:#F3ECFC;color:#7142C8;border:1px solid #C9A8F0;}
 .badge-outro{background:var(--bg3);color:var(--ts);border:1px solid var(--bd);}
 .anexo-btns{display:flex;gap:5px;flex-shrink:0;}
 .btn-anexo-view{background:var(--gold-bg);border:1px solid var(--gold-bd);border-radius:5px;padding:3px 9px;font-size:10px;color:var(--gold);cursor:pointer;font-family:'Inter',sans-serif;font-weight:500;}
@@ -2858,6 +2859,7 @@ tr:hover td{
 }
 .bg-p,
 .tag-cap,
+.badge-nota,
 .ag-badge.status.rescheduled{
   background:rgba(120,100,177,0.16) !important;
   border-color:rgba(120,100,177,0.32) !important;
