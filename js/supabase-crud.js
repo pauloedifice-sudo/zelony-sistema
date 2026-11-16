@@ -789,7 +789,7 @@ async function carregarComRetry(tentativa=1){
       origem:'supabase',
       motivo:''
     });
-    const temSessao=restaurarSessao();
+    const temSessao=await restaurarSessao();
     if(!temSessao){
       if(typeof mostrarTelaLogin==='function') mostrarTelaLogin();
       else{
@@ -803,6 +803,7 @@ async function carregarComRetry(tentativa=1){
     revelarShellApp();
     if(temSessao){
       renderizarModulosBaseApp();
+      restaurarModuloAtual();
       void carregarDadosAposAutenticacao({
         silencioso:true,
         renderizar:true,
@@ -830,7 +831,7 @@ async function carregarComRetry(tentativa=1){
       origem:'cache_local',
       motivo:'Sem conexão com o Supabase. Apenas consulta do último cache está liberada; novos cadastros e alterações estão bloqueados até reconectar e recarregar a página.'
     });
-    const temSessao=restaurarSessao();
+    const temSessao=await restaurarSessao();
     if(!temSessao){
       if(typeof mostrarTelaLogin==='function') mostrarTelaLogin();
       else{
@@ -842,7 +843,7 @@ async function carregarComRetry(tentativa=1){
       }
     }
     revelarShellApp();
-    if(temSessao) renderizarModulosBaseApp();
+    if(temSessao){ renderizarModulosBaseApp(); restaurarModuloAtual(); }
     setTimeout(()=>{
       if(typeof showToast==='function'){
         showToast('!', 'Modo consulta: dados locais podem estar desatualizados. Cadastros e alteracoes estao bloqueados ate o Supabase voltar.');

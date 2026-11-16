@@ -212,6 +212,7 @@ function fazerLogout() {
   zSetState('state.auth.usuarioLogado', usuarioLogado);
   if (typeof usuarioSelfServiceEncerrarSessao === 'function') usuarioSelfServiceEncerrarSessao();
   localStorage.removeItem('zel_sessao');
+  localStorage.removeItem('zel_ultimo_modulo');
   atualizarBadgeNotificacoes();
   if (typeof encerrarMonitorTratativaAgendamento === 'function') encerrarMonitorTratativaAgendamento();
   if (typeof limparDetalheVenda === 'function') limparDetalheVenda();
@@ -223,8 +224,9 @@ function fazerLogout() {
   setTimeout(() => document.getElementById('lg-email').focus(), 100);
 }
 
-function restaurarSessao() {
+function limparSessaoLocal() {
   localStorage.removeItem('zel_sessao');
+  localStorage.removeItem('zel_ultimo_modulo');
   usuarioLogado = null;
   role = 'cor';
   zSetState('state.auth.role', role);
@@ -232,6 +234,55 @@ function restaurarSessao() {
   if (typeof usuarioSelfServiceLimparSessao === 'function') usuarioSelfServiceLimparSessao();
   forcarDashboardInicial();
   return false;
+}
+
+// Restaura a sessao real do Supabase Auth ao recarregar a pagina (F5), em vez
+// de sempre forcar a tela de login de novo. So considera a sessao valida se o
+// Supabase ainda reconhecer o token (sb.auth.getSession) e o usuario
+// continuar cadastrado e ativo; caso contrario, cai no mesmo fluxo de sempre
+// (limpa tudo e mostra o login).
+async function restaurarSessao() {
+  try {
+    const { data } = await sb.auth.getSession();
+    const sessao = data && data.session;
+    const email = sessao && sessao.user && sessao.user.email
+      ? String(sessao.user.email).trim().toLowerCase()
+      : '';
+    if (!sessao || !email) return limparSessaoLocal();
+
+    if (typeof usuarioSelfServiceSincronizarSessaoLonga === 'function') {
+      await usuarioSelfServiceSincronizarSessaoLonga(sessao);
+    }
+    if (typeof carregarCredenciaisDB === 'function') {
+      await carregarCredenciaisDB();
+    }
+
+    const usuario = (typeof USUARIOS !== 'undefined' ? USUARIOS : [])
+      .find(u => u.email.toLowerCase() === email);
+    if (!usuario || !usuarioPodeEntrarNoSistema(usuario)) {
+      if (typeof usuarioSelfServiceEncerrarSessao === 'function') await usuarioSelfServiceEncerrarSessao();
+      return limparSessaoLocal();
+    }
+
+    aplicarSessaoUsuario(usuario);
+    return true;
+  } catch (e) {
+    console.warn('Nao foi possivel restaurar a sessao existente:', e && e.message);
+    return limparSessaoLocal();
+  }
+}
+
+// Depois que a sessao e os dados sao restaurados, volta para o mesmo modulo
+// (pagina) em que o usuario estava antes de atualizar a pagina, em vez de
+// sempre cair no Dashboard. Se o modulo salvo nao existir mais ou o perfil
+// atual nao tiver acesso a ele, o setMod() abaixo ja bloqueia com seguranca.
+function restaurarModuloAtual() {
+  let m = '';
+  try { m = localStorage.getItem('zel_ultimo_modulo') || ''; } catch (e) { m = ''; }
+  if (!m || m === 'dashboard') return;
+  if (!document.getElementById('mod-' + m)) return;
+  const el = document.querySelector(`.sb-item[onclick*="setMod('${m}'"]`);
+  if (typeof setMod === 'function') setMod(m, el || undefined);
 }
 
 function toggleSenha() {
@@ -376,6 +427,7 @@ function setMod(m, el) {
     showToast(zUiText('🔒'), zUiText('Somente Dono ou Financeiro podem acessar os Reembolsos de ATO.'));
     return;
   }
+  try { localStorage.setItem('zel_ultimo_modulo', m); } catch (e) {}
   ['carteira','vendas','dashboard','rh','agendamentos','envios','trein','documentos','proc','usuarios','financeiro','reembolsos-ato','folha-pagamento']
     .forEach(x => document.getElementById('mod-' + x).classList.add('hidden'));
   document.getElementById('mod-' + m).classList.remove('hidden');

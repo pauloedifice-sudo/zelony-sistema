@@ -77,13 +77,13 @@ function sbFetchComTimeoutLong(resource, init={}){
 }
 
 const sb=supabase.createClient(SB_URL, SB_KEY, {
-  auth: { persistSession: false, autoRefreshToken: true },
+  auth: { persistSession: true, autoRefreshToken: true },
   global: {
     fetch: sbFetchComTimeout
   }
 });
 const sbLong=supabase.createClient(SB_URL, SB_KEY, {
-  auth: { persistSession: false, autoRefreshToken: true },
+  auth: { persistSession: true, autoRefreshToken: true },
   global: {
     fetch: sbFetchComTimeoutLong
   }
