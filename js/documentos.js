@@ -12,7 +12,7 @@ let dFileDataUrl = '';
 let dFileMeta = null;
 
 const DOCUMENTO_ROLES_GESTAO = ['dono','dir','fin','rh'];
-const DOCUMENTO_MAX_SIZE = 5 * 1024 * 1024;
+const DOCUMENTO_MAX_SIZE = 12 * 1024 * 1024;
 
 zSetState('state.ui.documentosBusca', dBusca);
 zSetState('state.ui.documentosCategoria', dCategoria);
@@ -432,7 +432,7 @@ function renderResumoArquivoDocumento(){
     drop.classList.add('has-file');
   }else{
     badge.textContent = zUiText('Nenhum PDF selecionado');
-    summary.textContent = zUiText('Selecione um PDF de ate 5 MB.');
+    summary.textContent = zUiText('Selecione um PDF de ate 12 MB.');
     drop.classList.remove('has-file');
   }
 }
@@ -504,7 +504,7 @@ async function onDocumentoFileChange(event){
 
   if(file.size > DOCUMENTO_MAX_SIZE){
     if(input) input.value = '';
-    showToast(zUiText('⚠️'), zUiText('O PDF ultrapassa o limite de 5 MB para este modulo.'));
+    showToast(zUiText('⚠️'), zUiText('O PDF ultrapassa o limite de 12 MB para este modulo.'));
     return;
   }
 
