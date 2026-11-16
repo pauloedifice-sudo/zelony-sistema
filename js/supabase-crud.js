@@ -605,16 +605,29 @@ async function sincronizarAgendamentosPendentes(opcoes={}){
 }
 
 // ── LOCAL STORAGE (fallback offline) ─────────────────────────────────────────
+// Grava uma chave no localStorage sem deixar uma falha (ex.: quota
+// excedida) interromper o restante do salvamento/renderizacao. Cada chave
+// e independente: se uma falhar, as outras e a atualizacao do estado em
+// memoria continuam normalmente.
+function zSalvarChaveLS(chave,valor){
+  try{
+    localStorage.setItem(chave,valor);
+    return true;
+  }catch(e){
+    console.warn('Falha ao salvar cache local ('+chave+'):',e&&e.message||e);
+    return false;
+  }
+}
 function salvarLS(){
   try{
     const vendasSem=VENDAS.map(v=>({...v,anexos:[]}));
-    localStorage.setItem('zel_usuarios',JSON.stringify(USUARIOS));
-    localStorage.setItem('zel_vendas',JSON.stringify(vendasSem));
-    localStorage.setItem('zel_trein',JSON.stringify(TREIN));
-    localStorage.setItem('zel_docs',JSON.stringify(DOCUMENTOS));
-    localStorage.setItem('zel_agendamentos',JSON.stringify(AGENDAMENTOS));
-    localStorage.setItem('zel_financeiro_lancamentos',JSON.stringify(FINANCEIRO_LANCAMENTOS));
-    localStorage.setItem('zel_financeiro_saldos_bancarios',JSON.stringify(FINANCEIRO_SALDOS_BANCARIOS));
+    zSalvarChaveLS('zel_usuarios',JSON.stringify(USUARIOS));
+    zSalvarChaveLS('zel_vendas',JSON.stringify(vendasSem));
+    zSalvarChaveLS('zel_trein',JSON.stringify(TREIN));
+    zSalvarChaveLS('zel_docs',JSON.stringify(DOCUMENTOS));
+    zSalvarChaveLS('zel_agendamentos',JSON.stringify(AGENDAMENTOS));
+    zSalvarChaveLS('zel_financeiro_lancamentos',JSON.stringify(FINANCEIRO_LANCAMENTOS));
+    zSalvarChaveLS('zel_financeiro_saldos_bancarios',JSON.stringify(FINANCEIRO_SALDOS_BANCARIOS));
     zSetState('state.data.usuarios', typeof USUARIOS !== 'undefined' ? USUARIOS : null);
     zSetState('state.data.vendas', VENDAS);
     zSetState('state.data.treinamentos', TREIN);

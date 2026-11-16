@@ -76,14 +76,88 @@ function sbFetchComTimeoutLong(resource, init={}){
   return sbFetchComTimeout(resource,{...(init||{}),_timeoutMs:SB_WRITE_TIMEOUT_MS});
 }
 
+// Adaptador de storage à prova de falhas para a sessao do Supabase Auth.
+// Em alguns navegadores o localStorage pode estar cheio/indisponivel (modo
+// privado, quota excedida, etc.) e o SDK do Supabase tenta gravar o token de
+// sessao nele a cada login/refresh. Sem este adaptador, um erro ali (ex.:
+// "QuotaExceededError") sobe sem tratamento e aparece pro usuario como se
+// fosse um erro de login. Aqui qualquer falha de leitura/escrita e capturada
+// e a sessao cai para memoria (funciona durante a aba, mas nao sobrevive a
+// um F5 nesse navegador especifico) em vez de travar o login.
+const zAuthStorageMemoria={};
+function zAuthStorageDisponivel(){
+  try{
+    return typeof window!=='undefined' && !!window.localStorage;
+  }catch(e){
+    return false;
+  }
+}
+function zAuthStorageTentarLiberarEspaco(){
+  // Caches locais de dados (modo offline) sao os maiores consumidores de
+  // espaco (ex.: zel_docs pode conter PDFs em base64). Eles sao apenas um
+  // cache e podem ser reconstruidos do Supabase, entao sao os primeiros a
+  // serem descartados para abrir espaco para o token de autenticacao.
+  const chavesDescartaveis=['zel_docs','zel_vendas','zel_trein','zel_agendamentos','zel_financeiro_lancamentos','zel_financeiro_saldos_bancarios','zel_usuarios'];
+  for(const chave of chavesDescartaveis){
+    try{
+      if(window.localStorage.getItem(chave)!==null){
+        window.localStorage.removeItem(chave);
+        return true;
+      }
+    }catch(e){ /* ignora e tenta a proxima chave */ }
+  }
+  return false;
+}
+const zAuthStorageSeguro={
+  getItem(chave){
+    try{
+      if(zAuthStorageDisponivel()){
+        const valor=window.localStorage.getItem(chave);
+        if(valor!==null) return valor;
+      }
+    }catch(e){
+      console.warn('[auth] localStorage.getItem falhou, usando sessao em memoria:', e&&e.message);
+    }
+    return Object.prototype.hasOwnProperty.call(zAuthStorageMemoria,chave)?zAuthStorageMemoria[chave]:null;
+  },
+  setItem(chave,valor){
+    zAuthStorageMemoria[chave]=valor;
+    if(!zAuthStorageDisponivel()) return;
+    try{
+      window.localStorage.setItem(chave,valor);
+      return;
+    }catch(erro1){
+      console.warn('[auth] localStorage.setItem falhou (provavelmente quota excedida); tentando liberar espaco:', erro1&&erro1.message);
+    }
+    if(zAuthStorageTentarLiberarEspaco()){
+      try{
+        window.localStorage.setItem(chave,valor);
+        return;
+      }catch(erro2){
+        console.warn('[auth] mesmo apos liberar espaco a gravacao falhou; sessao mantida apenas em memoria nesta aba:', erro2&&erro2.message);
+      }
+    }else{
+      console.warn('[auth] nao havia cache local descartavel para liberar espaco; sessao mantida apenas em memoria nesta aba.');
+    }
+  },
+  removeItem(chave){
+    delete zAuthStorageMemoria[chave];
+    try{
+      if(zAuthStorageDisponivel()) window.localStorage.removeItem(chave);
+    }catch(e){
+      console.warn('[auth] localStorage.removeItem falhou:', e&&e.message);
+    }
+  }
+};
+
 const sb=supabase.createClient(SB_URL, SB_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true },
+  auth: { persistSession: true, autoRefreshToken: true, storage: zAuthStorageSeguro },
   global: {
     fetch: sbFetchComTimeout
   }
 });
 const sbLong=supabase.createClient(SB_URL, SB_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true },
+  auth: { persistSession: true, autoRefreshToken: true, storage: zAuthStorageSeguro },
   global: {
     fetch: sbFetchComTimeoutLong
   }
