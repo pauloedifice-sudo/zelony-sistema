@@ -7,6 +7,14 @@ function renderAgendamentos() {
   // (a cada poucos segundos), e sem isso o navegador jogava a tela para o
   // topo mesmo com o usuário navegando mais embaixo.
   const scrollAnterior = cont.scrollTop;
+  // Guarda se o campo de busca estava focado (e onde estava o cursor) antes
+  // de reconstruir a tela: como esta funcao recria todo o HTML a cada tecla
+  // digitada (o oninput do campo chama renderAgendamentos()), o campo de
+  // busca era substituido por um elemento novo a cada letra e perdia o
+  // foco, dando a impressao de que so aceitava uma letra por vez.
+  const buscaInputAtivo = !!(document.activeElement && document.activeElement.id === 'ag-busca-input');
+  const buscaSelecaoInicio = buscaInputAtivo ? document.activeElement.selectionStart : null;
+  const buscaSelecaoFim = buscaInputAtivo ? document.activeElement.selectionEnd : null;
   if (agModuloVisivel()) {
     agAtualizarDadosCompartilhadosEmSegundoPlano({
       cooldownMs: AG_REFRESH_COOLDOWN_MS,
@@ -271,7 +279,7 @@ function renderAgendamentos() {
     <div class="ag-toolbar">
       <div class="ag-search">
         <span class="ag-search-icon">🔍</span>
-        <input type="text" value="${agAttr(agBusca)}" placeholder="Buscar cliente, telefone ou corretor..." oninput="agBusca=this.value;zSetState('state.ui.agBusca',agBusca);renderAgendamentos()">
+        <input type="text" id="ag-busca-input" value="${agAttr(agBusca)}" placeholder="Buscar cliente, telefone ou corretor..." oninput="agBusca=this.value;zSetState('state.ui.agBusca',agBusca);renderAgendamentos()">
       </div>
       <div class="ag-date-range">
         <div class="ag-date-field">
@@ -403,6 +411,16 @@ function renderAgendamentos() {
   // Restaura a posição de rolagem salva acima, para o usuário não ser
   // jogado de volta ao topo a cada atualização automática da tela.
   cont.scrollTop = scrollAnterior;
+
+  // Restaura o foco e a posição do cursor no campo de busca (ver comentário
+  // no início da função): sem isso, o campo perdia o foco a cada letra digitada.
+  if (buscaInputAtivo) {
+    const buscaInputNovo = document.getElementById('ag-busca-input');
+    if (buscaInputNovo) {
+      buscaInputNovo.focus();
+      try { buscaInputNovo.setSelectionRange(buscaSelecaoInicio, buscaSelecaoFim); } catch (e) {}
+    }
+  }
 }
 
 function agAtualizarFiltroPeriodo(campo, valor) {
