@@ -47,7 +47,12 @@ function renderAgendamentos() {
   const corretoresOpcoes = Array.from(corretoresMap.values()).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
   if (agFiltroCorretor && !corretoresOpcoes.some(item => item.value === agFiltroCorretor)) agFiltroCorretor = '';
 
-  const lista = agFiltrarLista(basePeriodo, true);
+  // Quando ha um termo de busca, ele vale para todo o historico visivel
+  // (ignorando o filtro De/Ate) -- sem isso, um agendamento ja concluido em
+  // uma data fora do periodo selecionado nunca aparecia na busca, mesmo
+  // digitando o telefone ou nome do cliente corretamente.
+  const buscaAtiva = !!agBusca.trim();
+  const lista = agFiltrarLista(buscaAtiva ? base : basePeriodo, true);
   const listaAgenda = lista.filter(agAgendamentoAtivo);
   const listaAtivos = lista.filter(agAgendamentoAtivoFuturo);
   agGarantirDataSelecionada();
@@ -305,6 +310,7 @@ function renderAgendamentos() {
       </select>
       ${(agBusca || agFiltroUnidade || agFiltroEquipe || agFiltroCorretor || agFiltroDataDe || agFiltroDataAte) ? `<button class="ag-clear-btn" type="button" onclick="limparFiltrosAgendamento()">Limpar filtros</button>` : ''}
     </div>
+    ${buscaAtiva && (agFiltroDataDe || agFiltroDataAte) ? `<div class="ag-busca-aviso">🔍 Buscando em todo o historico (o filtro de periodo De/Ate fica pausado enquanto a busca estiver preenchida).</div>` : ''}
 
     <div class="ag-layout">
       <div class="ag-card">
