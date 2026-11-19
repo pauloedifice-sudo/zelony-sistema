@@ -868,26 +868,45 @@ async function carregarVendasSupabase(){
 
 async function carregarAgendamentosSupabase(){
   try{
-    let todas=[];
-    let pagina=0;
     const LOTE=200;
-    while(true){
-      const inicio=pagina*LOTE;
-      const fim=inicio+LOTE-1;
-      const {data,error}=await sbLong
-        .from('agendamentos')
-        .select('*')
-        .order('data_agendamento')
-        .order('horario_agendamento')
-        .order('id')
-        .range(inicio,fim);
-      if(error) throw error;
-      const lote=Array.isArray(data)?data:[];
-      if(!lote.length) break;
-      todas.push(...lote);
-      if(lote.length<LOTE) break;
-      pagina++;
+    // Busca a primeira pagina pedindo a contagem total da tabela, para
+    // depois buscar as demais paginas todas em paralelo (Promise.all) em vez de uma
+    // depois da outra. Antes, cada pagina de 200 linhas esperava a anterior
+    // terminar antes de comecar: com a tabela de agendamentos crescendo, isso
+    // deixava a tela de Agendamentos cada vez mais lenta para carregar, tanto
+    // na entrada no modulo quanto na atualizacao automatica a cada 15s.
+    const primeiraPagina=await sbLong
+      .from('agendamentos')
+      .select('*',{count:'exact'})
+      .order('data_agendamento')
+      .order('horario_agendamento')
+      .order('id')
+      .range(0,LOTE-1);
+    if(primeiraPagina.error) throw primeiraPagina.error;
+    let todas=Array.isArray(primeiraPagina.data)?primeiraPagina.data.slice():[];
+    const total=typeof primeiraPagina.count==='number'?primeiraPagina.count:todas.length;
+
+    if(total>todas.length){
+      const demaisPaginas=[];
+      for(let inicio=LOTE;inicio<total;inicio+=LOTE){
+        const fim=Math.min(inicio+LOTE,total)-1;
+        demaisPaginas.push(
+          sbLong
+            .from('agendamentos')
+            .select('*')
+            .order('data_agendamento')
+            .order('horario_agendamento')
+            .order('id')
+            .range(inicio,fim)
+        );
+      }
+      const resultados=await Promise.all(demaisPaginas);
+      for(const resultado of resultados){
+        if(resultado.error) throw resultado.error;
+        if(Array.isArray(resultado.data)) todas=todas.concat(resultado.data);
+      }
     }
+
     setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
     return todas;
   }catch(e){
