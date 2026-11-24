@@ -817,6 +817,7 @@ async function carregarComRetry(tentativa=1){
     if(temSessao){
       renderizarModulosBaseApp();
       restaurarModuloAtual();
+      if(typeof iniciarMonitorTratativaAgendamento==='function') iniciarMonitorTratativaAgendamento();
       void carregarDadosAposAutenticacao({
         silencioso:true,
         renderizar:true,
@@ -856,7 +857,11 @@ async function carregarComRetry(tentativa=1){
       }
     }
     revelarShellApp();
-    if(temSessao){ renderizarModulosBaseApp(); restaurarModuloAtual(); }
+    if(temSessao){
+      renderizarModulosBaseApp();
+      restaurarModuloAtual();
+      if(typeof iniciarMonitorTratativaAgendamento==='function') iniciarMonitorTratativaAgendamento();
+    }
     setTimeout(()=>{
       if(typeof showToast==='function'){
         showToast('!', 'Modo consulta: dados locais podem estar desatualizados. Cadastros e alteracoes estao bloqueados ate o Supabase voltar.');

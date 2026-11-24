@@ -869,42 +869,38 @@ async function carregarVendasSupabase(){
 async function carregarAgendamentosSupabase(){
   try{
     const LOTE=200;
-    // Busca a primeira pagina pedindo a contagem total da tabela, para
-    // depois buscar as demais paginas todas em paralelo (Promise.all) em vez de uma
-    // depois da outra. Antes, cada pagina de 200 linhas esperava a anterior
-    // terminar antes de comecar: com a tabela de agendamentos crescendo, isso
-    // deixava a tela de Agendamentos cada vez mais lenta para carregar, tanto
-    // na entrada no modulo quanto na atualizacao automatica a cada 15s.
-    const primeiraPagina=await sbLong
+    const RODADA_PARALELA=4; // busca ate 4 paginas (800 linhas) por vez
+    const buscarPagina=(pagina)=>sbLong
       .from('agendamentos')
-      .select('*',{count:'exact'})
+      .select('*')
       .order('data_agendamento')
       .order('horario_agendamento')
       .order('id')
-      .range(0,LOTE-1);
-    if(primeiraPagina.error) throw primeiraPagina.error;
-    let todas=Array.isArray(primeiraPagina.data)?primeiraPagina.data.slice():[];
-    const total=typeof primeiraPagina.count==='number'?primeiraPagina.count:todas.length;
+      .range(pagina*LOTE,(pagina+1)*LOTE-1);
 
-    if(total>todas.length){
-      const demaisPaginas=[];
-      for(let inicio=LOTE;inicio<total;inicio+=LOTE){
-        const fim=Math.min(inicio+LOTE,total)-1;
-        demaisPaginas.push(
-          sbLong
-            .from('agendamentos')
-            .select('*')
-            .order('data_agendamento')
-            .order('horario_agendamento')
-            .order('id')
-            .range(inicio,fim)
-        );
-      }
-      const resultados=await Promise.all(demaisPaginas);
+    // Busca as paginas em rodadas paralelas (Promise.all) em vez de uma
+    // depois da outra. Antes, cada pagina de 200 linhas esperava a anterior
+    // terminar antes de comecar: com a tabela de agendamentos crescendo, isso
+    // deixava a tela de Agendamentos cada vez mais lenta para carregar, tanto
+    // na entrada no modulo quanto na atualizacao automatica a cada 15s. Nao
+    // precisa saber o total de linhas de antemao: cada rodada busca um bloco
+    // de paginas de uma vez e para assim que alguma pagina da rodada vier
+    // incompleta (ou vazia), o que indica que chegou ao fim da tabela.
+    let todas=[];
+    let proximaPagina=0;
+    let aindaTemMais=true;
+    while(aindaTemMais){
+      const paginasDaRodada=[];
+      for(let i=0;i<RODADA_PARALELA;i++) paginasDaRodada.push(buscarPagina(proximaPagina+i));
+      const resultados=await Promise.all(paginasDaRodada);
+      aindaTemMais=false;
       for(const resultado of resultados){
         if(resultado.error) throw resultado.error;
-        if(Array.isArray(resultado.data)) todas=todas.concat(resultado.data);
+        const lote=Array.isArray(resultado.data)?resultado.data:[];
+        todas=todas.concat(lote);
+        if(lote.length===LOTE) aindaTemMais=true;
       }
+      proximaPagina+=RODADA_PARALELA;
     }
 
     setStatusSyncAgendamentos({tabela:'disponivel',erro:''});
