@@ -455,7 +455,7 @@ function agMesmoLancador(item, usuario = usuarioLogado) {
 
 function agPodeTratarManual(item, usuario = usuarioLogado) {
   if (!item || !usuario) return false;
-  if (!agendamentoVisivel(item)) return false;
+  if (!agendamentoVisivel(item, { ignorarUnidadeDir: true })) return false;
   if (agSituacao(item) !== 'Agendado') return false;
   if (['dono', 'fin', 'rh', 'dir', 'ger', 'cap'].includes(role)) return true;
   return agMesmoUsuario(item, usuario) || agMesmoLancador(item, usuario);
@@ -528,10 +528,19 @@ function agUsuariosPermitidosCadastro() {
     .sort((a, b) => agTexto(a.nome).localeCompare(agTexto(b.nome), 'pt-BR'));
 }
 
-function agendamentoVisivel(item) {
+function agendamentoVisivel(item, opcoes = {}) {
   if (!usuarioLogado) return false;
   if (['dono', 'fin', 'rh'].includes(role)) return true;
   if (role === 'dir') {
+    // Ao buscar por texto (e ao abrir manualmente um item encontrado na
+    // busca), o diretor de uma unidade especifica tambem precisa enxergar
+    // agendamentos da outra unidade: o sistema ja impede, para qualquer
+    // unidade, um mesmo telefone ter dois agendamentos em aberto ao mesmo
+    // tempo (agEncontrarConflitoTelefoneAgendamento verifica isso em todas
+    // as unidades) -- mas sem isso aqui, o diretor nunca conseguia
+    // encontrar/tratar o agendamento da outra unidade que estava causando
+    // o bloqueio.
+    if (opcoes.ignorarUnidadeDir) return true;
     return agPermiteTodasUnidades() || agTexto(item.unidade) === agTexto(usuarioLogado.unidade);
   }
   if (role === 'ger' || role === 'cap') {

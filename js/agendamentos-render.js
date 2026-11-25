@@ -27,7 +27,14 @@ function renderAgendamentos() {
   const pendentesQtd = pendentesSync.length;
   const mutacaoBloqueada = agMutacaoBloqueada();
   const periodo = agPeriodoNormalizado();
-  const base = agOrdenarLista((Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).filter(agendamentoVisivel));
+  // Precisa saber se ha uma busca em andamento antes de montar a lista base:
+  // enquanto o usuario estiver buscando por texto, um diretor tambem passa a
+  // enxergar agendamentos da outra unidade (ver agendamentoVisivel), para
+  // conseguir localizar um agendamento que esteja bloqueando um novo
+  // cadastro por telefone duplicado, mesmo quando esse agendamento foi
+  // criado na outra unidade.
+  const buscaAtivaAntesDaBase = !!agBusca.trim();
+  const base = agOrdenarLista((Array.isArray(AGENDAMENTOS) ? AGENDAMENTOS : []).filter(item => agendamentoVisivel(item, { ignorarUnidadeDir: buscaAtivaAntesDaBase })));
   const basePeriodo = agFiltrarPeriodo(base, periodo);
   const unidadesOpcoes = [...new Set(basePeriodo.map(item => agTexto(item.unidade)).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
   if (agFiltroUnidade && !unidadesOpcoes.includes(agFiltroUnidade)) agFiltroUnidade = '';
@@ -51,7 +58,7 @@ function renderAgendamentos() {
   // (ignorando o filtro De/Ate) -- sem isso, um agendamento ja concluido em
   // uma data fora do periodo selecionado nunca aparecia na busca, mesmo
   // digitando o telefone ou nome do cliente corretamente.
-  const buscaAtiva = !!agBusca.trim();
+  const buscaAtiva = buscaAtivaAntesDaBase;
   const lista = agFiltrarLista(buscaAtiva ? base : basePeriodo, true);
   const listaAgenda = lista.filter(agAgendamentoAtivo);
   const listaAtivos = lista.filter(agAgendamentoAtivoFuturo);
